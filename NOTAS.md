@@ -12,7 +12,11 @@ Scratchpad de sesión y notas de producto no evaluables. Las predicciones y resp
 - [x] Arnés: `options.py`, `recorder.py`, `offline.py`, `credentials.py`, con sus tests sin modelo (2026-10-23)
 - [x] `datos/generar_sinteticos.py`: usuarios, tickets (con etiquetas aparte) y artículos de KB, deterministas y con `--check`; los conjuntos de las entregas 2 y 3 se añaden con su módulo (2026-10-24)
 - [x] Capa meta §4.1: `docs/estandares-*.md`, `.claude/rules/`, skill, comando, permisos y hooks; 27 viñetas de D3 con su `INTRODUCE` (2026-10-24)
-- [ ] Verificación §11.5 de la capa meta en una sesión nueva: `/memory` ☑ y skill con fork ☑ (2026-10-24); protección de `datos/sinteticos/` ☑; falta la regla por ruta
+- [x] Verificación §11.5 de la capa meta en una sesión nueva (2026-10-24):
+  - `/memory` lista `CLAUDE.md` y sus dos `@import`.
+  - La skill corre en fork, con argumento y sin él.
+  - `datos/sinteticos/` queda protegido: la regla `deny` actúa en `Edit` y el hook en la shell.
+  - Regla por ruta: `apps-comentarios.md` no se carga al leer un `.md` y sí al leer un `.py` de `app*/`, con línea `Loaded` y contenido en contexto; `tests.md` se carga al leer un test fuera de `app*/` (glob por tipo de archivo).
 - [ ] `ANTHROPIC_API_KEY` disponible (necesaria a partir de la entrega 1)
 
 ## Sesiones
