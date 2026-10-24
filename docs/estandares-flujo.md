@@ -28,10 +28,21 @@ Importado por `CLAUDE.md`. Cómo se construye el proyecto.
 - Módulos pequeños: un concepto por módulo, ejecutable con y sin `--anti` cuando la viñeta describe un error.
 - Una sesión con nombre por app (`claude -n <app>`, `--resume <app>`).
 
+## Directivas
+
+- Todas las directivas del proyecto viven en el repositorio: `CLAUDE.md`, `docs/` y `.claude/`.
+- Nunca van en la memoria automática ni en la configuración de usuario. Ambas dependen del directorio de configuración (`CLAUDE_CONFIG_DIR`) y de la persona, así que no llegarían a otra sesión ni a otro miembro del equipo.
+
+## Git
+
+- Se puede commitear directamente en `main`, sobre todo los cambios acotados.
+- Un cambio grande (una app, o un cambio en el arnés o en la capa meta que afecte a varios módulos) puede hacerse en una rama y fusionarse a `main` cuando sus tests pasen.
+
 ## Registro entre sesiones
 
 - `NOTAS.md`: avance de los hitos, *scratchpad* de sesión y notas de producto no evaluables.
 - `FALLOS.md`: predicciones y respuestas fallidas.
+- Las notas son siempre agnósticas: rutas relativas al proyecto o genéricas (`~/.claude/…`), sin rutas absolutas, sin nombres de personas, cuentas ni perfiles.
 - `CLAUDE.md` y estos estándares solo cambian cuando cambia una regla estable.
 
 ## Revisión
