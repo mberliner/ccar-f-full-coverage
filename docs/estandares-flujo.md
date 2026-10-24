@@ -40,7 +40,8 @@ Importado por `CLAUDE.md`. Cómo se construye el proyecto.
 
 ## Registro entre sesiones
 
-- `NOTAS.md`: avance de los hitos, *scratchpad* de sesión y notas de producto no evaluables.
+- `NOTAS.md`: avance de todos los hitos (el roadmap es una plantilla y no lo lleva), *scratchpad* de sesión y notas de producto no evaluables.
+- Mejoras para el roadmap: una nota que le pasaría también a otra persona, con otra máquina y otra cuenta, se marca `→ roadmap`. Al llevarla al roadmap (sección afectada o §4.3, más una línea en §14) se reduce aquí a un puntero `✓ roadmap YYYY-MM-DD §x`, para no duplicarla. Las que dependen de esta implementación o aún no se han comprobado se quedan solo aquí (criterio en roadmap §12, «Mantener la plantilla al día»).
 - `FALLOS.md`: predicciones y respuestas fallidas.
 - Las notas son siempre agnósticas: rutas relativas al proyecto o genéricas (`~/.claude/…`), sin rutas absolutas, sin nombres de personas, cuentas ni perfiles.
 - `CLAUDE.md` y estos estándares solo cambian cuando cambia una regla estable.

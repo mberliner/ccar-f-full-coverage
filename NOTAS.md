@@ -2,7 +2,13 @@
 
 Scratchpad de sesión y notas de producto no evaluables. Las predicciones y respuestas fallidas van en [FALLOS.md](FALLOS.md).
 
-## Hito 0 (roadmap §10)
+Marcas para el roadmap (flujo en `docs/estandares-flujo.md`): `→ roadmap` pendiente de llevar; `✓ roadmap <fecha> §x` ya está allí y manda lo de allí.
+
+## Hitos (roadmap §10)
+
+El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio de cada hito es su columna «Hecho cuando».
+
+**Hito 0** (cerrado el 2026-10-24):
 
 - [x] Esqueleto de directorios, `pyproject.toml` con SDK fijado, `NOTAS.md`, `FALLOS.md`
 - [x] Aislamiento de las sesiones de construcción (comprobado con `/memory`, `/mcp` y `/plugin`, 2026-10-23)
@@ -19,6 +25,14 @@ Scratchpad de sesión y notas de producto no evaluables. Las predicciones y resp
   - Regla por ruta: `apps-comentarios.md` no se carga al leer un `.md` y sí al leer un `.py` de `app*/`, con línea `Loaded` y contenido en contexto; `tests.md` se carga al leer un test fuera de `app*/` (glob por tipo de archivo).
 - [x] `ANTHROPIC_API_KEY` disponible desde `.env` (plantilla en `.env.example`); `credentials.py` la detecta. La validez de la clave y `apiKeySource` se confirman en la primera ejecución con modelo (2026-10-24)
 
+**Entregas:**
+
+- [ ] Entrega 1 · D1 (`S-4`)
+- [ ] Entrega 2 · D2 y D3 (`S-3`)
+- [ ] Entrega 3 · D4 y D5 (`S-2`)
+- [ ] `S-1` · repaso sin código nuevo
+- [ ] Entrega 4 · opcional, después del examen
+
 ## Sesiones
 
 | App | Nombre de sesión | Estado |
@@ -26,36 +40,31 @@ Scratchpad de sesión y notas de producto no evaluables. Las predicciones y resp
 
 ## Notas de producto (no evaluables)
 
-- **Plugins sincronizados desde claude.ai:** en `enabledPlugins` se identifican como `<nombre>@synced`; la clave `<nombre>@<marketplace>` no tiene efecto (Claude Code 2.1.310).
-- **Subagentes fork activos por defecto** en Claude Code (`CLAUDE_CODE_FORK_SUBAGENT`): candidato a neutralizar con `"0"` en `env` en los módulos de subagentes (roadmap §3, regla 4). El test de perímetro admite el valor apagado.
+- **Plugins sincronizados desde claude.ai** (`<nombre>@synced`): ✓ roadmap 2026-10-24 §4.3.
+- **Subagentes fork activos por defecto** en Claude Code (`CLAUDE_CODE_FORK_SUBAGENT`): candidato a neutralizar con `"0"` en `env` en los módulos de subagentes (roadmap §3, regla 4). El test de perímetro admite el valor apagado. → roadmap (§3, regla 4) cuando se decida en `app3/01`.
 - **Cobertura 240/240:** `test_full_coverage` está en `xfail(strict=True)`; cuando pase, pytest lo marcará como XPASS fallido y hay que quitar la marca.
-- **Conectores de claude.ai:** `ENABLE_CLAUDEAI_MCP_SERVERS=false` en el `env` de `.claude/settings.json` los quita también de la sesión de Claude Code, no solo de los agentes del SDK.
+- **Conectores de claude.ai** (`ENABLE_CLAUDEAI_MCP_SERVERS=false` también en la sesión de construcción): ✓ roadmap 2026-10-24 §3, regla 3.
 - **Skills sincronizadas de claude.ai** (`docx`, `pdf`, `deep-research`…): no se encontró ajuste para desactivarlas por proyecto; no afectan a las apps (`setting_sources=[]`).
-- **`claudeMdExcludes`:** el patrón `**/<ruta>/CLAUDE.md` con barras normales funciona en Windows.
-- **`skills=None` no apaga las skills** en `ClaudeAgentOptions` (SDK 0.2.173): las CLI defaults siguen aplicando. Pendiente: en la primera ejecución con modelo, mirar la línea `[contexto]` del recorder; si lista alguna skill, añadir `skills=[]` en `harness/options.py` (regla 4).
-- **Una respuesta del modelo puede llegar en varios `AssistantMessage`** con el mismo `message_id`; el recorder agrupa por ese id. Confirmarlo en la primera ejecución de `app3/02`.
+- **`claudeMdExcludes` en Windows:** ✓ roadmap 2026-10-24 §4.3.
+- **`skills=None` no apaga las skills** en `ClaudeAgentOptions` (SDK 0.2.173): las CLI defaults siguen aplicando. Pendiente: en la primera ejecución con modelo, mirar la línea `[contexto]` del recorder; si lista alguna skill, añadir `skills=[]` en `harness/options.py` (regla 4). → roadmap (§3, regla 3) cuando se confirme.
+- **Una respuesta del modelo puede llegar en varios `AssistantMessage`** con el mismo `message_id`; el recorder agrupa por ese id. Confirmarlo en la primera ejecución de `app3/02`. → roadmap (§5, `recorder.py`) cuando se confirme.
 - **Hooks de la sesión de construcción:**
-  - Claude Code toma una instantánea de los hooks al arrancar: tras cambiarlos, revisar `/hooks` o abrir una sesión nueva.
+  - Instantánea de hooks al arrancar, fallo en cerrado, dos barreras (`deny` y hook), falso positivo con `git commit -F` y UTF-8 en Windows: ✓ roadmap 2026-10-24 §4.3.
   - El filtro de shell de `proteger_rutas.py` es heurístico:
     - bloquea cualquier comando que nombre `datos/sinteticos` o un `.env`, salvo `git status|diff|log|show|add` sin nada encadenado (el salto de línea cuenta como separador);
     - no ve un script que escriba por dentro, ni variables o comodines que compongan la ruta. Esa vía la cubre `generar_sinteticos.py --check`.
-  - **El hook falla en cerrado:** ante una entrada que no entiende devuelve 2, porque un exit 1 es no bloqueante y la llamada seguiría.
   - **Variantes de `.env`:** protege `.env` y `.env.*`, salvo las plantillas `.env.example` y `.env.sample`, sin distinguir mayúsculas.
-  - **Dos barreras para `Edit`/`Write`:** la regla `deny` de `settings.json` rechaza el `Edit` antes que el hook («directory that is denied by your permission settings»), así que el hook queda de respaldo; por shell, el hook es la única barrera y sí se vio bloquear (2026-10-24).
-  - **Una instrucción en contexto puede tapar la prueba:** al pedir «edita `datos/sinteticos/tickets.json`», la sesión leyó los estándares y fue directa al generador sin intentar el `Edit`, así que el hook no llegó a ejecutarse. Para probar una barrera hay que forzar el intento. En el examen, la instrucción no garantiza el cumplimiento; solo la puerta programática lo hace.
-  - Falso positivo conocido: un commit cuyo mensaje nombra esas rutas, o que llega por heredoc (`<<`), se bloquea. Se escribe el mensaje en un archivo y se usa `git commit -F <archivo>`.
-  - En Windows, los scripts de hook necesitan forzar UTF-8 en stdin y stderr, o los motivos con tildes llegan corruptos.
+  - La regla `deny` se vio rechazar el `Edit` («directory that is denied by your permission settings») y el hook bloquear por shell (2026-10-24).
+  - **Una instrucción en contexto puede tapar la prueba:** ✓ roadmap 2026-10-24 §11.5. Caso visto: al pedir «edita `datos/sinteticos/tickets.json`», la sesión fue directa al generador sin intentar el `Edit`.
 - **`argument-hint` no obliga a pasar el argumento** (Claude Code 2.1.310). La guía lo presenta como el mecanismo para pedir el parámetro; en el producto, el hint solo se muestra en el autocompletado y la skill se lanza igual sin argumento. Por eso `verificar-concepto` comprueba `$ARGUMENTS` y se detiene si llega vacío. En el examen vale la lectura de la guía (registrado en `conceptos-generales.md` §4.6 del repositorio de estudio). Comprobado el 2026-10-24: el fork funciona y a la conversación principal solo llegó el resultado.
-- **Varios directorios de configuración (`CLAUDE_CONFIG_DIR`):** todo lo del repositorio funciona igual con cualquiera (`CLAUDE.md`, reglas, skill, comando, hooks, permisos, `settings.local.json`). Cambia lo que vive en el directorio de configuración:
-  - **Credencial:** con `apiKeyHelper` en los ajustes de usuario, la clave no está en el entorno. Un módulo lanzado desde esa sesión no la hereda, y el Agent SDK con `setting_sources=[]` previsiblemente tampoco aplica el *helper*; comprobarlo en la primera ejecución con modelo. Si la clave está exportada, el módulo la usa y el coste va a esa cuenta.
-  - **Memoria automática, sesiones con nombre e historial:** son propios de cada directorio. `--resume <app>` no encuentra una sesión creada con otro, y `app2/06` reanuda sesiones del directorio del proceso que lo ejecuta.
-  - **Plugins, conectores y ajustes gestionados:** dependen de la cuenta. Repetir `/plugin`, `/mcp` y `/hooks` la primera vez que se construya con otro directorio. Unos ajustes gestionados podrían desactivar los hooks del proyecto.
-  - **Decidido:** las apps usan la clave empresarial cargada desde `.env` (plantilla en `.env.example`). El `apiKeyHelper` solo lo entiende la CLI; los módulos de la Messages API usan el cliente `anthropic`, que necesita la clave en el entorno, y activar el *helper* desde el SDK rompería el aislamiento de `setting_sources=[]`.
+- **Varios directorios de configuración (`CLAUDE_CONFIG_DIR`)** y decisión de credencial (`apiKeyHelper` solo en la CLI, clave en `.env`): ✓ roadmap 2026-10-24 §4.3. Lo propio de esta implementación:
+  - **Credencial:** las apps usan la clave empresarial cargada desde `.env`. Si la clave está exportada, el módulo la usa y el coste va a esa cuenta.
+  - `app2/06` reanuda sesiones del directorio de configuración del proceso que lo ejecuta.
   - **`.env` y el hook:** `proteger_rutas.py` impide crear o editar `.env` desde la sesión de construcción; lo crea la persona copiando `.env.example`. `.gitignore` cubre solo `.env` (patrón exacto), no variantes.
-  - **Pendiente:** `CLAUDE_CONFIG_DIR` para las apps. En la primera ejecución con modelo, ver qué directorio usa la CLI (sesiones de `app2/06`, login de respaldo) y, si hace falta fijarlo, ampliar `credentials.py` para copiar esa variable desde `.env`.
-- **`/memory` no lista las reglas por ruta:** muestra ubicaciones de `CLAUDE.md` y memoria, aunque no existan. Una regla con `paths` se carga al usar `Read`, `Write` o `Edit` sobre un archivo que coincide, y aparece una línea `Loaded` en el terminal. `/context` muestra lo cargado al arrancar.
+  - **Pendiente:** `CLAUDE_CONFIG_DIR` para las apps. En la primera ejecución con modelo, ver qué directorio usa la CLI (sesiones de `app2/06`, login de respaldo) y, si hace falta fijarlo, ampliar `credentials.py` para copiar esa variable desde `.env`. → roadmap (§4.3) cuando se resuelva.
+- **`/memory` no lista las reglas por ruta:** ✓ roadmap 2026-10-24 §11.5.
 - **Viñetas de D3 pendientes para `d3_claude_code/README.md`** (entrega 2): 3.1-S1, 3.1-S4, 3.2-K4, 3.2-S5 y las 9 de 3.5. Las otras 27 ya tienen su marcador en `CLAUDE.md`, `docs/` y `.claude/`.
-- **La CLI hereda `os.environ` completo** y encima aplica `options.env`: una variable vacía llega como definida. `credentials.py` las quita.
+- **La CLI hereda `os.environ` completo** y encima aplica `options.env`: ✓ roadmap 2026-10-24 §5 (`credentials.py`).
 
 ## Citas en prosa por convertir a `# USA`
 
@@ -64,4 +73,3 @@ El arnés cita estas viñetas en prosa porque aún no están introducidas (roadm
 - `TS 1.4-K1`: `harness/options.py`, `harness/recorder.py` (al introducir `app2/01`)
 - `TS 1.3-S3`: `harness/recorder.py` (`app3/02`)
 - `TS 1.2-K1`: `harness/recorder.py` (`app3/01`)
-
