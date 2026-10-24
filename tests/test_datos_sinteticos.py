@@ -61,3 +61,48 @@ def test_superseded_article_points_to_newer_one():
 
 def test_only_synthetic_email_domain():
     assert all(u["email"].endswith(".test") for u in load("usuarios.json"))
+
+
+def legacy_files():
+    return {name: text for name, text in build_all().items() if name.startswith("legacy_inventario/")}
+
+
+def test_legacy_package_is_valid_python_without_tests():
+    files = legacy_files()
+    assert 5 <= len(files) - 1 <= 7  # módulos, sin contar __init__.py
+    assert not any("test" in name.split("/")[-1] for name in files)
+    for name, text in files.items():
+        compile(text, name, "exec")
+
+
+def test_legacy_hidden_dependency_only_inside_function():
+    # depreciacion depende de almacen, pero no en sus imports de cabecera:
+    # solo se ve leyendo el cuerpo de valor_actual.
+    text = legacy_files()["legacy_inventario/depreciacion.py"]
+    header = text.split("def ")[0]
+    assert "almacen" not in header
+    assert "from . import almacen" in text and "_CACHE_ASIGNADOS" in text
+
+
+def test_legacy_package_runs(tmp_path):
+    import importlib
+    import sys
+    from datetime import date
+
+    write(tmp_path)
+    sys.path.insert(0, str(tmp_path))
+    try:
+        almacen = importlib.import_module("legacy_inventario.almacen")
+        asignaciones = importlib.import_module("legacy_inventario.asignaciones")
+        informes = importlib.import_module("legacy_inventario.informes")
+        almacen.reset()
+        almacen.alta("SN-1", "portatil", 1000.0, "01/01/2020")
+        hoy = date(2026, 1, 1)
+        assert informes.valor_total(hoy) == 0.0
+        # La dependencia escondida cambia el resultado: asignado conserva un 10 %.
+        asignaciones.asignar("SN-1", "EMP-1001", "02/01/2020")
+        assert informes.valor_total(hoy) == 100.0
+    finally:
+        sys.path.remove(str(tmp_path))
+        for name in [m for m in sys.modules if m.startswith("legacy_inventario")]:
+            del sys.modules[name]

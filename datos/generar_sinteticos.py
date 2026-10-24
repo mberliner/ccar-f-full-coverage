@@ -13,7 +13,8 @@ editar esa carpeta directamente.
 QUÉ NO HACE: no usa datos reales ni nombres de empresas, y los correos van al
 dominio reservado `.test`. Las etiquetas de lo que debería pasar con cada
 ticket van en un archivo aparte (`tickets_etiquetas.json`): el agente nunca
-debe verlas, solo el módulo que puntúa. Los conjuntos de las entregas 2 y 3
+debe verlas, solo el módulo que puntúa. `legacy_inventario/` es código Python
+de ejemplo para app3/02, sin tests a propósito. Los conjuntos de las entregas 2 y 3
 (documentos de extracción, inventario de 40 campos, informes con cifras en
 conflicto) se añaden aquí en el mismo cambio que su módulo.
 
@@ -236,6 +237,141 @@ def build_kb_articles(rng: random.Random) -> list[dict]:
     return articles
 
 
+# Paquete «legacy» de inventario de la mesa de ayuda para app3/02 (ver TS 1.6):
+# código sin tests que el agente debe mapear antes de planificar los tests.
+# La dependencia escondida: `depreciacion.valor_actual` importa `almacen`
+# dentro de la función y lee la caché que solo llena `asignaciones.asignar`.
+# No aparece en los imports de cabecera, así que solo se descubre al leer ese
+# módulo. Es texto fijo: no usa el generador aleatorio.
+LEGACY_DIR = "legacy_inventario"
+LEGACY_FILES = {
+    "__init__.py": '''"""Inventario de equipos de la mesa de ayuda (código heredado, sin tests)."""
+''',
+    "modelos.py": '''"""Modelos del inventario."""
+
+from dataclasses import dataclass
+
+
+@dataclass
+class Equipo:
+    serial: str
+    tipo: str  # portatil | monitor | movil | periferico
+    precio_compra: float
+    fecha_compra: str  # dd/mm/aaaa, como lo exporta el ERP antiguo
+
+
+@dataclass
+class Asignacion:
+    serial: str
+    user_id: str
+    fecha: str
+''',
+    "fechas.py": '''"""Utilidades de fechas del ERP antiguo."""
+
+from datetime import date
+
+
+def parse_fecha(texto):
+    # El ERP exporta dd/mm/aaaa; algunos registros vienen con guiones.
+    dia, mes, anio = texto.replace("-", "/").split("/")
+    return date(int(anio), int(mes), int(dia))
+
+
+def anios_entre(desde, hasta):
+    return (hasta - desde).days / 365.25
+''',
+    "almacen.py": '''"""Almacén en memoria de equipos y asignaciones."""
+
+from .modelos import Equipo
+
+_EQUIPOS = {}
+# Caché de asignaciones activas: serial -> user_id. La llena asignaciones.asignar.
+_CACHE_ASIGNADOS = {}
+
+
+def alta(serial, tipo, precio, fecha):
+    _EQUIPOS[serial] = Equipo(serial, tipo, precio, fecha)
+    return _EQUIPOS[serial]
+
+
+def obtener(serial):
+    return _EQUIPOS.get(serial)
+
+
+def todos():
+    return list(_EQUIPOS.values())
+
+
+def reset():
+    _EQUIPOS.clear()
+    _CACHE_ASIGNADOS.clear()
+''',
+    "asignaciones.py": '''"""Asignación de equipos a empleados."""
+
+from . import almacen
+from .modelos import Asignacion
+
+_HISTORICO = []
+
+
+def asignar(serial, user_id, fecha):
+    if almacen.obtener(serial) is None:
+        raise KeyError(f"equipo desconocido: {serial}")
+    if serial in almacen._CACHE_ASIGNADOS:
+        raise ValueError(f"{serial} ya está asignado a {almacen._CACHE_ASIGNADOS[serial]}")
+    almacen._CACHE_ASIGNADOS[serial] = user_id
+    _HISTORICO.append(Asignacion(serial, user_id, fecha))
+
+
+def devolver(serial):
+    almacen._CACHE_ASIGNADOS.pop(serial, None)
+
+
+def de_empleado(user_id):
+    return [s for s, u in almacen._CACHE_ASIGNADOS.items() if u == user_id]
+''',
+    "depreciacion.py": '''"""Valor contable de los equipos."""
+
+from datetime import date
+
+from .fechas import anios_entre, parse_fecha
+
+VIDA_UTIL = {"portatil": 4, "monitor": 6, "movil": 3, "periferico": 2}
+
+
+def valor_actual(serial, hoy=None):
+    # Import tardío para evitar un ciclo con almacen (deuda técnica conocida).
+    from . import almacen
+
+    equipo = almacen.obtener(serial)
+    hoy = hoy or date.today()
+    anios = anios_entre(parse_fecha(equipo.fecha_compra), hoy)
+    vida = VIDA_UTIL[equipo.tipo]
+    valor = equipo.precio_compra * max(0.0, 1 - anios / vida)
+    # Un equipo asignado conserva un 10 % de valor residual mínimo.
+    if serial in almacen._CACHE_ASIGNADOS:
+        valor = max(valor, equipo.precio_compra * 0.10)
+    return round(valor, 2)
+''',
+    "informes.py": '''"""Informes para Finanzas."""
+
+from . import almacen
+from .depreciacion import valor_actual
+
+
+def valor_total(hoy=None):
+    return round(sum(valor_actual(e.serial, hoy) for e in almacen.todos()), 2)
+
+
+def por_tipo():
+    conteo = {}
+    for equipo in almacen.todos():
+        conteo[equipo.tipo] = conteo.get(equipo.tipo, 0) + 1
+    return conteo
+''',
+}
+
+
 def build_all() -> dict[str, str]:
     """Genera todos los archivos en memoria: nombre → contenido serializado."""
     # Un generador por conjunto: añadir un conjunto nuevo no altera los existentes.
@@ -248,7 +384,10 @@ def build_all() -> dict[str, str]:
         "tickets_etiquetas.json": labels,
         "articulos_kb.json": articles,
     }
-    return {name: json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True) + "\n" for name, data in datasets.items()}
+    files = {name: json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True) + "\n" for name, data in datasets.items()}
+    # Las rutas con subcarpeta usan «/»: mismo nombre en Windows y en Linux.
+    files.update({f"{LEGACY_DIR}/{name}": content for name, content in LEGACY_FILES.items()})
+    return files
 
 
 def check(output_dir: Path = OUTPUT_DIR) -> list[str]:
@@ -261,9 +400,11 @@ def check(output_dir: Path = OUTPUT_DIR) -> list[str]:
             problems.append(f"falta {name}")
         elif path.read_text(encoding="utf-8") != content:
             problems.append(f"difiere {name}")
-    for path in sorted(output_dir.glob("*.json")):
-        if path.name not in expected:
-            problems.append(f"sobra {path.name}")
+    for path in sorted(output_dir.rglob("*")):
+        rel = path.relative_to(output_dir).as_posix()
+        # La caché de Python aparece si algún módulo importa el paquete legacy.
+        if path.is_file() and "__pycache__" not in rel and rel not in expected:
+            problems.append(f"sobra {rel}")
     return problems
 
 
@@ -271,7 +412,9 @@ def write(output_dir: Path = OUTPUT_DIR) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     for name, content in build_all().items():
         # newline="\n": mismos bytes en Windows y en Linux.
-        (output_dir / name).write_text(content, encoding="utf-8", newline="\n")
+        path = output_dir / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8", newline="\n")
 
 
 def main() -> int:

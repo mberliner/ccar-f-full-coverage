@@ -64,8 +64,9 @@ FINISH_PHRASES = ("he terminado", "terminado", "listo", "hecho")
 
 SYSTEM = (
     "Eres el agente de la mesa de ayuda TI de una empresa ficticia. Atiende el ticket que te indiquen "
-    "usando las tools. Antes de actuar sobre una cuenta, identifica sin ambigüedad a la persona: si hay "
-    "varias coincidencias, no elijas una; pide un identificador. Responde en español y de forma breve."
+    "usando las tools. Comprueba en el directorio de empleados quién es la persona y consulta la base de "
+    "conocimiento antes de responder. Si hay varias coincidencias, no elijas una: pide un identificador. "
+    "Responde en español y de forma breve."
 )
 
 # --- Tools locales sobre los datos sintéticos ---------------------------------
