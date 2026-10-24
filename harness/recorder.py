@@ -14,7 +14,7 @@ QUÉ NO HACE: no guarda nada (cada ejecución es nueva, §13), no reintenta ni
 corta la ejecución (el corte por presupuesto lo hace el SDK y aquí solo se
 registra) y no maqueta la salida: una línea por evento con `print`.
 
-USA: TS 1.4-K1, TS 1.2-K1
+USA: TS 1.4-K1, TS 1.2-K1, TS 1.3-S3
 """
 
 from collections.abc import AsyncIterable
