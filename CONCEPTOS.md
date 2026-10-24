@@ -5,6 +5,31 @@ Registro viñeta → módulo o sección D3 donde se INTRODUCE. Cobertura objetiv
 - **Destino:** `appN/NN_concepto` es el módulo que lleva el marcador; `d3` es la sección D3, cuyo marcador va en `d3_claude_code/`, `.claude/`, `docs/` o `CLAUDE.md` (roadmap §4).
 - **Estado:** ☐ sin marcador todavía · ☑ con su único `INTRODUCE`. Se marca ☑ en el mismo cambio que añade el marcador; `tests/test_una_vez.py` comprueba que ambos coinciden.
 
+## Dominios de la guía
+
+`Dn` es el dominio `n` de la Exam Guide v1.0 y el prefijo de sus viñetas `TS n.x`.
+
+| Dominio | Nombre | Peso |
+| :--- | :--- | :---: |
+| D1 | Agentic Architecture & Orchestration | 27% |
+| D2 | Tool Design & MCP Integration | 18% |
+| D3 | Claude Code Configuration & Workflows | 20% |
+| D4 | Prompt Engineering & Structured Output | 20% |
+| D5 | Context Management & Reliability | 15% |
+
+## Reparto por entregas
+
+Las apps se ordenan por complejidad creciente, pero se entregan por bloques de dominio (roadmap §10). Por eso una entrega reparte sus módulos entre varias apps y el dominio no coincide con la app.
+
+| Entrega | Semana | Dominios | Módulos |
+| :--- | :--- | :--- | :--- |
+| 1 | `S-4` | D1 · bucle, control y sesiones | `app1/01` · `app2/01`, `02`, `03`, `05`, `06` · `app3/01`, `02` |
+| 2 | `S-3` | D2 y D3 · tools, MCP y Claude Code | `app1/02`–`06` · `app3/03` · sección D3 |
+| 3 | `S-2` | D4 y D5 · extracción, calidad, contexto y CI | `app1/07` · `app2/04` · `app3/04`–`12` |
+| — | `S-1` | Repaso sin código nuevo | — |
+
+El avance de cada entrega se registra en `NOTAS.md`.
+
 **Introducidas: 27/240**
 
 | Viñeta | Destino | Estado |
