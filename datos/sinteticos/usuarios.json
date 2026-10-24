@@ -1,0 +1,242 @@
+[
+  {
+    "department": "Legal",
+    "email": "emp-1001@mesa-ejemplo.test",
+    "name": "Andrés Rubio",
+    "user_id": "EMP-1001"
+  },
+  {
+    "department": "Legal",
+    "email": "emp-1002@mesa-ejemplo.test",
+    "name": "Elena Herrero",
+    "user_id": "EMP-1002"
+  },
+  {
+    "department": "Ventas",
+    "email": "emp-1003@mesa-ejemplo.test",
+    "name": "Sergio Castro",
+    "user_id": "EMP-1003"
+  },
+  {
+    "department": "Finanzas",
+    "email": "emp-1004@mesa-ejemplo.test",
+    "name": "Laura Gómez",
+    "user_id": "EMP-1004"
+  },
+  {
+    "department": "Ingeniería",
+    "email": "emp-1005@mesa-ejemplo.test",
+    "name": "Sergio Herrero",
+    "user_id": "EMP-1005"
+  },
+  {
+    "department": "Legal",
+    "email": "emp-1006@mesa-ejemplo.test",
+    "name": "Diego Herrero",
+    "user_id": "EMP-1006"
+  },
+  {
+    "department": "Ingeniería",
+    "email": "emp-1007@mesa-ejemplo.test",
+    "name": "Carmen Molina",
+    "user_id": "EMP-1007"
+  },
+  {
+    "department": "Ingeniería",
+    "email": "emp-1008@mesa-ejemplo.test",
+    "name": "Laura Castro",
+    "user_id": "EMP-1008"
+  },
+  {
+    "department": "Finanzas",
+    "email": "emp-1009@mesa-ejemplo.test",
+    "name": "Javier Moreno",
+    "user_id": "EMP-1009"
+  },
+  {
+    "department": "Ventas",
+    "email": "emp-1010@mesa-ejemplo.test",
+    "name": "Óscar Navarro",
+    "user_id": "EMP-1010"
+  },
+  {
+    "department": "Operaciones",
+    "email": "emp-1011@mesa-ejemplo.test",
+    "name": "Óscar Navarro",
+    "user_id": "EMP-1011"
+  },
+  {
+    "department": "Operaciones",
+    "email": "emp-1012@mesa-ejemplo.test",
+    "name": "Irene Blanco",
+    "user_id": "EMP-1012"
+  },
+  {
+    "department": "Personas",
+    "email": "emp-1013@mesa-ejemplo.test",
+    "name": "Lucía Vidal",
+    "user_id": "EMP-1013"
+  },
+  {
+    "department": "Personas",
+    "email": "emp-1014@mesa-ejemplo.test",
+    "name": "Marta Molina",
+    "user_id": "EMP-1014"
+  },
+  {
+    "department": "Personas",
+    "email": "emp-1015@mesa-ejemplo.test",
+    "name": "Andrés Iglesias",
+    "user_id": "EMP-1015"
+  },
+  {
+    "department": "Ventas",
+    "email": "emp-1016@mesa-ejemplo.test",
+    "name": "Hugo Prieto",
+    "user_id": "EMP-1016"
+  },
+  {
+    "department": "Ingeniería",
+    "email": "emp-1017@mesa-ejemplo.test",
+    "name": "Nuria Castro",
+    "user_id": "EMP-1017"
+  },
+  {
+    "department": "Ventas",
+    "email": "emp-1018@mesa-ejemplo.test",
+    "name": "Laura Gómez",
+    "user_id": "EMP-1018"
+  },
+  {
+    "department": "Legal",
+    "email": "emp-1019@mesa-ejemplo.test",
+    "name": "Nuria Delgado",
+    "user_id": "EMP-1019"
+  },
+  {
+    "department": "Ingeniería",
+    "email": "emp-1020@mesa-ejemplo.test",
+    "name": "Andrés Cano",
+    "user_id": "EMP-1020"
+  },
+  {
+    "department": "Ingeniería",
+    "email": "emp-1021@mesa-ejemplo.test",
+    "name": "Javier Herrero",
+    "user_id": "EMP-1021"
+  },
+  {
+    "department": "Legal",
+    "email": "emp-1022@mesa-ejemplo.test",
+    "name": "Irene Prieto",
+    "user_id": "EMP-1022"
+  },
+  {
+    "department": "Legal",
+    "email": "emp-1023@mesa-ejemplo.test",
+    "name": "Carmen Serrano",
+    "user_id": "EMP-1023"
+  },
+  {
+    "department": "Personas",
+    "email": "emp-1024@mesa-ejemplo.test",
+    "name": "Sergio Herrero",
+    "user_id": "EMP-1024"
+  },
+  {
+    "department": "Ventas",
+    "email": "emp-1025@mesa-ejemplo.test",
+    "name": "Javier Serrano",
+    "user_id": "EMP-1025"
+  },
+  {
+    "department": "Ingeniería",
+    "email": "emp-1026@mesa-ejemplo.test",
+    "name": "Carmen Iglesias",
+    "user_id": "EMP-1026"
+  },
+  {
+    "department": "Finanzas",
+    "email": "emp-1027@mesa-ejemplo.test",
+    "name": "Carmen Navarro",
+    "user_id": "EMP-1027"
+  },
+  {
+    "department": "Ventas",
+    "email": "emp-1028@mesa-ejemplo.test",
+    "name": "Laura Gómez Prieto",
+    "user_id": "EMP-1028"
+  },
+  {
+    "department": "Finanzas",
+    "email": "emp-1029@mesa-ejemplo.test",
+    "name": "Irene Moreno",
+    "user_id": "EMP-1029"
+  },
+  {
+    "department": "Ventas",
+    "email": "emp-1030@mesa-ejemplo.test",
+    "name": "Beatriz Blanco",
+    "user_id": "EMP-1030"
+  },
+  {
+    "department": "Ventas",
+    "email": "emp-1031@mesa-ejemplo.test",
+    "name": "Laura Castro",
+    "user_id": "EMP-1031"
+  },
+  {
+    "department": "Ventas",
+    "email": "emp-1032@mesa-ejemplo.test",
+    "name": "Sergio Moreno",
+    "user_id": "EMP-1032"
+  },
+  {
+    "department": "Ingeniería",
+    "email": "emp-1033@mesa-ejemplo.test",
+    "name": "Carmen Iglesias",
+    "user_id": "EMP-1033"
+  },
+  {
+    "department": "Operaciones",
+    "email": "emp-1034@mesa-ejemplo.test",
+    "name": "Pablo Molina",
+    "user_id": "EMP-1034"
+  },
+  {
+    "department": "Legal",
+    "email": "emp-1035@mesa-ejemplo.test",
+    "name": "Andrés Ortega",
+    "user_id": "EMP-1035"
+  },
+  {
+    "department": "Operaciones",
+    "email": "emp-1036@mesa-ejemplo.test",
+    "name": "Sergio Rubio",
+    "user_id": "EMP-1036"
+  },
+  {
+    "department": "Operaciones",
+    "email": "emp-1037@mesa-ejemplo.test",
+    "name": "Laura Cano",
+    "user_id": "EMP-1037"
+  },
+  {
+    "department": "Operaciones",
+    "email": "emp-1038@mesa-ejemplo.test",
+    "name": "Marta Iglesias",
+    "user_id": "EMP-1038"
+  },
+  {
+    "department": "Legal",
+    "email": "emp-1039@mesa-ejemplo.test",
+    "name": "Andrés Ortega",
+    "user_id": "EMP-1039"
+  },
+  {
+    "department": "Legal",
+    "email": "emp-1040@mesa-ejemplo.test",
+    "name": "Raúl Delgado",
+    "user_id": "EMP-1040"
+  }
+]

@@ -1,0 +1,122 @@
+[
+  {
+    "article_id": "KB-101",
+    "body": "Pasos para restablecer la contraseña desde el portal de autoservicio.",
+    "category": "acceso",
+    "superseded_by": null,
+    "title": "Restablecer la contraseña corporativa",
+    "updated_at": "2025-10-22"
+  },
+  {
+    "article_id": "KB-102",
+    "body": "La cuenta se desbloquea sola a los 30 minutos o la desbloquea soporte tras verificar la identidad.",
+    "category": "acceso",
+    "superseded_by": null,
+    "title": "Desbloquear una cuenta tras intentos fallidos",
+    "updated_at": "2025-09-17"
+  },
+  {
+    "article_id": "KB-103",
+    "body": "La persona responsable de la carpeta aprueba la solicitud desde el catálogo.",
+    "category": "acceso",
+    "superseded_by": null,
+    "title": "Solicitar acceso a una carpeta compartida",
+    "updated_at": "2025-10-29"
+  },
+  {
+    "article_id": "KB-104",
+    "body": "Ejecutar el diagnóstico del fabricante y adjuntar el informe al ticket.",
+    "category": "hardware",
+    "superseded_by": null,
+    "title": "Diagnóstico de batería del portátil",
+    "updated_at": "2026-09-10"
+  },
+  {
+    "article_id": "KB-105",
+    "body": "Revisar el cable, actualizar el firmware de la base y probar otro puerto.",
+    "category": "hardware",
+    "superseded_by": null,
+    "title": "Pantalla externa no detectada",
+    "updated_at": "2025-12-05"
+  },
+  {
+    "article_id": "KB-106",
+    "body": "El catálogo incluye monitores de 24 y 27 pulgadas; otros modelos requieren aprobación de la dirección del área.",
+    "category": "hardware",
+    "superseded_by": null,
+    "title": "Política de monitores y periféricos",
+    "updated_at": "2026-05-03"
+  },
+  {
+    "article_id": "KB-107",
+    "body": "Reducir el tamaño del recibo por debajo de 5 MB o usar PDF.",
+    "category": "software",
+    "superseded_by": null,
+    "title": "La aplicación de gastos se cierra al adjuntar",
+    "updated_at": "2026-07-20"
+  },
+  {
+    "article_id": "KB-108",
+    "body": "Reconstruir el perfil local; la carpeta de enviados se recupera del servidor.",
+    "category": "software",
+    "superseded_by": null,
+    "title": "Sincronización del cliente de correo",
+    "updated_at": "2026-02-08"
+  },
+  {
+    "article_id": "KB-109",
+    "body": "Cambiar al perfil TCP de la VPN y comprobar la red doméstica.",
+    "category": "red",
+    "superseded_by": null,
+    "title": "VPN inestable desde casa",
+    "updated_at": "2026-01-23"
+  },
+  {
+    "article_id": "KB-110",
+    "body": "Instrucciones del perfil UDP retirado. Sustituido por «VPN inestable desde casa».",
+    "category": "red",
+    "superseded_by": "KB-109",
+    "title": "VPN: perfil antiguo (obsoleto)",
+    "updated_at": "2025-07-07"
+  },
+  {
+    "article_id": "KB-111",
+    "body": "Las salas usan la red de invitados con portal cautivo.",
+    "category": "red",
+    "superseded_by": null,
+    "title": "Wifi en salas de reuniones",
+    "updated_at": "2026-03-14"
+  },
+  {
+    "article_id": "KB-112",
+    "body": "Las renovaciones se piden 15 días antes de caducar desde el catálogo.",
+    "category": "licencias",
+    "superseded_by": null,
+    "title": "Renovar una licencia de software",
+    "updated_at": "2026-05-09"
+  },
+  {
+    "article_id": "KB-113",
+    "body": "No se compran licencias fuera del catálogo; se puede proponer una alta nueva.",
+    "category": "licencias",
+    "superseded_by": null,
+    "title": "Compras fuera de catálogo",
+    "updated_at": "2025-10-02"
+  },
+  {
+    "article_id": "KB-114",
+    "body": "Hasta 500 EUR lo aprueba soporte; por encima, requiere aprobación de Finanzas.",
+    "category": "gastos",
+    "superseded_by": null,
+    "title": "Reembolso de material comprado por el empleado",
+    "updated_at": "2025-08-29"
+  },
+  {
+    "article_id": "KB-115",
+    "body": "Los reembolsos aprobados se pagan en la nómina siguiente.",
+    "category": "gastos",
+    "superseded_by": null,
+    "title": "Plazos de pago de reembolsos",
+    "updated_at": "2026-03-13"
+  }
+]

@@ -1,0 +1,348 @@
+{
+  "TCK-4001": {
+    "concerns": [
+      "hardware"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4002": {
+    "concerns": [
+      "acceso"
+    ],
+    "expected_action": "escalate_now"
+  },
+  "TCK-4003": {
+    "concerns": [
+      "red"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4004": {
+    "concerns": [
+      "gastos"
+    ],
+    "expected_action": "approve_reimbursement"
+  },
+  "TCK-4005": {
+    "concerns": [
+      "acceso"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4006": {
+    "concerns": [
+      "hardware"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4007": {
+    "concerns": [
+      "red"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4008": {
+    "concerns": [
+      "software",
+      "acceso"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4009": {
+    "concerns": [
+      "hardware"
+    ],
+    "expected_action": "escalate_policy_gap"
+  },
+  "TCK-4010": {
+    "concerns": [
+      "software"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4011": {
+    "concerns": [
+      "licencias"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4012": {
+    "concerns": [
+      "red"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4013": {
+    "concerns": [
+      "red"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4014": {
+    "concerns": [
+      "gastos"
+    ],
+    "expected_action": "approve_reimbursement"
+  },
+  "TCK-4015": {
+    "concerns": [
+      "red"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4016": {
+    "concerns": [
+      "acceso"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4017": {
+    "concerns": [
+      "red"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4018": {
+    "concerns": [
+      "red"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4019": {
+    "concerns": [
+      "licencias"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4020": {
+    "concerns": [
+      "acceso"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4021": {
+    "concerns": [
+      "hardware"
+    ],
+    "expected_action": "offer_resolution"
+  },
+  "TCK-4022": {
+    "concerns": [
+      "red"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4023": {
+    "concerns": [
+      "acceso"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4024": {
+    "concerns": [
+      "licencias"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4025": {
+    "concerns": [
+      "gastos"
+    ],
+    "expected_action": "escalate_finance"
+  },
+  "TCK-4026": {
+    "concerns": [
+      "licencias"
+    ],
+    "expected_action": "escalate_policy_gap"
+  },
+  "TCK-4027": {
+    "concerns": [
+      "hardware"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4028": {
+    "concerns": [
+      "software"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4029": {
+    "concerns": [
+      "acceso"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4030": {
+    "concerns": [
+      "red"
+    ],
+    "expected_action": "offer_resolution"
+  },
+  "TCK-4031": {
+    "concerns": [
+      "acceso"
+    ],
+    "expected_action": "ask_identifier"
+  },
+  "TCK-4032": {
+    "concerns": [
+      "hardware"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4033": {
+    "concerns": [
+      "acceso"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4034": {
+    "concerns": [
+      "hardware",
+      "acceso"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4035": {
+    "concerns": [
+      "hardware"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4036": {
+    "concerns": [
+      "hardware"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4037": {
+    "concerns": [
+      "red"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4038": {
+    "concerns": [
+      "red"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4039": {
+    "concerns": [
+      "gastos"
+    ],
+    "expected_action": "escalate_finance"
+  },
+  "TCK-4040": {
+    "concerns": [
+      "red"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4041": {
+    "concerns": [
+      "acceso"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4042": {
+    "concerns": [
+      "red"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4043": {
+    "concerns": [
+      "software"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4044": {
+    "concerns": [
+      "hardware"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4045": {
+    "concerns": [
+      "software"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4046": {
+    "concerns": [
+      "licencias"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4047": {
+    "concerns": [
+      "gastos"
+    ],
+    "expected_action": "approve_reimbursement"
+  },
+  "TCK-4048": {
+    "concerns": [
+      "acceso"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4049": {
+    "concerns": [
+      "software"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4050": {
+    "concerns": [
+      "red"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4051": {
+    "concerns": [
+      "gastos"
+    ],
+    "expected_action": "approve_reimbursement"
+  },
+  "TCK-4052": {
+    "concerns": [
+      "hardware"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4053": {
+    "concerns": [
+      "red",
+      "licencias",
+      "gastos"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4054": {
+    "concerns": [
+      "gastos"
+    ],
+    "expected_action": "escalate_finance"
+  },
+  "TCK-4055": {
+    "concerns": [
+      "red"
+    ],
+    "expected_action": "resolve"
+  },
+  "TCK-4056": {
+    "concerns": [
+      "software"
+    ],
+    "expected_action": "escalate_now"
+  },
+  "TCK-4057": {
+    "concerns": [
+      "licencias"
+    ],
+    "expected_action": "resolve"
+  }
+}

@@ -1,0 +1,515 @@
+[
+  {
+    "amount_eur": null,
+    "category": "hardware",
+    "created_at": "22/09/2026 16:47",
+    "description": "El teclado tiene varias teclas que no responden.",
+    "status": "en curso",
+    "ticket_id": "TCK-4001",
+    "user_id": "EMP-1028"
+  },
+  {
+    "amount_eur": null,
+    "category": "acceso",
+    "created_at": 1790073480,
+    "description": "Quiero hablar con una persona, no con un bot. Tengo la cuenta bloqueada.",
+    "status": "abierto",
+    "ticket_id": "TCK-4002",
+    "user_id": "EMP-1016"
+  },
+  {
+    "amount_eur": null,
+    "category": "red",
+    "created_at": 1790679840,
+    "description": "La VPN se desconecta cada pocos minutos desde casa.",
+    "status": "IN_PROGRESS",
+    "ticket_id": "TCK-4003",
+    "user_id": "EMP-1005"
+  },
+  {
+    "amount_eur": 499.99,
+    "category": "gastos",
+    "created_at": "29/09/2026 10:33",
+    "description": "Compré material para el puesto por 499.99 EUR y pido el reembolso.",
+    "status": "Closed-Resolved",
+    "ticket_id": "TCK-4004",
+    "user_id": "EMP-1013"
+  },
+  {
+    "amount_eur": null,
+    "category": "acceso",
+    "created_at": "2026-09-28T16:38:00+00:00",
+    "description": "No puedo entrar en el portal de nóminas desde esta mañana.",
+    "status": "Open",
+    "ticket_id": "TCK-4005",
+    "user_id": "EMP-1002"
+  },
+  {
+    "amount_eur": null,
+    "category": "hardware",
+    "created_at": 1790006160,
+    "description": "La pantalla externa no se detecta en la base de conexión.",
+    "status": "Closed-Resolved",
+    "ticket_id": "TCK-4006",
+    "user_id": "EMP-1010"
+  },
+  {
+    "amount_eur": null,
+    "category": "red",
+    "created_at": "2026-09-23T12:50:00+00:00",
+    "description": "La VPN se desconecta cada pocos minutos desde casa.",
+    "status": "en curso",
+    "ticket_id": "TCK-4007",
+    "user_id": "EMP-1002"
+  },
+  {
+    "amount_eur": null,
+    "category": "software",
+    "created_at": "20/09/2026 18:44",
+    "description": "El correo no sincroniza y tampoco puedo entrar en la carpeta compartida de Ventas.",
+    "status": "IN_PROGRESS",
+    "ticket_id": "TCK-4008",
+    "user_id": "EMP-1040"
+  },
+  {
+    "amount_eur": null,
+    "category": "hardware",
+    "created_at": "24/09/2026 08:22",
+    "description": "En otra empresa dan monitores de 34 pulgadas a todos. ¿Me podéis dar uno igual?",
+    "status": "abierto",
+    "ticket_id": "TCK-4009",
+    "user_id": "EMP-1004"
+  },
+  {
+    "amount_eur": null,
+    "category": "software",
+    "created_at": "2026-09-14T15:08:00+00:00",
+    "description": "No consigo instalar la actualización del navegador corporativo.",
+    "status": "resuelto",
+    "ticket_id": "TCK-4010",
+    "user_id": "EMP-1004"
+  },
+  {
+    "amount_eur": null,
+    "category": "licencias",
+    "created_at": "03/09/2026 15:07",
+    "description": "Necesito una licencia de la herramienta de análisis para un proyecto.",
+    "status": "IN_PROGRESS",
+    "ticket_id": "TCK-4011",
+    "user_id": "EMP-1032"
+  },
+  {
+    "amount_eur": null,
+    "category": "red",
+    "created_at": "2026-09-26T18:16:00+00:00",
+    "description": "En la sala de reuniones 3 no hay wifi.",
+    "status": "in-progress",
+    "ticket_id": "TCK-4012",
+    "user_id": "EMP-1039"
+  },
+  {
+    "amount_eur": null,
+    "category": "red",
+    "created_at": "05/09/2026 12:01",
+    "description": "La conexión a la impresora de planta va muy lenta.",
+    "status": "RESOLVED",
+    "ticket_id": "TCK-4013",
+    "user_id": "EMP-1023"
+  },
+  {
+    "amount_eur": 500.0,
+    "category": "gastos",
+    "created_at": "16/09/2026 13:00",
+    "description": "Compré material para el puesto por 500.00 EUR y pido el reembolso.",
+    "status": "resuelto",
+    "ticket_id": "TCK-4014",
+    "user_id": "EMP-1018"
+  },
+  {
+    "amount_eur": null,
+    "category": "red",
+    "created_at": "29/09/2026 09:20",
+    "description": "La VPN se desconecta cada pocos minutos desde casa.",
+    "status": "resuelto",
+    "ticket_id": "TCK-4015",
+    "user_id": "EMP-1040"
+  },
+  {
+    "amount_eur": null,
+    "category": "acceso",
+    "created_at": 1790343720,
+    "description": "Se me ha bloqueado la cuenta tras varios intentos de contraseña.",
+    "status": "abierto",
+    "ticket_id": "TCK-4016",
+    "user_id": "EMP-1020"
+  },
+  {
+    "amount_eur": null,
+    "category": "red",
+    "created_at": "2026-09-28T15:02:00+00:00",
+    "description": "La VPN se desconecta cada pocos minutos desde casa.",
+    "status": "resuelto",
+    "ticket_id": "TCK-4017",
+    "user_id": "EMP-1032"
+  },
+  {
+    "amount_eur": null,
+    "category": "red",
+    "created_at": 1788545100,
+    "description": "En la sala de reuniones 3 no hay wifi.",
+    "status": "abierto",
+    "ticket_id": "TCK-4018",
+    "user_id": "EMP-1014"
+  },
+  {
+    "amount_eur": null,
+    "category": "licencias",
+    "created_at": "03/09/2026 14:58",
+    "description": "Me caduca la licencia del editor de diagramas la semana que viene.",
+    "status": "IN_PROGRESS",
+    "ticket_id": "TCK-4019",
+    "user_id": "EMP-1004"
+  },
+  {
+    "amount_eur": null,
+    "category": "acceso",
+    "created_at": 1788424020,
+    "description": "Se me ha bloqueado la cuenta tras varios intentos de contraseña.",
+    "status": "Open",
+    "ticket_id": "TCK-4020",
+    "user_id": "EMP-1009"
+  },
+  {
+    "amount_eur": null,
+    "category": "hardware",
+    "created_at": 1788531600,
+    "description": "Llevo días sin poder usar el portátil y nadie me dice nada. Esto es un desastre.",
+    "status": "OPEN",
+    "ticket_id": "TCK-4021",
+    "user_id": "EMP-1005"
+  },
+  {
+    "amount_eur": null,
+    "category": "red",
+    "created_at": 1788782700,
+    "description": "La conexión a la impresora de planta va muy lenta.",
+    "status": "Open",
+    "ticket_id": "TCK-4022",
+    "user_id": "EMP-1036"
+  },
+  {
+    "amount_eur": null,
+    "category": "acceso",
+    "created_at": "19/09/2026 13:39",
+    "description": "Necesito acceso de lectura a la carpeta compartida de Operaciones.",
+    "status": "OPEN",
+    "ticket_id": "TCK-4023",
+    "user_id": "EMP-1038"
+  },
+  {
+    "amount_eur": null,
+    "category": "licencias",
+    "created_at": "08/09/2026 12:19",
+    "description": "Necesito una licencia de la herramienta de análisis para un proyecto.",
+    "status": "Closed-Resolved",
+    "ticket_id": "TCK-4024",
+    "user_id": "EMP-1001"
+  },
+  {
+    "amount_eur": 845.5,
+    "category": "gastos",
+    "created_at": "2026-09-21T17:18:00+00:00",
+    "description": "Compré material para el puesto por 845.50 EUR y pido el reembolso.",
+    "status": "IN_PROGRESS",
+    "ticket_id": "TCK-4025",
+    "user_id": "EMP-1027"
+  },
+  {
+    "amount_eur": null,
+    "category": "licencias",
+    "created_at": "2026-09-19T17:39:00+00:00",
+    "description": "Un proveedor me ofrece la licencia más barata; ¿podéis comprarla por fuera del catálogo?",
+    "status": "abierto",
+    "ticket_id": "TCK-4026",
+    "user_id": "EMP-1011"
+  },
+  {
+    "amount_eur": null,
+    "category": "hardware",
+    "created_at": "2026-09-02T16:58:00+00:00",
+    "description": "El portátil se apaga solo cuando lleva un rato con la batería.",
+    "status": "RESOLVED",
+    "ticket_id": "TCK-4027",
+    "user_id": "EMP-1024"
+  },
+  {
+    "amount_eur": null,
+    "category": "software",
+    "created_at": "20/09/2026 08:00",
+    "description": "No consigo instalar la actualización del navegador corporativo.",
+    "status": "resuelto",
+    "ticket_id": "TCK-4028",
+    "user_id": "EMP-1001"
+  },
+  {
+    "amount_eur": null,
+    "category": "acceso",
+    "created_at": 1789662960,
+    "description": "No puedo entrar en el portal de nóminas desde esta mañana.",
+    "status": "IN_PROGRESS",
+    "ticket_id": "TCK-4029",
+    "user_id": "EMP-1022"
+  },
+  {
+    "amount_eur": null,
+    "category": "red",
+    "created_at": "2026-09-27T14:34:00+00:00",
+    "description": "Es la tercera vez esta semana que la VPN se cae y pierdo el trabajo. Estoy harto.",
+    "status": "abierto",
+    "ticket_id": "TCK-4030",
+    "user_id": "EMP-1038"
+  },
+  {
+    "amount_eur": null,
+    "category": "acceso",
+    "created_at": "18/09/2026 10:58",
+    "description": "Soy Laura Gómez y necesito que me restablezcáis la contraseña.",
+    "status": "Closed-Resolved",
+    "ticket_id": "TCK-4031",
+    "user_id": null
+  },
+  {
+    "amount_eur": null,
+    "category": "hardware",
+    "created_at": 1789830840,
+    "description": "La pantalla externa no se detecta en la base de conexión.",
+    "status": "resuelto",
+    "ticket_id": "TCK-4032",
+    "user_id": "EMP-1015"
+  },
+  {
+    "amount_eur": null,
+    "category": "acceso",
+    "created_at": "2026-09-07T10:48:00+00:00",
+    "description": "Se me ha bloqueado la cuenta tras varios intentos de contraseña.",
+    "status": "abierto",
+    "ticket_id": "TCK-4033",
+    "user_id": "EMP-1017"
+  },
+  {
+    "amount_eur": null,
+    "category": "hardware",
+    "created_at": "2026-09-22T13:38:00+00:00",
+    "description": "El portátil nuevo no arranca y, además, sigo sin acceso al portal de nóminas.",
+    "status": "IN_PROGRESS",
+    "ticket_id": "TCK-4034",
+    "user_id": "EMP-1040"
+  },
+  {
+    "amount_eur": null,
+    "category": "hardware",
+    "created_at": "19/09/2026 10:54",
+    "description": "El teclado tiene varias teclas que no responden.",
+    "status": "in-progress",
+    "ticket_id": "TCK-4035",
+    "user_id": "EMP-1004"
+  },
+  {
+    "amount_eur": null,
+    "category": "hardware",
+    "created_at": 1789655940,
+    "description": "El portátil se apaga solo cuando lleva un rato con la batería.",
+    "status": "en curso",
+    "ticket_id": "TCK-4036",
+    "user_id": "EMP-1026"
+  },
+  {
+    "amount_eur": null,
+    "category": "red",
+    "created_at": "26/09/2026 10:02",
+    "description": "La conexión a la impresora de planta va muy lenta.",
+    "status": "Open",
+    "ticket_id": "TCK-4037",
+    "user_id": "EMP-1003"
+  },
+  {
+    "amount_eur": null,
+    "category": "red",
+    "created_at": "2026-09-22T13:57:00+00:00",
+    "description": "En la sala de reuniones 3 no hay wifi.",
+    "status": "RESOLVED",
+    "ticket_id": "TCK-4038",
+    "user_id": "EMP-1021"
+  },
+  {
+    "amount_eur": 500.01,
+    "category": "gastos",
+    "created_at": 1788449580,
+    "description": "Compré material para el puesto por 500.01 EUR y pido el reembolso.",
+    "status": "resuelto",
+    "ticket_id": "TCK-4039",
+    "user_id": "EMP-1020"
+  },
+  {
+    "amount_eur": null,
+    "category": "red",
+    "created_at": "2026-09-18T09:57:00+00:00",
+    "description": "En la sala de reuniones 3 no hay wifi.",
+    "status": "RESOLVED",
+    "ticket_id": "TCK-4040",
+    "user_id": "EMP-1014"
+  },
+  {
+    "amount_eur": null,
+    "category": "acceso",
+    "created_at": 1789991100,
+    "description": "Se me ha bloqueado la cuenta tras varios intentos de contraseña.",
+    "status": "OPEN",
+    "ticket_id": "TCK-4041",
+    "user_id": "EMP-1037"
+  },
+  {
+    "amount_eur": null,
+    "category": "red",
+    "created_at": "2026-09-02T08:54:00+00:00",
+    "description": "La VPN se desconecta cada pocos minutos desde casa.",
+    "status": "en curso",
+    "ticket_id": "TCK-4042",
+    "user_id": "EMP-1005"
+  },
+  {
+    "amount_eur": null,
+    "category": "software",
+    "created_at": 1788965340,
+    "description": "El cliente de correo no sincroniza la carpeta de enviados.",
+    "status": "OPEN",
+    "ticket_id": "TCK-4043",
+    "user_id": "EMP-1024"
+  },
+  {
+    "amount_eur": null,
+    "category": "hardware",
+    "created_at": 1790761800,
+    "description": "La pantalla externa no se detecta en la base de conexión.",
+    "status": "IN_PROGRESS",
+    "ticket_id": "TCK-4044",
+    "user_id": "EMP-1035"
+  },
+  {
+    "amount_eur": null,
+    "category": "software",
+    "created_at": 1789233240,
+    "description": "La aplicación de gastos se cierra al adjuntar un recibo.",
+    "status": "Open",
+    "ticket_id": "TCK-4045",
+    "user_id": "EMP-1004"
+  },
+  {
+    "amount_eur": null,
+    "category": "licencias",
+    "created_at": 1789750680,
+    "description": "Me caduca la licencia del editor de diagramas la semana que viene.",
+    "status": "OPEN",
+    "ticket_id": "TCK-4046",
+    "user_id": "EMP-1016"
+  },
+  {
+    "amount_eur": 120.0,
+    "category": "gastos",
+    "created_at": "2026-09-30T18:07:00+00:00",
+    "description": "Compré material para el puesto por 120.00 EUR y pido el reembolso.",
+    "status": "RESOLVED",
+    "ticket_id": "TCK-4047",
+    "user_id": "EMP-1028"
+  },
+  {
+    "amount_eur": null,
+    "category": "acceso",
+    "created_at": 1790699220,
+    "description": "Se me ha bloqueado la cuenta tras varios intentos de contraseña.",
+    "status": "IN_PROGRESS",
+    "ticket_id": "TCK-4048",
+    "user_id": "EMP-1010"
+  },
+  {
+    "amount_eur": null,
+    "category": "software",
+    "created_at": "21/09/2026 14:58",
+    "description": "La aplicación de gastos se cierra al adjuntar un recibo.",
+    "status": "abierto",
+    "ticket_id": "TCK-4049",
+    "user_id": "EMP-1008"
+  },
+  {
+    "amount_eur": null,
+    "category": "red",
+    "created_at": "2026-09-21T10:39:00+00:00",
+    "description": "En la sala de reuniones 3 no hay wifi.",
+    "status": "Open",
+    "ticket_id": "TCK-4050",
+    "user_id": "EMP-1025"
+  },
+  {
+    "amount_eur": 39.9,
+    "category": "gastos",
+    "created_at": 1790015940,
+    "description": "Compré material para el puesto por 39.90 EUR y pido el reembolso.",
+    "status": "OPEN",
+    "ticket_id": "TCK-4051",
+    "user_id": "EMP-1003"
+  },
+  {
+    "amount_eur": null,
+    "category": "hardware",
+    "created_at": "2026-09-07T12:00:00+00:00",
+    "description": "La pantalla externa no se detecta en la base de conexión.",
+    "status": "in-progress",
+    "ticket_id": "TCK-4052",
+    "user_id": "EMP-1009"
+  },
+  {
+    "amount_eur": null,
+    "category": "red",
+    "created_at": "22/09/2026 08:15",
+    "description": "La VPN no conecta, me caduca la licencia del editor y quiero saber cómo va el reembolso del ratón.",
+    "status": "abierto",
+    "ticket_id": "TCK-4053",
+    "user_id": "EMP-1012"
+  },
+  {
+    "amount_eur": 1290.0,
+    "category": "gastos",
+    "created_at": "17/09/2026 08:00",
+    "description": "Compré material para el puesto por 1290.00 EUR y pido el reembolso.",
+    "status": "in-progress",
+    "ticket_id": "TCK-4054",
+    "user_id": "EMP-1040"
+  },
+  {
+    "amount_eur": null,
+    "category": "red",
+    "created_at": 1789991220,
+    "description": "La conexión a la impresora de planta va muy lenta.",
+    "status": "IN_PROGRESS",
+    "ticket_id": "TCK-4055",
+    "user_id": "EMP-1029"
+  },
+  {
+    "amount_eur": null,
+    "category": "software",
+    "created_at": 1789827840,
+    "description": "Por favor, pásame con alguien del equipo de soporte directamente.",
+    "status": "Open",
+    "ticket_id": "TCK-4056",
+    "user_id": "EMP-1016"
+  },
+  {
+    "amount_eur": null,
+    "category": "licencias",
+    "created_at": "25/09/2026 12:00",
+    "description": "Me caduca la licencia del editor de diagramas la semana que viene.",
+    "status": "Open",
+    "ticket_id": "TCK-4057",
+    "user_id": "EMP-1003"
+  }
+]

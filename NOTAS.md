@@ -10,7 +10,7 @@ Scratchpad de sesión y notas de producto no evaluables. Las predicciones y resp
 - [x] `CONCEPTOS.md` con las 240 filas (solo identificadores y módulo, sin texto de la guía)
 - [x] Test «una vez por viñeta» y test de perímetro
 - [x] Arnés: `options.py`, `recorder.py`, `offline.py`, `credentials.py`, con sus tests sin modelo (2026-10-23)
-- [ ] `datos/generar_sinteticos.py`
+- [x] `datos/generar_sinteticos.py`: usuarios, tickets (con etiquetas aparte) y artículos de KB, deterministas y con `--check`; los conjuntos de las entregas 2 y 3 se añaden con su módulo (2026-10-24)
 - [ ] Capa meta §4.1: `docs/estandares-*.md`, `.claude/rules/`, skill, comando, permisos y hooks
 - [ ] `ANTHROPIC_API_KEY` disponible (necesaria a partir de la entrega 1)
 
