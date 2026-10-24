@@ -30,7 +30,7 @@ Las apps se ordenan por complejidad creciente, pero se entregan por bloques de d
 
 El avance de cada entrega se registra en `NOTAS.md`.
 
-**Introducidas: 34/240**
+**Introducidas: 43/240**
 
 | Viñeta | Destino | Estado |
 | :--- | :--- | :---: |
@@ -56,18 +56,18 @@ El avance de cada entrega se registra en `NOTAS.md`.
 | TS 1.3-S2 | app3/05_procedencia | ☐ |
 | TS 1.3-S3 | app3/02_paralelo_y_descomposicion | ☐ |
 | TS 1.3-S4 | app3/01_coordinador | ☐ |
-| TS 1.4-K1 | app2/01_prompt_vs_enforcement | ☐ |
-| TS 1.4-K2 | app2/01_prompt_vs_enforcement | ☐ |
+| TS 1.4-K1 | app2/01_prompt_vs_enforcement | ☑ |
+| TS 1.4-K2 | app2/01_prompt_vs_enforcement | ☑ |
 | TS 1.4-K3 | app2/05_multi_concern_y_handoff | ☐ |
-| TS 1.4-S1 | app2/01_prompt_vs_enforcement | ☐ |
+| TS 1.4-S1 | app2/01_prompt_vs_enforcement | ☑ |
 | TS 1.4-S2 | app2/05_multi_concern_y_handoff | ☐ |
 | TS 1.4-S3 | app2/05_multi_concern_y_handoff | ☐ |
-| TS 1.5-K1 | app2/02_hooks_pre_post | ☐ |
-| TS 1.5-K2 | app2/02_hooks_pre_post | ☐ |
-| TS 1.5-K3 | app2/02_hooks_pre_post | ☐ |
-| TS 1.5-S1 | app2/02_hooks_pre_post | ☐ |
-| TS 1.5-S2 | app2/02_hooks_pre_post | ☐ |
-| TS 1.5-S3 | app2/02_hooks_pre_post | ☐ |
+| TS 1.5-K1 | app2/02_hooks_pre_post | ☑ |
+| TS 1.5-K2 | app2/02_hooks_pre_post | ☑ |
+| TS 1.5-K3 | app2/02_hooks_pre_post | ☑ |
+| TS 1.5-S1 | app2/02_hooks_pre_post | ☑ |
+| TS 1.5-S2 | app2/02_hooks_pre_post | ☑ |
+| TS 1.5-S3 | app2/02_hooks_pre_post | ☑ |
 | TS 1.6-K1 | app3/02_paralelo_y_descomposicion | ☐ |
 | TS 1.6-K2 | app3/12_revision_independiente | ☐ |
 | TS 1.6-K3 | app3/02_paralelo_y_descomposicion | ☐ |

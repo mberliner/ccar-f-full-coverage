@@ -13,6 +13,8 @@ por subagente (ver TS 1.2-K1) y coste acumulado (roadmap §3, regla 7).
 QUÉ NO HACE: no guarda nada (cada ejecución es nueva, §13), no reintenta ni
 corta la ejecución (el corte por presupuesto lo hace el SDK y aquí solo se
 registra) y no maqueta la salida: una línea por evento con `print`.
+
+USA: TS 1.4-K1
 """
 
 from collections.abc import AsyncIterable

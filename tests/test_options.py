@@ -8,6 +8,7 @@ from harness.options import ISOLATION_ENV, isolated_options
 def test_isolation_by_default():
     options = isolated_options(max_budget_usd=0.05)
     assert options.setting_sources == []
+    assert options.skills == []
     assert options.env == ISOLATION_ENV
     assert options.max_budget_usd == 0.05
 

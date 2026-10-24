@@ -1,8 +1,8 @@
 """Opciones aisladas para los agentes de las apps (roadmap §3, reglas 3 y 7, y §5).
 
 PROPÓSITO: construir `ClaudeAgentOptions` con el aislamiento del proyecto por
-defecto (`setting_sources=[]`, sin memoria automática y sin conectores de
-claude.ai) y con un presupuesto obligatorio.
+defecto (`setting_sources=[]`, `skills=[]`, sin memoria automática y sin
+conectores de claude.ai) y con un presupuesto obligatorio.
 
 POR QUÉ EXISTE: sin `setting_sources`, el SDK carga lo mismo que la CLI
 (`CLAUDE.md`, `.claude/rules/`, skills, hooks y memoria), así que el agente de
@@ -30,6 +30,7 @@ ISOLATION_ENV = {
 }
 
 
+# USA: TS 1.4-K1
 def isolated_options(*, max_budget_usd: float, **kwargs: Any) -> ClaudeAgentOptions:
     """Devuelve `ClaudeAgentOptions` aisladas y con presupuesto.
 
@@ -47,4 +48,8 @@ def isolated_options(*, max_budget_usd: float, **kwargs: Any) -> ClaudeAgentOpti
     env = {**ISOLATION_ENV, **kwargs.pop("env", {})}
     # `[]` aísla; un módulo puede pedir otra cosa (app1/06 usa ["project"]).
     kwargs.setdefault("setting_sources", [])
+    # `skills=None` no apaga las skills: la CLI sigue listando las suyas y las
+    # de los plugins (comprobado en la primera ejecución con modelo, SDK
+    # 0.2.173). `[]` las oculta todas; un módulo que enseñe skills puede pedirlas.
+    kwargs.setdefault("skills", [])
     return ClaudeAgentOptions(max_budget_usd=max_budget_usd, env=env, **kwargs)
