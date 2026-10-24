@@ -17,7 +17,7 @@ Scratchpad de sesión y notas de producto no evaluables. Las predicciones y resp
   - La skill corre en fork, con argumento y sin él.
   - `datos/sinteticos/` queda protegido: la regla `deny` actúa en `Edit` y el hook en la shell.
   - Regla por ruta: `apps-comentarios.md` no se carga al leer un `.md` y sí al leer un `.py` de `app*/`, con línea `Loaded` y contenido en contexto; `tests.md` se carga al leer un test fuera de `app*/` (glob por tipo de archivo).
-- [ ] `ANTHROPIC_API_KEY` disponible (necesaria a partir de la entrega 1)
+- [x] `ANTHROPIC_API_KEY` disponible desde `.env` (plantilla en `.env.example`); `credentials.py` la detecta. La validez de la clave y `apiKeySource` se confirman en la primera ejecución con modelo (2026-10-24)
 
 ## Sesiones
 
