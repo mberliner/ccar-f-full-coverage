@@ -27,7 +27,7 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
 
 **Entregas:**
 
-- [ ] Entrega 1 · D1 (`S-4`)
+- [ ] Entrega 1 · D1 (`S-4`): diseño aprobado en `docs/diseno-entrega-1.md` (2026-10-24)
 - [ ] Entrega 2 · D2 y D3 (`S-3`)
 - [ ] Entrega 3 · D4 y D5 (`S-2`)
 - [ ] `S-1` · repaso sin código nuevo
