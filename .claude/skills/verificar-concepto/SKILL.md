@@ -19,6 +19,12 @@ allowed-tools: Read, Grep, Glob
 
 Verifica la viñeta `$ARGUMENTS` en este repositorio. No modifiques ningún archivo.
 
+Si no se indicó ninguna viñeta, o lo indicado no tiene la forma `TS x.y-Kn` o `TS x.y-Sn`, no busques nada. Devuelve solo esta línea:
+
+```
+Falta la viñeta. Uso: /verificar-concepto <TS x.y-Kn|Sn>
+```
+
 1. En `CONCEPTOS.md`, localiza la fila de la viñeta y anota su destino (`appN/NN_concepto` o `d3`) y su estado (☐/☑).
 2. Busca con Grep el marcador `INTRODUCE:` que contenga el identificador exacto, excluyendo `CONCEPTOS.md`, `NOTAS.md`, `FALLOS.md` y `tests/`. Debe haber como mucho uno, y estar en el destino:
    - si el destino es un módulo, en su archivo;

@@ -12,7 +12,7 @@ Scratchpad de sesión y notas de producto no evaluables. Las predicciones y resp
 - [x] Arnés: `options.py`, `recorder.py`, `offline.py`, `credentials.py`, con sus tests sin modelo (2026-10-23)
 - [x] `datos/generar_sinteticos.py`: usuarios, tickets (con etiquetas aparte) y artículos de KB, deterministas y con `--check`; los conjuntos de las entregas 2 y 3 se añaden con su módulo (2026-10-24)
 - [x] Capa meta §4.1: `docs/estandares-*.md`, `.claude/rules/`, skill, comando, permisos y hooks; 27 viñetas de D3 con su `INTRODUCE` (2026-10-24)
-- [ ] Verificación §11.5 de la capa meta en una sesión nueva (`/memory`, regla por ruta, skill con fork, hook que rechaza `datos/sinteticos/`)
+- [ ] Verificación §11.5 de la capa meta en una sesión nueva: `/memory` ☑ y skill con fork ☑ (2026-10-24); faltan la regla por ruta y que el hook rechace un `Edit` en `datos/sinteticos/` (por `Bash` ya bloqueó)
 - [ ] `ANTHROPIC_API_KEY` disponible (necesaria a partir de la entrega 1)
 
 ## Sesiones
@@ -35,6 +35,7 @@ Scratchpad de sesión y notas de producto no evaluables. Las predicciones y resp
   - El filtro de shell de `proteger_rutas.py` es heurístico. Bloquea cualquier comando que nombre `datos/sinteticos` o `.env` (salvo un `git` aislado) y no ve un script que escriba por dentro; esa vía la cubre `generar_sinteticos.py --check`.
   - Falso positivo conocido: un commit cuyo mensaje nombra esas rutas, o que llega por heredoc (`<<`), se bloquea. Se escribe el mensaje en un archivo y se usa `git commit -F <archivo>`.
   - En Windows, los scripts de hook necesitan forzar UTF-8 en stdin y stderr, o los motivos con tildes llegan corruptos.
+- **`argument-hint` no obliga a pasar el argumento** (Claude Code 2.1.310). La guía lo presenta como el mecanismo para pedir el parámetro; en el producto, el hint solo se muestra en el autocompletado y la skill se lanza igual sin argumento. Por eso `verificar-concepto` comprueba `$ARGUMENTS` y se detiene si llega vacío. En el examen vale la lectura de la guía. Comprobado el 2026-10-24: el fork funciona y a la conversación principal solo llegó el resultado.
 - **Viñetas de D3 pendientes para `d3_claude_code/README.md`** (entrega 2): 3.1-S1, 3.1-S4, 3.2-K4, 3.2-S5 y las 9 de 3.5. Las otras 27 ya tienen su marcador en `CLAUDE.md`, `docs/` y `.claude/`.
 - **La CLI hereda `os.environ` completo** y encima aplica `options.env`: una variable vacía llega como definida. `credentials.py` las quita.
 
