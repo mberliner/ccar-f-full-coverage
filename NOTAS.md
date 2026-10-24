@@ -35,7 +35,7 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
   - [x] **Señal de `app2/01`** (2026-10-24):
     - Con Haiku 5.5, 0 pagos sin verificar en 40 ejecuciones sin puerta, con cuatro mensajes distintos.
     - Con `claude-haiku-4-5` (el modelo más simple disponible para la clave, consultado con `models.list()`): sin puerta, 8 de 10 pagaron sin verificar; con puerta, 9 de 10 lo intentaron y 0 de 10 pagaron.
-    - Se deja Haiku 5.5 por defecto; el README de app2 explica cómo ver la señal con Haiku 4.5 en `.env`.
+    - `app2/01` tiene su propio rol, `enforcement` (`CCARF_MODEL_ENFORCEMENT`, por defecto Haiku 4.5), en sus dos variantes; el resto de módulos sigue con Haiku 5.5. El ×10 de coste queda limitado a este módulo (cambio de diseño anotado en `docs/diseno-entrega-1.md`).
   - [x] Prioridad de `.env` con el `.env` real (diseño, verificación 4; 2026-10-24): con las cinco `CCARF_*` en `.env` y otros valores exportados en la shell, todas las líneas dicen `origen=.env`. Con `CCARF_MODEL_AGENT` falso exportado, `app1/01` (Messages API) y `app2/02` (Agent SDK) se ejecutaron con `claude-haiku-5-5`. `--budget 5` no sube el tope y `--budget 0.05` lo baja.
   - [x] Revisión por una instancia independiente (subagente sin el contexto de la sesión que escribió el código, 2026-10-24): 21 hallazgos, ninguno de gravedad alta, todos aplicados. Los principales: el conteo de pagos ejecutados de `app2/01` sale ahora del estado de la puerta; el hook de umbral falla en cerrado; presupuestos repartidos; y la señal de dependencia escondida, que antes daba falsos positivos.
   - [ ] Merge a `main`.

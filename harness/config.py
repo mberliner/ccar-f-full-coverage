@@ -27,8 +27,17 @@ MODEL_VARS = {
     "agent": "CCARF_MODEL_AGENT",  # agente único y repeticiones (app1, app2)
     "coordinator": "CCARF_MODEL_COORDINATOR",  # coordinador de app3
     "subagent": "CCARF_MODEL_SUBAGENT",  # subagentes de app3
+    # Solo app2/01, en sus dos variantes. Su lección es una tasa de fallo del
+    # prompt, y Haiku 5.5 no falló en 40 ejecuciones; Haiku 4.5 sí (8 de 10).
+    # Cuesta unas diez veces más, pero solo en este módulo.
+    "enforcement": "CCARF_MODEL_ENFORCEMENT",
 }
-MODEL_DEFAULTS = {"agent": "claude-haiku-5-5", "coordinator": "claude-sonnet-5-5", "subagent": "claude-haiku-5-5"}
+MODEL_DEFAULTS = {
+    "agent": "claude-haiku-5-5",
+    "coordinator": "claude-sonnet-5-5",
+    "subagent": "claude-haiku-5-5",
+    "enforcement": "claude-haiku-4-5",
+}
 
 BUDGET_VARS = {"agent": "CCARF_BUDGET_AGENT", "multiagent": "CCARF_BUDGET_MULTIAGENT"}
 BUDGET_DEFAULTS = {"agent": 0.25, "multiagent": 1.00}

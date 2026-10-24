@@ -2,7 +2,15 @@
 
 import pytest
 
-from harness.config import BUDGET_DEFAULTS, MODEL_DEFAULTS, describe, resolve_budget, resolve_model
+from harness.config import (
+    BUDGET_DEFAULTS,
+    BUDGET_VARS,
+    MODEL_DEFAULTS,
+    MODEL_VARS,
+    describe,
+    resolve_budget,
+    resolve_model,
+)
 
 
 def write_env(tmp_path, text):
@@ -13,8 +21,7 @@ def write_env(tmp_path, text):
 @pytest.fixture(autouse=True)
 def clean_env(monkeypatch):
     # Ningún test depende de lo que haya exportado quien ejecuta pytest.
-    for name in ["CCARF_MODEL_AGENT", "CCARF_MODEL_COORDINATOR", "CCARF_MODEL_SUBAGENT",
-                 "CCARF_BUDGET_AGENT", "CCARF_BUDGET_MULTIAGENT"]:
+    for name in [*MODEL_VARS.values(), *BUDGET_VARS.values()]:
         monkeypatch.delenv(name, raising=False)
 
 
@@ -31,6 +38,15 @@ def test_dotenv_wins_over_process_env(tmp_path, monkeypatch):
     monkeypatch.setenv("CCARF_BUDGET_AGENT", "3")
     assert resolve_model("agent", root=tmp_path) == ("modelo-del-repo", ".env")
     assert resolve_budget("agent", root=tmp_path) == (0.10, ".env")
+
+
+def test_enforcement_role_is_independent_of_agent(tmp_path):
+    # app2/01 necesita un modelo que falle más sin cambiar el del resto de módulos.
+    write_env(tmp_path, "CCARF_MODEL_AGENT=claude-haiku-5-5\n")
+    assert resolve_model("enforcement", root=tmp_path) == ("claude-haiku-4-5", "defecto")
+    write_env(tmp_path, "CCARF_MODEL_ENFORCEMENT=otro\n")
+    assert resolve_model("enforcement", root=tmp_path) == ("otro", ".env")
+    assert resolve_model("agent", root=tmp_path) == ("claude-haiku-5-5", "defecto")
 
 
 def test_process_env_used_when_dotenv_lacks_key(tmp_path, monkeypatch):

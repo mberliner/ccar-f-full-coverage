@@ -176,7 +176,8 @@ async def main_async() -> int:
     parser = build_parser(__doc__.splitlines()[0], anti_variants=["prompt"])
     args = parser.parse_args()
     print(credentials.describe())
-    model = report_model("agent")
+    # Mismo modelo en las dos variantes: si no, el 0 con puerta sería mérito del modelo.
+    model = report_model("enforcement")
     budget = report_budget(args.budget, "agent")
 
     results = []
