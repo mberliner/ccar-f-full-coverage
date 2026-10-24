@@ -30,16 +30,16 @@ Las apps se ordenan por complejidad creciente, pero se entregan por bloques de d
 
 El avance de cada entrega se registra en `NOTAS.md`.
 
-**Introducidas: 27/240**
+**Introducidas: 34/240**
 
 | Viñeta | Destino | Estado |
 | :--- | :--- | :---: |
-| TS 1.1-K1 | app1/01_bucle_manual | ☐ |
-| TS 1.1-K2 | app1/01_bucle_manual | ☐ |
-| TS 1.1-K3 | app1/01_bucle_manual | ☐ |
-| TS 1.1-S1 | app1/01_bucle_manual | ☐ |
-| TS 1.1-S2 | app1/01_bucle_manual | ☐ |
-| TS 1.1-S3 | app1/01_bucle_manual | ☐ |
+| TS 1.1-K1 | app1/01_bucle_manual | ☑ |
+| TS 1.1-K2 | app1/01_bucle_manual | ☑ |
+| TS 1.1-K3 | app1/01_bucle_manual | ☑ |
+| TS 1.1-S1 | app1/01_bucle_manual | ☑ |
+| TS 1.1-S2 | app1/01_bucle_manual | ☑ |
+| TS 1.1-S3 | app1/01_bucle_manual | ☑ |
 | TS 1.2-K1 | app3/01_coordinador | ☐ |
 | TS 1.2-K2 | app3/01_coordinador | ☐ |
 | TS 1.2-K3 | app3/01_coordinador | ☐ |
@@ -224,7 +224,7 @@ El avance de cada entrega se registra en `NOTAS.md`.
 | TS 5.1-K1 | app2/05_multi_concern_y_handoff | ☐ |
 | TS 5.1-K2 | app3/05_procedencia | ☐ |
 | TS 5.1-K3 | app1/07_recorte_de_contexto | ☐ |
-| TS 5.1-K4 | app1/01_bucle_manual | ☐ |
+| TS 5.1-K4 | app1/01_bucle_manual | ☑ |
 | TS 5.1-S1 | app2/05_multi_concern_y_handoff | ☐ |
 | TS 5.1-S2 | app2/05_multi_concern_y_handoff | ☐ |
 | TS 5.1-S3 | app1/07_recorte_de_contexto | ☐ |
