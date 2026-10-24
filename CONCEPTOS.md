@@ -30,7 +30,7 @@ Las apps se ordenan por complejidad creciente, pero se entregan por bloques de d
 
 El avance de cada entrega se registra en `NOTAS.md`.
 
-**Introducidas: 49/240**
+**Introducidas: 58/240**
 
 | Viñeta | Destino | Estado |
 | :--- | :--- | :---: |
@@ -51,7 +51,7 @@ El avance de cada entrega se registra en `NOTAS.md`.
 | TS 1.3-K1 | app3/01_coordinador | ☐ |
 | TS 1.3-K2 | app3/01_coordinador | ☐ |
 | TS 1.3-K3 | app3/01_coordinador | ☐ |
-| TS 1.3-K4 | app2/06_sesiones | ☐ |
+| TS 1.3-K4 | app2/06_sesiones | ☑ |
 | TS 1.3-S1 | app3/01_coordinador | ☐ |
 | TS 1.3-S2 | app3/05_procedencia | ☐ |
 | TS 1.3-S3 | app3/02_paralelo_y_descomposicion | ☐ |
@@ -74,14 +74,14 @@ El avance de cada entrega se registra en `NOTAS.md`.
 | TS 1.6-S1 | app3/02_paralelo_y_descomposicion | ☐ |
 | TS 1.6-S2 | app3/12_revision_independiente | ☐ |
 | TS 1.6-S3 | app3/02_paralelo_y_descomposicion | ☐ |
-| TS 1.7-K1 | app2/06_sesiones | ☐ |
-| TS 1.7-K2 | app2/06_sesiones | ☐ |
-| TS 1.7-K3 | app2/06_sesiones | ☐ |
-| TS 1.7-K4 | app2/06_sesiones | ☐ |
-| TS 1.7-S1 | app2/06_sesiones | ☐ |
-| TS 1.7-S2 | app2/06_sesiones | ☐ |
-| TS 1.7-S3 | app2/06_sesiones | ☐ |
-| TS 1.7-S4 | app2/06_sesiones | ☐ |
+| TS 1.7-K1 | app2/06_sesiones | ☑ |
+| TS 1.7-K2 | app2/06_sesiones | ☑ |
+| TS 1.7-K3 | app2/06_sesiones | ☑ |
+| TS 1.7-K4 | app2/06_sesiones | ☑ |
+| TS 1.7-S1 | app2/06_sesiones | ☑ |
+| TS 1.7-S2 | app2/06_sesiones | ☑ |
+| TS 1.7-S3 | app2/06_sesiones | ☑ |
+| TS 1.7-S4 | app2/06_sesiones | ☑ |
 | TS 2.1-K1 | app1/03_servidor_mcp | ☐ |
 | TS 2.1-K2 | app1/03_servidor_mcp | ☐ |
 | TS 2.1-K3 | app1/03_servidor_mcp | ☐ |
