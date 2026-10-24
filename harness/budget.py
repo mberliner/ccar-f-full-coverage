@@ -20,6 +20,8 @@ from typing import Any
 # USD por millón de tokens: (entrada, salida).
 PRICES = {
     "claude-haiku-5-5": (0.10, 0.50),
+    # Modelo anterior, para variantes anti que necesitan un modelo que falle más (app2/01).
+    "claude-haiku-4-5": (1.00, 5.00),
     "claude-sonnet-5-5": (2.00, 10.00),
 }
 # Haiku 5.5 tiene un tramo más caro para peticiones de más de 100K tokens de entrada.

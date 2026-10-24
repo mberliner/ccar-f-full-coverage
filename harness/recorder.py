@@ -24,6 +24,7 @@ from typing import Any
 from claude_agent_sdk import (
     AssistantMessage,
     Message,
+    ResultError,
     ResultMessage,
     SystemMessage,
     TextBlock,
@@ -198,6 +199,14 @@ class Recorder:
 async def record(stream: AsyncIterable[Message], *, echo: bool = True) -> RunRecord:
     """Consume `query(...)` o `client.receive_response()` y devuelve el registro."""
     recorder = Recorder(echo)
-    async for message in stream:
-        recorder.feed(message)
+    try:
+        async for message in stream:
+            recorder.feed(message)
+    except ResultError:
+        # Tras un resultado de error (p. ej. el corte de max_budget_usd), el SDK
+        # emite el ResultMessage y después lanza ResultError. Si ya se registró
+        # ese resultado, la ejecución termina con su registro; un error sin
+        # resultado previo se propaga.
+        if recorder.record.num_turns is None:
+            raise
     return recorder.record

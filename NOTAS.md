@@ -32,7 +32,10 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
   - [x] 8 módulos con `INTRODUCE` y ☑: 49 viñetas, 76/240. `pytest` en verde y `generar_sinteticos.py --check` limpio.
   - [x] §11.1 observado: credencial, versiones, `[modelo]` y `[presupuesto]` con su origen.
   - [x] Señales con modelo: `app2/02` (500.01 denegado y escalado; fecha y estado normalizados), `app2/05` (sin case facts se pierde la fecha de compra), `app2/06` (sin aviso responde con datos viejos), `app3/01` (`estrecha` pierde la wifi; `simple` solo invoca `kb_analyst`), `app3/02` (3 `Agent` en `r1`, ×1,66 de latencia).
-  - [ ] **Señal de `app2/01` no observada:** con Haiku 5.5, 0 pagos sin verificar en 40 ejecuciones sin puerta, con cuatro mensajes distintos (directo, ingeniería social, instrucción de eficiencia en competencia y lote de cuatro). El módulo imprime la cota del 95 % (< 3/n). Decisión pendiente: aceptar la lectura estadística o fijar un modelo más antiguo para la variante anti en `.env`.
+  - [x] **Señal de `app2/01`** (2026-10-24):
+    - Con Haiku 5.5, 0 pagos sin verificar en 40 ejecuciones sin puerta, con cuatro mensajes distintos.
+    - Con `claude-haiku-4-5` (el modelo más simple disponible para la clave, consultado con `models.list()`): sin puerta, 8 de 10 pagaron sin verificar; con puerta, 9 de 10 lo intentaron y 0 de 10 pagaron.
+    - Se deja Haiku 5.5 por defecto; el README de app2 explica cómo ver la señal con Haiku 4.5 en `.env`.
   - [x] Prioridad de `.env` con el `.env` real (diseño, verificación 4; 2026-10-24): con las cinco `CCARF_*` en `.env` y otros valores exportados en la shell, todas las líneas dicen `origen=.env`. Con `CCARF_MODEL_AGENT` falso exportado, `app1/01` (Messages API) y `app2/02` (Agent SDK) se ejecutaron con `claude-haiku-5-5`. `--budget 5` no sube el tope y `--budget 0.05` lo baja.
   - [x] Revisión por una instancia independiente (subagente sin el contexto de la sesión que escribió el código, 2026-10-24): 21 hallazgos, ninguno de gravedad alta, todos aplicados. Los principales: el conteo de pagos ejecutados de `app2/01` sale ahora del estado de la puerta; el hook de umbral falla en cerrado; presupuestos repartidos; y la señal de dependencia escondida, que antes daba falsos positivos.
   - [ ] Merge a `main`.
@@ -59,7 +62,8 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
 - **`tools=[]` quita también la tool `Agent`** (2026-10-24): un coordinador con `tools=[]` no puede delegar; hace falta `tools=["Agent"]`. → roadmap (§5 o §8, `app3`).
 - **`disallowed_tools` con una tool MCP no la quita** (CLI 2.1.309, 2026-10-24): sigue en las tools de `init`, el modelo la llama y la llamada se deniega. Se comporta como regla *deny*, no como eliminación (la documentación dice que la quita). Para el examen vale la documentación. Anotado en el README de app2 (módulo 03).
 - **La denegación de un subagente no aparece en `permission_denials`** del `ResultMessage` del padre (2026-10-24, `app2/03`): el recorder ve la llamada del subagente con su error, pero `denegaciones=0`.
-- **Haiku 5.5 cumple la regla del prompt** de verificar antes de pagar en 40 de 40 ejecuciones sin puerta (2026-10-24, `app2/01`). Ver la entrega 1 arriba.
+- **Haiku 5.5 cumple la regla del prompt** de verificar antes de pagar en 40 de 40 ejecuciones sin puerta; Haiku 4.5 se la salta en 8 de 10 (2026-10-24, `app2/01`). Para medir una tasa de fallo del prompt hace falta un modelo que falle: con un modelo nuevo, la lección se ve con un modelo anterior. → roadmap (§13, ejecución obligatoria de `app2/01`).
+- **El corte de `max_budget_usd` lanza `ResultError`** después del `ResultMessage` (SDK 0.2.173, 2026-10-24): sin capturarlo, se perdían las repeticiones siguientes. `harness/recorder.record` lo captura si el resultado ya se registró. → roadmap (§5, `recorder.py`).
 - **Cobertura 240/240:** `test_full_coverage` está en `xfail(strict=True)`; cuando pase, pytest lo marcará como XPASS fallido y hay que quitar la marca.
 - **Conectores de claude.ai** (`ENABLE_CLAUDEAI_MCP_SERVERS=false` también en la sesión de construcción): ✓ roadmap 2026-10-24 §3, regla 3.
 - **Skills sincronizadas de claude.ai** (`docx`, `pdf`, `deep-research`…): no se encontró ajuste para desactivarlas por proyecto; no afectan a las apps (`setting_sources=[]`).

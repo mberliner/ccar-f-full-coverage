@@ -19,6 +19,7 @@ def test_cost_of_haiku_and_sonnet():
     # 100K de entrada no supera el tramo corto de Haiku.
     assert cost_of("claude-haiku-5-5", usage(100_000, 1_000_000)) == pytest.approx(0.01 + 0.50)
     assert cost_of("claude-sonnet-5-5", usage(1_000_000, 100_000)) == pytest.approx(2.00 + 1.00)
+    assert cost_of("claude-haiku-4-5", usage(1_000_000, 100_000)) == pytest.approx(1.00 + 0.50)
 
 
 def test_cache_tokens_are_priced():

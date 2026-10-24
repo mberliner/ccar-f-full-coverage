@@ -105,3 +105,28 @@ def test_result_text_is_kept_for_downstream_extraction():
     calls = {c.id: c for c in run(messages).tool_calls}
     assert calls["t1"].result_text == '{"ticket_id": "TCK-1"}'
     assert calls["t2"].result_text == "texto plano"
+
+
+def test_budget_cut_followed_by_result_error_returns_the_record():
+    # El SDK emite el ResultMessage del corte y después lanza ResultError: la
+    # ejecución tiene que terminar con su registro, no tirar el script entero.
+    from claude_agent_sdk import ResultError
+
+    async def cut_then_raise():
+        yield result_message("error_max_budget_usd")
+        raise ResultError("Reached maximum budget", {"subtype": "error_max_budget_usd"}, exit_code=1)
+
+    rec = asyncio.run(record(cut_then_raise(), echo=False))
+    assert rec.budget_exceeded and rec.is_error
+
+
+def test_result_error_without_result_message_still_raises():
+    import pytest
+    from claude_agent_sdk import ResultError
+
+    async def raise_only():
+        raise ResultError("fallo", {"subtype": "error_during_execution"}, exit_code=1)
+        yield  # pragma: no cover
+
+    with pytest.raises(ResultError):
+        asyncio.run(record(raise_only(), echo=False))
