@@ -65,8 +65,8 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
 - **`/memory` no lista las reglas por ruta:** ✓ roadmap 2026-10-24 §11.5.
 - **Viñetas de D3 pendientes para `d3_claude_code/README.md`** (entrega 2): 3.1-S1, 3.1-S4, 3.2-K4, 3.2-S5 y las 9 de 3.5. Las otras 27 ya tienen su marcador en `CLAUDE.md`, `docs/` y `.claude/`.
 - **La CLI hereda `os.environ` completo** y encima aplica `options.env`: ✓ roadmap 2026-10-24 §5 (`credentials.py`).
-- **Los hooks se lanzan con `uv run`, no con `python`** (2026-10-24): en Linux y macOS suele no existir `python` (solo `python3`) y en Windows ocurre al revés. Si el intérprete no existe, la orden sale con 127, que no es 2: el hook de bloqueo falla en abierto y la sesión solo muestra «PreToolUse hook error» en cada llamada, sin bloquear nada. `uv run --no-sync --project "$CLAUDE_PROJECT_DIR" python …` usa el Python del `.venv` en cualquier sistema y desde cualquier `cwd`. Requisito: `uv` en el `PATH`. → roadmap (§4.3).
-- **La configuración de usuario no se apaga desde el repositorio** (2026-10-24): los hooks de `~/.claude/settings.json` se suman a los del proyecto, y `disableAllHooks` también apagaría los del proyecto. Una sesión abierta con el directorio de configuración equivocado carga los hooks, reglas, skills y agentes globales de esa persona. Por eso las sesiones de construcción se abren con el directorio de configuración del proyecto (`CLAUDE_CONFIG_DIR`), y se comprueba con `/memory` y `/hooks`. Pendiente de comprobar: si `--setting-sources project,local` deja fuera también las reglas y el `CLAUDE.md` de usuario. → roadmap (§3, regla 3, y §4.3).
+- **Los hooks se lanzan con `uv run`, no con `python`:** ✓ roadmap 2026-10-24 §4.3.
+- **La configuración de usuario no se apaga desde el repositorio:** ✓ roadmap 2026-10-24 §3 (regla 3) y §4.3. Pendiente de comprobar: si `--setting-sources project,local` deja fuera también las reglas y el `CLAUDE.md` de usuario. → roadmap (§4.3) cuando se confirme.
 
 ## Citas en prosa por convertir a `# USA`
 
