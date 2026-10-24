@@ -93,3 +93,15 @@ def test_echo_prints_one_line_per_event(capsys):
     lines = capsys.readouterr().out.splitlines()
     assert lines[0].startswith("[llamada r1 · principal] Read")
     assert lines[1].startswith("[resultado r1 · principal] Read ok")
+
+
+def test_result_text_is_kept_for_downstream_extraction():
+    blocks = [{"type": "text", "text": '{"ticket_id": "TCK-1"}'}]
+    messages = [
+        assistant([ToolUseBlock("t1", "get_ticket", {}), ToolUseBlock("t2", "Read", {})], "m1"),
+        UserMessage(content=[ToolResultBlock(tool_use_id="t1", content=blocks, is_error=False),
+                             ToolResultBlock(tool_use_id="t2", content="texto plano", is_error=False)]),
+    ]
+    calls = {c.id: c for c in run(messages).tool_calls}
+    assert calls["t1"].result_text == '{"ticket_id": "TCK-1"}'
+    assert calls["t2"].result_text == "texto plano"

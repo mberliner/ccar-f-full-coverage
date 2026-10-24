@@ -50,6 +50,7 @@ class ToolCall:
     agent: str  # MAIN o el subagent_type que la hizo
     executed: bool = False
     is_error: bool | None = None
+    result_text: str | None = None  # texto del resultado, para extraer hechos (app2/05)
 
 
 @dataclass
@@ -77,6 +78,13 @@ class RunRecord:
         for call in self.tool_calls:
             groups.setdefault(call.agent, []).append(call)
         return groups
+
+
+def result_text(content: Any) -> str | None:
+    """Texto de un `tool_result`: la cadena tal cual o los bloques de texto concatenados."""
+    if content is None or isinstance(content, str):
+        return content
+    return "".join(b.get("text", "") for b in content if isinstance(b, dict) and b.get("type") == "text")
 
 
 def short(value: Any) -> str:
@@ -156,6 +164,7 @@ class Recorder:
             return  # resultado de una carga de tool search
         call.executed = True
         call.is_error = bool(block.is_error)
+        call.result_text = result_text(block.content)
         state = "error" if call.is_error else "ok"
         self.out(f"[resultado {call.response} · {call.agent}] {call.name} {state}: {short(block.content)}")
 

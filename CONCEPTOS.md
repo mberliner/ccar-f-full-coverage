@@ -30,7 +30,7 @@ Las apps se ordenan por complejidad creciente, pero se entregan por bloques de d
 
 El avance de cada entrega se registra en `NOTAS.md`.
 
-**Introducidas: 43/240**
+**Introducidas: 49/240**
 
 | Viñeta | Destino | Estado |
 | :--- | :--- | :---: |
@@ -58,10 +58,10 @@ El avance de cada entrega se registra en `NOTAS.md`.
 | TS 1.3-S4 | app3/01_coordinador | ☐ |
 | TS 1.4-K1 | app2/01_prompt_vs_enforcement | ☑ |
 | TS 1.4-K2 | app2/01_prompt_vs_enforcement | ☑ |
-| TS 1.4-K3 | app2/05_multi_concern_y_handoff | ☐ |
+| TS 1.4-K3 | app2/05_multi_concern_y_handoff | ☑ |
 | TS 1.4-S1 | app2/01_prompt_vs_enforcement | ☑ |
-| TS 1.4-S2 | app2/05_multi_concern_y_handoff | ☐ |
-| TS 1.4-S3 | app2/05_multi_concern_y_handoff | ☐ |
+| TS 1.4-S2 | app2/05_multi_concern_y_handoff | ☑ |
+| TS 1.4-S3 | app2/05_multi_concern_y_handoff | ☑ |
 | TS 1.5-K1 | app2/02_hooks_pre_post | ☑ |
 | TS 1.5-K2 | app2/02_hooks_pre_post | ☑ |
 | TS 1.5-K3 | app2/02_hooks_pre_post | ☑ |
@@ -221,12 +221,12 @@ El avance de cada entrega se registra en `NOTAS.md`.
 | TS 4.6-S1 | app3/12_revision_independiente | ☐ |
 | TS 4.6-S2 | app3/12_revision_independiente | ☐ |
 | TS 4.6-S3 | app3/12_revision_independiente | ☐ |
-| TS 5.1-K1 | app2/05_multi_concern_y_handoff | ☐ |
+| TS 5.1-K1 | app2/05_multi_concern_y_handoff | ☑ |
 | TS 5.1-K2 | app3/05_procedencia | ☐ |
 | TS 5.1-K3 | app1/07_recorte_de_contexto | ☐ |
 | TS 5.1-K4 | app1/01_bucle_manual | ☑ |
-| TS 5.1-S1 | app2/05_multi_concern_y_handoff | ☐ |
-| TS 5.1-S2 | app2/05_multi_concern_y_handoff | ☐ |
+| TS 5.1-S1 | app2/05_multi_concern_y_handoff | ☑ |
+| TS 5.1-S2 | app2/05_multi_concern_y_handoff | ☑ |
 | TS 5.1-S3 | app1/07_recorte_de_contexto | ☐ |
 | TS 5.1-S4 | app3/05_procedencia | ☐ |
 | TS 5.1-S5 | app3/05_procedencia | ☐ |
