@@ -12,7 +12,7 @@ Scratchpad de sesión y notas de producto no evaluables. Las predicciones y resp
 - [x] Arnés: `options.py`, `recorder.py`, `offline.py`, `credentials.py`, con sus tests sin modelo (2026-10-23)
 - [x] `datos/generar_sinteticos.py`: usuarios, tickets (con etiquetas aparte) y artículos de KB, deterministas y con `--check`; los conjuntos de las entregas 2 y 3 se añaden con su módulo (2026-10-24)
 - [x] Capa meta §4.1: `docs/estandares-*.md`, `.claude/rules/`, skill, comando, permisos y hooks; 27 viñetas de D3 con su `INTRODUCE` (2026-10-24)
-- [ ] Verificación §11.5 de la capa meta en una sesión nueva: `/memory` ☑ y skill con fork ☑ (2026-10-24); faltan la regla por ruta y que el hook rechace un `Edit` en `datos/sinteticos/` (por `Bash` ya bloqueó)
+- [ ] Verificación §11.5 de la capa meta en una sesión nueva: `/memory` ☑ y skill con fork ☑ (2026-10-24); protección de `datos/sinteticos/` ☑; falta la regla por ruta
 - [ ] `ANTHROPIC_API_KEY` disponible (necesaria a partir de la entrega 1)
 
 ## Sesiones
@@ -33,6 +33,8 @@ Scratchpad de sesión y notas de producto no evaluables. Las predicciones y resp
 - **Hooks de la sesión de construcción:**
   - Claude Code toma una instantánea de los hooks al arrancar: tras cambiarlos, revisar `/hooks` o abrir una sesión nueva.
   - El filtro de shell de `proteger_rutas.py` es heurístico. Bloquea cualquier comando que nombre `datos/sinteticos` o `.env` (salvo un `git` aislado) y no ve un script que escriba por dentro; esa vía la cubre `generar_sinteticos.py --check`.
+  - **Dos barreras para `Edit`/`Write`:** la regla `deny` de `settings.json` rechaza el `Edit` antes que el hook («directory that is denied by your permission settings»), así que el hook queda de respaldo; por shell, el hook es la única barrera y sí se vio bloquear (2026-10-24).
+  - **Una instrucción en contexto puede tapar la prueba:** al pedir «edita `datos/sinteticos/tickets.json`», la sesión leyó los estándares y fue directa al generador sin intentar el `Edit`, así que el hook no llegó a ejecutarse. Para probar una barrera hay que forzar el intento. En el examen, la instrucción no garantiza el cumplimiento; solo la puerta programática lo hace.
   - Falso positivo conocido: un commit cuyo mensaje nombra esas rutas, o que llega por heredoc (`<<`), se bloquea. Se escribe el mensaje en un archivo y se usa `git commit -F <archivo>`.
   - En Windows, los scripts de hook necesitan forzar UTF-8 en stdin y stderr, o los motivos con tildes llegan corruptos.
 - **`argument-hint` no obliga a pasar el argumento** (Claude Code 2.1.310). La guía lo presenta como el mecanismo para pedir el parámetro; en el producto, el hint solo se muestra en el autocompletado y la skill se lanza igual sin argumento. Por eso `verificar-concepto` comprueba `$ARGUMENTS` y se detiene si llega vacío. En el examen vale la lectura de la guía. Comprobado el 2026-10-24: el fork funciona y a la conversación principal solo llegó el resultado.
