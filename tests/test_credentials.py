@@ -14,6 +14,11 @@ FAKE_KEY = "sk-ant-sintetica-0000"
 def clean_env(monkeypatch):
     monkeypatch.delenv(API_KEY, raising=False)
     monkeypatch.delenv(OAUTH_TOKEN, raising=False)
+    yield
+    # detect() copia la clave de .env a os.environ sin pasar por monkeypatch:
+    # se quita aquí para que la clave falsa no siga en el resto de la sesión.
+    # Si había una clave real antes de pytest, monkeypatch la restaura después.
+    os.environ.pop(API_KEY, None)
 
 
 def test_environment_wins_over_dotenv(monkeypatch, tmp_path):
