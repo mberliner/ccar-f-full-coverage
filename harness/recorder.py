@@ -61,6 +61,7 @@ class RunRecord:
     denials: list[Any] = field(default_factory=list)
     budget_exceeded: bool = False
     is_error: bool = False
+    session_id: str | None = None  # para reanudar o bifurcar la sesión (app2/06)
 
     def parallel_groups(self) -> dict[str, list[ToolCall]]:
         """Respuestas con dos o más llamadas: el modelo las pidió a la vez."""
@@ -162,6 +163,7 @@ class Recorder:
         rec.num_turns = message.num_turns
         rec.cost_usd = message.total_cost_usd
         rec.is_error = message.is_error
+        rec.session_id = message.session_id
         rec.denials = message.permission_denials or []
         # Una llamada denegada recibe un tool_result con el motivo, pero la
         # tool no llegó a ejecutarse: intentada no es ejecutada.
