@@ -5,7 +5,7 @@ Registro viñeta → módulo o sección D3 donde se INTRODUCE. Cobertura objetiv
 - **Destino:** `appN/NN_concepto` es el módulo que lleva el marcador; `d3` es la sección D3, cuyo marcador va en `d3_claude_code/`, `.claude/`, `docs/` o `CLAUDE.md` (roadmap §4).
 - **Estado:** ☐ sin marcador todavía · ☑ con su único `INTRODUCE`. Se marca ☑ en el mismo cambio que añade el marcador; `tests/test_una_vez.py` comprueba que ambos coinciden.
 
-**Introducidas: 0/240**
+**Introducidas: 27/240**
 
 | Viñeta | Destino | Estado |
 | :--- | :--- | :---: |
@@ -100,37 +100,37 @@ Registro viñeta → módulo o sección D3 donde se INTRODUCE. Cobertura objetiv
 | TS 2.5-S3 | app1/02_tools_integradas | ☐ |
 | TS 2.5-S4 | app1/02_tools_integradas | ☐ |
 | TS 2.5-S5 | app1/02_tools_integradas | ☐ |
-| TS 3.1-K1 | d3 | ☐ |
-| TS 3.1-K2 | d3 | ☐ |
-| TS 3.1-K3 | d3 | ☐ |
-| TS 3.1-K4 | d3 | ☐ |
+| TS 3.1-K1 | d3 | ☑ |
+| TS 3.1-K2 | d3 | ☑ |
+| TS 3.1-K3 | d3 | ☑ |
+| TS 3.1-K4 | d3 | ☑ |
 | TS 3.1-S1 | d3 | ☐ |
-| TS 3.1-S2 | d3 | ☐ |
-| TS 3.1-S3 | d3 | ☐ |
+| TS 3.1-S2 | d3 | ☑ |
+| TS 3.1-S3 | d3 | ☑ |
 | TS 3.1-S4 | d3 | ☐ |
-| TS 3.2-K1 | d3 | ☐ |
-| TS 3.2-K2 | d3 | ☐ |
-| TS 3.2-K3 | d3 | ☐ |
+| TS 3.2-K1 | d3 | ☑ |
+| TS 3.2-K2 | d3 | ☑ |
+| TS 3.2-K3 | d3 | ☑ |
 | TS 3.2-K4 | d3 | ☐ |
-| TS 3.2-S1 | d3 | ☐ |
-| TS 3.2-S2 | d3 | ☐ |
-| TS 3.2-S3 | d3 | ☐ |
-| TS 3.2-S4 | d3 | ☐ |
+| TS 3.2-S1 | d3 | ☑ |
+| TS 3.2-S2 | d3 | ☑ |
+| TS 3.2-S3 | d3 | ☑ |
+| TS 3.2-S4 | d3 | ☑ |
 | TS 3.2-S5 | d3 | ☐ |
-| TS 3.3-K1 | d3 | ☐ |
-| TS 3.3-K2 | d3 | ☐ |
-| TS 3.3-K3 | d3 | ☐ |
-| TS 3.3-S1 | d3 | ☐ |
-| TS 3.3-S2 | d3 | ☐ |
-| TS 3.3-S3 | d3 | ☐ |
-| TS 3.4-K1 | d3 | ☐ |
-| TS 3.4-K2 | d3 | ☐ |
-| TS 3.4-K3 | d3 | ☐ |
-| TS 3.4-K4 | d3 | ☐ |
-| TS 3.4-S1 | d3 | ☐ |
-| TS 3.4-S2 | d3 | ☐ |
-| TS 3.4-S3 | d3 | ☐ |
-| TS 3.4-S4 | d3 | ☐ |
+| TS 3.3-K1 | d3 | ☑ |
+| TS 3.3-K2 | d3 | ☑ |
+| TS 3.3-K3 | d3 | ☑ |
+| TS 3.3-S1 | d3 | ☑ |
+| TS 3.3-S2 | d3 | ☑ |
+| TS 3.3-S3 | d3 | ☑ |
+| TS 3.4-K1 | d3 | ☑ |
+| TS 3.4-K2 | d3 | ☑ |
+| TS 3.4-K3 | d3 | ☑ |
+| TS 3.4-K4 | d3 | ☑ |
+| TS 3.4-S1 | d3 | ☑ |
+| TS 3.4-S2 | d3 | ☑ |
+| TS 3.4-S3 | d3 | ☑ |
+| TS 3.4-S4 | d3 | ☑ |
 | TS 3.5-K1 | d3 | ☐ |
 | TS 3.5-K2 | d3 | ☐ |
 | TS 3.5-K3 | d3 | ☐ |
