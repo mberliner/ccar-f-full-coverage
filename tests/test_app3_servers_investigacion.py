@@ -43,7 +43,12 @@ def test_kb_metadata_includes_date_and_supersession():
 
 def test_empty_result_is_valid_not_error():
     outcome, data = search("search_kb", "inexistente-xyz")
-    assert not outcome.is_error and data == {"query": "inexistente-xyz", "results": []}
+    assert not outcome.is_error and data == {"query": "inexistente-xyz", "total": 0, "truncated": False, "results": []}
+
+
+def test_truncation_is_reported():
+    _, data = search("search_tickets", "red")
+    assert data["total"] > len(data["results"]) == 8 and data["truncated"] is True
 
 
 def test_blank_query_is_structured_error():

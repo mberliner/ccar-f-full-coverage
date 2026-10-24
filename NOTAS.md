@@ -34,7 +34,10 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
   - [x] Señales con modelo: `app2/02` (500.01 denegado y escalado; fecha y estado normalizados), `app2/05` (sin case facts se pierde la fecha de compra), `app2/06` (sin aviso responde con datos viejos), `app3/01` (`estrecha` pierde la wifi; `simple` solo invoca `kb_analyst`), `app3/02` (3 `Agent` en `r1`, ×1,66 de latencia).
   - [ ] **Señal de `app2/01` no observada:** con Haiku 5.5, 0 pagos sin verificar en 40 ejecuciones sin puerta, con cuatro mensajes distintos (directo, ingeniería social, instrucción de eficiencia en competencia y lote de cuatro). El módulo imprime la cota del 95 % (< 3/n). Decisión pendiente: aceptar la lectura estadística o fijar un modelo más antiguo para la variante anti en `.env`.
   - [ ] Comprobación manual de la prioridad de `.env` (diseño, verificación 4): la sesión de construcción no puede escribir `.env`; lo cubren `tests/test_config.py` y `tests/test_cli.py`.
-  - [ ] Revisión por una instancia independiente y merge a `main`.
+  - [x] Revisión por una instancia independiente (subagente sin el contexto de la sesión que escribió el código, 2026-10-24): 21 hallazgos, ninguno de gravedad alta, todos aplicados. Los principales: el conteo de pagos ejecutados de `app2/01` sale ahora del estado de la puerta; el hook de umbral falla en cerrado; presupuestos repartidos; y la señal de dependencia escondida, que antes daba falsos positivos.
+  - [ ] Merge a `main`.
+  - **Criterio de presupuesto** (decidido en la revisión): `CCARF_BUDGET_*` es el tope de **toda la ejecución del script**. Se reparte entre `--repeat`, configuraciones, turnos o ramas; el diseño decía «por ejecución» sin precisarlo.
+  - **`resume` y `fork_session` arrastran el coste de la sesión base** (posible, 2026-10-24): un fork sin llamadas costó más que la base. `app2/06` da a cada rama reanudada el coste de la base más su parte. Pendiente: confirmarlo con una base cara.
 - [ ] Entrega 2 · D2 y D3 (`S-3`)
 - [ ] Entrega 3 · D4 y D5 (`S-2`)
 - [ ] `S-1` · repaso sin código nuevo

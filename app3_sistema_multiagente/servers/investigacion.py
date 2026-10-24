@@ -23,6 +23,9 @@ from harness.data import load
 
 SERVER_NAME = "investigacion"
 MAX_RESULTS = 8
+# Subtemas de «problemas de red» en los datos (categoría red). Los usan los
+# módulos para medir cobertura; vive aquí porque describe los datos del servidor.
+NETWORK_SUBTOPICS = {"vpn": ["vpn"], "wifi": ["wifi", "wi-fi"], "impresora": ["impresora"]}
 
 
 def tool_name(name: str) -> str:
@@ -42,7 +45,8 @@ def make_tools() -> list[SdkMcpTool[Any]]:
         "search_tickets",
         "Busca en los tickets de la mesa de ayuda por palabras clave o por categoría (acceso, hardware, software, "
         "red, licencias, gastos). Devuelve hasta 8 resultados con el texto del ticket en `content` y su ID, "
-        "categoría, estado y fecha en `metadata`. No busca en la base de conocimiento: para eso, search_kb.",
+        "categoría, estado y fecha en `metadata`, más `total` y `truncated` si hay más coincidencias. "
+        "No busca en la base de conocimiento: para eso, search_kb.",
         {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]},
     )
     async def search_tickets(args: dict[str, Any]) -> dict[str, Any]:
@@ -60,7 +64,9 @@ def make_tools() -> list[SdkMcpTool[Any]]:
             }
             for t in hits[:MAX_RESULTS]
         ]
-        return ok({"query": args["query"], "results": results})
+        # `total` y `truncated`: el analista sabe que hay más de lo que ve y
+        # puede afinar la búsqueda, en vez de dar por completo un listado parcial.
+        return ok({"query": args["query"], "total": len(hits), "truncated": len(hits) > MAX_RESULTS, "results": results})
 
     @tool(
         "search_kb",
@@ -85,7 +91,7 @@ def make_tools() -> list[SdkMcpTool[Any]]:
             }
             for a in hits[:MAX_RESULTS]
         ]
-        return ok({"query": args["query"], "results": results})
+        return ok({"query": args["query"], "total": len(hits), "truncated": len(hits) > MAX_RESULTS, "results": results})
 
     return [search_tickets, search_kb]
 

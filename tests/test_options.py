@@ -32,6 +32,11 @@ def test_module_can_override_any_value():
     assert options.max_turns == 5
 
 
+def test_setting_sources_none_is_rejected():
+    with pytest.raises(ValueError):
+        isolated_options(max_budget_usd=0.05, setting_sources=None)
+
+
 @pytest.mark.parametrize("budget", [0, -1, None])
 def test_budget_is_required(budget):
     with pytest.raises(ValueError):

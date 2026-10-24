@@ -47,6 +47,10 @@ def isolated_options(*, max_budget_usd: float, **kwargs: Any) -> ClaudeAgentOpti
     # clave explícita del módulo sí gana.
     env = {**ISOLATION_ENV, **kwargs.pop("env", {})}
     # `[]` aísla; un módulo puede pedir otra cosa (app1/06 usa ["project"]).
+    # `None` no se admite: con `skills=[]`, el SDK lo convierte en
+    # ["user", "project"] y el agente cargaría la capa meta sin que se note.
+    if "setting_sources" in kwargs and kwargs["setting_sources"] is None:
+        raise ValueError("setting_sources=None carga la configuración de usuario y de proyecto; usa [] o una lista explícita")
     kwargs.setdefault("setting_sources", [])
     # `skills=None` no apaga las skills: la CLI sigue listando las suyas y las
     # de los plugins (comprobado en la primera ejecución con modelo, SDK

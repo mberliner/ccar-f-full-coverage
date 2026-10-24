@@ -18,7 +18,9 @@ def test_allowed_preapproves_without_removing():
     assert options.permission_mode is None
 
 
-def test_disallowed_removes_the_tool():
+def test_disallowed_lists_pay():
+    # Solo comprueba la configuración: si la tool desaparece de init se observa
+    # al ejecutar (con una tool MCP, CLI 2.1.309, no desaparece; ver README).
     options = build("disallowed")
     assert options.disallowed_tools == [mod.PAY]
 

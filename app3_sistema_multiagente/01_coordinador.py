@@ -58,7 +58,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from claude_agent_sdk import AgentDefinition, ClaudeAgentOptions, query  # noqa: E402
 
-from app3_sistema_multiagente.servers.investigacion import SERVER_NAME, build_server, tool_name  # noqa: E402
+from app3_sistema_multiagente.servers.investigacion import (  # noqa: E402
+    NETWORK_SUBTOPICS,
+    SERVER_NAME,
+    build_server,
+    tool_name,
+)
 from harness import credentials  # noqa: E402
 from harness.cli import build_parser, report_budget  # noqa: E402
 from harness.config import report_model  # noqa: E402
@@ -73,7 +78,7 @@ QUESTIONS = {
     "simple": "¿Qué dice el artículo KB-109?",
 }
 # Subtemas de «problemas de red» en los datos: la variante estrecha pierde la wifi.
-SUBTOPICS = {"vpn": ["vpn"], "wifi": ["wifi", "wi-fi"]}
+SUBTOPICS = NETWORK_SUBTOPICS
 ID_RE = re.compile(r"\b(?:TCK|KB)-\d+\b")
 
 # Reparto del alcance por tipo de fuente (1.2-S2): un analista por tool.
@@ -236,7 +241,8 @@ async def main_async() -> int:
 
     question = QUESTIONS[args.pregunta]
     for run in range(1, args.repeat + 1):
-        options = build_options(anti=args.anti, budget=budget, model=model, subagent_model=subagent_model)
+        # El tope es de toda la ejecución del script, repartido entre repeticiones.
+        options = build_options(anti=args.anti, budget=budget / args.repeat, model=model, subagent_model=subagent_model)
         print(f"\n=== ejecución {run}/{args.repeat} · variante {args.anti or 'correcta'} · pregunta {args.pregunta} ===")
         rec = await record(query(prompt=question, options=options))
         coverage = findings_coverage(rec)

@@ -56,6 +56,9 @@ def test_hidden_dependency_detection():
         "Ojo: depreciacion importa almacen dentro de valor_actual y lee _CACHE_ASIGNADOS, que llena asignaciones."
     )
     assert not mod.mentions_hidden_dependency("Plan: tests para fechas, modelos e informes.")
+    # Los imports de cabecera de informes.py o asignaciones.py no son la dependencia escondida.
+    assert not mod.mentions_hidden_dependency("informes.py hace from . import almacen y usa _CACHE_ASIGNADOS de asignaciones.")
+    assert mod.mentions_hidden_dependency("Un equipo asignado conserva un valor residual: depreciacion depende de asignaciones.")
 
 
 def test_legacy_package_location():

@@ -71,23 +71,33 @@ THRESHOLD_EUR = 500.0
 
 async def threshold_hook(hook_input: dict[str, Any], tool_use_id: str | None, context: Any) -> dict[str, Any]:
     """Deniega un reembolso de más de 500 EUR y dice al modelo qué hacer en su lugar."""
-    amount = float(hook_input["tool_input"].get("amount_eur", 0))
+    raw = hook_input["tool_input"].get("amount_eur")
+    try:
+        amount = float(raw)
+    except (TypeError, ValueError):
+        # Falla en cerrado: un importe que falta o no es un número no se aprueba.
+        return deny(f"Importe no válido ({raw!r}): no se puede comprobar el umbral. Revisa el ticket y vuelve a intentarlo.")
     # `>` y no `>=`: 500.00 lo aprueba soporte; 500.01 ya va a Finanzas.
     if amount <= THRESHOLD_EUR:
         return {}
+    # El motivo le llega al modelo: no solo dice «no», sino cuál es el flujo
+    # alternativo, para que no reintente ni se quede sin salida.
+    return deny(
+        f"Reembolso de {amount:.2f} EUR por encima de {THRESHOLD_EUR:.0f} EUR: requiere aprobación de "
+        "Finanzas y no se puede pagar desde soporte. No lo reintentes. Escala el caso con "
+        "escalate_to_human (user_id, ticket_id, causa raíz, importe y acción recomendada)."
+    )
+
+
+def deny(reason: str) -> dict[str, Any]:
     return {
         "hookSpecificOutput": {
             "hookEventName": "PreToolUse",
             "permissionDecision": "deny",
-            # El motivo le llega al modelo: no solo dice «no», sino cuál es el
-            # flujo alternativo, para que no reintente ni se quede sin salida.
-            "permissionDecisionReason": (
-                f"Reembolso de {amount:.2f} EUR por encima de {THRESHOLD_EUR:.0f} EUR: requiere aprobación de "
-                "Finanzas y no se puede pagar desde soporte. No lo reintentes. Escala el caso con "
-                "escalate_to_human (user_id, ticket_id, causa raíz, importe y acción recomendada)."
-            ),
+            "permissionDecisionReason": reason,
         }
     }
+
 
 
 # --- PostToolUse: normalización (1.5-K1, 1.5-S1) -------------------------------
@@ -114,7 +124,9 @@ def normalize_date(value: int | str) -> str:
         # El sistema de origen exporta la hora local de la sede en UTC.
         moment = datetime.strptime(value, "%d/%m/%Y %H:%M").replace(tzinfo=timezone.utc)
     else:
-        moment = datetime.fromisoformat(value).astimezone(timezone.utc)
+        moment = datetime.fromisoformat(value)
+        # Un ISO sin zona se toma como UTC, no como la hora local de la máquina.
+        moment = moment.replace(tzinfo=timezone.utc) if moment.tzinfo is None else moment.astimezone(timezone.utc)
     return moment.isoformat()
 
 
@@ -192,7 +204,7 @@ async def main_async() -> int:
         # estado de esta ejecución, con otro formato más del sistema de origen.
         state.ticket_overrides[ticket["ticket_id"]] = {"status": "en curso"}
         options = isolated_options(
-            max_budget_usd=budget,
+            max_budget_usd=budget / args.repeat,  # tope de toda la ejecución, repartido entre repeticiones
             model=model,
             system_prompt=system_prompt(args.anti),
             mcp_servers={SERVER_NAME: build_server(state)},

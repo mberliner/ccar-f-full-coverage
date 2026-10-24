@@ -81,5 +81,5 @@ def test_findings_coverage_in_synthesizer_prompt():
 
 
 def test_subtopic_coverage_detects_missing_wifi():
-    assert mod.subtopics_covered("Problemas con la VPN y con la wifi de las salas") == {"vpn": True, "wifi": True}
-    assert mod.subtopics_covered("Solo la VPN falla") == {"vpn": True, "wifi": False}
+    assert mod.subtopics_covered("VPN, wifi de las salas e impresora de planta") == {"vpn": True, "wifi": True, "impresora": True}
+    assert mod.subtopics_covered("Solo la VPN falla") == {"vpn": True, "wifi": False, "impresora": False}

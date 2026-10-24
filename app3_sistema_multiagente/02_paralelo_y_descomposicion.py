@@ -51,7 +51,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from claude_agent_sdk import AgentDefinition, ClaudeAgentOptions, ClaudeSDKClient, query  # noqa: E402
 
-from app3_sistema_multiagente.servers.investigacion import SERVER_NAME, build_server, tool_name  # noqa: E402
+from app3_sistema_multiagente.servers.investigacion import (  # noqa: E402
+    NETWORK_SUBTOPICS,
+    SERVER_NAME,
+    build_server,
+    tool_name,
+)
 from harness import credentials  # noqa: E402
 from harness.cli import build_parser, report_budget  # noqa: E402
 from harness.config import report_model  # noqa: E402
@@ -64,9 +69,12 @@ SEARCH_TICKETS = tool_name("search_tickets")
 SEARCH_KB = tool_name("search_kb")
 LEGACY_DIR = DATA_DIR / "legacy_inventario"
 # Subtemas que una síntesis de «problemas de red» debe cubrir según los datos.
-REQUIRED_SUBTOPICS = {"vpn": ["vpn"], "wifi": ["wifi", "wi-fi"], "impresora": ["impresora"]}
+REQUIRED_SUBTOPICS = NETWORK_SUBTOPICS
 MAX_REFINEMENT_ROUNDS = 2
-HIDDEN_DEPENDENCY_SIGNS = ["_cache_asignados", "import tardío", "dentro de valor_actual", "from . import almacen"]
+# Señales que solo da quien leyó `depreciacion.valor_actual`: el import dentro
+# de la función y el valor residual del 10 % de los equipos asignados. Los
+# imports de cabecera de otros módulos no cuentan.
+HIDDEN_DEPENDENCY_SIGNS = ["import tardío", "dentro de valor_actual", "dentro de la función", "valor residual", "10 %", "10%"]
 
 # Neutralizar valores por defecto (roadmap §3, regla 4): sin subagentes en
 # segundo plano ni fork, y sin que un subagente lance otros.
@@ -231,6 +239,7 @@ async def part_decomposition(args: Any, budget: float, model: str, subagent_mode
     print("\n=== descomposición · cadena fija (prompt chaining) ===")
     for number in range(len(steps)):
         prompt = chain_prompts(steps, outputs)[number]
+        # max_turns=1: red de seguridad; sin tools, cada paso es una sola respuesta.
         options = isolated_options(max_budget_usd=budget / 6, model=subagent_model, tools=[], max_turns=1,
                                    system_prompt="Responde en español, solo con lo que pide el paso.")
         rec = await record(query(prompt=prompt, options=options), echo=False)

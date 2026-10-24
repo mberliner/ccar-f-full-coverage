@@ -129,8 +129,10 @@ async def main_async() -> int:
     model = report_model("agent")
     subagent_model = report_model("subagent")
     budget = report_budget(args.budget, "agent")
-    for config in [args.config] if args.config else CONFIGS:
-        await run(config, budget, model, subagent_model)
+    configs = [args.config] if args.config else CONFIGS
+    for config in configs:
+        # El tope es de toda la ejecución del script, repartido entre configuraciones.
+        await run(config, budget / len(configs), model, subagent_model)
     return 0
 
 

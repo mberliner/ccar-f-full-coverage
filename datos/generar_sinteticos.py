@@ -241,8 +241,9 @@ def build_kb_articles(rng: random.Random) -> list[dict]:
 # código sin tests que el agente debe mapear antes de planificar los tests.
 # La dependencia escondida: `depreciacion.valor_actual` importa `almacen`
 # dentro de la función y lee la caché que solo llena `asignaciones.asignar`.
-# No aparece en los imports de cabecera, así que solo se descubre al leer ese
-# módulo. Es texto fijo: no usa el generador aleatorio.
+# No aparece en los imports de cabecera de `depreciacion`: un Grep de la caché
+# la insinúa, pero su efecto (valor residual del 10 %) solo se ve al leer
+# `valor_actual`. Es texto fijo: no usa el generador aleatorio.
 LEGACY_DIR = "legacy_inventario"
 LEGACY_FILES = {
     "__init__.py": '''"""Inventario de equipos de la mesa de ayuda (código heredado, sin tests)."""

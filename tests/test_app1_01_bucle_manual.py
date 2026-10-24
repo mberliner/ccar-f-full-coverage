@@ -142,6 +142,7 @@ def test_get_ticket_and_unknown_tool():
     assert payload["ticket_id"] == ticket["ticket_id"]
     assert "error" in json.loads(mod.execute_tool("get_ticket", {"ticket_id": "TCK-0"}))
     assert "error" in json.loads(mod.execute_tool("borrar_todo", {}))
+    assert "argumentos no válidos" in json.loads(mod.execute_tool("get_ticket", {"id": "TCK-1"}))["error"]
 
 
 def test_search_kb_finds_password_article():

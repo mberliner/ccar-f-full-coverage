@@ -71,7 +71,7 @@ from harness.recorder import RunRecord, record  # noqa: E402
 LIST_TICKETS = tool_name("list_employee_tickets")
 GET_TICKET = tool_name("get_ticket")
 SEARCH_KB = tool_name("search_kb")
-EMPLOYEE = "EMP-1040"  # cuatro tickets: correo, carpeta compartida, reembolso de 1290 EUR…
+EMPLOYEE = "EMP-1040"  # cuatro tickets: TCK-4008 (correo y carpeta), 4015, 4034 y 4054 (reembolso de 1290 EUR)
 RESOLVED_TICKET = "TCK-4054"  # el reembolso pasa a resuelto entre fases
 OBSOLETE_ARTICLE = "KB-108"  # el artículo de sincronización de correo queda obsoleto
 # Proporción de resultados previos obsoletos a partir de la cual se empieza de nuevo.
@@ -199,6 +199,7 @@ def cli_resume_command(name: str) -> str:
 
 
 def options_for(state: HelpdeskState, *, budget: float, model: str, cwd: str, **session: Any) -> Any:
+    """Opciones de una sesión. Para `resume`, `budget` ya incluye el coste de la base (ver main_async)."""
     return isolated_options(
         max_budget_usd=budget,
         model=model,
@@ -245,6 +246,11 @@ async def main_async() -> int:
     base = await run_session(BASE_TASK, options_for(state, budget=per_session, model=model, cwd=cwd), "sesión base")
     print(f"[cli] equivalente con nombre: claude -n app2-06 y después {cli_resume_command('app2-06')}")
 
+    # Una sesión reanudada o bifurcada arrastra el coste de la base (en la
+    # primera ejecución, el fork sin llamadas costó más que la base): su tope
+    # es ese coste más su parte del presupuesto.
+    resumed_budget = (base.cost_usd or 0.0) + per_session
+
     before = snapshot(HelpdeskState())
     apply_phase_change(state)
     changes = diff_states(before, snapshot(state))
@@ -255,7 +261,8 @@ async def main_async() -> int:
         notice = "" if args.anti else change_notice(changes)
         prompt = f"{notice}\n\n{FOLLOW_UP}" if notice else FOLLOW_UP
         label = "reanudar sin aviso (anti)" if args.anti else "reanudar con aviso de cambios"
-        await run_session(prompt, options_for(state, budget=per_session, model=model, cwd=cwd, resume=base.session_id), label)
+        await run_session(prompt, options_for(state, budget=resumed_budget, model=model, cwd=cwd,
+                                              resume=base.session_id), label)
     if "nueva" in branches:
         prompt = f"{structured_summary(findings(base), changes)}\n\n{FOLLOW_UP}"
         await run_session(prompt, options_for(state, budget=per_session, model=model, cwd=cwd), "sesión nueva con resumen")
@@ -263,7 +270,7 @@ async def main_async() -> int:
         notice = change_notice(changes)
         for name, strategy in FORK_STRATEGIES.items():
             # Cada fork parte de la misma base y no ve al otro.
-            options = options_for(state, budget=per_session, model=model, cwd=cwd,
+            options = options_for(state, budget=resumed_budget, model=model, cwd=cwd,
                                   resume=base.session_id, fork_session=True)
             fork = await run_session(f"{notice}\n\n{strategy}", options, f"fork {name}")
             print(f"[fork] {name}: sesión {fork.session_id} (base {base.session_id})")

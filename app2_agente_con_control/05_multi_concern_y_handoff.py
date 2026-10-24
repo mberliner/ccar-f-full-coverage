@@ -126,8 +126,12 @@ def extract_user_facts(message: str) -> dict[str, dict[str, list[Any]]]:
     return {concern: layer for concern, layer in facts.items() if layer}
 
 
-def extract_tool_facts(rec: RunRecord) -> dict[str, dict[str, Any]]:
-    """Hechos de los resultados de las tools: el ticket del caso y los artículos por asunto."""
+def extract_tool_facts(rec: RunRecord, case_ticket_id: str) -> dict[str, dict[str, Any]]:
+    """Hechos de los resultados de las tools: el ticket del caso y los artículos por asunto.
+
+    La capa «caso» solo la llena el ticket del enunciado: si el modelo consulta
+    otro ticket, no sustituye al del caso.
+    """
     facts: dict[str, dict[str, Any]] = {}
     for call in rec.tool_calls:
         if not call.executed or call.is_error or not call.result_text:
@@ -136,7 +140,7 @@ def extract_tool_facts(rec: RunRecord) -> dict[str, dict[str, Any]]:
             data = json.loads(call.result_text)
         except json.JSONDecodeError:
             continue
-        if call.name == GET_TICKET and "ticket_id" in data:
+        if call.name == GET_TICKET and data.get("ticket_id") == case_ticket_id:
             facts["caso"] = {k: data[k] for k in ("ticket_id", "user_id", "status", "created_at")}
         elif call.name == SEARCH_KB:
             for article in data.get("articles", []):
@@ -202,11 +206,18 @@ def check_handoff(handoff: dict[str, Any], facts: dict[str, dict[str, Any]]) -> 
     if amounts and float(handoff["amount_eur"]) not in amounts:
         problems.append(f"amount_eur {handoff['amount_eur']} ≠ {amounts[-1]}")
     # Las fechas tienen que llegar completas: «hasta el 30/10» sin año es
-    # justo la vaguedad de la sumarización progresiva (5.1-K1).
+    # justo la vaguedad de la sumarización progresiva (5.1-K1). Se aceptan
+    # dd/mm/aaaa y aaaa-mm-dd; una fecha escrita en palabras no cuenta.
     text = f"{handoff['root_cause']} {handoff['recommended_action']}"
     dates = [d for layer in facts.values() for d in layer.get("dates", [])]
-    problems += [f"falta la fecha {d}" for d in dict.fromkeys(dates) if d not in text]
+    problems += [f"falta la fecha {d}" for d in dict.fromkeys(dates) if not date_in(d, text)]
     return problems
+
+
+def date_in(date: str, text: str) -> bool:
+    day, month, year = (int(part) for part in date.split("/"))
+    forms = {date, f"{day:02d}/{month:02d}/{year}", f"{day}/{month}/{year}", f"{year}-{month:02d}-{day:02d}"}
+    return any(form in text for form in forms)
 
 
 def user_turns(ticket: dict[str, Any]) -> list[str]:
@@ -234,12 +245,15 @@ async def main_async() -> int:
     spent = 0.0
 
     for number, message in enumerate(user_turns(ticket), start=1):
+        if budget - spent <= 0:
+            print(f"[corte] presupuesto agotado antes del turno {number} (${spent:.4f} de ${budget})")
+            break
         # Cada turno empieza una sesión nueva con el resumen: es la
         # sumarización progresiva. Lo que cambia entre variantes es si los
         # hechos viajan aparte del resumen.
         prompt = turn_prompt(summary, facts, message, anti=args.anti)
         options = isolated_options(
-            max_budget_usd=max(budget - spent, 0.01),  # el tope es de toda la ejecución
+            max_budget_usd=budget - spent,  # el tope es de toda la ejecución
             model=model,
             system_prompt=SYSTEM_PROMPT,
             mcp_servers={SERVER_NAME: server},
@@ -256,11 +270,14 @@ async def main_async() -> int:
             rec = await record(client.receive_response())
             # Los hechos se extraen siempre, también en la variante anti, para
             # poder comparar al final qué se perdió.
-            facts = merge_facts(facts, merge_facts(extract_tool_facts(rec), extract_user_facts(message)))
+            facts = merge_facts(facts, merge_facts(extract_tool_facts(rec, ticket["ticket_id"]),
+                                                   extract_user_facts(message)))
             await client.query(SUMMARY_REQUEST)
             summary_rec = await record(client.receive_response(), echo=False)
         summary = summary_rec.final_text
-        spent += max(rec.cost_usd or 0.0, summary_rec.cost_usd or 0.0)
+        # Se suman las dos consultas de la sesión. Si el SDK diera el coste
+        # acumulado de la sesión, esto lo sobrestima: se queda del lado seguro.
+        spent += (rec.cost_usd or 0.0) + (summary_rec.cost_usd or 0.0)
         print(f"[resumen para el turno siguiente] {summary}")
 
     print(f"\n{render_case_facts(facts)}")

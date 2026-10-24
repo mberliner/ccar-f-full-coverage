@@ -140,7 +140,13 @@ def execute_tool(name: str, tool_input: dict) -> str:
     handler = HANDLERS.get(name)
     if handler is None:
         return json.dumps({"error": f"tool desconocida: {name}"})
-    return json.dumps(handler(**tool_input), ensure_ascii=False)
+    try:
+        result = handler(**tool_input)
+    except TypeError as exc:
+        # Un argumento que la tool no espera vuelve al modelo como error, no
+        # tira el bucle.
+        result = {"error": f"argumentos no válidos para {name}: {exc}"}
+    return json.dumps(result, ensure_ascii=False)
 
 
 def ambiguous_ticket() -> dict:
@@ -220,6 +226,9 @@ def run_loop(
 
         # 1.1-S1: la única señal de continuar es stop_reason == "tool_use".
         if response.stop_reason != "tool_use":
+            if response.stop_reason != "end_turn" and echo:
+                # max_tokens, pause_turn, refusal…: termina, pero no es un final normal.
+                print(f"[aviso] parada anómala: stop_reason={response.stop_reason}")
             return finish(response.stop_reason, iteration, response)
 
         # 1.1-S2: un tool_result por tool_use, con su tool_use_id, todos en un
@@ -294,8 +303,8 @@ def main() -> int:
     question = [{"role": "user", "content": f"Atiende el ticket {ticket['ticket_id']}."}]
 
     for run in range(1, args.repeat + 1):
-        # El tope es por ejecución, como `max_budget_usd` en el Agent SDK.
-        guard = CostGuard(model, budget)
+        # El tope es de toda la ejecución del script, repartido entre repeticiones.
+        guard = CostGuard(model, budget / args.repeat)
 
         def create(messages: list[dict], tools: list[dict] | None = TOOLS) -> Any:
             response = client.messages.create(
@@ -315,7 +324,7 @@ def main() -> int:
             return 1
         print(f"[final] {result.final_text or '(sin respuesta final)'}")
         print(f"[fin] parada={result.stop} · iteraciones={result.iterations} · llamadas={len(result.tool_calls)} "
-              f"· coste=${guard.spent:.4f} (tope ${budget})")
+              f"· coste=${guard.spent:.4f} (tope ${guard.max_usd:.4f})")
     return 0
 
 

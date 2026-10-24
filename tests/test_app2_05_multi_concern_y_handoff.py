@@ -34,8 +34,10 @@ def test_tool_facts_from_results():
         call(mod.SEARCH_KB, {"articles": [{"article_id": "KB-110", "title": "VPN: perfil antiguo (obsoleto)",
                                            "superseded_by": "KB-109"}]}),
         ToolCall("x", mod.GET_TICKET, {}, "r1", "principal", True, True, '{"errorCategory": "not_found"}'),
+        # Otro ticket consultado después no sustituye al del caso.
+        call(mod.GET_TICKET, {**ticket, "ticket_id": "TCK-4001", "status": "RESOLVED"}, response="r2"),
     ])
-    facts = mod.extract_tool_facts(rec)
+    facts = mod.extract_tool_facts(rec, ticket["ticket_id"])
     assert facts["caso"]["ticket_id"] == ticket["ticket_id"] and facts["caso"]["user_id"] == ticket["user_id"]
     assert facts["caso"]["status"] == ticket["status"]
     assert facts["red"]["kb"] == ["KB-110 (sustituido por KB-109)"]
@@ -73,6 +75,8 @@ def test_handoff_check_against_case_facts():
     dated = {**facts, "gastos": {"amounts_eur": [34.5], "dates": ["12/09/2026", "30/10/2026"]}}
     with_dates = {**good, "recommended_action": "pagar 34,50 EUR (compra del 12/09/2026) antes del 30/10/2026"}
     assert mod.check_handoff(with_dates, dated) == []
+    iso = {**good, "recommended_action": "pagar 34,50 EUR (compra del 2026-09-12) antes del 30/10/2026"}
+    assert mod.check_handoff(iso, dated) == []
     vague = {**good, "recommended_action": "pagar 34,50 EUR antes del 30/10"}
     assert mod.check_handoff(vague, dated) == ["falta la fecha 12/09/2026", "falta la fecha 30/10/2026"]
     assert mod.check_handoff({"summary": "quiere su dinero"}, facts) == [

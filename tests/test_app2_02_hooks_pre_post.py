@@ -30,12 +30,24 @@ def test_threshold_denies_and_redirects(amount):
     assert "escalate_to_human" in result.reason and "Finanzas" in result.reason
 
 
+@pytest.mark.parametrize("amount", [None, "seiscientos", "600,50"])
+def test_threshold_fails_closed_on_invalid_amount(amount):
+    result = run_hook(mod.threshold_hook, "PreToolUse", mod.PAY, {"user_id": "EMP-1020", "amount_eur": amount})
+    assert result.decision == "deny" and "no válido" in result.reason
+
+
+def test_missing_amount_is_denied():
+    result = run_hook(mod.threshold_hook, "PreToolUse", mod.PAY, {"user_id": "EMP-1020"})
+    assert result.decision == "deny"
+
+
 @pytest.mark.parametrize(
     ("raw", "expected"),
     [
         (1788449580, "2026-09-03T15:33:00+00:00"),
         ("29/09/2026 10:33", "2026-09-29T10:33:00+00:00"),
         ("2026-09-21T17:18:00+00:00", "2026-09-21T17:18:00+00:00"),
+        ("2026-09-21T17:18:00", "2026-09-21T17:18:00+00:00"),  # sin zona: UTC, no la hora local
     ],
 )
 def test_dates_to_iso(raw, expected):
