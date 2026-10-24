@@ -1,0 +1,19 @@
+[project]
+name = "ccar-f-full-coverage"
+version = "0.1.0"
+description = "Apps agénticas de demostración para practicar las viñetas del examen CCAR-F"
+requires-python = ">=3.10"
+dependencies = [
+    # Versión fijada a propósito (roadmap §3, regla 1): se actualiza solo de forma deliberada.
+    "claude-agent-sdk==0.2.173",
+    "anthropic",
+    "pyyaml",
+]
+
+[dependency-groups]
+dev = ["pytest"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Proyecto virtual (sin build-system): la raíz va al path para importar harness/ desde los tests.
+pythonpath = ["."]

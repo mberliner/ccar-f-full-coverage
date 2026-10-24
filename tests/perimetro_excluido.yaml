@@ -1,0 +1,30 @@
+# Lista de exclusión del perímetro (roadmap §3, reglas 2 y 5).
+# Mecanismos del producto que la Exam Guide v1.0 no nombra: en el examen son distractores.
+# La usan tests/test_perimetro.py y, como criterio categórico, el revisor de app3/11.
+# Nombres comprobados contra claude-agent-sdk 0.2.173 y la documentación de Claude Code (2026-10-23).
+#
+# kind:
+#   identifier   nombre, atributo, keyword de llamada o import con ese nombre exacto
+#   string       constante de texto exactamente igual (p. ej. un nombre de tool en allowed_tools)
+#   env_enabled  clave de un dict literal (env=...) con un valor distinto de "0"/"false";
+#                apagarla de forma explícita está permitido (regla 4)
+
+- pattern: output_format
+  kind: identifier
+  motivo: structured outputs del SDK (ClaudeAgentOptions.output_format); la guía enseña JSON Schema con tool_use (4.3)
+
+- pattern: Workflow
+  kind: string
+  motivo: tool Workflow de Claude Code, posterior a la guía
+
+- pattern: SendMessage
+  kind: string
+  motivo: mensajería entre agentes de agent teams; la guía solo cubre coordinador-subagente (1.2)
+
+- pattern: CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS
+  kind: env_enabled
+  motivo: agent teams, experimental y fuera de la guía
+
+- pattern: CLAUDE_CODE_FORK_SUBAGENT
+  kind: env_enabled
+  motivo: subagentes fork, que heredan el contexto del padre; la guía enseña que el subagente no hereda contexto (1.3)

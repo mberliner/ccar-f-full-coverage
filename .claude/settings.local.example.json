@@ -1,0 +1,9 @@
+{
+  "claudeMdExcludes": [
+    "**/<ruta-del-directorio-padre>/CLAUDE.md"
+  ],
+  "enabledPlugins": {
+    "<plugin-sincronizado>@synced": false,
+    "<plugin>@<marketplace>": false
+  }
+}
