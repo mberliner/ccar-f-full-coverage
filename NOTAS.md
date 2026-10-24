@@ -32,7 +32,11 @@ Scratchpad de sesión y notas de producto no evaluables. Las predicciones y resp
 - **Una respuesta del modelo puede llegar en varios `AssistantMessage`** con el mismo `message_id`; el recorder agrupa por ese id. Confirmarlo en la primera ejecución de `app3/02`.
 - **Hooks de la sesión de construcción:**
   - Claude Code toma una instantánea de los hooks al arrancar: tras cambiarlos, revisar `/hooks` o abrir una sesión nueva.
-  - El filtro de shell de `proteger_rutas.py` es heurístico. Bloquea cualquier comando que nombre `datos/sinteticos` o `.env` (salvo un `git` aislado) y no ve un script que escriba por dentro; esa vía la cubre `generar_sinteticos.py --check`.
+  - El filtro de shell de `proteger_rutas.py` es heurístico:
+    - bloquea cualquier comando que nombre `datos/sinteticos` o un `.env`, salvo `git status|diff|log|show|add` sin nada encadenado (el salto de línea cuenta como separador);
+    - no ve un script que escriba por dentro, ni variables o comodines que compongan la ruta. Esa vía la cubre `generar_sinteticos.py --check`.
+  - **El hook falla en cerrado:** ante una entrada que no entiende devuelve 2, porque un exit 1 es no bloqueante y la llamada seguiría.
+  - **Variantes de `.env`:** protege `.env` y `.env.*`, salvo las plantillas `.env.example` y `.env.sample`, sin distinguir mayúsculas.
   - **Dos barreras para `Edit`/`Write`:** la regla `deny` de `settings.json` rechaza el `Edit` antes que el hook («directory that is denied by your permission settings»), así que el hook queda de respaldo; por shell, el hook es la única barrera y sí se vio bloquear (2026-10-24).
   - **Una instrucción en contexto puede tapar la prueba:** al pedir «edita `datos/sinteticos/tickets.json`», la sesión leyó los estándares y fue directa al generador sin intentar el `Edit`, así que el hook no llegó a ejecutarse. Para probar una barrera hay que forzar el intento. En el examen, la instrucción no garantiza el cumplimiento; solo la puerta programática lo hace.
   - Falso positivo conocido: un commit cuyo mensaje nombra esas rutas, o que llega por heredoc (`<<`), se bloquea. Se escribe el mensaje en un archivo y se usa `git commit -F <archivo>`.
