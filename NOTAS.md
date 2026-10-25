@@ -45,6 +45,7 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
     - `resume` sin `fork_session` conserva el `session_id` y añade su turno a la sesión base: un fork posterior ve ese turno (preguntado: recuerda ALFA y BRAVO) y su coste acumulado incluye el de la reanudación.
     - Efecto en `app2/06 --rama todas`: antes, `reanudar` iba antes que los forks, que no partían de la base «limpia» y arrastraban ese coste. Corregido el 2026-10-24: `reanudar` va la última. Ejecutado `app2/06` completo tras el cambio (2026-10-24): base 0,0016 $; sesión nueva 0,0014 $; forks 0,0025 y 0,0026 $ (el segundo no arrastra al primero); reanudar 0,0024 $ con el mismo `session_id` que la base. README de app2 ampliado con predicción, observaciones y estos dos hechos.
 - [ ] Entrega 2 · D2 y D3 (`S-3`)
+  - [x] Diseño aprobado en `docs/diseno-entrega-2.md` (2026-10-25): 55 viñetas, 76 → 131/240. Siguiente paso: rama `entrega-2`, piezas compartidas (datos, `copy_to_temp`, servidores) y después `app1/02`. Antes de los módulos afectados, las sondas de la sección «Riesgos» (aprobación de `.mcp.json`, `tool_choice` con Haiku 5.5, variable de *tool search*).
 - [ ] Entrega 3 · D4 y D5 (`S-2`)
 - [ ] `S-1` · repaso sin código nuevo
 - [ ] Entrega 4 · opcional, después del examen
