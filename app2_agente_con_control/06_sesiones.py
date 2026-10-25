@@ -257,12 +257,6 @@ async def main_async() -> int:
     ratio = stale_ratio(base, changes)
     print(f"\n[cambios] {changes}\n[obsoletos] {ratio:.0%} de los resultados previos → decisión: {decide(ratio)}")
 
-    if "reanudar" in branches:
-        notice = "" if args.anti else change_notice(changes)
-        prompt = f"{notice}\n\n{FOLLOW_UP}" if notice else FOLLOW_UP
-        label = "reanudar sin aviso (anti)" if args.anti else "reanudar con aviso de cambios"
-        await run_session(prompt, options_for(state, budget=resumed_budget, model=model, cwd=cwd,
-                                              resume=base.session_id), label)
     if "nueva" in branches:
         prompt = f"{structured_summary(findings(base), changes)}\n\n{FOLLOW_UP}"
         await run_session(prompt, options_for(state, budget=per_session, model=model, cwd=cwd), "sesión nueva con resumen")
@@ -274,6 +268,15 @@ async def main_async() -> int:
                                   resume=base.session_id, fork_session=True)
             fork = await run_session(f"{notice}\n\n{strategy}", options, f"fork {name}")
             print(f"[fork] {name}: sesión {fork.session_id} (base {base.session_id})")
+    # `reanudar` va la última: `resume` sin `fork_session` añade su turno a la
+    # sesión base (mismo session_id, comprobado), así que un fork posterior lo
+    # vería y arrastraría su coste. Los forks y la sesión nueva no la modifican.
+    if "reanudar" in branches:
+        notice = "" if args.anti else change_notice(changes)
+        prompt = f"{notice}\n\n{FOLLOW_UP}" if notice else FOLLOW_UP
+        label = "reanudar sin aviso (anti)" if args.anti else "reanudar con aviso de cambios"
+        await run_session(prompt, options_for(state, budget=resumed_budget, model=model, cwd=cwd,
+                                              resume=base.session_id), label)
     print(f"\n[esperado] con aviso o con resumen, {RESOLVED_TICKET} ya no está pendiente y {OBSOLETE_ARTICLE} "
           "no se recomienda; sin aviso, la respuesta usa los resultados viejos.")
     return 0

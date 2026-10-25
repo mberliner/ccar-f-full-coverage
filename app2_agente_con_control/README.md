@@ -170,20 +170,29 @@ Un agente de soporte resume la conversación cada pocos turnos para no llenar el
 ## 06 · Sesiones
 
 ```bash
-uv run python app2_agente_con_control/06_sesiones.py                              # base + reanudar, nueva y fork
+uv run python app2_agente_con_control/06_sesiones.py                              # base + nueva, fork y reanudar (en ese orden)
 uv run python app2_agente_con_control/06_sesiones.py --anti --rama reanudar       # reanudar sin aviso
 ```
 
-La sesión base analiza los cuatro tickets de EMP-1040. Entre fases, el reembolso TCK-4054 se resuelve y el artículo KB-108 queda obsoleto. El módulo calcula qué proporción de los resultados previos quedó obsoleta y decide entre reanudar y empezar de nuevo (umbral: 50 %).
+La sesión base analiza los cuatro tickets de EMP-1040. Entre fases, el reembolso TCK-4054 se resuelve y el artículo KB-108 queda obsoleto. El módulo calcula qué proporción de los resultados previos quedó obsoleta y decide entre reanudar y empezar de nuevo (umbral: 50 %). Con estos datos, la proporción es del 33 %, así que la decisión es reanudar.
 
-**Predice:** si reanudas sin avisar, ¿consultará otra vez los tickets? ¿Recomendará KB-108?
+**Predice:**
 
-**Qué observar:** lee la `[respuesta completa]` de cada rama.
+- Si reanudas sin avisar, ¿consultará otra vez los tickets? ¿Recomendará KB-108?
+- Tras reanudar la sesión base, ¿qué `session_id` tendrá la sesión? ¿Y qué verá un fork creado después?
+
+**Qué observar:** lee la `[respuesta completa]` de cada rama y compara las líneas `[fin]` y `[sesión]`.
 
 - **Sin aviso:** en la primera ejecución con modelo, no hizo ninguna llamada y respondió con la foto vieja: TCK-4054 como pendiente y KB-108 como solución.
-- **Con aviso:** reconsulta solo lo que cambió.
-- **Sesión nueva con resumen:** separa lo que sigue valiendo de lo que cambió.
-- **Fork:** dos ramas independientes desde la misma base, con dos estrategias distintas; cada una tiene su propio `session_id`.
+- **Con aviso:** reconsulta solo lo que cambió: dos llamadas (`get_ticket` de TCK-4054 y una búsqueda de KB-108) y no repite las siete del análisis base.
+- **Sesión nueva con resumen:** separa lo que sigue valiendo de lo que cambió. Es la rama que menos cuesta, porque no arrastra la historia de la base.
+- **Fork:** dos ramas independientes desde la misma base, con dos estrategias distintas; cada una tiene su propio `session_id` y no ve a la otra.
+- **Reanudar:** devuelve el mismo `session_id` que la base. `resume` sin `fork_session` no crea una sesión: añade su turno a la original.
+
+**Dos cosas que enseña el coste y el orden de las ramas** (hechos comprobados con modelo; la guía no los nombra, son del producto):
+
+- **El coste de una sesión reanudada o bifurcada es acumulado:** su `[fin]` suma el coste de la historia de la sesión y el suyo propio. En una ejecución, la base costó 0,0016 $ y los forks y la reanudación, entre 0,0024 y 0,0026 $ cada uno; la sesión nueva, 0,0014 $. Por eso el tope de cada rama es el coste de la base más su parte del presupuesto.
+- **`reanudar` va la última a propósito:** como modifica la base, un fork posterior vería su turno y arrastraría su coste. Los dos forks cuestan casi lo mismo (0,0025 $ y 0,0026 $) porque ninguno incluye al otro. Si cambias el orden en el módulo, comprueba cómo cambian el coste y lo que ven los forks.
 
 **Práctica con nombre (1.7-K1, 1.7-S1):** el SDK reanuda por ID; `--resume <nombre>` es de la CLI. Practícalo con tu sesión de trabajo de esta app: `claude -n app2` al empezar y `claude --resume app2` al día siguiente, y anota en `NOTAS.md` (tabla de sesiones) cuándo la reanudaste y cuándo preferiste empezar de nuevo.
 
