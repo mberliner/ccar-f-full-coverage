@@ -39,8 +39,14 @@ MODEL_DEFAULTS = {
     "enforcement": "claude-haiku-4-5",
 }
 
-BUDGET_VARS = {"agent": "CCARF_BUDGET_AGENT", "multiagent": "CCARF_BUDGET_MULTIAGENT"}
-BUDGET_DEFAULTS = {"agent": 0.25, "multiagent": 1.00}
+BUDGET_VARS = {
+    "agent": "CCARF_BUDGET_AGENT",
+    "multiagent": "CCARF_BUDGET_MULTIAGENT",
+    # app2/01 con Haiku 4.5: con 0,25 $ y --repeat 10, la variante con puerta
+    # usaba el 95 % del tope de cada ejecución y a veces lo superaba.
+    "enforcement": "CCARF_BUDGET_ENFORCEMENT",
+}
+BUDGET_DEFAULTS = {"agent": 0.25, "multiagent": 1.00, "enforcement": 0.50}
 
 
 def lookup(name: str, root: Path) -> tuple[str, str] | None:

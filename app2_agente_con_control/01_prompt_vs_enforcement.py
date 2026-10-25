@@ -178,7 +178,7 @@ async def main_async() -> int:
     print(credentials.describe())
     # Mismo modelo en las dos variantes: si no, el 0 con puerta sería mérito del modelo.
     model = report_model("enforcement")
-    budget = report_budget(args.budget, "agent")
+    budget = report_budget(args.budget, "enforcement")
 
     results = []
     # El tope es de toda la ejecución del script: se reparte entre repeticiones.

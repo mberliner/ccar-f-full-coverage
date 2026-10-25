@@ -49,6 +49,14 @@ def test_enforcement_role_is_independent_of_agent(tmp_path):
     assert resolve_model("agent", root=tmp_path) == ("claude-haiku-5-5", "defecto")
 
 
+def test_enforcement_budget_is_independent_of_agent(tmp_path):
+    write_env(tmp_path, "CCARF_BUDGET_AGENT=0.10\n")
+    assert resolve_budget("enforcement", root=tmp_path) == (0.50, "defecto")
+    write_env(tmp_path, "CCARF_BUDGET_ENFORCEMENT=0.80\n")
+    assert resolve_budget("enforcement", root=tmp_path) == (0.80, ".env")
+    assert resolve_budget("agent", root=tmp_path) == (0.25, "defecto")
+
+
 def test_process_env_used_when_dotenv_lacks_key(tmp_path, monkeypatch):
     write_env(tmp_path, "# sin claves CCARF\n")
     monkeypatch.setenv("CCARF_MODEL_SUBAGENT", "modelo-de-la-shell")

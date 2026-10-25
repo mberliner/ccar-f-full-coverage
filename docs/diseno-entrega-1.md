@@ -10,7 +10,7 @@ Viñetas que introduce: 1.1 (6), 1.2 (8), 1.3 salvo S2 (7), 1.4 (6), 1.5 (6), 1.
 
 **Decisiones tomadas:** Haiku 5.5 para agente único, repeticiones y subagentes; Sonnet 5.5 solo para el coordinador de app3, `max_budget_usd` = **0,25 $** por ejecución de agente único y **1,00 $** en app3. Modelos y presupuestos se parametrizan por `.env` (ver `harness/config.py`). El código *legacy* de `app3/02` lo genera `datos/generar_sinteticos.py`.
 
-**Cambio del 2026-10-24, tras ejecutar:** `app2/01` usa en sus dos variantes un rol propio, `enforcement` (`CCARF_MODEL_ENFORCEMENT`, por defecto Haiku 4.5). Con Haiku 5.5 la regla del prompt no falló en 40 ejecuciones y la señal de §11.3 no se veía; con Haiku 4.5, sin puerta, falló en 8 de 10. El presupuesto de cada `CCARF_BUDGET_*` es el de toda la ejecución del script, repartido entre repeticiones, configuraciones, turnos o ramas.
+**Cambio del 2026-10-24, tras ejecutar:** `app2/01` usa en sus dos variantes un rol propio, `enforcement` (`CCARF_MODEL_ENFORCEMENT`, por defecto Haiku 4.5). Con Haiku 5.5 la regla del prompt no falló en 40 ejecuciones y la señal de §11.3 no se veía; con Haiku 4.5, sin puerta, falló en 8 de 10. Tiene también presupuesto propio, `CCARF_BUDGET_ENFORCEMENT` (0,50 $): con 0,25 $ y `--repeat 10`, la variante con puerta usaba el 95 % del tope de cada repetición. El presupuesto de cada `CCARF_BUDGET_*` es el de toda la ejecución del script, repartido entre repeticiones, configuraciones, turnos o ramas.
 
 ## Piezas compartidas (primero)
 
