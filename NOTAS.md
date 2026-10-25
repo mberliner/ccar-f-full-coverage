@@ -27,7 +27,7 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
 
 **Entregas:**
 
-- [ ] Entrega 1 · D1 (`S-4`): diseño aprobado en `docs/diseno-entrega-1.md` (2026-10-24). Construida en la rama `entrega-1` (2026-10-24):
+- [x] Entrega 1 · D1 (`S-4`): diseño aprobado en `docs/diseno-entrega-1.md` (2026-10-24). Construida en la rama `entrega-1` y fusionada a `main` (2026-10-24):
   - [x] Arnés: `config.py`, `cli.py`, `budget.py`, `data.py`; `skills=[]` por defecto en `options.py`; el recorder guarda `session_id` y el texto de cada resultado.
   - [x] 8 módulos con `INTRODUCE` y ☑: 49 viñetas, 76/240. `pytest` en verde y `generar_sinteticos.py --check` limpio.
   - [x] §11.1 observado: credencial, versiones, `[modelo]` y `[presupuesto]` con su origen.
@@ -38,7 +38,7 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
     - `app2/01` tiene su propio rol, `enforcement` (`CCARF_MODEL_ENFORCEMENT`, por defecto Haiku 4.5), en sus dos variantes; el resto de módulos sigue con Haiku 5.5. El ×10 de coste queda limitado a este módulo (cambio de diseño anotado en `docs/diseno-entrega-1.md`). Presupuesto propio `CCARF_BUDGET_ENFORCEMENT` (0,50 $): con 0,25 $ y `--repeat 10`, la variante con puerta usaba de media el 95 % del tope de cada repetición (máximo 106 %) y la variante anti, el 54 %.
   - [x] Prioridad de `.env` con el `.env` real (diseño, verificación 4; 2026-10-24): con las cinco `CCARF_*` en `.env` y otros valores exportados en la shell, todas las líneas dicen `origen=.env`. Con `CCARF_MODEL_AGENT` falso exportado, `app1/01` (Messages API) y `app2/02` (Agent SDK) se ejecutaron con `claude-haiku-5-5`. `--budget 5` no sube el tope y `--budget 0.05` lo baja.
   - [x] Revisión por una instancia independiente (subagente sin el contexto de la sesión que escribió el código, 2026-10-24): 21 hallazgos, ninguno de gravedad alta, todos aplicados. Los principales: el conteo de pagos ejecutados de `app2/01` sale ahora del estado de la puerta; el hook de umbral falla en cerrado; presupuestos repartidos; y la señal de dependencia escondida, que antes daba falsos positivos.
-  - [ ] Merge a `main`.
+  - [x] Merge a `main` (2026-10-24).
   - **Criterio de presupuesto** (decidido en la revisión): `CCARF_BUDGET_*` es el tope de **toda la ejecución del script**. Se reparte entre `--repeat`, configuraciones, turnos o ramas; el diseño decía «por ejecución» sin precisarlo.
   - **`resume` y `fork_session` arrastran el coste de la sesión base** (posible, 2026-10-24): un fork sin llamadas costó más que la base. `app2/06` da a cada rama reanudada el coste de la base más su parte. Pendiente: confirmarlo con una base cara.
 - [ ] Entrega 2 · D2 y D3 (`S-3`)
