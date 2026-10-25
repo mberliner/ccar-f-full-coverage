@@ -10,7 +10,20 @@ Viñetas que introduce: 2.1 (8), 2.2 salvo S3 (7), 2.3 (9: K1, K4, S4, S5 en `ap
 
 **Decisiones que se mantienen de la entrega 1:** Haiku 5.5 para agente único y subagentes, Sonnet 5.5 para el coordinador, `CCARF_BUDGET_AGENT` (0,25 $) y `CCARF_BUDGET_MULTIAGENT` (1,00 $) como topes de **toda la ejecución del script**, repartidos entre partes, configuraciones y repeticiones. No se añaden roles ni variables salvo que una sonda lo exija (ver Riesgos).
 
-**Fuentes:** roadmap §2–§4, §6, §8, §10 y §13; `resumen-guia-examen-ccar-f.md` §6 (D2 y D3) y §8 (Exercise 1 y 2); `conceptos-generales.md` §4.2 y §4.6, todo en el repositorio de estudio.
+## Lecturas previas
+
+Este diseño solo recoge lo propio de la entrega 2 y se apoya en el repositorio de estudio que nombra `CLAUDE.md`. Las rutas son relativas a la raíz de ese repositorio, esté donde esté clonado. Nada de esto se copia aquí: allí está la fuente única. Un `§` sin nombre de documento se refiere al roadmap.
+
+| Antes de… | Leer |
+| :--- | :--- |
+| Cualquier módulo | `docs/roadmap-apps-demo-ccar-f.md` §2 (cabecera, regla «una vez», par `--anti`, pregunta tipo examen), §3 (perímetro y aislamiento, reglas 3, 4 y 7), §4.3 (trampas ya conocidas) y §13 (ciclo del README) |
+| `QUÉ DICE LA GUÍA` y las preguntas de cada módulo | `docs/resumen-guia-examen-ccar-f.md` §6, la Task Statement del módulo (2.1–2.5, 3.1–3.5) |
+| `app1/03`, `04` y `06` | El mismo resumen, §8: Exercise 1 (tools parecidas y errores estructurados) y Exercise 2 (`.mcp.json` y `~/.claude.json`) |
+| `app1/05` | `docs/conceptos-generales.md` §4.2 (`tool_choice`) y §4.6 (400 con `any` y forzado) |
+| `app1/06` y D3 | `docs/conceptos-generales.md` §4.5 (ámbitos compartido y personal) y §4.6 (`/memory`, `argument-hint`) |
+| `app1/02`–`06` y `app3/03` | `docs/roadmap-apps-demo-ccar-f.md` §6 y §8 (las filas del módulo) |
+| `d3_claude_code/README.md` | `docs/roadmap-apps-demo-ccar-f.md` §4.1, §4.2 y §11 (pasos 5 y 6) |
+| Cierre de la entrega | `docs/roadmap-apps-demo-ccar-f.md` §10 (fila de la entrega 2) |
 
 ## Piezas compartidas (primero)
 
@@ -120,6 +133,23 @@ Cada módulo sigue `/nuevo-modulo`: tests sin modelo primero → módulo con cab
 - **`app1/05` `tool_choice`:** comprobar que Haiku 5.5 acepta `any` y el forzado. Si devuelve 400, la parte usa el rol `enforcement` (Haiku 4.5), con el mismo precedente que `app2/01`, y se anota como cambio de diseño.
 - **`app1/05` scoping y `app1/03` enrutamiento: la señal puede no verse** con Haiku 5.5, que podría acertar igual con 18 tools o con descripciones mínimas. Primero se ejecuta con Haiku 5.5. Si no hay diferencia, se usa el rol `enforcement` en las dos variantes, igual que en `app2/01`, y se anota.
 - **Nombre de la variable de *tool search*** y forma de las tools de *resources* en la CLI fijada (`ListMcpResources`/`ReadMcpResource`): se comprueban en el `init` de la primera ejecución y no se inventan (roadmap §2).
+
+## Modelo de la sesión de construcción
+
+Es el modelo de la sesión de Claude Code que construye la entrega. Los modelos con los que se ejecutan las apps los fijan `.env` y `harness/config.py`, y no cambian.
+
+| Fase | Modelo | Por qué |
+| :--- | :--- | :--- |
+| Datos, `copy_to_temp`, servidores y sus tests | Sonnet 5.5 | Trabajo mecánico que validan los tests |
+| Código y tests de `app1/02`–`06` y `app3/03` | Sonnet 5.5 | Siguen el patrón de la entrega 1; los tests sin modelo y las ejecuciones con `--anti` muestran si funcionan |
+| Sondas de «Riesgos» | Sonnet 5.5 | Se ejecutan de verdad y su resultado se anota en `NOTAS.md`; no se da nada por supuesto (roadmap §2) |
+| Cabeceras `QUÉ DICE LA GUÍA` · `ANTI-PATRÓN / TRAMPA DEL EXAMEN`, preguntas tipo examen y `d3_claude_code/README.md` | Opus 5.5 | Piden criterio didáctico (distractores plausibles, sin copiar la guía, guía frente a producto) y ningún test lo comprueba |
+| Revisión por una instancia independiente, antes del merge | Opus 5.5 | Es la última barrera, sobre todo para lo que no cubren los tests. Si se hace con un subagente, se le asigna Opus al lanzarlo y la sesión no tiene que cambiar de modelo |
+| Rehacer una pieza que la revisión señale como floja | Opus 5.5 | Solo esa pieza, no el módulo entero |
+
+**El cambio se pide, no se asume.** La sesión no puede cambiar su propio modelo. Al empezar una fase cuyo modelo no es el de la sesión actual, se detiene, dice qué fase empieza y qué modelo le corresponde, y pide a la persona que lo cambie con `/model`. No sigue hasta que la persona lo confirma o decide quedarse con el modelo actual. Si la persona se queda con el actual, se anota en `NOTAS.md`.
+
+**Orden dentro de cada módulo:** primero, con Sonnet, el código, los tests y una cabecera con los campos técnicos; después, con Opus, los textos de cabecera de la guía y la sección del README con su pregunta. Para no cambiar de modelo en cada módulo, los textos con Opus pueden agruparse: por ejemplo, todos los de `app1` antes de empezar `app3/03`.
 
 ## Registro y cierre
 

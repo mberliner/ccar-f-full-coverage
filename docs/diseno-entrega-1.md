@@ -2,6 +2,8 @@
 
 Aprobado el 2026-10-24 en plan mode. El avance se registra en `NOTAS.md`; este documento solo cambia si cambia el diseño.
 
+Se apoya en el repositorio de estudio que nombra `CLAUDE.md`, sin rutas de máquina. Un `§` sin nombre de documento se refiere a su roadmap (`docs/roadmap-apps-demo-ccar-f.md`, relativo a la raíz de ese repositorio).
+
 ## Contexto
 
 Hito 0 cerrado (capa meta, arnés, datos, 27/240 viñetas). La entrega 1 (roadmap §10, semana `S-4`) construye los 8 módulos de D1 repartidos en tres apps: `app1/01` · `app2/01`, `02`, `03`, `05`, `06` · `app3/01`, `02`. **Hecho cuando:** sus viñetas tienen `INTRODUCE` y ☑ en `CONCEPTOS.md`, y §11.1 y la señal de §11.3 se han observado en una ejecución con modelo.
