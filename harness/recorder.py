@@ -66,6 +66,9 @@ class RunRecord:
     budget_exceeded: bool = False
     is_error: bool = False
     session_id: str | None = None  # para reanudar o bifurcar la sesión (app2/06)
+    # «rN» -> número de AssistantMessage con ese message_id: distingue una
+    # respuesta que trae varias llamadas en un mensaje de otra partida en varios.
+    messages_per_response: dict[str, int] = field(default_factory=dict)
 
     def parallel_groups(self) -> dict[str, list[ToolCall]]:
         """Respuestas con dos o más llamadas: el modelo las pidió a la vez."""
@@ -143,6 +146,8 @@ class Recorder:
 
     def on_assistant(self, message: AssistantMessage) -> None:
         label = self.response_label(message)
+        counts = self.record.messages_per_response
+        counts[label] = counts.get(label, 0) + 1
         agent = self.agent_of(message.parent_tool_use_id)
         for block in message.content:
             if isinstance(block, TextBlock) and block.text.strip():
@@ -190,9 +195,13 @@ class Recorder:
             self.out(f"[final] {short(rec.final_text)}")
         cost = f"{rec.cost_usd:.4f}" if rec.cost_usd is not None else "?"
         executed = sum(c.executed for c in rec.tool_calls)
+        # `partidas` solo aparece si alguna respuesta llegó en varios mensajes.
+        counts = rec.messages_per_response
+        split = ",".join(f"{r}:{n}" for r, n in counts.items() if n > 1)
+        messages = f"mensajes={sum(counts.values())} respuestas={len(counts)}" + (f" partidas={split}" if split else "")
         self.out(
             f"[fin] {message.subtype} · turnos={rec.num_turns} · coste=${cost} · "
-            f"llamadas={len(rec.tool_calls)} (ejecutadas {executed}) · denegaciones={len(rec.denials)}"
+            f"llamadas={len(rec.tool_calls)} (ejecutadas {executed}) · denegaciones={len(rec.denials)} · {messages}"
         )
 
 

@@ -130,3 +130,24 @@ def test_result_error_without_result_message_still_raises():
 
     with pytest.raises(ResultError):
         asyncio.run(record(raise_only(), echo=False))
+
+
+def test_messages_per_response_distinguishes_split_from_single_message(capsys):
+    # r1 llega partida en tres mensajes (uno por llamada); r2 llega entera.
+    messages = [
+        assistant([ToolUseBlock("a", "Agent", {"subagent_type": "x"})], "m1"),
+        assistant([ToolUseBlock("b", "Agent", {"subagent_type": "y"})], "m1"),
+        assistant([ToolUseBlock("c", "Agent", {"subagent_type": "z"})], "m1"),
+        assistant([TextBlock("hecho"), ToolUseBlock("d", "Read", {"file_path": "a"})], "m2"),
+        result_message(),
+    ]
+    rec = asyncio.run(record(stream(messages), echo=True))
+    assert rec.messages_per_response == {"r1": 3, "r2": 1}
+    out = capsys.readouterr().out
+    assert "mensajes=4 respuestas=2 partidas=r1:3" in out
+
+
+def test_no_split_responses_omits_partidas(capsys):
+    asyncio.run(record(stream([assistant([ToolUseBlock("a", "Read", {"file_path": "a"})], "m1"), result_message()]), echo=True))
+    out = capsys.readouterr().out
+    assert "mensajes=1 respuestas=1" in out and "partidas" not in out
