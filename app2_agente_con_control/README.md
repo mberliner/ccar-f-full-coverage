@@ -15,7 +15,7 @@ Garantías, escalamiento y sesiones sobre un agente de mesa de ayuda (escenario 
 
 ## Ruta de lectura
 
-Ciclo de cada módulo: **predecir → ejecutar (correcto y `--anti`) → contrastar → responder → anotar los fallos en `FALLOS.md`**.
+Ciclo de cada módulo: **predecir → ejecutar (correcto y `--anti`) → contrastar → responder → anotar los fallos en tu `FALLOS.md` (`estado/<perfil>/`)**.
 
 | Módulo | Viñetas | Entrega |
 | :--- | :--- | :---: |
@@ -117,7 +117,7 @@ Mismo pedido de pago con cuatro configuraciones. La línea `[medida]` dice si `p
 | `dontAsk` + `allowed_tools` | lo no listado se deniega sin preguntar | visible, intentada, denegada («don't ask mode») |
 | subagente | hereda el modo del padre | el subagente `pagos` declara la tool, hereda `dontAsk` y se le deniega |
 
-Para el examen vale la lectura de la documentación. La diferencia observada con `disallowed_tools` está anotada en `NOTAS.md`.
+Para el examen vale la lectura de la documentación. La diferencia observada con `disallowed_tools` está anotada en `docs/hallazgos.md`.
 
 ### Pregunta tipo examen
 
@@ -194,7 +194,7 @@ La sesión base analiza los cuatro tickets de EMP-1040. Entre fases, el reembols
 - **El coste de una sesión reanudada o bifurcada es acumulado:** su `[fin]` suma el coste de la historia de la sesión y el suyo propio. En una ejecución, la base costó 0,0016 $ y los forks y la reanudación, entre 0,0024 y 0,0026 $ cada uno; la sesión nueva, 0,0014 $. Por eso el tope de cada rama es el coste de la base más su parte del presupuesto.
 - **`reanudar` va la última a propósito:** como modifica la base, un fork posterior vería su turno y arrastraría su coste. Los dos forks cuestan casi lo mismo (0,0025 $ y 0,0026 $) porque ninguno incluye al otro. Si cambias el orden en el módulo, comprueba cómo cambian el coste y lo que ven los forks.
 
-**Práctica con nombre (1.7-K1, 1.7-S1):** el SDK reanuda por ID; `--resume <nombre>` es de la CLI. Practícalo con tu sesión de trabajo de esta app: `claude -n app2` al empezar y `claude --resume app2` al día siguiente, y anota en `NOTAS.md` (tabla de sesiones) cuándo la reanudaste y cuándo preferiste empezar de nuevo.
+**Práctica con nombre (1.7-K1, 1.7-S1):** el SDK reanuda por ID; `--resume <nombre>` es de la CLI. Practícalo con tu sesión de trabajo de esta app: `claude -n app2` al empezar y `claude --resume app2` al día siguiente, y anota en tu `NOTAS_PERSONALES.md` (`estado/<perfil>/`, tabla de sesiones) cuándo la reanudaste y cuándo preferiste empezar de nuevo.
 
 ### Pregunta tipo examen
 

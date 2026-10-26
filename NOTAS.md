@@ -1,6 +1,6 @@
 # NOTAS
 
-Scratchpad de sesión y notas de producto no evaluables. Las predicciones y respuestas fallidas van en [FALLOS.md](FALLOS.md).
+Avance de construcción del proyecto: igual para todo el mundo y versionado. Los hallazgos de producto están en [docs/hallazgos.md](docs/hallazgos.md); las sesiones, la práctica propia y los fallos son personales y viven en `estado/<perfil>/` (plantillas en `plantillas/estado/`).
 
 Marcas para el roadmap (flujo en `docs/estandares-flujo.md`): `→ roadmap` pendiente de llevar; `✓ roadmap <fecha> §x` ya está allí y manda lo de allí.
 
@@ -50,57 +50,12 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
 - [ ] `S-1` · repaso sin código nuevo
 - [ ] Entrega 4 · opcional, después del examen
 
-## Sesiones
+## Notas de construcción
 
-| App | Nombre de sesión | Estado |
-| :--- | :--- | :--- |
-| app1 | `app1` | módulo 01 hecho (entrega 1) |
-| app2 | `app2` | módulos 01, 02, 03, 05 y 06 hechos (entrega 1); práctica de `--resume app2` pendiente (README de app2, módulo 06) |
-| app3 | `app3` | módulos 01 y 02 hechos (entrega 1) |
-
-## Notas de producto (no evaluables)
-
-- **Plugins sincronizados desde claude.ai** (`<nombre>@synced`): ✓ roadmap 2026-10-24 §4.3.
-- **Subagentes fork activos por defecto** (`CLAUDE_CODE_FORK_SUBAGENT="0"` en los módulos con subagentes): ✓ roadmap 2026-10-24 §3, regla 4.
-- **Subagentes en segundo plano aunque `background=False`** (`CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1`): ✓ roadmap 2026-10-24 §3, regla 4. Lo propio de esta implementación: sin la variable, `query()` emitía varios `ResultMessage`; con ella, un solo `[fin]` y resultado «Subagent hand-back».
-- **`tools=[]` quita también la tool `Agent`:** ✓ roadmap 2026-10-24 §4.3.
-- **`disallowed_tools` con una tool MCP no la quita:** ✓ roadmap 2026-10-24 §4.3 y §7 (`app2/03`).
-- **La denegación de un subagente no aparece en `permission_denials`** del padre: ✓ roadmap 2026-10-24 §4.3.
-- **Un modelo reciente puede no mostrar la tasa de fallo del prompt** (`app2/01`): ✓ roadmap 2026-10-24 §4.3, §7 y §13. Lo propio de esta implementación: rol `enforcement` y presupuesto `CCARF_BUDGET_ENFORCEMENT` en `harness/config.py`.
-- **El corte de `max_budget_usd` lanza `ResultError`:** ✓ roadmap 2026-10-24 §4.3 y §5 (`recorder.py`).
-- **Tope por ejecución del script**, repartido entre repeticiones, configuraciones, turnos o ramas: ✓ roadmap 2026-10-24 §3, regla 7.
 - **Cobertura 240/240:** `test_full_coverage` está en `xfail(strict=True)`; cuando pase, pytest lo marcará como XPASS fallido y hay que quitar la marca.
-- **Conectores de claude.ai** (`ENABLE_CLAUDEAI_MCP_SERVERS=false` también en la sesión de construcción): ✓ roadmap 2026-10-24 §3, regla 3.
-- **Skills sincronizadas de claude.ai** (`docx`, `pdf`, `deep-research`…): no se encontró ajuste para desactivarlas por proyecto; no afectan a las apps (`setting_sources=[]`). Origen de las 18 skills de `[contexto]`: ✓ roadmap 2026-10-24 §4.3 (vienen de la CLI; con `CLAUDE_CONFIG_DIR` vacío salen las mismas).
-- **`claudeMdExcludes` en Windows:** ✓ roadmap 2026-10-24 §4.3.
-- **`skills=None` no apaga las skills** (`skills=[]` por defecto y `setting_sources=None` rechazado): ✓ roadmap 2026-10-24 §3, regla 3, y §5; comprobado que el modelo no ve las skills con `skills=[]`: ✓ roadmap 2026-10-24 §3, regla 3. Lo propio de esta implementación: la primera ejecución con modelo listó 18 skills en `[contexto]`, y la sonda (Haiku 5.5, ~0,004 $) recibió `Skill simplify is not in this session's skills allowlist`.
-- **Plugins en la línea `[contexto]` con `setting_sources=[]`** (2026-10-24): ✓ roadmap 2026-10-24 §4.3 (origen `@builtin`, no de la cuenta). Pendiente de comprobar: si aportan hooks o tools a los agentes de las apps; la lista de tools de la sonda (24) solo muestra tools de la CLI. → roadmap (§4.3) cuando se confirme.
-- **Una respuesta del modelo puede llegar en varios `AssistantMessage`** con el mismo `message_id`: ✓ roadmap 2026-10-24 §5 (`recorder.py`). Lo propio de esta implementación: `RunRecord.messages_per_response` y `partidas=` en `[fin]`. En `app3/02 --parte paralelo`, `r1` llegó en 3 mensajes con las 3 llamadas `Agent`, y en modo secuencial también en 3 con una sola llamada. Pendiente: por qué son 3 (¿razonamiento o texto en mensajes aparte?); no se ha mirado.
-- **Hooks de la sesión de construcción:**
-  - Instantánea de hooks al arrancar, fallo en cerrado, dos barreras (`deny` y hook), falso positivo con `git commit -F` y UTF-8 en Windows: ✓ roadmap 2026-10-24 §4.3.
-  - El filtro de shell de `proteger_rutas.py` es heurístico:
-    - bloquea cualquier comando que nombre `datos/sinteticos` o un `.env`, salvo `git status|diff|log|show|add` sin nada encadenado (el salto de línea cuenta como separador);
-    - no ve un script que escriba por dentro, ni variables o comodines que compongan la ruta. Esa vía la cubre `generar_sinteticos.py --check`.
-  - **Variantes de `.env`:** protege `.env` y `.env.*`, salvo las plantillas `.env.example` y `.env.sample`, sin distinguir mayúsculas.
-  - La regla `deny` se vio rechazar el `Edit` («directory that is denied by your permission settings») y el hook bloquear por shell (2026-10-24).
-  - **Una instrucción en contexto puede tapar la prueba:** ✓ roadmap 2026-10-24 §11.5. Caso visto: al pedir «edita `datos/sinteticos/tickets.json`», la sesión fue directa al generador sin intentar el `Edit`.
-- **`argument-hint` no obliga a pasar el argumento** (Claude Code 2.1.310). La guía lo presenta como el mecanismo para pedir el parámetro; en el producto, el hint solo se muestra en el autocompletado y la skill se lanza igual sin argumento. Por eso `verificar-concepto` comprueba `$ARGUMENTS` y se detiene si llega vacío. En el examen vale la lectura de la guía (registrado en `conceptos-generales.md` §4.6 del repositorio de estudio). Comprobado el 2026-10-24: el fork funciona y a la conversación principal solo llegó el resultado.
-- **Varios directorios de configuración (`CLAUDE_CONFIG_DIR`)** y decisión de credencial (`apiKeyHelper` solo en la CLI, clave en `.env`): ✓ roadmap 2026-10-24 §4.3. Lo propio de esta implementación:
-  - **Credencial:** las apps usan la clave empresarial cargada desde `.env`. Si la clave está exportada, el módulo la usa y el coste va a esa cuenta.
-  - `app2/06` reanuda sesiones del directorio de configuración del proceso que lo ejecuta.
-  - **`.env` y el hook:** `proteger_rutas.py` impide crear o editar `.env` desde la sesión de construcción; lo crea la persona copiando `.env.example`. `.gitignore` cubre solo `.env` (patrón exacto), no variantes.
-  - **`CLAUDE_CONFIG_DIR` para las apps:** en `app2/06` (2026-10-24), `resume` y `fork_session` funcionaron con el directorio de configuración del proceso que ejecuta el módulo, sin fijarlo. Con la clave en `.env` no hace falta login de respaldo. No se amplía `credentials.py`. Se queda aquí: depende del directorio de configuración de cada persona.
-- **`/memory` no lista las reglas por ruta:** ✓ roadmap 2026-10-24 §11.5.
 - **Viñetas de D3 pendientes para `d3_claude_code/README.md`** (entrega 2): 3.1-S1, 3.1-S4, 3.2-K4, 3.2-S5 y las 9 de 3.5. Las otras 27 ya tienen su marcador en `CLAUDE.md`, `docs/` y `.claude/`.
-- **La CLI hereda `os.environ` completo** y encima aplica `options.env`: ✓ roadmap 2026-10-24 §5 (`credentials.py`).
-- **Los hooks se lanzan con `uv run`, no con `python`:** ✓ roadmap 2026-10-24 §4.3.
-- **La configuración de usuario no se apaga desde el repositorio:** ✓ roadmap 2026-10-24 §3 (regla 3) y §4.3. Pendiente de comprobar: si `--setting-sources project,local` deja fuera también las reglas y el `CLAUDE.md` de usuario. → roadmap (§4.3) cuando se confirme.
 
-- **Sugerencias de entrada desactivadas** (2026-10-25): la caja de entrada de Claude Code propone texto gris con la siguiente respuesta y puede revelar la letra correcta de un ejercicio. Se fija `promptSuggestionEnabled: false` en `.claude/settings.json`. Comprobado (2026-10-25, sesiones de la CLI, observado por la persona en su caja de entrada):
-  - Una sesión nueva abierta con la setting de proyecto no muestra sugerencias.
-  - **La clave no se aplica en caliente:** la sesión que ya estaba abierta siguió mostrándolas tras fijar `false` en `.claude/settings.json`; la sesión que ya no las mostraba siguió sin ellas tras crear `.claude/settings.local.json` con `true`; una sesión nueva sí aplicó el `true` local. El archivo local de la prueba se borró después.
-  - Consecuencia: no hay forma dinámica dentro de una sesión; el valor se fija al arrancarla. Un comando que escribiera el archivo local solo valdría para la siguiente sesión.
-  - Pendiente de comprobar: qué pasa si la configuración de usuario la activa (la de proyecto debería ganar, pero `settings.local.json` o la variable `CLAUDE_CODE_ENABLE_PROMPT_SUGGESTION` pueden anularla).
+Los hallazgos de producto y de implementación están en [docs/hallazgos.md](docs/hallazgos.md). Tu estado de estudio (fallos, sesiones, práctica) vive fuera de git, en `estado/<perfil>/`.
 
 ## Citas en prosa por convertir a `# USA`
 

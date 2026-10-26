@@ -12,7 +12,7 @@ Una sesión de estudio típica:
 2. **Lee la cabecera del módulo.** Explica el concepto, qué dice la guía, por qué importa y cuál es el anti-patrón o la trampa del examen.
 3. **Predice** qué hará el agente y ejecuta el módulo. El agente trabaja sobre una mesa de ayuda TI con datos sintéticos.
 4. **Ejecútalo con `--anti`** (si la viñeta describe un error) y compara el resultado con el comportamiento correcto.
-5. **Anota tus fallos** en `FALLOS.md`: las predicciones y respuestas que no acertaste.
+5. **Anota tus fallos** en tu `FALLOS.md` (`estado/<perfil>/`, ver «Primeros pasos»): las predicciones y respuestas que no acertaste.
 6. **Repasa la cobertura** con `/verificar-concepto TS x.y-Kn`, que comprueba que la viñeta está introducida una sola vez y en su sitio.
 
 Las ejecuciones con modelo tienen coste, por eso todas llevan un presupuesto máximo (`max_budget_usd`). Los tests con `pytest` no llaman al modelo y no cuestan nada.
@@ -37,7 +37,9 @@ Además, el propio repositorio muestra la configuración de Claude Code (`CLAUDE
 | `datos/` | Datos **sintéticos** de una mesa de ayuda TI y su generador |
 | `tests/` | Tests sin modelo (`pytest`): una-vez-por-viñeta, perímetro, arnés, datos, hooks |
 | `CONCEPTOS.md` | Registro viñeta → módulo donde se introduce (240 viñetas) |
-| `NOTAS.md` / `FALLOS.md` | Registro de avance y scratchpad / predicciones y respuestas fallidas |
+| `NOTAS.md` / `docs/hallazgos.md` | Avance de construcción / hallazgos de producto (versionados) |
+| `plantillas/estado/` | Plantillas de tu estado personal (`FALLOS.md`, `NOTAS_PERSONALES.md`) |
+| `estado/<perfil>/` | **Tu** estado de estudio: fallos, sesiones, práctica. Lo crea `harness/estado.py`; git lo ignora |
 | `docs/` | Estándares de código y de flujo de trabajo |
 
 ## Si la guía cambia
@@ -117,7 +119,22 @@ cp .env.example .env     # en PowerShell: Copy-Item .env.example .env
 
 Edita `.env` y sustituye `sk-ant-REEMPLAZAR` por tu clave. El archivo está en `.gitignore`. `harness/credentials.py` solo lee `.env` si no hay `ANTHROPIC_API_KEY` en el entorno.
 
-### 5. Si trabajas con Claude Code en este repositorio
+### 5. Crear tu estado personal
+
+Tus fallos, sesiones y práctica no se versionan: viven en `estado/<perfil>/`, que git ignora, y se crean desde `plantillas/estado/`.
+
+```bash
+uv run python -m harness.estado init                  # perfil «default»
+uv run python -m harness.estado init --perfil intento2
+uv run python -m harness.estado where                 # muestra la ruta y de dónde sale
+```
+
+- Un clon admite varios perfiles (una persona, o varios intentos del examen). Se eligen con `--perfil` o con `CCARF_PERFIL` en `.env`.
+- `CCARF_ESTADO_DIR` mueve la base fuera del clon, por ejemplo a una carpeta sincronizada. Debe ser una ruta absoluta (o `estado`): una carpeta relativa con otro nombre quedaría dentro del clon sin ignorar y se rechaza.
+- `init` solo crea lo que falta y nunca sobrescribe lo que ya escribiste.
+- `uv run pytest` no necesita este estado: un clon recién hecho pasa los tests igual.
+
+### 6. Si trabajas con Claude Code en este repositorio
 
 Los `CLAUDE.md` de directorios padre contaminarían las pruebas, así que se excluyen en un archivo local que no se versiona:
 
@@ -137,7 +154,7 @@ Edítalo: un patrón en `claudeMdExcludes` por cada `CLAUDE.md` padre que aparez
 3. Escribe la lógica hasta que `uv run pytest` pase. Construye las opciones del agente con `harness.options.isolated_options(max_budget_usd=...)`.
 4. Al añadir un `INTRODUCE`, marca ☑ la fila en `CONCEPTOS.md` y actualiza su contador en el mismo cambio.
 5. Comprueba la viñeta con la skill `/verificar-concepto TS x.y-Kn`.
-6. Registra el avance en `NOTAS.md` y los fallos en `FALLOS.md`.
+6. Registra el avance de construcción en `NOTAS.md`, los hallazgos en `docs/hallazgos.md` y tus fallos en tu `FALLOS.md` personal.
 
 Cada módulo debería poder ejecutarse con y sin `--anti` cuando la viñeta describe un error, para comparar el comportamiento correcto con el anti-patrón.
 

@@ -4,7 +4,7 @@ Aprobado el 2026-10-25 en plan mode. El avance se registra en `NOTAS.md`; este d
 
 ## Contexto
 
-Entrega 1 cerrada y fusionada (76/240). La entrega 2 (roadmap §10, semana `S-3`) construye `app1/02`–`06`, `app3/03` y la sección D3 (`d3_claude_code/README.md`). **Hecho cuando:** sus viñetas tienen `INTRODUCE` y ☑ en `CONCEPTOS.md`, incluidas las 13 del README de D3, y la práctica propia de §4.2 queda anotada en `NOTAS.md`.
+Entrega 1 cerrada y fusionada (76/240). La entrega 2 (roadmap §10, semana `S-3`) construye `app1/02`–`06`, `app3/03` y la sección D3 (`d3_claude_code/README.md`). **Hecho cuando:** sus viñetas tienen `INTRODUCE` y ☑ en `CONCEPTOS.md`, incluidas las 13 del README de D3, y la práctica propia de §4.2 queda anotada en tu `NOTAS_PERSONALES.md` (`estado/<perfil>/`).
 
 Viñetas que introduce: 2.1 (8), 2.2 salvo S3 (7), 2.3 (9: K1, K4, S4, S5 en `app1/05`; K2, K3, S1–S3 en `app3/03`), 2.4 (9), 2.5 (9) y las 13 de D3 (3.1-S1, 3.1-S4, 3.2-K4, 3.2-S5, 3.5 completo) = **55**. El contador pasa de 76 a **131/240**. (2.2-S3 va a `app3/04`, en la entrega 3.)
 
@@ -45,7 +45,7 @@ Este diseño solo recoge lo propio de la entrega 2 y se apoya en el repositorio 
      - `amplio`: 18 tools frente a `acotado`, que tiene 5 (05).
    - **`app1_agente_unico/servers/catalogo_stdio.py`**: servidor stdio con `mcp` (FastMCP, ya instalado en la versión 2.3.0). Expone `search_kb` y `get_article`, y el catálogo de artículos como *resources*. Lee un token de su entorno y solo informa de si lo recibió, sin mostrarlo (06).
    - **`app3_sistema_multiagente/servers/investigacion.py`** (ampliación): `fetch_url` (genérica), `load_document` (valida que la URL sea de documento y, si no, devuelve un error de validación) y `verify_fact` (acotada: solo afirmaciones simples; las complejas devuelven «enrutar al coordinador»).
-5. **Prosa → `USA`** en el mismo cambio que introduce 2.2: `helpdesk.error` y `investigacion.validation_error` ya devuelven `errorCategory`/`isRetryable`. Reciben `USA: TS 2.2-K1, TS 2.2-S1`, igual que `.claude/rules/mcp-servers.md`, que lleva el marcador como comentario HTML.
+5. **Prosa → `USA`** en el mismo cambio que introduce 2.2: `helpdesk.error` y `investigacion.validation_error` ya devuelven `errorCategory`/`isRetryable`. Reciben el marcador `USA` de TS 2.2-K1 y TS 2.2-S1, igual que `.claude/rules/mcp-servers.md`, que lleva el marcador como comentario HTML.
 6. **Por app:**
    - `app1_agente_unico/CLAUDE.md`: se actualiza la línea de servidores (ya existen `servers/`) y se añade la excepción `setting_sources=["project"]` de 06.
    - `app1/README.md` y `app3/README.md`: una sección por módulo, con su comando, predicciones, qué observar y una pregunta tipo examen en `<details>`.
@@ -123,13 +123,13 @@ Cada módulo sigue `/nuevo-modulo`: tests sin modelo primero → módulo con cab
   - la verificación de §11.5;
   - un cambio multi-archivo pequeño con plan mode: por ejemplo, una variante `--anti` nueva en `app1/03` con su test y su README;
   - uno acotado con ejecución directa: por ejemplo, ajustar un mensaje de error de `mesa.py` con su test;
-  - anotar en `NOTAS.md` cuál eligió para cada cambio y por qué.
+  - anotar en tu `NOTAS_PERSONALES.md` cuál eligió para cada cambio y por qué.
 - **3 preguntas tipo examen** (una de 3.1 y 3.3, otra de 3.2 y otra de 3.4 y 3.5), con la respuesta en `<details>`.
 - `tests/test_una_vez.py` ya acepta el destino `d3` en `d3_claude_code/`, `.claude/` y `docs/`, así que no hay que tocarlo.
 
 ## Riesgos y sondas (antes de codificar el módulo afectado)
 
-- **`app1/06`: aprobación de los servidores de `.mcp.json`.** Con `setting_sources=["project"]`, la CLI puede exigir que se aprueben. Una sonda barata lo comprueba. Si hace falta, el `cwd` de prueba lleva su propio `.claude/settings.json` con `enableAllProjectMcpServers: true`, comentado. → Si se confirma, `NOTAS.md` y `→ roadmap` (§4.3).
+- **`app1/06`: aprobación de los servidores de `.mcp.json`.** Con `setting_sources=["project"]`, la CLI puede exigir que se aprueben. Una sonda barata lo comprueba. Si hace falta, el `cwd` de prueba lleva su propio `.claude/settings.json` con `enableAllProjectMcpServers: true`, comentado. → Si se confirma, `docs/hallazgos.md` y `→ roadmap` (§4.3).
 - **`app1/05` `tool_choice`:** comprobar que Haiku 5.5 acepta `any` y el forzado. Si devuelve 400, la parte usa el rol `enforcement` (Haiku 4.5), con el mismo precedente que `app2/01`, y se anota como cambio de diseño.
 - **`app1/05` scoping y `app1/03` enrutamiento: la señal puede no verse** con Haiku 5.5, que podría acertar igual con 18 tools o con descripciones mínimas. Primero se ejecuta con Haiku 5.5. Si no hay diferencia, se usa el rol `enforcement` en las dos variantes, igual que en `app2/01`, y se anota.
 - **Nombre de la variable de *tool search*** y forma de las tools de *resources* en la CLI fijada (`ListMcpResources`/`ReadMcpResource`): se comprueban en el `init` de la primera ejecución y no se inventan (roadmap §2).
@@ -142,7 +142,7 @@ Es el modelo de la sesión de Claude Code que construye la entrega. Los modelos 
 | :--- | :--- | :--- |
 | Datos, `copy_to_temp`, servidores y sus tests | Sonnet 5.5 | Trabajo mecánico que validan los tests |
 | Código y tests de `app1/02`–`06` y `app3/03` | Sonnet 5.5 | Siguen el patrón de la entrega 1; los tests sin modelo y las ejecuciones con `--anti` muestran si funcionan |
-| Sondas de «Riesgos» | Sonnet 5.5 | Se ejecutan de verdad y su resultado se anota en `NOTAS.md`; no se da nada por supuesto (roadmap §2) |
+| Sondas de «Riesgos» | Sonnet 5.5 | Se ejecutan de verdad y su resultado se anota en `docs/hallazgos.md`; no se da nada por supuesto (roadmap §2) |
 | Cabeceras `QUÉ DICE LA GUÍA` · `ANTI-PATRÓN / TRAMPA DEL EXAMEN`, preguntas tipo examen y `d3_claude_code/README.md` | Opus 5.5 | Piden criterio didáctico (distractores plausibles, sin copiar la guía, guía frente a producto) y ningún test lo comprueba |
 | Revisión por una instancia independiente, antes del merge | Opus 5.5 | Es la última barrera, sobre todo para lo que no cubren los tests. Si se hace con un subagente, se le asigna Opus al lanzarlo y la sesión no tiene que cambiar de modelo |
 | Rehacer una pieza que la revisión señale como floja | Opus 5.5 | Solo esa pieza, no el módulo entero |
@@ -154,7 +154,9 @@ Es el modelo de la sesión de Claude Code que construye la entrega. Los modelos 
 ## Registro y cierre
 
 - `CONCEPTOS.md`: ☑ y contador en el mismo cambio que cada `INTRODUCE`.
-- `NOTAS.md`: casilla de la entrega 2, tabla de sesiones (`app1`, `app3` y `d3`), resultado de las sondas y notas nuevas `→ roadmap`.
+- `NOTAS.md`: casilla de la entrega 2.
+- `docs/hallazgos.md`: resultado de las sondas y notas nuevas `→ roadmap`.
+- Tu `NOTAS_PERSONALES.md`: tabla de sesiones (`app1`, `app3` y `d3`).
 - Revisión de cada módulo por una instancia independiente (un subagente sin el contexto de la sesión que escribió el código), antes del merge.
 
 ## Verificación
@@ -170,6 +172,6 @@ Es el modelo de la sesión de Claude Code que construye la entrega. Los modelos 
    - `app3/03`: llamadas fuera de rol con `todas`, URL no válida con `fetch_url` y más delegaciones con `sin_verify`.
 4. `[contexto]` sin la capa meta (§11.6). En `app1/06`, solo el `.mcp.json` del `cwd` temporal, no el del repositorio. Coste dentro del tope en cada `[fin]`.
 5. `/verificar-concepto TS x.y-Kn` sobre una muestra de cada módulo y de D3.
-6. La práctica propia de D3 queda anotada en `NOTAS.md` (lo hace la persona).
+6. La práctica propia de D3 queda anotada en tu `NOTAS_PERSONALES.md` (lo hace la persona).
 
 Coste orientativo de la entrega en modo normal: unos 3–6 $. La mayor parte se va en `app3/03` (Sonnet como coordinador, 4 variantes) y en las baterías de `app1/03` y `app1/05`.

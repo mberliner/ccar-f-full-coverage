@@ -4,7 +4,7 @@ Un agente, sus tools y su bucle: la base sobre la que se apoyan app2 y app3. El 
 
 ## Ruta de lectura
 
-Cada módulo sigue el ciclo de `README.md` del proyecto: **predecir → ejecutar (correcto y `--anti`) → contrastar → responder la pregunta → anotar los fallos en `FALLOS.md`**.
+Cada módulo sigue el ciclo de `README.md` del proyecto: **predecir → ejecutar (correcto y `--anti`) → contrastar → responder la pregunta → anotar los fallos en tu `FALLOS.md` (`estado/<perfil>/`)**.
 
 | Módulo | Viñetas | Entrega |
 | :--- | :--- | :---: |

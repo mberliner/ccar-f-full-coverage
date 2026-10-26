@@ -37,9 +37,10 @@ COUNTER_RE = re.compile(r"\*\*Introducidas: (\d+)/240\*\*")
 MARKER_RE = re.compile(r"\b(INTRODUCE|USA):\s*(.*)")
 ID_RE = re.compile(r"TS \d\.\d-[KS]\d+")
 
-# Se excluyen los registros (contienen todos los identificadores) y los propios tests.
-SKIP_DIRS = {".git", ".venv", "tests", "__pycache__", ".pytest_cache"}
-SKIP_FILES = {"CONCEPTOS.md", "NOTAS.md", "FALLOS.md"}
+# Se excluyen los registros (contienen todos los identificadores), los propios tests y el
+# estado personal (`estado/`, ignorado por git) con sus plantillas.
+SKIP_DIRS = {".git", ".venv", "tests", "__pycache__", ".pytest_cache", "estado", "plantillas"}
+SKIP_FILES = {"CONCEPTOS.md", "NOTAS.md"}
 
 
 def parse_conceptos(path: Path) -> tuple[dict[str, tuple[str, str]], int | None]:

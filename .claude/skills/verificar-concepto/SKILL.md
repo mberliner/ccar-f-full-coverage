@@ -26,7 +26,7 @@ Falta la viñeta. Uso: /verificar-concepto <TS x.y-Kn|Sn>
 ```
 
 1. En `CONCEPTOS.md`, localiza la fila de la viñeta y anota su destino (`appN/NN_concepto` o `d3`) y su estado (☐/☑).
-2. Busca con Grep el marcador `INTRODUCE:` que contenga el identificador exacto, excluyendo `CONCEPTOS.md`, `NOTAS.md`, `FALLOS.md` y `tests/`. Debe haber como mucho uno, y estar en el destino:
+2. Busca con Grep el marcador `INTRODUCE:` que contenga el identificador exacto, excluyendo `CONCEPTOS.md`, `NOTAS.md`, `estado/`, `plantillas/` y `tests/`. Debe haber como mucho uno, y estar en el destino:
    - si el destino es un módulo, en su archivo;
    - si es `d3`, en `d3_claude_code/`, `.claude/`, `docs/`, `CLAUDE.md` o en el `CLAUDE.md` de una app.
 3. Si hay marcador, comprueba que su archivo tiene la cabecera completa:

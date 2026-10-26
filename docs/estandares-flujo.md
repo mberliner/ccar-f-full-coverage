@@ -40,10 +40,19 @@ Importado por `CLAUDE.md`. Cómo se construye el proyecto.
 
 ## Registro entre sesiones
 
-- `NOTAS.md`: avance de todos los hitos (el roadmap es una plantilla y no lo lleva), *scratchpad* de sesión y notas de producto no evaluables.
-- Mejoras para el roadmap: una nota que le pasaría también a otra persona, con otra máquina y otra cuenta, se marca `→ roadmap`. Al llevarla al roadmap (sección afectada o §4.3, más una línea en §14) se reduce aquí a un puntero `✓ roadmap YYYY-MM-DD §x`, para no duplicarla. Las que dependen de esta implementación o aún no se han comprobado se quedan solo aquí (criterio en roadmap §12, «Mantener la plantilla al día»).
+Se separa lo que es del proyecto (versionado y igual para todos) de lo que es de una persona (fuera de git).
+
+**Versionado:**
+- `NOTAS.md`: avance de todos los hitos (el roadmap es una plantilla y no lo lleva) y notas de construcción.
+- `docs/hallazgos.md`: notas de producto no evaluables y hallazgos de esta implementación.
+- Mejoras para el roadmap: una nota que le pasaría también a otra persona, con otra máquina y otra cuenta, se marca `→ roadmap`. Al llevarla al roadmap (sección afectada o §4.3, más una línea en §14) se reduce en `docs/hallazgos.md` a un puntero `✓ roadmap YYYY-MM-DD §x`, para no duplicarla. Las que dependen de esta implementación o aún no se han comprobado se quedan solo allí (criterio en roadmap §12, «Mantener la plantilla al día»).
+- Estos documentos son siempre agnósticos: rutas relativas al proyecto o genéricas (`~/.claude/…`), sin rutas absolutas, sin nombres de personas, cuentas ni perfiles.
+
+**Personal, fuera de git** (`estado/<perfil>/`, ignorado; plantillas en `plantillas/estado/`):
 - `FALLOS.md`: predicciones y respuestas fallidas.
-- Las notas son siempre agnósticas: rutas relativas al proyecto o genéricas (`~/.claude/…`), sin rutas absolutas, sin nombres de personas, cuentas ni perfiles.
+- `NOTAS_PERSONALES.md`: tabla de sesiones, práctica propia (`--resume`, D3) y *scratchpad*.
+- Se crea con `uv run python -m harness.estado init [--perfil nombre]`, que nunca pisa lo ya escrito. Un clon puede tener varios perfiles (`CCARF_PERFIL`) y la base se puede mover con `CCARF_ESTADO_DIR`.
+- Aquí no rige la regla de agnosticismo: es tuyo. Lo que le serviría a otra persona se lleva a `docs/hallazgos.md`.
 - `CLAUDE.md` y estos estándares solo cambian cuando cambia una regla estable.
 
 ## Ejercicios de evaluación

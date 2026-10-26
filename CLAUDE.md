@@ -32,7 +32,7 @@ Los `CLAUDE.md` de directorios padre no aplican aquí y contaminarían las prueb
 - **Regla «una vez»:** un único `INTRODUCE` por viñeta; después, solo `USA`.
 - **Datos:** siempre sintéticos y generados por `datos/generar_sinteticos.py`.
 - **Coste:** `max_budget_usd` en toda ejecución con modelo.
-- **Registros:** `CLAUDE.md` solo lleva contexto y reglas estables. El avance de los hitos y el *scratchpad* de sesión van en `NOTAS.md`; las predicciones y respuestas fallidas, en `FALLOS.md`.
+- **Registros:** `CLAUDE.md` solo lleva contexto y reglas estables. El avance de los hitos va en `NOTAS.md` y los hallazgos de producto, en `docs/hallazgos.md` (ambos versionados). El estado personal (fallos, sesiones, práctica, *scratchpad*) vive fuera de git, en `estado/<perfil>/`, creado desde `plantillas/estado/` con `harness/estado.py`.
 
 Detalle de código y de flujo:
 

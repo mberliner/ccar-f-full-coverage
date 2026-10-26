@@ -4,7 +4,7 @@ Un coordinador (Sonnet) y subagentes (Haiku) que investigan los tickets y la bas
 
 ## Ruta de lectura
 
-Ciclo de cada módulo: **predecir → ejecutar (correcto y `--anti`) → contrastar → responder → anotar los fallos en `FALLOS.md`**.
+Ciclo de cada módulo: **predecir → ejecutar (correcto y `--anti`) → contrastar → responder → anotar los fallos en tu `FALLOS.md` (`estado/<perfil>/`)**.
 
 | Módulo | Viñetas | Entrega |
 | :--- | :--- | :---: |
