@@ -12,7 +12,7 @@ Cada módulo sigue el ciclo de `README.md` del proyecto: **predecir → ejecutar
 | [`02_tools_integradas.py`](02_tools_integradas.py) | TS 2.5-K1, K2, K3, K4, S1, S2, S3, S4, S5 | 2 |
 | [`03_servidor_mcp.py`](03_servidor_mcp.py) | TS 2.1-K1, K2, K3, K4, S1, S2, S3, S4 | 2 |
 | [`04_errores_estructurados.py`](04_errores_estructurados.py) | TS 2.2-K1, K2, K3, K4, S1, S2, S4 | 2 |
-| `05_scoping_y_tool_choice.py` | TS 2.3 | 2 |
+| [`05_scoping_y_tool_choice.py`](05_scoping_y_tool_choice.py) | TS 2.3-K1, K4, S4, S5 | 2 |
 | `06_mcp_config.py` | TS 2.4 | 2 |
 | `07_recorte_de_contexto.py` | TS 5.1-K3, S3 | 3 |
 
@@ -224,4 +224,61 @@ Una tool MCP de reembolsos devuelve «Operation failed» ante cualquier fallo. E
 <summary>Respuesta</summary>
 
 **A.** El fallo se comunica con el flag de error y metadatos estructurados (TS 2.2-K1, TS 2.2-S1): la categoría distingue una regla de negocio de un fallo transitorio (TS 2.2-K2), `isRetryable` evita el reintento inútil (TS 2.2-K4) y el mensaje explica la política para que el agente informe bien (TS 2.2-S2). B pone un tope arbitrario en vez de dar al agente la información, y seguirá reintentando lo que no tiene arreglo; C intenta suplir en prosa lo que debería salir de la tool, y no distingue unos errores de otros; D empeora el problema: invita a reintentar justo lo que no es reintentable. Un mensaje genérico es el anti-patrón (TS 2.2-K3).
+</details>
+
+---
+
+## 05 · Scoping y `tool_choice`
+
+```bash
+uv run python app1_agente_unico/05_scoping_y_tool_choice.py --parte scoping                  # 5 tools
+uv run python app1_agente_unico/05_scoping_y_tool_choice.py --parte scoping --anti amplio    # 18 tools
+uv run python app1_agente_unico/05_scoping_y_tool_choice.py --parte tool_choice --repeat 6   # auto, any y forzado
+uv run python app1_agente_unico/05_scoping_y_tool_choice.py --parte scoping --repeat 5 --budget 0.20
+```
+
+Dos partes independientes.
+
+**`scoping` (Agent SDK):** las mismas seis peticiones sobre el servidor `mesa` con la familia `acotado` (5 tools) o `amplio` (18: las mismas 5 más 13 alias casi iguales, como `lookup_ticket` o `get_employee`). Se mide el acierto de la primera llamada (un alias de la tool esperada cuenta como acierto), si la tool elegida cambia entre repeticiones y el coste. La carga diferida de definiciones (*tool search*) se apaga con `ENABLE_TOOL_SEARCH=false` y la salida confirma `cargas diferidas=0`.
+
+**`tool_choice` (Messages API, como `01`):** una misma petición de opinión sobre un ticket («¿crees que este tipo de tickets suelen ser un problema grave?») con `auto`, con `any` y con la tool `extract_ticket_metadata` forzada. En el primer turno va el modo elegido y en los siguientes `auto`, para que el modelo pueda enriquecer y responder. Se imprime con qué empieza cada respuesta.
+
+**Predice antes de ejecutar:**
+
+1. `scoping`: ¿acertará menos con 18 tools que con 5? Si no, ¿qué más puede cambiar?
+2. `tool_choice`: con `auto`, ¿cuántas respuestas empezarán por una tool? ¿Y con `any` y con la forzada?
+3. ¿Qué tool llamará `any`? ¿Y la forzada?
+4. ¿Qué pasaría si `any` o la forzada se enviaran en **todos** los turnos?
+
+**Qué observar (Haiku 5.5):**
+
+| Parte / variante | Señal observada | Qué dice |
+| :--- | :--- | :--- |
+| `scoping` 5 tools | acierto 30/30, sin cambios entre repeticiones, ~0,00033 $ por petición | — |
+| `scoping` 18 tools (`--anti amplio`) | acierto 30/30, sin cambios, ~0,00045 $ por petición (+36 %) | el acierto no baja, pero cada petición carga 13 definiciones de más |
+| `tool_choice` `auto` | 0/6 empiezan por tool: contesta con texto | puede no llamar a ninguna tool |
+| `tool_choice` `any` | 6/6 empiezan por tool | garantiza una llamada (cuál, la elige el modelo) |
+| `tool_choice` forzado | 6/6 empiezan por `extract_ticket_metadata`, y el turno siguiente (`auto`) enriquece o responde | la tool fijada va primero y el resto sigue en turnos posteriores |
+
+Notas:
+
+- **`scoping`:** la guía dice que 18 tools degradan la fiabilidad de selección; aquí no se vio en el acierto. Con Haiku 5.5 y con Haiku 4.5 (sonda: 18/18 y 18/18) las peticiones son claras y el modelo elige bien. Lo que sí se vio: más coste con 18 tools (+36 % con Haiku 5.5, +58 % con Haiku 4.5) y, con Haiku 4.5, una petición cuya tool cambió entre repeticiones (`get_user` o `get_employee`). Con peticiones más ambiguas o más tools, la degradación de acierto sería más fácil de provocar. En el examen manda la guía.
+- **`auto`:** depende de la petición. Con «¿qué te parece?» o «¿es urgente?» Haiku 5.5 sí llamaba a la tool y el contraste no se veía; con una petición de opinión contesta con texto. Ese es el caso que `any` y el forzado resuelven.
+- **Un turno, no todos:** el modo forzado o `any` solo va en el primer turno. En todos los turnos, el modelo estaría obligado a llamar a una tool también después de recibir los resultados y no podría dar su respuesta final.
+- **En producción (no evaluable):** `any` y la forzada devuelven 400 en Sonnet 5.5 (comprobado) y, según la documentación del repositorio de estudio, en Opus 5.5 y Fable 5.1. Haiku 5.5 y Haiku 4.5 las aceptan. En el examen manda la guía.
+- La petición por modo, la secuencia forzado → `auto` y el clasificador de la primera respuesta se prueban sin modelo en `tests/test_app1_05_scoping_y_tool_choice.py`.
+
+### Pregunta tipo examen
+
+Un flujo de soporte necesita extraer los metadatos de cada ticket nuevo antes de enriquecerlo con la base de conocimiento. A veces el asistente responde con texto conversacional y se salta la extracción. ¿Qué configuración es la más adecuada?
+
+- A. Enviar `tool_choice` con el valor `"any"` en todos los turnos, para que el asistente nunca devuelva texto y el flujo siempre avance.
+- B. Forzar la tool de extracción con `{"type": "tool", "name": "extract_metadata"}` en el primer turno y usar `"auto"` en los siguientes para el enriquecimiento.
+- C. Añadir al *system prompt* la instrucción «llama siempre a `extract_metadata` antes de responder» y mantener `"auto"` en todos los turnos.
+- D. Dar al asistente diez tools de enriquecimiento más junto a la de extracción, para que siempre tenga una opción disponible que llamar.
+
+<details>
+<summary>Respuesta</summary>
+
+**B.** La selección forzada asegura que una tool concreta se llame primero y los pasos siguientes se procesan en turnos posteriores (TS 2.3-S4, TS 2.3-K4). A fuerza una llamada en cada turno, así que el asistente nunca podría dar su respuesta final, y `"any"` además no fija cuál es la tool (garantiza una llamada, no esa llamada, TS 2.3-S5). C intenta suplir en prosa lo que debe garantizar la configuración: con `"auto"` el modelo puede seguir contestando con texto. D va en contra de TS 2.3-K1: más tools degradan la selección y no aseguran que se llame a la de extracción.
 </details>

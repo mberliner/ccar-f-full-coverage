@@ -68,7 +68,10 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
     - La rama de validación no se ejercita en ejecución: el modelo corrige el ID por la descripción (hallazgo en `docs/hallazgos.md`).
     - Sonda con Haiku 4.5 (2026-10-26, ~0,12 $): validación tampoco (0/10) y `generico` sin reintentos inútiles; sí se rinde ante el timeout (2/5 con metadatos, 0/5 con error genérico). Se mantiene Haiku 5.5 como rol del módulo.
   - [x] Sondas de `app1/05` (2026-10-26): `tool_choice` `any` y forzado funcionan con Haiku 5.5 y 4.5 y dan 400 con Sonnet 5.5 (la parte `tool_choice` usa el rol `agent`, sin `enforcement`); la variable es `ENABLE_TOOL_SEARCH`, pero ningún valor activó la carga diferida con 18 tools en proceso, así que el efecto no se puede demostrar (se fija en `env` como precaución y se confirma `tool_search_loads == 0`). Detalle en `docs/hallazgos.md`.
-  - [ ] Siguiente: `app1/05` y `app1/06`, `app3/03`, sección D3.
+  - [x] `app1/05_scoping_y_tool_choice` (2026-10-26): 4 viñetas con `INTRODUCE` y ☑, 104/240; `pytest` 365 en verde. Cabecera y README son borrador de Sonnet (**pasada con Opus pendiente**).
+    - `tool_choice` (Haiku 5.5, 6 repeticiones): `auto` 0/6 empiezan por tool, `any` 6/6, forzado 6/6 (la petición es de opinión a propósito: con «¿qué te parece?» `auto` también llamaba a la tool).
+    - `scoping`: 30/30 con 5 y con 18 tools (Haiku 5.5) y 18/18 en ambas (Haiku 4.5), **sin caída de acierto**; la señal es el coste (+36 % con Haiku 5.5, +58 % con Haiku 4.5) y, con Haiku 4.5, un alias distinto entre repeticiones. Sin pasar al rol `enforcement`. `tool_search_loads == 0` en todas las ejecuciones.
+  - [ ] Siguiente: `app1/06`, `app3/03`, sección D3.
 - [ ] Entrega 3 · D4 y D5 (`S-2`)
 - [ ] `S-1` · repaso sin código nuevo
 - [ ] Entrega 4 · opcional, después del examen
