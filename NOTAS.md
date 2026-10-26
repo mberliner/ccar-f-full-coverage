@@ -66,6 +66,7 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
   - [x] `app1/04_errores_estructurados` (2026-10-26): 7 viñetas con `INTRODUCE` y ☑, 100/240; `pytest` 348 en verde. Cabecera y README son borrador de Sonnet (**pasada con Opus pendiente**). Los `USA` de TS 2.2-K1/S1 ya están en `mesa.py`, `helpdesk.py`, `investigacion.py` y `mcp-servers.md`.
     - Con modelo (Haiku 5.5, 5 ejecuciones por variante, ~0,02 $): correcta 5/5 con 1 reintento útil (transitorio) y 0 inútiles; `generico` 5/5 con 1 reintento inútil (`export_audit_log`); `fallo_como_vacio` 5/5 sin reintentar el transitorio y 4/5 afirmando que no hay histórico.
     - La rama de validación no se ejercita en ejecución: el modelo corrige el ID por la descripción (hallazgo en `docs/hallazgos.md`).
+    - Sonda con Haiku 4.5 (2026-10-26, ~0,12 $): validación tampoco (0/10) y `generico` sin reintentos inútiles; sí se rinde ante el timeout (2/5 con metadatos, 0/5 con error genérico). Se mantiene Haiku 5.5 como rol del módulo.
   - [ ] Siguiente: sondas de `tool_choice` con Haiku 5.5 y de la variable de *tool search* (antes de `app1/05`).
 - [ ] Entrega 3 · D4 y D5 (`S-2`)
 - [ ] `S-1` · repaso sin código nuevo
