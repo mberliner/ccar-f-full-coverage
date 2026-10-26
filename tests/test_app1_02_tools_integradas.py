@@ -161,6 +161,14 @@ def test_edit_prompt_names_the_notifications_timeout():
     assert "segundo" in prompt and "TIMEOUT = 30" in prompt and "60" in prompt
 
 
+def test_edit_prompt_forces_the_naive_edit_but_not_the_recovery():
+    # El flujo normal (Read y ancla ampliada) evita el fallo: el prompt pide el `Edit` ingenuo
+    # con el ancla repetida, para provocarlo, y deja libre cómo recuperarse.
+    prompt = mod.prompts_for("edicion", None)[0][1]
+    assert "una única llamada a `Edit`" in prompt and "`old_string`" in prompt
+    assert "Write" not in prompt and "Read" not in prompt  # no le dice cómo recuperarse
+
+
 def test_options_are_isolated_with_budget_and_temp_cwd(repo):
     options = mod.build_options("busqueda", None, cwd=repo, budget=0.1, model="m")
     assert options.setting_sources == [] and options.max_budget_usd == 0.1

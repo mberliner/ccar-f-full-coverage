@@ -215,10 +215,14 @@ def prompts_for(part: str, anti: str | None) -> list[tuple[str, str]]:
         return [("sla", prompt)]
     if part == "wrapper":
         return [("usos", f"Encuentra todos los usos de `{TARGET}` en el repositorio y lista las rutas de los archivos que la llaman.")]
+    # Un modelo capaz amplía el ancla por sí solo tras el `Read` y `Edit` nunca falla (comprobado con
+    # Haiku 5.5 y 4.5). Para observar 2.5-K3/K4, el prompt pide el `Edit` ingenuo con el ancla repetida
+    # y deja libre cómo recuperarse: no nombra `Read` ni `Write`.
     return [(
         "timeout",
         f"En `config.py` hay dos asignaciones `{ANCHOR}`. Cambia solo el segundo (el del cliente de notificaciones) "
-        "a 60 y deja todo lo demás igual.",
+        "a 60 y deja todo lo demás igual. Hazlo con una única llamada a `Edit` cuyo `old_string` sea exactamente "
+        f"`{ANCHOR}`; si no funciona, resuélvelo como creas mejor.",
     )]
 
 
@@ -285,7 +289,7 @@ def expectation(part: str, anti: str | None) -> str:
         ("incremental", "leer_todo"): "un Read por cada .py del repositorio y más coste",
         ("wrapper", None): "los 4 llamadores, incluidos los dos que usan alias",
         ("wrapper", "solo_nombre"): "solo 2 de los 4: los llamadores por alias se pierden",
-        ("edicion", None): "Edit falla por ancla no única; después Read + Write (o Edit con más contexto); solo cambia el segundo bloque",
+        ("edicion", None): "Edit falla por ancla no única (a veces); se recupera con Edit de más contexto o con Read + Write; solo cambia el segundo bloque",
     }[(part, anti)]
 
 

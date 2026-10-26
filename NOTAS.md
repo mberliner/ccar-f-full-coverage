@@ -55,7 +55,7 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
       - `wrapper`: 4/4 llamadores en las 3 ejecuciones correctas y 2/4 con `solo_nombre` en las 3 (siempre faltan `informes/resumen.py` y `notificaciones/avisos.py`).
       - `incremental`: correcta con 3–4 `Read` y ~0,0012 $; `leer_todo` con 14 `Read` y ~0,0022 $ (×1,8).
       - `busqueda`: `Grep` + 0 `Read` para el error y `Glob` para los tests; con `sin_grep`, 2 `Read` más en el error (~×1,4–2 de coste). La pregunta de los tests no cambia: usa `Glob` en ambas.
-      - `edicion`: sin señal de fallo de `Edit` (el modelo amplía el ancla, 3/3 correctas). **Decisión pendiente:** provocar el fallo en el prompt o dejarlo como observación. Detalle y los otros dos hallazgos (ruta corta de Windows, tool inexistente) en `docs/hallazgos.md`.
+      - `edicion`: sin petición especial, `Edit` no falla ni con Haiku 5.5 (0/3) ni con Haiku 4.5 (0/8): el modelo amplía el ancla tras el `Read`. **Decidido (2026-10-26): provocar el fallo en el prompt** (un único `Edit` con `old_string` exacto, sin nombrar `Read`/`Write`). Resultado: `Edit` falla en 3/6, siempre recuperado con `Edit` de más contexto (nunca `Write`), archivo correcto 6/6. Detalle y los otros dos hallazgos (ruta corta de Windows, tool inexistente) en `docs/hallazgos.md`.
       - Arreglo: `copy_to_temp` devuelve la ruta resuelta (con la corta, `Edit` salía denegado).
     - Pendiente: revisión por una instancia independiente.
   - [ ] Siguiente: sondas de «Riesgos» y `app1/03`.

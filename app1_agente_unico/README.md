@@ -99,11 +99,13 @@ La salida muestra `[contexto]`, cada llamada con su resultado y, al final de cad
 | `incremental` `leer_todo` | un `Read` por cada `.py` y más coste | una explicación parecida, más cara y con el contexto lleno de archivos irrelevantes |
 | `wrapper` correcta | `api.py` primero, después una búsqueda por cada nombre: 4 de 4 | — |
 | `wrapper` `solo_nombre` | 2 de 4: `informes/resumen.py` y `notificaciones/avisos.py` no salen | un rastreo incompleto que la respuesta presenta como completo |
-| `edicion` (sin `--anti`) | `Edit` con `is_error`, después `Read` + `Write` (o un `Edit` con más contexto); solo cambia el segundo bloque | la trampa sería repetir el mismo `Edit` o, con `Write`, tocar también el primer `TIMEOUT` |
+| `edicion` (sin `--anti`) | `Edit` con `is_error` («Found 2 matches») en cerca de la mitad de las ejecuciones; se recupera con `Edit` de más contexto o con `Read` + `Write`; solo cambia el segundo bloque | la trampa sería repetir el mismo `Edit` o, con `Write`, tocar también el primer `TIMEOUT` |
 
 Notas:
 
-- **`edicion`:** ampliar el ancla con más contexto también resuelve el fallo. Es válido y el comprobador lo acepta, porque mira el archivo final. La guía nombra `Read` + `Write` como respaldo; ampliar el ancla es una inferencia propia. `[comprobación]` indica cuál de los dos caminos tomó.
+- **`edicion`:** el prompt pide a propósito un único `Edit` con `old_string` exactamente `TIMEOUT = 30`, porque sin esa petición el modelo lee el archivo, ve las dos líneas y amplía el ancla en el primer `Edit`, que nunca falla (Haiku 5.5 y Haiku 4.5, 11 de 11 ejecuciones). Con la petición, el fallo sale en torno a la mitad de las veces (3 de 6); el resto amplía el ancla igualmente.
+  - Ampliar el ancla con más contexto también resuelve el fallo. Es válido y el comprobador lo acepta, porque mira el archivo final. La guía nombra `Read` + `Write` como respaldo; ampliar el ancla es una inferencia propia.
+  - En las 3 recuperaciones observadas, el modelo usó un segundo `Edit` con más contexto y nunca `Write`. `[comprobación]` indica qué camino tomó.
 - **`busqueda`:** la primera pregunta localiza el mensaje de error «SLA vencido para…» y no los llamadores de la función, porque estos son el reto de `wrapper` (TS 2.5-S5).
 - **Variabilidad:** con un modelo capaz, `sin_grep` o `leer_todo` pueden salir casi iguales en un repositorio de este tamaño. Lo estable es el comprobador de `wrapper` y el fallo de `Edit`. Usa `--repeat` para ver tasas. Las funciones de comprobación se prueban sin modelo en `tests/test_app1_02_tools_integradas.py`.
 
