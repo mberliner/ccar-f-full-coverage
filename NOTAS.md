@@ -63,7 +63,10 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
     - Con modelo (Haiku 5.5, 6 peticiones × 3, ~0,03 $): correcta 18/18; `minimas` 15/18 (solo falla `articulo-resumen`, 3/3); `palabra_clave` 12/18 (las 2 peticiones con «documento», 3/3 cada una).
     - Riesgo del diseño («la señal puede no verse con Haiku 5.5»): la señal de `minimas` es moderada (-17 puntos) y la de `palabra_clave` es fuerte; no se pasa al rol `enforcement`. Si se quisiera más caída en `minimas`, es la variante a repetir con Haiku 4.5 (~×15 de coste).
     - Pendiente: revisión independiente.
-  - [ ] Siguiente: sondas de `tool_choice` con Haiku 5.5 y de la variable de *tool search* (antes de `app1/05`), y `app1/04`.
+  - [x] `app1/04_errores_estructurados` (2026-10-26): 7 viñetas con `INTRODUCE` y ☑, 100/240; `pytest` 348 en verde. Cabecera y README son borrador de Sonnet (**pasada con Opus pendiente**). Los `USA` de TS 2.2-K1/S1 ya están en `mesa.py`, `helpdesk.py`, `investigacion.py` y `mcp-servers.md`.
+    - Con modelo (Haiku 5.5, 5 ejecuciones por variante, ~0,02 $): correcta 5/5 con 1 reintento útil (transitorio) y 0 inútiles; `generico` 5/5 con 1 reintento inútil (`export_audit_log`); `fallo_como_vacio` 5/5 sin reintentar el transitorio y 4/5 afirmando que no hay histórico.
+    - La rama de validación no se ejercita en ejecución: el modelo corrige el ID por la descripción (hallazgo en `docs/hallazgos.md`).
+  - [ ] Siguiente: sondas de `tool_choice` con Haiku 5.5 y de la variable de *tool search* (antes de `app1/05`).
 - [ ] Entrega 3 · D4 y D5 (`S-2`)
 - [ ] `S-1` · repaso sin código nuevo
 - [ ] Entrega 4 · opcional, después del examen

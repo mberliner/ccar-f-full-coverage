@@ -14,7 +14,7 @@ sistema de origen; lo hace el hook de app2/02), no aplica el umbral de 500 EUR
 (lo aplica el hook) y no guarda nada entre ejecuciones: el estado de sesión
 vive en `HelpdeskState`, uno por ejecución.
 
-USA: TS 1.4-K1, TS 1.4-S1
+USA: TS 1.4-K1, TS 1.4-S1, TS 2.2-K1, TS 2.2-S1
 """
 
 import json

@@ -17,8 +17,9 @@ agente) sale de las descripciones y de los errores, no de datos distintos.
 QUÉ NO HACE: no tiene estado salvo `ErroresState` (cuenta las llamadas para
 que el transitorio falle solo la primera vez) y no escribe nada: los datos se
 leen de `datos/sinteticos/`. No lleva marcadores `INTRODUCE` (los llevan los
-módulos). Los errores usan `errorCategory`/`isRetryable` (ver TS 2.2-K1); su
-marcador `USA` se añade con el módulo que lo introduce.
+módulos). Los errores usan `errorCategory` e `isRetryable` (TS 2.2-S1).
+
+USA: TS 2.2-K1, TS 2.2-S1
 """
 
 import json

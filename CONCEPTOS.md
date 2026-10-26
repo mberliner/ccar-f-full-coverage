@@ -30,7 +30,7 @@ Las apps se ordenan por complejidad creciente, pero se entregan por bloques de d
 
 El avance de cada entrega se registra en `NOTAS.md`.
 
-**Introducidas: 93/240**
+**Introducidas: 100/240**
 
 | Viñeta | Destino | Estado |
 | :--- | :--- | :---: |
@@ -90,14 +90,14 @@ El avance de cada entrega se registra en `NOTAS.md`.
 | TS 2.1-S2 | app1/03_servidor_mcp | ☑ |
 | TS 2.1-S3 | app1/03_servidor_mcp | ☑ |
 | TS 2.1-S4 | app1/03_servidor_mcp | ☑ |
-| TS 2.2-K1 | app1/04_errores_estructurados | ☐ |
-| TS 2.2-K2 | app1/04_errores_estructurados | ☐ |
-| TS 2.2-K3 | app1/04_errores_estructurados | ☐ |
-| TS 2.2-K4 | app1/04_errores_estructurados | ☐ |
-| TS 2.2-S1 | app1/04_errores_estructurados | ☐ |
-| TS 2.2-S2 | app1/04_errores_estructurados | ☐ |
+| TS 2.2-K1 | app1/04_errores_estructurados | ☑ |
+| TS 2.2-K2 | app1/04_errores_estructurados | ☑ |
+| TS 2.2-K3 | app1/04_errores_estructurados | ☑ |
+| TS 2.2-K4 | app1/04_errores_estructurados | ☑ |
+| TS 2.2-S1 | app1/04_errores_estructurados | ☑ |
+| TS 2.2-S2 | app1/04_errores_estructurados | ☑ |
 | TS 2.2-S3 | app3/04_errores_entre_agentes | ☐ |
-| TS 2.2-S4 | app1/04_errores_estructurados | ☐ |
+| TS 2.2-S4 | app1/04_errores_estructurados | ☑ |
 | TS 2.3-K1 | app1/05_scoping_y_tool_choice | ☐ |
 | TS 2.3-K2 | app3/03_tools_entre_roles | ☐ |
 | TS 2.3-K3 | app3/03_tools_entre_roles | ☐ |

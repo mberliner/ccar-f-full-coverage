@@ -11,7 +11,7 @@ Cada módulo sigue el ciclo de `README.md` del proyecto: **predecir → ejecutar
 | [`01_bucle_manual.py`](01_bucle_manual.py) | TS 1.1-K1, K2, K3, S1, S2, S3 · TS 5.1-K4 | 1 |
 | [`02_tools_integradas.py`](02_tools_integradas.py) | TS 2.5-K1, K2, K3, K4, S1, S2, S3, S4, S5 | 2 |
 | [`03_servidor_mcp.py`](03_servidor_mcp.py) | TS 2.1-K1, K2, K3, K4, S1, S2, S3, S4 | 2 |
-| `04_errores_estructurados.py` | TS 2.2 | 2 |
+| [`04_errores_estructurados.py`](04_errores_estructurados.py) | TS 2.2-K1, K2, K3, K4, S1, S2, S4 | 2 |
 | `05_scoping_y_tool_choice.py` | TS 2.3 | 2 |
 | `06_mcp_config.py` | TS 2.4 | 2 |
 | `07_recorte_de_contexto.py` | TS 5.1-K3, S3 | 3 |
@@ -172,4 +172,56 @@ Un agente de soporte dispone de dos tools, `analyze_content` y `analyze_document
 <summary>Respuesta</summary>
 
 **D.** La descripción es el mecanismo con el que el modelo elige (TS 2.1-K1), y las ambiguas o solapadas causan *misrouting* (TS 2.1-K3). La corrección es describir con propósito, entradas y límites (TS 2.1-K2, TS 2.1-S1) y renombrar para quitar el solapamiento (TS 2.1-S2). A es una instrucción por palabra clave que puede anular las descripciones (TS 2.1-K4, TS 2.1-S4): arregla un caso y crea otros. B va al revés de la guía, que divide las tools genéricas en otras de contrato definido (TS 2.1-S3). C añade una pieza para compensar un defecto que se arregla en la descripción.
+</details>
+
+---
+
+## 04 · Errores estructurados
+
+```bash
+uv run python app1_agente_unico/04_errores_estructurados.py                          # correcta
+uv run python app1_agente_unico/04_errores_estructurados.py --anti generico          # todos los errores: «Operation failed»
+uv run python app1_agente_unico/04_errores_estructurados.py --anti fallo_como_vacio  # el timeout llega como lista vacía
+uv run python app1_agente_unico/04_errores_estructurados.py --repeat 5 --budget 0.25
+```
+
+Un único mensaje pide cinco tareas al servidor `mesa` (familia `errores`): el histórico de un ticket (**tiempo de espera** la primera vez), el perfil de «1001» (ID mal formado: **validación**), reasignar 12 puestos de licencia (**regla de negocio**: el cupo es 10), exportar el registro de auditoría (**permisos**) y listar los tickets de `EMP-9999` (una **búsqueda sin coincidencias**). El prompt del sistema no dice qué hacer con cada error: lo decide el agente con lo que el error le cuenta.
+
+La salida muestra los reintentos idénticos por tool, cuántos son inútiles, las categorías de error por tool y si el transitorio se recuperó.
+
+**Predice antes de ejecutar:**
+
+1. Con la variante correcta, ¿qué tools se llamarán más de una vez y por qué esas?
+2. ¿Cómo explicará el agente el fallo del cupo y el del permiso? ¿Dirá que son problemas técnicos?
+3. Con `--anti generico`, ¿qué tool se reintentará sin que tenga arreglo?
+4. Con `--anti fallo_como_vacio`, ¿qué dirá el agente del histórico del ticket, y habrá un segundo intento?
+
+**Qué observar:**
+
+| Variante | Reintentos | Qué se rompe |
+| :--- | :--- | :--- |
+| correcta | solo `fetch_ticket_history` (1), que se recupera | — |
+| `generico` | `export_audit_log` se repite sin arreglo posible (1 inútil por ejecución) y el transitorio se reintenta por costumbre | sin categoría ni `isRetryable`, el agente no distingue lo reintentable de lo que no lo es |
+| `fallo_como_vacio` | ninguno: el transitorio no se reintenta | el agente cree que el ticket no tiene histórico (4 de 5) y lo cuenta como un dato |
+
+Notas:
+
+- **Validación:** en las ejecuciones observadas (Haiku 5.5) el modelo corrige «1001» a `EMP-1001` antes de llamar, porque la descripción de la tool dice el formato, y el error de validación no llega a producirse. Su forma se prueba sin modelo (`tests/test_app1_servers_mesa.py`). Es la consecuencia de una buena descripción (TS 2.1-K2), no un defecto del módulo.
+- **`isRetryable` frente a `retriable`:** la guía escribe `retriable: false` para la regla de negocio; el proyecto usa `isRetryable` en todos los errores. Con la regla de negocio, además, el mensaje explica la política para que el agente informe a la persona usuaria (TS 2.2-S2).
+- **Vacío válido:** la búsqueda de `EMP-9999` devuelve una lista vacía correcta, que no es un error. Lo que `fallo_como_vacio` rompe es lo contrario: un fallo de acceso disfrazado de lista vacía (TS 2.2-S4).
+- Las señales sobre el `RunRecord` (reintentos idénticos, categorías) se prueban sin modelo en `tests/test_app1_04_errores_estructurados.py`. «Dice que no hay histórico» es un detector de texto aproximado; la señal robusta es «transitorio recuperado».
+
+### Pregunta tipo examen
+
+Una tool MCP de reembolsos devuelve «Operation failed» ante cualquier fallo. El agente reintenta tres veces un reembolso rechazado por superar el límite de la política y luego comunica a la persona que hubo un problema técnico. ¿Qué cambio es el más adecuado?
+
+- A. Devolver el error con `isError`, la categoría `business`, `isRetryable` a falso y un mensaje legible que explique la política, para que el agente informe sin reintentar.
+- B. Limitar al agente a un máximo de dos reintentos por tool, de modo que ningún error se reintente más de lo razonable y se acote el gasto.
+- C. Añadir al *system prompt* la regla «no reintentes los errores de política y explica la causa», dejando la tool como está.
+- D. Cambiar el mensaje a «Operation failed, please try again later», para que el agente sepa que debe esperar antes de volver a intentarlo.
+
+<details>
+<summary>Respuesta</summary>
+
+**A.** El fallo se comunica con el flag de error y metadatos estructurados (TS 2.2-K1, TS 2.2-S1): la categoría distingue una regla de negocio de un fallo transitorio (TS 2.2-K2), `isRetryable` evita el reintento inútil (TS 2.2-K4) y el mensaje explica la política para que el agente informe bien (TS 2.2-S2). B pone un tope arbitrario en vez de dar al agente la información, y seguirá reintentando lo que no tiene arreglo; C intenta suplir en prosa lo que debería salir de la tool, y no distingue unos errores de otros; D empeora el problema: invita a reintentar justo lo que no es reintentable. Un mensaje genérico es el anti-patrón (TS 2.2-K3).
 </details>

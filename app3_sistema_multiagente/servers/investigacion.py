@@ -15,7 +15,7 @@ sigue con las dos tools de búsqueda que usan app3/01 y app3/02.
 QUÉ NO HACE: no resume ni ordena por relevancia semántica (busca palabras y
 categoría) y no tiene estado: dos llamadas iguales devuelven lo mismo.
 
-USA: TS 1.3-K2
+USA: TS 1.3-K2, TS 2.2-K1, TS 2.2-S1
 """
 
 import json
