@@ -36,7 +36,9 @@ def copy_to_temp(name: str) -> Path:
     salir del proceso.
     """
     source = DATA_DIR / name
-    target = Path(tempfile.mkdtemp(prefix="ccarf-"))
+    # `resolve()`: en Windows `mkdtemp` devuelve una ruta corta (`FMARTI~1`); la CLI no la
+    # reconoce como el directorio de trabajo y deniega `Edit`/`Write` en `dontAsk`.
+    target = Path(tempfile.mkdtemp(prefix="ccarf-")).resolve()
     # ignore_errors: en Windows el directorio puede seguir en uso al salir.
     atexit.register(shutil.rmtree, target, ignore_errors=True)
     if source.is_dir():

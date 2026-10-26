@@ -51,7 +51,13 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
   - [x] `app1/02_tools_integradas` (2026-10-26): 9 viñetas con `INTRODUCE` y ☑, 85/240; `pytest` 325 en verde. Código y tests con Sonnet 5.5; la cabecera `QUÉ DICE LA GUÍA` · `ANTI-PATRÓN` y la sección del README (con su pregunta) son un primer borrador de Sonnet y **quedan para la pasada con Opus 5.5** (agrupada con los demás módulos de `app1`, según el diseño).
     - Cambio de diseño: la primera pregunta de `--parte busqueda` localiza el mensaje de error «SLA vencido para…» (2.5-S1) y no los llamadores de `calcular_sla`, que ya son el reto de `--parte wrapper` (S5).
     - [x] Pasada con Opus 5.5 de los textos didácticos (2026-10-26): cabecera parafraseada de nuevo contra la TS 2.5, con nota sobre `Bash` (en el enunciado, sin viñeta) y `ANTI-PATRÓN` dividido en hechos de la guía e inferencias propias; en el README, predicciones más abiertas y tabla «Qué observar» con el riesgo de `Write` en `edicion`. La pregunta tipo examen se mantiene. Sin cambios de lógica ni de tests.
-    - Pendiente: ejecución con modelo de las cuatro partes y sus `--anti` (señales de «Verificación» 3) y revisión por una instancia independiente.
+    - [x] Ejecutado con modelo (2026-10-26, Haiku 5.5, `--repeat 3`, ~0,05 $ en total) tras la pasada de Opus:
+      - `wrapper`: 4/4 llamadores en las 3 ejecuciones correctas y 2/4 con `solo_nombre` en las 3 (siempre faltan `informes/resumen.py` y `notificaciones/avisos.py`).
+      - `incremental`: correcta con 3–4 `Read` y ~0,0012 $; `leer_todo` con 14 `Read` y ~0,0022 $ (×1,8).
+      - `busqueda`: `Grep` + 0 `Read` para el error y `Glob` para los tests; con `sin_grep`, 2 `Read` más en el error (~×1,4–2 de coste). La pregunta de los tests no cambia: usa `Glob` en ambas.
+      - `edicion`: sin señal de fallo de `Edit` (el modelo amplía el ancla, 3/3 correctas). **Decisión pendiente:** provocar el fallo en el prompt o dejarlo como observación. Detalle y los otros dos hallazgos (ruta corta de Windows, tool inexistente) en `docs/hallazgos.md`.
+      - Arreglo: `copy_to_temp` devuelve la ruta resuelta (con la corta, `Edit` salía denegado).
+    - Pendiente: revisión por una instancia independiente.
   - [ ] Siguiente: sondas de «Riesgos» y `app1/03`.
 - [ ] Entrega 3 · D4 y D5 (`S-2`)
 - [ ] `S-1` · repaso sin código nuevo
