@@ -373,6 +373,143 @@ def por_tipo():
 }
 
 
+# Paquete `repo_mesa` para app1/02 (TS 2.5): un repositorio pequeño sobre el que
+# el agente busca con Grep/Glob y edita con Edit/Write. Está diseñado para tres
+# trampas: `calcular_sla` se reexporta con alias en `api.py` (hay llamadores que
+# nunca escriben el nombre original), los tests están repartidos en varios
+# directorios (para Glob) y `config.py` repite `TIMEOUT = 30` en dos bloques
+# (para que Edit falle por ancla no única). El mensaje «SLA vencido para» solo
+# existe en `core/sla.py`. Es texto fijo: no usa el generador aleatorio.
+REPO_MESA_DIR = "repo_mesa"
+REPO_MESA_FILES = {
+    "__init__.py": '''"""Núcleo de la mesa de ayuda (repositorio de ejemplo)."""
+''',
+    "config.py": '''"""Configuración de los clientes de la mesa de ayuda."""
+
+# Cliente de la API de tickets
+API_URL = "https://api.mesa-ejemplo.test/tickets"
+TIMEOUT = 30
+REINTENTOS = 3
+
+# Cliente de notificaciones
+NOTIF_URL = "https://notif.mesa-ejemplo.test/avisos"
+TIMEOUT = 30
+CANAL = "correo"
+''',
+    "core/__init__.py": "",
+    "core/sla.py": '''"""Cálculo de plazos de SLA."""
+
+# Horas máximas de resolución por prioridad.
+LIMITE_HORAS = {"urgente": 4, "alta": 8, "normal": 24, "baja": 72}
+
+
+def calcular_sla(prioridad, horas_abiertas):
+    limite = LIMITE_HORAS[prioridad]
+    if horas_abiertas > limite:
+        raise ValueError(f"SLA vencido para prioridad {prioridad}: {horas_abiertas} h de {limite} h")
+    return {"limite_horas": limite, "restante_horas": limite - horas_abiertas}
+''',
+    "api.py": '''"""Interfaz pública del paquete: reexporta funciones con el nombre que usa el resto."""
+
+from .core.sla import calcular_sla as sla_ticket
+
+__all__ = ["sla_ticket"]
+''',
+    "tickets/__init__.py": "",
+    "tickets/escalado.py": '''"""Decide si un ticket hay que escalarlo."""
+
+from ..core.sla import calcular_sla
+
+
+def debe_escalar(prioridad, horas_abiertas):
+    try:
+        calcular_sla(prioridad, horas_abiertas)
+    except ValueError:
+        return True
+    return False
+''',
+    "tickets/tests/test_escalado.py": '''from repo_mesa.tickets.escalado import debe_escalar
+
+
+def test_escala_cuando_vence():
+    assert debe_escalar("urgente", 5)
+    assert not debe_escalar("urgente", 1)
+''',
+    "informes/__init__.py": "",
+    "informes/resumen.py": '''"""Resumen de plazos para el informe semanal."""
+
+from ..api import sla_ticket
+
+
+def horas_restantes(tickets):
+    return {t["ticket_id"]: sla_ticket(t["prioridad"], t["horas"])["restante_horas"] for t in tickets}
+''',
+    "informes/tests/test_resumen.py": '''from repo_mesa.informes.resumen import horas_restantes
+
+
+def test_horas_restantes():
+    assert horas_restantes([{"ticket_id": "T1", "prioridad": "normal", "horas": 4}]) == {"T1": 20}
+''',
+    "notificaciones/__init__.py": "",
+    "notificaciones/avisos.py": '''"""Avisos de plazo a la persona responsable."""
+
+from ..api import sla_ticket as plazo
+
+
+def texto_aviso(ticket_id, prioridad, horas):
+    restante = plazo(prioridad, horas)["restante_horas"]
+    return f"{ticket_id}: quedan {restante} h"
+''',
+    "tests/test_sla.py": '''import pytest
+
+from repo_mesa.core.sla import calcular_sla
+
+
+def test_dentro_de_plazo():
+    assert calcular_sla("alta", 3)["restante_horas"] == 5
+
+
+def test_vencido():
+    with pytest.raises(ValueError):
+        calcular_sla("alta", 9)
+''',
+}
+
+
+# Catálogo de URLs y afirmaciones para app3/03 (TS 2.3). Unas URLs son
+# documentos (`/docs/…`, con contenido) y otras no (login, seguimiento, imagen):
+# `load_document` solo acepta las primeras y `fetch_url` abre cualquiera. Cada
+# afirmación dice si se verifica de forma simple (un artículo) o compleja
+# (varios). Los IDs de artículo salen de `KB_TOPICS`: KB-101 + posición.
+DOCS_HOST = "https://docs.mesa-ejemplo.test"
+DOCUMENT_URLS = [
+    (f"{DOCS_HOST}/docs/vpn-perfil-tcp", "Perfil TCP de la VPN", "Cambiar al perfil TCP en el cliente de VPN y reiniciar la conexión. Si la red doméstica bloquea el puerto 443, usar el puerto alternativo."),
+    (f"{DOCS_HOST}/docs/reembolsos", "Reembolsos de material", "Hasta 500 EUR aprueba soporte. Por encima, aprueba Finanzas. El pago se hace en la nómina siguiente a la aprobación."),
+    (f"{DOCS_HOST}/docs/licencias", "Licencias de software", "Las renovaciones se solicitan 15 días antes de caducar. Las altas fuera de catálogo no se compran."),
+    (f"{DOCS_HOST}/docs/acceso-carpetas", "Acceso a carpetas compartidas", "La persona responsable de la carpeta aprueba la solicitud desde el catálogo de accesos."),
+]
+NON_DOCUMENT_URLS = [
+    f"{DOCS_HOST}/login?next=/docs",
+    f"{DOCS_HOST}/tracking?id=TCK-4001",
+    f"{DOCS_HOST}/static/logo-mesa.png",
+    f"{DOCS_HOST}/perfil/preferencias",
+]
+CLAIMS = [
+    ("C-1", "Los reembolsos hasta 500 EUR los aprueba soporte.", ["KB-114"], "simple"),
+    ("C-2", "Las renovaciones de licencia se piden 15 días antes de caducar.", ["KB-112"], "simple"),
+    ("C-3", "Las salas de reuniones usan la red de invitados.", ["KB-111"], "simple"),
+    ("C-4", "Un reembolso de 520 EUR se aprueba en soporte y se paga en la nómina siguiente.", ["KB-114", "KB-115"], "compleja"),
+    ("C-5", "La VPN inestable se arregla con el perfil TCP y no con el perfil UDP antiguo.", ["KB-109", "KB-110"], "compleja"),
+]
+
+
+def build_documents() -> dict:
+    urls = [{"url": url, "is_document": True, "title": title, "content": content} for url, title, content in DOCUMENT_URLS]
+    urls += [{"url": url, "is_document": False, "title": None, "content": None} for url in NON_DOCUMENT_URLS]
+    claims = [{"claim_id": cid, "text": text, "article_ids": ids, "verifiable": kind} for cid, text, ids, kind in CLAIMS]
+    return {"urls": urls, "afirmaciones": claims}
+
+
 def build_all() -> dict[str, str]:
     """Genera todos los archivos en memoria: nombre → contenido serializado."""
     # Un generador por conjunto: añadir un conjunto nuevo no altera los existentes.
@@ -384,10 +521,12 @@ def build_all() -> dict[str, str]:
         "tickets.json": tickets,
         "tickets_etiquetas.json": labels,
         "articulos_kb.json": articles,
+        "documentos.json": build_documents(),
     }
     files = {name: json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True) + "\n" for name, data in datasets.items()}
     # Las rutas con subcarpeta usan «/»: mismo nombre en Windows y en Linux.
     files.update({f"{LEGACY_DIR}/{name}": content for name, content in LEGACY_FILES.items()})
+    files.update({f"{REPO_MESA_DIR}/{name}": content for name, content in REPO_MESA_FILES.items()})
     return files
 
 

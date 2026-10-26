@@ -1,0 +1,96 @@
+{
+  "afirmaciones": [
+    {
+      "article_ids": [
+        "KB-114"
+      ],
+      "claim_id": "C-1",
+      "text": "Los reembolsos hasta 500 EUR los aprueba soporte.",
+      "verifiable": "simple"
+    },
+    {
+      "article_ids": [
+        "KB-112"
+      ],
+      "claim_id": "C-2",
+      "text": "Las renovaciones de licencia se piden 15 días antes de caducar.",
+      "verifiable": "simple"
+    },
+    {
+      "article_ids": [
+        "KB-111"
+      ],
+      "claim_id": "C-3",
+      "text": "Las salas de reuniones usan la red de invitados.",
+      "verifiable": "simple"
+    },
+    {
+      "article_ids": [
+        "KB-114",
+        "KB-115"
+      ],
+      "claim_id": "C-4",
+      "text": "Un reembolso de 520 EUR se aprueba en soporte y se paga en la nómina siguiente.",
+      "verifiable": "compleja"
+    },
+    {
+      "article_ids": [
+        "KB-109",
+        "KB-110"
+      ],
+      "claim_id": "C-5",
+      "text": "La VPN inestable se arregla con el perfil TCP y no con el perfil UDP antiguo.",
+      "verifiable": "compleja"
+    }
+  ],
+  "urls": [
+    {
+      "content": "Cambiar al perfil TCP en el cliente de VPN y reiniciar la conexión. Si la red doméstica bloquea el puerto 443, usar el puerto alternativo.",
+      "is_document": true,
+      "title": "Perfil TCP de la VPN",
+      "url": "https://docs.mesa-ejemplo.test/docs/vpn-perfil-tcp"
+    },
+    {
+      "content": "Hasta 500 EUR aprueba soporte. Por encima, aprueba Finanzas. El pago se hace en la nómina siguiente a la aprobación.",
+      "is_document": true,
+      "title": "Reembolsos de material",
+      "url": "https://docs.mesa-ejemplo.test/docs/reembolsos"
+    },
+    {
+      "content": "Las renovaciones se solicitan 15 días antes de caducar. Las altas fuera de catálogo no se compran.",
+      "is_document": true,
+      "title": "Licencias de software",
+      "url": "https://docs.mesa-ejemplo.test/docs/licencias"
+    },
+    {
+      "content": "La persona responsable de la carpeta aprueba la solicitud desde el catálogo de accesos.",
+      "is_document": true,
+      "title": "Acceso a carpetas compartidas",
+      "url": "https://docs.mesa-ejemplo.test/docs/acceso-carpetas"
+    },
+    {
+      "content": null,
+      "is_document": false,
+      "title": null,
+      "url": "https://docs.mesa-ejemplo.test/login?next=/docs"
+    },
+    {
+      "content": null,
+      "is_document": false,
+      "title": null,
+      "url": "https://docs.mesa-ejemplo.test/tracking?id=TCK-4001"
+    },
+    {
+      "content": null,
+      "is_document": false,
+      "title": null,
+      "url": "https://docs.mesa-ejemplo.test/static/logo-mesa.png"
+    },
+    {
+      "content": null,
+      "is_document": false,
+      "title": null,
+      "url": "https://docs.mesa-ejemplo.test/perfil/preferencias"
+    }
+  ]
+}
