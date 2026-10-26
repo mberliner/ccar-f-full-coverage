@@ -71,7 +71,12 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
   - [x] `app1/05_scoping_y_tool_choice` (2026-10-26): 4 viñetas con `INTRODUCE` y ☑, 104/240; `pytest` 365 en verde. Cabecera y README son borrador de Sonnet (**pasada con Opus pendiente**).
     - `tool_choice` (Haiku 5.5, 6 repeticiones): `auto` 0/6 empiezan por tool, `any` 6/6, forzado 6/6 (la petición es de opinión a propósito: con «¿qué te parece?» `auto` también llamaba a la tool).
     - `scoping`: 30/30 con 5 y con 18 tools (Haiku 5.5) y 18/18 en ambas (Haiku 4.5), **sin caída de acierto**; la señal es el coste (+36 % con Haiku 5.5, +58 % con Haiku 4.5) y, con Haiku 4.5, un alias distinto entre repeticiones. Sin pasar al rol `enforcement`. `tool_search_loads == 0` en todas las ejecuciones.
-  - [ ] Siguiente: `app1/06`, `app3/03`, sección D3.
+  - [x] `app1/06_mcp_config` (2026-10-26): 9 viñetas con `INTRODUCE` y ☑, 113/240; `pytest` 383 en verde. Cabecera y README son borrador de Sonnet (**pasada con Opus pendiente**).
+    - `conexion`: tres servidores (dos stdio por `.mcp.json` y uno en proceso), 9 tools y `token_recibido: true`; `init` a veces trae la lista de tools parcial (2 de ~8), el módulo lo avisa.
+    - `recursos` (Haiku 5.5, 4 repeticiones): con resource, 2 llamadas a resources y 0 exploratorias (~0,0009 $); sin él, 19–31 exploratorias (×2,3–3,7). Hay que avisar al agente de que existen: sin la frase del prompt no los usa.
+    - `descripcion`: **sin señal**; `Grep` 0/6 con la descripción completa y con la mínima (con aviso de archivos, 4/6 y 5/6). Se documenta sin fabricarla.
+    - Comprobaciones heredadas cerradas: `setting_sources=["project"]`/`["project","local"]` dejan fuera el `CLAUDE.md` y las reglas de usuario; los plugins `@builtin` no añaden tools (hooks sin comprobar). Detalle en `docs/hallazgos.md`.
+  - [ ] Siguiente: `app3/03`, sección D3, pasada con Opus de `app1/03`–`06`, revisión independiente.
 - [ ] Entrega 3 · D4 y D5 (`S-2`)
 - [ ] `S-1` · repaso sin código nuevo
 - [ ] Entrega 4 · opcional, después del examen

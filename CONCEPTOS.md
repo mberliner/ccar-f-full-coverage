@@ -30,7 +30,7 @@ Las apps se ordenan por complejidad creciente, pero se entregan por bloques de d
 
 El avance de cada entrega se registra en `NOTAS.md`.
 
-**Introducidas: 104/240**
+**Introducidas: 113/240**
 
 | Viñeta | Destino | Estado |
 | :--- | :--- | :---: |
@@ -107,15 +107,15 @@ El avance de cada entrega se registra en `NOTAS.md`.
 | TS 2.3-S3 | app3/03_tools_entre_roles | ☐ |
 | TS 2.3-S4 | app1/05_scoping_y_tool_choice | ☑ |
 | TS 2.3-S5 | app1/05_scoping_y_tool_choice | ☑ |
-| TS 2.4-K1 | app1/06_mcp_config | ☐ |
-| TS 2.4-K2 | app1/06_mcp_config | ☐ |
-| TS 2.4-K3 | app1/06_mcp_config | ☐ |
-| TS 2.4-K4 | app1/06_mcp_config | ☐ |
-| TS 2.4-S1 | app1/06_mcp_config | ☐ |
-| TS 2.4-S2 | app1/06_mcp_config | ☐ |
-| TS 2.4-S3 | app1/06_mcp_config | ☐ |
-| TS 2.4-S4 | app1/06_mcp_config | ☐ |
-| TS 2.4-S5 | app1/06_mcp_config | ☐ |
+| TS 2.4-K1 | app1/06_mcp_config | ☑ |
+| TS 2.4-K2 | app1/06_mcp_config | ☑ |
+| TS 2.4-K3 | app1/06_mcp_config | ☑ |
+| TS 2.4-K4 | app1/06_mcp_config | ☑ |
+| TS 2.4-S1 | app1/06_mcp_config | ☑ |
+| TS 2.4-S2 | app1/06_mcp_config | ☑ |
+| TS 2.4-S3 | app1/06_mcp_config | ☑ |
+| TS 2.4-S4 | app1/06_mcp_config | ☑ |
+| TS 2.4-S5 | app1/06_mcp_config | ☑ |
 | TS 2.5-K1 | app1/02_tools_integradas | ☑ |
 | TS 2.5-K2 | app1/02_tools_integradas | ☑ |
 | TS 2.5-K3 | app1/02_tools_integradas | ☑ |

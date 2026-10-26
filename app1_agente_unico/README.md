@@ -13,7 +13,7 @@ Cada módulo sigue el ciclo de `README.md` del proyecto: **predecir → ejecutar
 | [`03_servidor_mcp.py`](03_servidor_mcp.py) | TS 2.1-K1, K2, K3, K4, S1, S2, S3, S4 | 2 |
 | [`04_errores_estructurados.py`](04_errores_estructurados.py) | TS 2.2-K1, K2, K3, K4, S1, S2, S4 | 2 |
 | [`05_scoping_y_tool_choice.py`](05_scoping_y_tool_choice.py) | TS 2.3-K1, K4, S4, S5 | 2 |
-| `06_mcp_config.py` | TS 2.4 | 2 |
+| [`06_mcp_config.py`](06_mcp_config.py) | TS 2.4-K1, K2, K3, K4, S1, S2, S3, S4, S5 | 2 |
 | `07_recorte_de_contexto.py` | TS 5.1-K3, S3 | 3 |
 
 ---
@@ -281,4 +281,71 @@ Un flujo de soporte necesita extraer los metadatos de cada ticket nuevo antes de
 <summary>Respuesta</summary>
 
 **B.** La selección forzada asegura que una tool concreta se llame primero y los pasos siguientes se procesan en turnos posteriores (TS 2.3-S4, TS 2.3-K4). A fuerza una llamada en cada turno, así que el asistente nunca podría dar su respuesta final, y `"any"` además no fija cuál es la tool (garantiza una llamada, no esa llamada, TS 2.3-S5). C intenta suplir en prosa lo que debe garantizar la configuración: con `"auto"` el modelo puede seguir contestando con texto. D va en contra de TS 2.3-K1: más tools degradan la selección y no aseguran que se llame a la de extracción.
+</details>
+
+---
+
+## 06 · Configuración MCP
+
+```bash
+uv run python app1_agente_unico/06_mcp_config.py --parte conexion                          # tres servidores y el token
+uv run python app1_agente_unico/06_mcp_config.py --parte recursos                          # catálogo como resource
+uv run python app1_agente_unico/06_mcp_config.py --parte recursos --anti sin_recursos
+uv run python app1_agente_unico/06_mcp_config.py --parte descripcion [--anti descripcion_minima]
+uv run python app1_agente_unico/06_mcp_config.py --parte recursos --repeat 4 --budget 0.20
+```
+
+El módulo genera, en una copia temporal (el `cwd` del agente), un `.mcp.json` con dos servidores stdio: `catalogo` (`servers/catalogo_stdio.py`) e `inventario`. Los lanza con `uv run --no-sync --project <raíz>` y entrega el token con `"env": {"CATALOGO_TOKEN": "${CCARF_DEMO_TOKEN}"}`: el archivo lleva la **variable**, no el valor, y el módulo pone un valor sintético en el entorno del proceso. El agente se ejecuta con `setting_sources=["project"]` (la excepción al aislamiento: lee el `.mcp.json` del `cwd`, no el del repositorio ni la configuración de usuario).
+
+Tres partes:
+
+- **`conexion`:** además de los dos servidores del `.mcp.json`, el servidor en proceso `mesa`. La petición usa una tool de cada uno. La salida muestra las tools por servidor, si el servidor recibió el token (solo dice sí o no, nunca el valor) y el comando de **ámbito de usuario** (`claude mcp add --scope user …`), que se imprime y no se ejecuta: `~/.claude.json` es personal.
+- **`recursos`:** «¿qué artículos hay en el catálogo?» con el catálogo expuesto como *resource* (`kb://catalogo`) frente a `--anti sin_recursos`. Se cuentan las llamadas exploratorias (`search_kb` y `get_article`).
+- **`descripcion`:** los artículos están además como archivos en el `cwd`, y el agente tiene `Grep` y `Read` junto a la tool MCP. Se cuentan `Grep` frente a `search_kb`. Con `--anti descripcion_minima` la descripción de `search_kb` es una línea.
+
+**Comunitario frente a propio (TS 2.4-S4), sin código:**
+
+| La integración es… | Servidor | Por qué |
+| :--- | :--- | :--- |
+| estándar y ya resuelta (Jira, GitHub, Slack) | **comunitario** | se mantiene fuera y se actualiza con su proyecto |
+| un flujo de la mesa de ayuda (su catálogo, sus reglas, sus datos) | **propio** | es el único que conoce el dominio y cuyo contrato debe mantener el equipo |
+
+**Predice antes de ejecutar:**
+
+1. `conexion`: ¿verás las tools de los tres servidores a la vez? ¿Qué prefijo llevan?
+2. `recursos`: sin avisar de que existen, ¿usará el agente los resources por su cuenta? ¿Cuántas llamadas exploratorias hará sin ellos?
+3. `descripcion`: con la descripción de una línea, ¿preferirá `Grep` sobre la tool MCP?
+4. ¿Dónde pondrías un servidor experimental de una sola persona, y dónde uno que debe tener todo el equipo?
+
+**Qué observar (Haiku 5.5):**
+
+| Parte / variante | Señal observada | Qué dice |
+| :--- | :--- | :--- |
+| `conexion` | `mcp=['catalogo','inventario','mesa']`, 9 tools con prefijos `mcp__<servidor>__`, `token_recibido: true`, una llamada ok a cada servidor | todas las tools, a la vez; el token se expande sin escribirse en el archivo |
+| `recursos` correcta | 2 llamadas a resources (`ListMcpResourcesTool`, `ReadMcpResourceTool`), 0 exploratorias, ~0,0009 $ | el catálogo da visibilidad de qué hay sin explorar |
+| `recursos` `sin_recursos` | 19–31 llamadas exploratorias, 0,0021–0,0033 $ (×2,3–3,7) | el agente adivina con búsquedas y lecturas por ID, incluidos IDs que no existen |
+| `descripcion` correcta | `Grep` 0/6, `search_kb` MCP 6/6 | — |
+| `descripcion` `descripcion_minima` | `Grep` 0/6, `search_kb` MCP 6/6 | **sin diferencia** con Haiku 5.5 |
+
+Notas:
+
+- **Los resources no los descubre el modelo solo.** Con las tools de resources disponibles pero sin avisar, el agente exploró con búsquedas: la aplicación debe decirle que existen (aquí, una frase en el prompt del sistema). En el SDK se alcanzan con `ListMcpResourcesTool` y `ReadMcpResourceTool`. Es una nota de producto (no evaluable).
+- **`descripcion`: la señal que dice la guía no se vio.** Según la guía, una descripción mínima hace que el agente prefiera `Grep`. Con Haiku 5.5 y con Haiku 4.5 (sondas, 6 repeticiones por condición) no cambió la preferencia: sin avisar de que hay archivos, `Grep` salió 0/6 con las dos descripciones, y avisando salió igual de a menudo con una que con otra (4/6 y 5/6 con Haiku 5.5). Lo que movió al agente a `Grep` fue saber que los archivos existían, no la descripción. La viñeta se enseña igualmente (cabecera y pregunta); en el examen manda la guía.
+- **`init` puede traer la lista de tools incompleta:** en 2 de unas 8 ejecuciones, los servidores stdio constaban como conectados pero sus tools no estaban aún en `init`; el módulo lo avisa con `[aviso]`. Las llamadas funcionan igualmente.
+- **Sin aprobación:** con `setting_sources=["project"]` el SDK conecta los servidores de `.mcp.json` sin pedir aprobación; la CLI interactiva sí puede pedirla.
+- El `.mcp.json` generado, el comando de ámbito de usuario, los contadores y la agrupación de tools por servidor se prueban sin modelo en `tests/test_app1_06_mcp_config.py`.
+
+### Pregunta tipo examen
+
+Un agente tiene `Grep` y un servidor MCP propio con una tool `search_kb` que ordena por relevancia y filtra los artículos obsoletos con `superseded_by`. La descripción de la tool es «Busca en la base de conocimiento.» y el agente suele preferir `Grep` sobre los archivos del repositorio. ¿Qué cambio es el más adecuado?
+
+- A. Quitar `Grep` de las tools del agente, para que la única forma de buscar artículos sea la tool del servidor MCP.
+- B. Añadir al *system prompt* la regla «usa siempre `search_kb` para buscar artículos» y dejar la descripción como está.
+- C. Ampliar la descripción de `search_kb` con sus capacidades y sus salidas: ranking y filtrado de obsoletos con `superseded_by`.
+- D. Sustituir el servidor propio por uno comunitario genérico de búsqueda, que ya traerá descripciones más largas.
+
+<details>
+<summary>Respuesta</summary>
+
+**C.** Una descripción que detalla capacidades y salidas evita que el agente prefiera una tool integrada sobre una tool MCP más capaz (TS 2.4-S3): lo que decide la elección es lo que el agente ve de cada tool (TS 2.1-K1). A quita una herramienta que el agente sigue necesitando para otras cosas y no arregla la descripción; B es una instrucción en el prompt que compensa una descripción pobre y puede crear asociaciones no deseadas (TS 2.1-K4); D no aplica el criterio de TS 2.4-S4: una búsqueda sobre el catálogo propio de la mesa es un flujo específico del equipo y pide servidor propio.
 </details>
