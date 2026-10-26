@@ -76,7 +76,10 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
     - `recursos` (Haiku 5.5, 4 repeticiones): con resource, 2 llamadas a resources y 0 exploratorias (~0,0009 $); sin él, 19–31 exploratorias (×2,3–3,7). Hay que avisar al agente de que existen: sin la frase del prompt no los usa.
     - `descripcion`: **sin señal**; `Grep` 0/6 con la descripción completa y con la mínima (con aviso de archivos, 4/6 y 5/6). Se documenta sin fabricarla.
     - Comprobaciones heredadas cerradas: `setting_sources=["project"]`/`["project","local"]` dejan fuera el `CLAUDE.md` y las reglas de usuario; los plugins `@builtin` no añaden tools (hooks sin comprobar). Detalle en `docs/hallazgos.md`.
-  - [ ] Siguiente: `app3/03`, sección D3, pasada con Opus de `app1/03`–`06`, revisión independiente.
+  - [x] `app3/03_tools_entre_roles` (2026-10-26): 5 viñetas con `INTRODUCE` y ☑, 118/240; `pytest` 398 en verde. Cabecera y README son borrador de Sonnet (**pasada con Opus pendiente**).
+    - Con modelo (Sonnet 5.5 + Haiku 5.5, 3 repeticiones, ~0,15 $ por variante): correcta 0 fuera de rol, 2 delegaciones, 5 `verify_fact` (2 devueltas al coordinador); `fetch_url` abrió las 4 páginas basura en 2/3; **`todas` sin señal** (0/3, también con Haiku 4.5); **`sin_verify`: menos delegaciones (1 vs 2), no más**: el coordinador se queda con la verificación.
+    - Cambio frente al diseño (señales de «Verificación» 3): `todas` y `sin_verify` no muestran lo que preveía el diseño; se documentan tal cual en el README y en `docs/hallazgos.md`.
+  - [ ] Siguiente: sección D3 (`d3_claude_code/README.md`), pasada con Opus de `app1/03`–`06` y `app3/03`, revisión independiente, merge.
 - [ ] Entrega 3 · D4 y D5 (`S-2`)
 - [ ] `S-1` · repaso sin código nuevo
 - [ ] Entrega 4 · opcional, después del examen
