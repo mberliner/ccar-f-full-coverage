@@ -134,6 +134,13 @@ Cada módulo sigue `/nuevo-modulo`: tests sin modelo primero → módulo con cab
 - **`app1/05` scoping y `app1/03` enrutamiento: la señal puede no verse** con Haiku 5.5, que podría acertar igual con 18 tools o con descripciones mínimas. Primero se ejecuta con Haiku 5.5. Si no hay diferencia, se usa el rol `enforcement` en las dos variantes, igual que en `app2/01`, y se anota.
 - **Nombre de la variable de *tool search*** y forma de las tools de *resources* en la CLI fijada (`ListMcpResources`/`ReadMcpResource`): se comprueban en el `init` de la primera ejecución y no se inventan (roadmap §2).
 
+Comprobaciones heredadas de la entrega 1. Cada una se resuelve con una sonda barata junto al módulo que la reutiliza, y su resultado va a `docs/hallazgos.md`. Si se confirma y vale para otra persona, se marca `→ roadmap` (§4.3):
+
+- **Plugins `@builtin` con `setting_sources=[]`** (con `app1/06`, que ya mira el `init`): ¿aportan hooks o tools a los agentes de las apps? La lista de tools de la sonda (24) solo mostraba tools de la CLI; se compara con el `init` de un módulo.
+- **`--setting-sources project,local`** (con `app1/06`, que usa `setting_sources=["project"]`): ¿deja fuera también las reglas y el `CLAUDE.md` de usuario? Se mira qué carga `[contexto]`.
+- **Varios `AssistantMessage` por respuesta** (con `app3/03`, el módulo con subagentes de esta entrega): en `app3/02` una respuesta llegó en 3 mensajes con el mismo `message_id`. Se vuelcan los bloques de cada mensaje (razonamiento, texto, `tool_use`) para saber por qué son 3.
+- **`promptSuggestionEnabled` frente a la configuración de usuario**: ¿gana la de proyecto si la de usuario la activa, o la anulan `settings.local.json` o `CLAUDE_CODE_ENABLE_PROMPT_SUGGESTION`? Solo se observa en una sesión nueva de la CLI y la hace la persona, porque la clave no se aplica en caliente.
+
 ## Modelo de la sesión de construcción
 
 Es el modelo de la sesión de Claude Code que construye la entrega. Los modelos con los que se ejecutan las apps los fijan `.env` y `harness/config.py`, y no cambian.
