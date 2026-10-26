@@ -30,7 +30,7 @@ Las apps se ordenan por complejidad creciente, pero se entregan por bloques de d
 
 El avance de cada entrega se registra en `NOTAS.md`.
 
-**Introducidas: 85/240**
+**Introducidas: 93/240**
 
 | Viñeta | Destino | Estado |
 | :--- | :--- | :---: |
@@ -82,14 +82,14 @@ El avance de cada entrega se registra en `NOTAS.md`.
 | TS 1.7-S2 | app2/06_sesiones | ☑ |
 | TS 1.7-S3 | app2/06_sesiones | ☑ |
 | TS 1.7-S4 | app2/06_sesiones | ☑ |
-| TS 2.1-K1 | app1/03_servidor_mcp | ☐ |
-| TS 2.1-K2 | app1/03_servidor_mcp | ☐ |
-| TS 2.1-K3 | app1/03_servidor_mcp | ☐ |
-| TS 2.1-K4 | app1/03_servidor_mcp | ☐ |
-| TS 2.1-S1 | app1/03_servidor_mcp | ☐ |
-| TS 2.1-S2 | app1/03_servidor_mcp | ☐ |
-| TS 2.1-S3 | app1/03_servidor_mcp | ☐ |
-| TS 2.1-S4 | app1/03_servidor_mcp | ☐ |
+| TS 2.1-K1 | app1/03_servidor_mcp | ☑ |
+| TS 2.1-K2 | app1/03_servidor_mcp | ☑ |
+| TS 2.1-K3 | app1/03_servidor_mcp | ☑ |
+| TS 2.1-K4 | app1/03_servidor_mcp | ☑ |
+| TS 2.1-S1 | app1/03_servidor_mcp | ☑ |
+| TS 2.1-S2 | app1/03_servidor_mcp | ☑ |
+| TS 2.1-S3 | app1/03_servidor_mcp | ☑ |
+| TS 2.1-S4 | app1/03_servidor_mcp | ☑ |
 | TS 2.2-K1 | app1/04_errores_estructurados | ☐ |
 | TS 2.2-K2 | app1/04_errores_estructurados | ☐ |
 | TS 2.2-K3 | app1/04_errores_estructurados | ☐ |

@@ -10,7 +10,7 @@ Cada módulo sigue el ciclo de `README.md` del proyecto: **predecir → ejecutar
 | :--- | :--- | :---: |
 | [`01_bucle_manual.py`](01_bucle_manual.py) | TS 1.1-K1, K2, K3, S1, S2, S3 · TS 5.1-K4 | 1 |
 | [`02_tools_integradas.py`](02_tools_integradas.py) | TS 2.5-K1, K2, K3, K4, S1, S2, S3, S4, S5 | 2 |
-| `03_servidor_mcp.py` | TS 2.1 | 2 |
+| [`03_servidor_mcp.py`](03_servidor_mcp.py) | TS 2.1-K1, K2, K3, K4, S1, S2, S3, S4 | 2 |
 | `04_errores_estructurados.py` | TS 2.2 | 2 |
 | `05_scoping_y_tool_choice.py` | TS 2.3 | 2 |
 | `06_mcp_config.py` | TS 2.4 | 2 |
@@ -122,4 +122,54 @@ Un agente de mantenimiento debe encontrar todos los llamadores de `process_refun
 <summary>Respuesta</summary>
 
 **C.** Para rastrear una función a través de un módulo *wrapper* se identifican primero todos los nombres exportados y después se busca cada uno (TS 2.5-S5); `Grep` es la tool para el contenido (TS 2.5-K1, 2.5-S1). A pierde los llamadores por alias y parece completa; B es leer todo cuando una búsqueda lo resuelve, contra la exploración incremental (TS 2.5-S4); D confunde `Glob` (rutas, TS 2.5-K2) con una búsqueda de contenido: un llamador no tiene por qué llevar «refund» en su nombre de archivo.
+</details>
+
+---
+
+## 03 · Servidor MCP: descripciones de tools
+
+```bash
+uv run python app1_agente_unico/03_servidor_mcp.py                          # correcta
+uv run python app1_agente_unico/03_servidor_mcp.py --anti minimas           # dos tools solapadas de una línea
+uv run python app1_agente_unico/03_servidor_mcp.py --anti palabra_clave     # prompt con una regla por palabra clave
+uv run python app1_agente_unico/03_servidor_mcp.py --repeat 3 --budget 0.15 # tasa en 18 peticiones
+```
+
+Seis peticiones de mesa de ayuda (dos sobre tickets y cuatro sobre artículos de la base de conocimiento), cada una con su tool esperada. Cada petición es una conversación nueva con `query()` y se registra la **primera** llamada a una tool del servidor `mesa` (`servers/mesa.py`, familia `routing`). La salida da, por petición, la tool esperada y la elegida, y al final la tasa de acierto.
+
+**Predice antes de ejecutar:**
+
+1. ¿Qué tasa de acierto tendrá la variante correcta con sus cuatro tools?
+2. Con `--anti minimas` solo hay `analyze_content` y `analyze_document`. ¿Qué peticiones fallarán y cuáles aciertan sin que las descripciones ayuden?
+3. Con `--anti palabra_clave` las descripciones son las buenas. ¿Cuántas peticiones se desvían y por qué esas?
+4. ¿Cambiará el resultado de `palabra_clave` entre repeticiones?
+
+**Qué observar:**
+
+| Variante | Qué cambia | Acierto observado (Haiku 5.5, 18 peticiones) |
+| :--- | :--- | :--- |
+| correcta | 4 tools renombradas y divididas, con descripciones de propósito, entrada, ejemplo, casos borde y diferencias | 18/18 |
+| `minimas` | 2 tools genéricas con una línea cada una | 15/18: falla `articulo-resumen` siempre |
+| `palabra_clave` | las descripciones buenas, pero el prompt dice «si menciona un documento, usa `summarize_article`» | 12/18: las 2 peticiones con «documento» (pasos y verificar) siempre |
+
+Notas:
+
+- **`minimas`:** con un modelo reciente, la caída es moderada. Acierta lo que su vocabulario sugiere (la petición con «documento» va a `analyze_document`) y falla donde la petición no da pista: el resumen de un «artículo». Con un modelo más flojo o más herramientas solapadas, la tasa baja más. Lo que se mide aquí es la ambigüedad, no la capacidad: con descripciones reales no hay nada que adivinar.
+- **`palabra_clave`:** es la señal más fuerte y estable. La regla del prompt gana a la descripción en las dos peticiones con la palabra, en todas las repeticiones, y deja intacto el resto. La corrección es la configuración correcta: quitar la regla del prompt y confiar en las descripciones.
+- **Tool esperada con `minimas`:** como solo hay dos tools, se espera «tickets → `analyze_content`, artículos → `analyze_document`». Es una convención del módulo, no algo que diga la guía.
+- Los contratos de cada tool (entrada y salida) y la medida de acierto se prueban sin modelo en `tests/test_app1_servers_mesa.py` y `tests/test_app1_03_servidor_mcp.py`.
+
+### Pregunta tipo examen
+
+Un agente de soporte dispone de dos tools, `analyze_content` y `analyze_document`, descritas como «Analiza contenido.» y «Analiza un documento.». Con frecuencia elige la tool equivocada para peticiones parecidas. ¿Qué cambio es el más adecuado?
+
+- A. Añadir al *system prompt* la regla «si la petición menciona un documento, usa `analyze_document`», para guiar la elección en esos casos.
+- B. Fusionar las dos tools en una sola llamada `analyze` que acepte cualquier entrada, para que el modelo no tenga que elegir entre ellas.
+- C. Poner un clasificador previo que decida la tool y se la entregue al agente, para que este solo tenga que ejecutarla sin elegir.
+- D. Renombrar las tools según su propósito y ampliar sus descripciones con entradas, ejemplos, casos borde y en qué se diferencian de la otra.
+
+<details>
+<summary>Respuesta</summary>
+
+**D.** La descripción es el mecanismo con el que el modelo elige (TS 2.1-K1), y las ambiguas o solapadas causan *misrouting* (TS 2.1-K3). La corrección es describir con propósito, entradas y límites (TS 2.1-K2, TS 2.1-S1) y renombrar para quitar el solapamiento (TS 2.1-S2). A es una instrucción por palabra clave que puede anular las descripciones (TS 2.1-K4, TS 2.1-S4): arregla un caso y crea otros. B va al revés de la guía, que divide las tools genéricas en otras de contrato definido (TS 2.1-S3). C añade una pieza para compensar un defecto que se arregla en la descripción.
 </details>

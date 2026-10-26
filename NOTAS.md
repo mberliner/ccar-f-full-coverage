@@ -59,7 +59,11 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
       - Arreglo: `copy_to_temp` devuelve la ruta resuelta (con la corta, `Edit` salía denegado).
     - Pendiente: revisión por una instancia independiente.
   - [x] Sonda de `.mcp.json` (2026-10-26): los servidores se conectan sin aprobación con `setting_sources=["project"]`; el `.claude/settings.json` de reserva no hace falta en `app1/06`. Detalle en `docs/hallazgos.md`.
-  - [ ] Siguiente: `app1/03`; sondas pendientes: `tool_choice` con Haiku 5.5 y variable de *tool search* (antes de `app1/05`).
+  - [x] `app1/03_servidor_mcp` (2026-10-26): 8 viñetas con `INTRODUCE` y ☑, 93/240; `pytest` 336 en verde. Cabecera y README son borrador de Sonnet: **quedan para la pasada con Opus 5.5**.
+    - Con modelo (Haiku 5.5, 6 peticiones × 3, ~0,03 $): correcta 18/18; `minimas` 15/18 (solo falla `articulo-resumen`, 3/3); `palabra_clave` 12/18 (las 2 peticiones con «documento», 3/3 cada una).
+    - Riesgo del diseño («la señal puede no verse con Haiku 5.5»): la señal de `minimas` es moderada (-17 puntos) y la de `palabra_clave` es fuerte; no se pasa al rol `enforcement`. Si se quisiera más caída en `minimas`, es la variante a repetir con Haiku 4.5 (~×15 de coste).
+    - Pendiente: revisión independiente.
+  - [ ] Siguiente: sondas de `tool_choice` con Haiku 5.5 y de la variable de *tool search* (antes de `app1/05`), y `app1/04`.
 - [ ] Entrega 3 · D4 y D5 (`S-2`)
 - [ ] `S-1` · repaso sin código nuevo
 - [ ] Entrega 4 · opcional, después del examen
