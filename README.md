@@ -21,11 +21,11 @@ Las apps siguen el temario por dominios:
 
 | App | Dominios | Tema |
 | :--- | :--- | :--- |
-| `app1_agente_unico/` | D1 | Bucle agéntico y fundamentos |
-| `app2_agente_con_control/` | D2 y D3 | Hooks, control del agente, sesiones |
-| `app3_sistema_multiagente/` | D4 y D5 | Coordinador, subagentes, procedencia |
+| `app1_agente_unico/` | D1, D2 y D5 | Bucle agéntico, tools integradas, servidores MCP, errores, scoping y `tool_choice`, configuración MCP y recorte de contexto |
+| `app2_agente_con_control/` | D1, D4 y D5 | Hooks, permisos, sesiones, *few-shot*, escalamiento y *handoff* |
+| `app3_sistema_multiagente/` | D1 a D5 | Coordinador y subagentes, tools entre roles, procedencia, extracción, lotes y CI |
 
-Además, el propio repositorio muestra la configuración de Claude Code (`CLAUDE.md`, `.claude/`, `docs/`), que cubre las viñetas del dominio D3.
+Cada módulo introduce las viñetas que `CONCEPTOS.md` le asigna, así que una app puede cubrir varios dominios. Además, el propio repositorio muestra la configuración de Claude Code (`CLAUDE.md`, `.claude/`, `docs/`) y `d3_claude_code/` la recorre: ahí están las viñetas del dominio D3 que no son de ninguna app.
 
 ## Qué encontrarás aquí
 

@@ -30,7 +30,7 @@ Las apps se ordenan por complejidad creciente, pero se entregan por bloques de d
 
 El avance de cada entrega se registra en `NOTAS.md`.
 
-**Introducidas: 118/240**
+**Introducidas: 131/240**
 
 | Viñeta | Destino | Estado |
 | :--- | :--- | :---: |
@@ -129,19 +129,19 @@ El avance de cada entrega se registra en `NOTAS.md`.
 | TS 3.1-K2 | d3 | ☑ |
 | TS 3.1-K3 | d3 | ☑ |
 | TS 3.1-K4 | d3 | ☑ |
-| TS 3.1-S1 | d3 | ☐ |
+| TS 3.1-S1 | d3 | ☑ |
 | TS 3.1-S2 | d3 | ☑ |
 | TS 3.1-S3 | d3 | ☑ |
-| TS 3.1-S4 | d3 | ☐ |
+| TS 3.1-S4 | d3 | ☑ |
 | TS 3.2-K1 | d3 | ☑ |
 | TS 3.2-K2 | d3 | ☑ |
 | TS 3.2-K3 | d3 | ☑ |
-| TS 3.2-K4 | d3 | ☐ |
+| TS 3.2-K4 | d3 | ☑ |
 | TS 3.2-S1 | d3 | ☑ |
 | TS 3.2-S2 | d3 | ☑ |
 | TS 3.2-S3 | d3 | ☑ |
 | TS 3.2-S4 | d3 | ☑ |
-| TS 3.2-S5 | d3 | ☐ |
+| TS 3.2-S5 | d3 | ☑ |
 | TS 3.3-K1 | d3 | ☑ |
 | TS 3.3-K2 | d3 | ☑ |
 | TS 3.3-K3 | d3 | ☑ |
@@ -156,15 +156,15 @@ El avance de cada entrega se registra en `NOTAS.md`.
 | TS 3.4-S2 | d3 | ☑ |
 | TS 3.4-S3 | d3 | ☑ |
 | TS 3.4-S4 | d3 | ☑ |
-| TS 3.5-K1 | d3 | ☐ |
-| TS 3.5-K2 | d3 | ☐ |
-| TS 3.5-K3 | d3 | ☐ |
-| TS 3.5-K4 | d3 | ☐ |
-| TS 3.5-S1 | d3 | ☐ |
-| TS 3.5-S2 | d3 | ☐ |
-| TS 3.5-S3 | d3 | ☐ |
-| TS 3.5-S4 | d3 | ☐ |
-| TS 3.5-S5 | d3 | ☐ |
+| TS 3.5-K1 | d3 | ☑ |
+| TS 3.5-K2 | d3 | ☑ |
+| TS 3.5-K3 | d3 | ☑ |
+| TS 3.5-K4 | d3 | ☑ |
+| TS 3.5-S1 | d3 | ☑ |
+| TS 3.5-S2 | d3 | ☑ |
+| TS 3.5-S3 | d3 | ☑ |
+| TS 3.5-S4 | d3 | ☑ |
+| TS 3.5-S5 | d3 | ☑ |
 | TS 3.6-K1 | app3/11_criterios_y_ci | ☐ |
 | TS 3.6-K2 | app3/11_criterios_y_ci | ☐ |
 | TS 3.6-K3 | app3/11_criterios_y_ci | ☐ |
