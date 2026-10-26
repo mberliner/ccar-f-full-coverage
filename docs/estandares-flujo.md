@@ -46,6 +46,12 @@ Importado por `CLAUDE.md`. Cómo se construye el proyecto.
 - Las notas son siempre agnósticas: rutas relativas al proyecto o genéricas (`~/.claude/…`), sin rutas absolutas, sin nombres de personas, cuentas ni perfiles.
 - `CLAUDE.md` y estos estándares solo cambian cuando cambia una regla estable.
 
+## Ejercicios de evaluación
+
+- Las sugerencias de entrada de Claude Code (`promptSuggestionEnabled`) están desactivadas en `.claude/settings.json`, porque pueden proponer la respuesta correcta de un ejercicio. Una configuración local o una variable de entorno pueden anularlo: el repositorio fija el valor por defecto y no puede impedirlo.
+- Las predicciones se piden en texto libre. Las opciones múltiples se reservan para practicar el formato de examen.
+- Las opciones tienen la misma longitud y registro, y la correcta no ocupa siempre la misma posición.
+
 ## Revisión
 
 - La revisa una instancia independiente, nunca la sesión que escribió el código.

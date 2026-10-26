@@ -96,6 +96,12 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
 - **Los hooks se lanzan con `uv run`, no con `python`:** ✓ roadmap 2026-10-24 §4.3.
 - **La configuración de usuario no se apaga desde el repositorio:** ✓ roadmap 2026-10-24 §3 (regla 3) y §4.3. Pendiente de comprobar: si `--setting-sources project,local` deja fuera también las reglas y el `CLAUDE.md` de usuario. → roadmap (§4.3) cuando se confirme.
 
+- **Sugerencias de entrada desactivadas** (2026-10-25): la caja de entrada de Claude Code propone texto gris con la siguiente respuesta y puede revelar la letra correcta de un ejercicio. Se fija `promptSuggestionEnabled: false` en `.claude/settings.json`. Comprobado (2026-10-25, sesiones de la CLI, observado por la persona en su caja de entrada):
+  - Una sesión nueva abierta con la setting de proyecto no muestra sugerencias.
+  - **La clave no se aplica en caliente:** la sesión que ya estaba abierta siguió mostrándolas tras fijar `false` en `.claude/settings.json`; la sesión que ya no las mostraba siguió sin ellas tras crear `.claude/settings.local.json` con `true`; una sesión nueva sí aplicó el `true` local. El archivo local de la prueba se borró después.
+  - Consecuencia: no hay forma dinámica dentro de una sesión; el valor se fija al arrancarla. Un comando que escribiera el archivo local solo valdría para la siguiente sesión.
+  - Pendiente de comprobar: qué pasa si la configuración de usuario la activa (la de proyecto debería ganar, pero `settings.local.json` o la variable `CLAUDE_CODE_ENABLE_PROMPT_SUGGESTION` pueden anularla).
+
 ## Citas en prosa por convertir a `# USA`
 
 El arnés cita estas viñetas en prosa porque aún no están introducidas (roadmap §2). Se convierten en el mismo cambio que las introduce:
