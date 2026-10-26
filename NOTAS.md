@@ -67,7 +67,8 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
     - Con modelo (Haiku 5.5, 5 ejecuciones por variante, ~0,02 $): correcta 5/5 con 1 reintento útil (transitorio) y 0 inútiles; `generico` 5/5 con 1 reintento inútil (`export_audit_log`); `fallo_como_vacio` 5/5 sin reintentar el transitorio y 4/5 afirmando que no hay histórico.
     - La rama de validación no se ejercita en ejecución: el modelo corrige el ID por la descripción (hallazgo en `docs/hallazgos.md`).
     - Sonda con Haiku 4.5 (2026-10-26, ~0,12 $): validación tampoco (0/10) y `generico` sin reintentos inútiles; sí se rinde ante el timeout (2/5 con metadatos, 0/5 con error genérico). Se mantiene Haiku 5.5 como rol del módulo.
-  - [ ] Siguiente: sondas de `tool_choice` con Haiku 5.5 y de la variable de *tool search* (antes de `app1/05`).
+  - [x] Sondas de `app1/05` (2026-10-26): `tool_choice` `any` y forzado funcionan con Haiku 5.5 y 4.5 y dan 400 con Sonnet 5.5 (la parte `tool_choice` usa el rol `agent`, sin `enforcement`); la variable es `ENABLE_TOOL_SEARCH`, pero ningún valor activó la carga diferida con 18 tools en proceso, así que el efecto no se puede demostrar (se fija en `env` como precaución y se confirma `tool_search_loads == 0`). Detalle en `docs/hallazgos.md`.
+  - [ ] Siguiente: `app1/05` y `app1/06`, `app3/03`, sección D3.
 - [ ] Entrega 3 · D4 y D5 (`S-2`)
 - [ ] `S-1` · repaso sin código nuevo
 - [ ] Entrega 4 · opcional, después del examen
