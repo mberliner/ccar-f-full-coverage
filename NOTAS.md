@@ -58,7 +58,8 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
       - `edicion`: sin petición especial, `Edit` no falla ni con Haiku 5.5 (0/3) ni con Haiku 4.5 (0/8): el modelo amplía el ancla tras el `Read`. **Decidido (2026-10-26): provocar el fallo en el prompt** (un único `Edit` con `old_string` exacto, sin nombrar `Read`/`Write`). Resultado: `Edit` falla en 3/6, siempre recuperado con `Edit` de más contexto (nunca `Write`), archivo correcto 6/6. Detalle y los otros dos hallazgos (ruta corta de Windows, tool inexistente) en `docs/hallazgos.md`.
       - Arreglo: `copy_to_temp` devuelve la ruta resuelta (con la corta, `Edit` salía denegado).
     - Pendiente: revisión por una instancia independiente.
-  - [ ] Siguiente: sondas de «Riesgos» y `app1/03`.
+  - [x] Sonda de `.mcp.json` (2026-10-26): los servidores se conectan sin aprobación con `setting_sources=["project"]`; el `.claude/settings.json` de reserva no hace falta en `app1/06`. Detalle en `docs/hallazgos.md`.
+  - [ ] Siguiente: `app1/03`; sondas pendientes: `tool_choice` con Haiku 5.5 y variable de *tool search* (antes de `app1/05`).
 - [ ] Entrega 3 · D4 y D5 (`S-2`)
 - [ ] `S-1` · repaso sin código nuevo
 - [ ] Entrega 4 · opcional, después del examen
