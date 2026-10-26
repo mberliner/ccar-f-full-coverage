@@ -139,10 +139,10 @@ Seis peticiones de mesa de ayuda (dos sobre tickets y cuatro sobre artículos de
 
 **Predice antes de ejecutar:**
 
-1. ¿Qué tasa de acierto tendrá la variante correcta con sus cuatro tools?
-2. Con `--anti minimas` solo hay `analyze_content` y `analyze_document`. ¿Qué peticiones fallarán y cuáles aciertan sin que las descripciones ayuden?
-3. Con `--anti palabra_clave` las descripciones son las buenas. ¿Cuántas peticiones se desvían y por qué esas?
-4. ¿Cambiará el resultado de `palabra_clave` entre repeticiones?
+1. Con la variante correcta y sus cuatro tools, ¿qué tasa de acierto esperas? Si alguna petición fallara, ¿qué tendría que tener para confundir al modelo?
+2. Con `--anti minimas` solo hay `analyze_content` y `analyze_document`, de una línea cada una. ¿En qué peticiones podrá el modelo guiarse por las palabras de la propia petición, y en cuáles no tendrá ninguna pista?
+3. Con `--anti palabra_clave` las descripciones son las buenas y el prompt añade una regla. Cuando las dos cosas apuntan a tools distintas, ¿cuál crees que pesará más? ¿Qué peticiones lo pondrán a prueba?
+4. ¿Qué variante esperas más estable entre repeticiones, y por qué?
 
 **Qué observar:**
 
@@ -154,7 +154,7 @@ Seis peticiones de mesa de ayuda (dos sobre tickets y cuatro sobre artículos de
 
 Notas:
 
-- **`minimas`:** con un modelo reciente, la caída es moderada. Acierta lo que su vocabulario sugiere (la petición con «documento» va a `analyze_document`) y falla donde la petición no da pista: el resumen de un «artículo». Con un modelo más flojo o más herramientas solapadas, la tasa baja más. Lo que se mide aquí es la ambigüedad, no la capacidad: con descripciones reales no hay nada que adivinar.
+- **`minimas`:** con un modelo reciente, la caída es moderada. Acierta lo que su vocabulario sugiere (la petición con «documento» va a `analyze_document`) y falla donde la petición no da pista: el resumen de un «artículo». Con un modelo más flojo o más tools solapadas cabe esperar más caída (hipótesis sin comprobar; la variante a repetir sería esta con Haiku 4.5). Lo que se mide aquí es la ambigüedad, no la capacidad: con descripciones reales no hay nada que adivinar.
 - **`palabra_clave`:** es la señal más fuerte y estable. La regla del prompt gana a la descripción en las dos peticiones con la palabra, en todas las repeticiones, y deja intacto el resto. La corrección es la configuración correcta: quitar la regla del prompt y confiar en las descripciones.
 - **Tool esperada con `minimas`:** como solo hay dos tools, se espera «tickets → `analyze_content`, artículos → `analyze_document`». Es una convención del módulo, no algo que diga la guía.
 - Los contratos de cada tool (entrada y salida) y la medida de acierto se prueban sin modelo en `tests/test_app1_servers_mesa.py` y `tests/test_app1_03_servidor_mcp.py`.
@@ -171,7 +171,7 @@ Un agente de soporte dispone de dos tools, `analyze_content` y `analyze_document
 <details>
 <summary>Respuesta</summary>
 
-**D.** La descripción es el mecanismo con el que el modelo elige (TS 2.1-K1), y las ambiguas o solapadas causan *misrouting* (TS 2.1-K3). La corrección es describir con propósito, entradas y límites (TS 2.1-K2, TS 2.1-S1) y renombrar para quitar el solapamiento (TS 2.1-S2). A es una instrucción por palabra clave que puede anular las descripciones (TS 2.1-K4, TS 2.1-S4): arregla un caso y crea otros. B va al revés de la guía, que divide las tools genéricas en otras de contrato definido (TS 2.1-S3). C añade una pieza para compensar un defecto que se arregla en la descripción.
+**D.** La descripción es el mecanismo con el que el modelo elige (TS 2.1-K1), y las ambiguas o solapadas causan *misrouting* (TS 2.1-K3). La corrección es describir con propósito, entradas y límites (TS 2.1-K2, TS 2.1-S1) y renombrar para quitar el solapamiento (TS 2.1-S2). A es una instrucción por palabra clave que puede anular las descripciones (TS 2.1-K4, TS 2.1-S4): arregla un caso y crea otros. B va al revés de la guía, que divide las tools genéricas en otras de contrato definido (TS 2.1-S3). C añade una pieza para compensar un defecto que se arregla en la descripción; ninguna viñeta de la guía lo propone.
 </details>
 
 ---
@@ -192,21 +192,23 @@ La salida muestra los reintentos idénticos por tool, cuántos son inútiles, la
 **Predice antes de ejecutar:**
 
 1. Con la variante correcta, ¿qué tools se llamarán más de una vez y por qué esas?
-2. ¿Cómo explicará el agente el fallo del cupo y el del permiso? ¿Dirá que son problemas técnicos?
-3. Con `--anti generico`, ¿qué tool se reintentará sin que tenga arreglo?
-4. Con `--anti fallo_como_vacio`, ¿qué dirá el agente del histórico del ticket, y habrá un segundo intento?
+2. ¿Cómo explicará el agente el fallo del cupo y el del permiso, y en qué se apoyará para distinguir uno de otro?
+3. El perfil se pide con «1001», un ID mal formado. ¿Llegará a producirse el error de validación? ¿De qué depende?
+4. Con `--anti generico` todos los errores dicen lo mismo. ¿Reintentará el agente algo que no tiene arreglo? ¿Y dejará de reintentar algo que sí lo tenía?
+5. Con `--anti fallo_como_vacio`, ¿qué dirá el agente del histórico del ticket, y habrá un segundo intento?
 
 **Qué observar:**
 
 | Variante | Reintentos | Qué se rompe |
 | :--- | :--- | :--- |
 | correcta | solo `fetch_ticket_history` (1), que se recupera | — |
-| `generico` | `export_audit_log` se repite sin arreglo posible (1 inútil por ejecución) y el transitorio se reintenta por costumbre | sin categoría ni `isRetryable`, el agente no distingue lo reintentable de lo que no lo es |
+| `generico` | `export_audit_log` se repite sin arreglo posible (1 inútil por ejecución) y el transitorio también se reintenta, sin nada que diga que lo es | sin categoría ni `isRetryable`, el agente no distingue lo reintentable de lo que no lo es |
 | `fallo_como_vacio` | ninguno: el transitorio no se reintenta | el agente cree que el ticket no tiene histórico (4 de 5) y lo cuenta como un dato |
 
 Notas:
 
-- **Validación:** en las ejecuciones observadas (Haiku 5.5) el modelo corrige «1001» a `EMP-1001` antes de llamar, porque la descripción de la tool dice el formato, y el error de validación no llega a producirse. Su forma se prueba sin modelo (`tests/test_app1_servers_mesa.py`). Es la consecuencia de una buena descripción (TS 2.1-K2), no un defecto del módulo.
+- **Validación:** en las ejecuciones observadas (Haiku 5.5) el modelo corrige «1001» a `EMP-1001` antes de llamar, porque la descripción de la tool dice el formato, y el error de validación no llega a producirse. Su forma se prueba sin modelo (`tests/test_app1_servers_mesa.py`). Es la consecuencia de una buena descripción (TS 2.1-K2), no un defecto del módulo. Con Haiku 4.5 (sonda, 10 ejecuciones) tampoco se vio.
+- **`generico` depende del modelo:** con Haiku 4.5 (sonda) no hubo reintentos inútiles, porque no reintentó nada; lo que cambió fue que se rindió ante el *timeout* (lo recuperó 2 de 5 veces con metadatos y 0 de 5 con el error genérico). Muestra pequeña: la señal del módulo es la de Haiku 5.5.
 - **`isRetryable` frente a `retriable`:** la guía escribe `retriable: false` para la regla de negocio; el proyecto usa `isRetryable` en todos los errores. Con la regla de negocio, además, el mensaje explica la política para que el agente informe a la persona usuaria (TS 2.2-S2).
 - **Vacío válido:** la búsqueda de `EMP-9999` devuelve una lista vacía correcta, que no es un error. Lo que `fallo_como_vacio` rompe es lo contrario: un fallo de acceso disfrazado de lista vacía (TS 2.2-S4).
 - Las señales sobre el `RunRecord` (reintentos idénticos, categorías) se prueban sin modelo en `tests/test_app1_04_errores_estructurados.py`. «Dice que no hay histórico» es un detector de texto aproximado; la señal robusta es «transitorio recuperado».
@@ -215,15 +217,15 @@ Notas:
 
 Una tool MCP de reembolsos devuelve «Operation failed» ante cualquier fallo. El agente reintenta tres veces un reembolso rechazado por superar el límite de la política y luego comunica a la persona que hubo un problema técnico. ¿Qué cambio es el más adecuado?
 
-- A. Devolver el error con `isError`, la categoría `business`, `isRetryable` a falso y un mensaje legible que explique la política, para que el agente informe sin reintentar.
-- B. Limitar al agente a un máximo de dos reintentos por tool, de modo que ningún error se reintente más de lo razonable y se acote el gasto.
-- C. Añadir al *system prompt* la regla «no reintentes los errores de política y explica la causa», dejando la tool como está.
-- D. Cambiar el mensaje a «Operation failed, please try again later», para que el agente sepa que debe esperar antes de volver a intentarlo.
+- A. Devolver el error con `isError`, una categoría de regla de negocio, la marca de no reintentable y una explicación legible de la política.
+- B. Limitar al agente a un máximo de dos reintentos por tool, para que ningún error se repita más de lo razonable y se acote el gasto.
+- C. Añadir al *system prompt* la regla «no reintentes los errores de política y explica la causa», sin cambiar la respuesta de la tool.
+- D. Cambiar el mensaje a «Operation failed, please try again later», para que el agente espere un poco antes de volver a intentarlo.
 
 <details>
 <summary>Respuesta</summary>
 
-**A.** El fallo se comunica con el flag de error y metadatos estructurados (TS 2.2-K1, TS 2.2-S1): la categoría distingue una regla de negocio de un fallo transitorio (TS 2.2-K2), `isRetryable` evita el reintento inútil (TS 2.2-K4) y el mensaje explica la política para que el agente informe bien (TS 2.2-S2). B pone un tope arbitrario en vez de dar al agente la información, y seguirá reintentando lo que no tiene arreglo; C intenta suplir en prosa lo que debería salir de la tool, y no distingue unos errores de otros; D empeora el problema: invita a reintentar justo lo que no es reintentable. Un mensaje genérico es el anti-patrón (TS 2.2-K3).
+**A.** El fallo se comunica con el flag de error y metadatos estructurados (TS 2.2-K1, TS 2.2-S1): la categoría distingue una regla de negocio de un fallo transitorio (TS 2.2-K2; la guía no da nombre al valor de esa categoría), la marca de no reintentable evita el reintento inútil (TS 2.2-K4; la guía la escribe `retriable: false` en S2 e `isRetryable` en S1) y la explicación de la política permite al agente informar bien (TS 2.2-S2). B pone un tope arbitrario en vez de dar al agente la información, y seguirá reintentando lo que no tiene arreglo; C intenta suplir en prosa lo que debería salir de la tool, y no distingue unos errores de otros; D empeora el problema: invita a reintentar justo lo que no es reintentable. Un mensaje genérico es el anti-patrón (TS 2.2-K3).
 </details>
 
 ---
@@ -239,13 +241,13 @@ uv run python app1_agente_unico/05_scoping_y_tool_choice.py --parte scoping --re
 
 Dos partes independientes.
 
-**`scoping` (Agent SDK):** las mismas seis peticiones sobre el servidor `mesa` con la familia `acotado` (5 tools) o `amplio` (18: las mismas 5 más 13 alias casi iguales, como `lookup_ticket` o `get_employee`). Se mide el acierto de la primera llamada (un alias de la tool esperada cuenta como acierto), si la tool elegida cambia entre repeticiones y el coste. La carga diferida de definiciones (*tool search*) se apaga con `ENABLE_TOOL_SEARCH=false` y la salida confirma `cargas diferidas=0`.
+**`scoping` (Agent SDK):** las mismas seis peticiones sobre el servidor `mesa` con la familia `acotado` (5 tools) o `amplio` (18: las mismas 5 más 13 alias casi iguales, como `lookup_ticket` o `get_employee`). Se mide el acierto de la primera llamada (un alias de la tool esperada cuenta como acierto), si la tool elegida cambia entre repeticiones y el coste. La carga diferida de definiciones (*tool search*) se fija en `ENABLE_TOOL_SEARCH=false` por precaución y la salida confirma `cargas diferidas=0`. En las sondas no se activó con ningún valor de la variable, así que no hay prueba de que `false` apague algo: solo de que aquí no interviene (`docs/hallazgos.md`).
 
 **`tool_choice` (Messages API, como `01`):** una misma petición de opinión sobre un ticket («¿crees que este tipo de tickets suelen ser un problema grave?») con `auto`, con `any` y con la tool `extract_ticket_metadata` forzada. En el primer turno va el modo elegido y en los siguientes `auto`, para que el modelo pueda enriquecer y responder. Se imprime con qué empieza cada respuesta.
 
 **Predice antes de ejecutar:**
 
-1. `scoping`: ¿acertará menos con 18 tools que con 5? Si no, ¿qué más puede cambiar?
+1. `scoping`: con 18 tools frente a 5, ¿qué esperas que cambie: el acierto, la tool elegida entre repeticiones, el coste? ¿Qué tendrían que tener las peticiones para que el acierto se resintiera?
 2. `tool_choice`: con `auto`, ¿cuántas respuestas empezarán por una tool? ¿Y con `any` y con la forzada?
 3. ¿Qué tool llamará `any`? ¿Y la forzada?
 4. ¿Qué pasaría si `any` o la forzada se enviaran en **todos** los turnos?
@@ -262,7 +264,7 @@ Dos partes independientes.
 
 Notas:
 
-- **`scoping`:** la guía dice que 18 tools degradan la fiabilidad de selección; aquí no se vio en el acierto. Con Haiku 5.5 y con Haiku 4.5 (sonda: 18/18 y 18/18) las peticiones son claras y el modelo elige bien. Lo que sí se vio: más coste con 18 tools (+36 % con Haiku 5.5, +58 % con Haiku 4.5) y, con Haiku 4.5, una petición cuya tool cambió entre repeticiones (`get_user` o `get_employee`). Con peticiones más ambiguas o más tools, la degradación de acierto sería más fácil de provocar. En el examen manda la guía.
+- **`scoping`:** la guía dice que 18 tools degradan la fiabilidad de selección; aquí no se vio en el acierto. Con Haiku 5.5 y con Haiku 4.5 (sonda: 18/18 y 18/18) las peticiones son claras y el modelo elige bien. Lo que sí se vio: más coste con 18 tools (+36 % con Haiku 5.5, +58 % con Haiku 4.5) y, con Haiku 4.5, una petición cuya tool cambió entre repeticiones (`get_user` o `get_employee`). Con peticiones más ambiguas o más tools, la degradación de acierto sería previsiblemente más fácil de provocar (hipótesis sin comprobar). En el examen manda la guía.
 - **`auto`:** depende de la petición. Con «¿qué te parece?» o «¿es urgente?» Haiku 5.5 sí llamaba a la tool y el contraste no se veía; con una petición de opinión contesta con texto. Ese es el caso que `any` y el forzado resuelven.
 - **Un turno, no todos:** el modo forzado o `any` solo va en el primer turno. En todos los turnos, el modelo estaría obligado a llamar a una tool también después de recibir los resultados y no podría dar su respuesta final.
 - **En producción (no evaluable):** `any` y la forzada devuelven 400 en Sonnet 5.5 (comprobado) y, según la documentación del repositorio de estudio, en Opus 5.5 y Fable 5.1. Haiku 5.5 y Haiku 4.5 las aceptan. En el examen manda la guía.
@@ -273,8 +275,8 @@ Notas:
 Un flujo de soporte necesita extraer los metadatos de cada ticket nuevo antes de enriquecerlo con la base de conocimiento. A veces el asistente responde con texto conversacional y se salta la extracción. ¿Qué configuración es la más adecuada?
 
 - A. Enviar `tool_choice` con el valor `"any"` en todos los turnos, para que el asistente nunca devuelva texto y el flujo siempre avance.
-- B. Forzar la tool de extracción con `{"type": "tool", "name": "extract_metadata"}` en el primer turno y usar `"auto"` en los siguientes para el enriquecimiento.
-- C. Añadir al *system prompt* la instrucción «llama siempre a `extract_metadata` antes de responder» y mantener `"auto"` en todos los turnos.
+- B. Forzar la extracción con `{"type": "tool", "name": "extract_ticket_metadata"}` en el primer turno y usar `"auto"` en los siguientes.
+- C. Añadir al *system prompt* «llama siempre a `extract_ticket_metadata` antes de responder» y mantener `"auto"` en todos los turnos.
 - D. Dar al asistente diez tools de enriquecimiento más junto a la de extracción, para que siempre tenga una opción disponible que llamar.
 
 <details>
@@ -314,7 +316,7 @@ Tres partes:
 
 1. `conexion`: ¿verás las tools de los tres servidores a la vez? ¿Qué prefijo llevan?
 2. `recursos`: sin avisar de que existen, ¿usará el agente los resources por su cuenta? ¿Cuántas llamadas exploratorias hará sin ellos?
-3. `descripcion`: con la descripción de una línea, ¿preferirá `Grep` sobre la tool MCP?
+3. `descripcion`: el agente tiene `Grep` y `search_kb` para lo mismo. ¿Qué crees que decidirá cuál usa: la descripción de la tool MCP, saber que los artículos están también como archivos, otra cosa? ¿Cambiará algo con la descripción de una línea?
 4. ¿Dónde pondrías un servidor experimental de una sola persona, y dónde uno que debe tener todo el equipo?
 
 **Qué observar (Haiku 5.5):**

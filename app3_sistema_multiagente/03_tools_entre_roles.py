@@ -6,32 +6,40 @@ correcciones: restringir por rol, sustituir una tool genérica por una restringi
 dar una tool acotada para las necesidades frecuentes.
 
 QUÉ DICE LA GUÍA:
-- Los agentes con tools fuera de su especialización tienden a malusarlas; por ejemplo,
-  un agente de síntesis que intenta hacer búsquedas (2.3-K2).
-- El acceso acotado da a cada agente solo las tools de su rol, más unas pocas tools
-  *cross-role* muy limitadas para las necesidades de alta frecuencia (2.3-K3).
-- Cada subagente recibe solo las tools relevantes para su rol (2.3-S1).
-- Una tool genérica se sustituye por una restringida: `fetch_url` por `load_document`,
-  que valida que la URL sea de un documento (2.3-S2).
-- Una tool cross-role acotada, como `verify_fact` en el agente de síntesis, cubre las
-  verificaciones simples (en la guía, el 85 %); los casos complejos se enrutan por el
-  coordinador (2.3-S3).
+- Un agente que tiene a mano tools ajenas a su especialidad tiende a usarlas mal;
+  el ejemplo de la guía es un agente de síntesis que se pone a hacer búsquedas web
+  (2.3-K2).
+- Acceso acotado: cada agente recibe las tools de su rol y, como mucho, alguna tool
+  *cross-role* muy limitada para lo que necesita con mucha frecuencia (2.3-K3).
+- Habilidades que nombra: dejar a cada subagente solo lo relevante para su rol
+  (2.3-S1); cambiar una tool genérica por otra restringida, como `fetch_url` por
+  `load_document`, que comprueba que la URL apunta a un documento (2.3-S2); y dar
+  al sintetizador una tool acotada como `verify_fact` para las comprobaciones
+  simples, que según la guía son el 85 %, mientras las complejas siguen pasando por
+  el coordinador (2.3-S3).
+- El número de tools y `tool_choice` (2.3-K1, K4, S4, S5) están en `app1/05`.
 
-POR QUÉ IMPORTA (inferencia propia): lo que un subagente puede hacer lo decide su lista de
-tools, no su prompt. Con todas las tools, el prompt «solo sintetiza» es una petición, no
-una barrera; con las suyas, la barrera es la configuración. Y la tool cross-role evita que
-cada comprobación trivial dé una vuelta completa por el coordinador.
+POR QUÉ IMPORTA (inferencia propia): lo que un subagente puede hacer lo decide su
+lista de tools, no su prompt. Con todas las tools, «solo sintetiza» es una
+petición, no una barrera; con las suyas, la barrera es la configuración. Y la tool
+cross-role evita que cada comprobación trivial dependa del coordinador.
 
 ANTI-PATRÓN / TRAMPA DEL EXAMEN:
-- Hechos de la guía: el sintetizador con todas las tools, que se pone a buscar
-  (`--anti todas`); la tool genérica `fetch_url` en lugar de la que valida
-  (`--anti fetch_url`); y ninguna tool cross-role, de modo que cada verificación simple
-  pasa por el coordinador (`--anti sin_verify`).
-- Inferencias propias: la respuesta tentadora a «el sintetizador busca de más» es reforzar
-  el prompt («no busques»), no quitar la tool. Y dar `verify_fact` también al coordinador
-  o fusionar investigador y sintetizador son vías que la guía no propone.
-- Guía frente a producto: la guía llama `Task` a la tool de subagentes; en el producto es
-  `Agent`. Un subagente no hereda el contexto: solo sabe lo que el coordinador le pase.
+- Hechos de la guía: el sintetizador con todas las tools (`--anti todas`, 2.3-K2),
+  la tool genérica `fetch_url` en lugar de la que valida (`--anti fetch_url`,
+  2.3-S2) y ninguna tool cross-role para las verificaciones simples
+  (`--anti sin_verify`, 2.3-S3).
+- Lo observado aquí (ver README y `docs/hallazgos.md`): solo `fetch_url` dio la
+  señal prevista (páginas que no son documentos en los hallazgos). Con `todas`, el
+  sintetizador no salió de su rol en ninguna ejecución. Con `sin_verify` hubo
+  **menos** delegaciones, no más: el coordinador dejó de invocar al sintetizador y
+  verificó él.
+- Inferencias propias: la respuesta tentadora a «el sintetizador busca de más» es
+  reforzar el prompt («no busques»), no quitar la tool. Y dar `verify_fact` también
+  al coordinador, o fusionar investigador y sintetizador, son vías que la guía no
+  propone.
+- Guía frente a producto: la guía llama `Task` a la tool de subagentes; en el
+  producto es `Agent`.
 
 Pregunta tipo examen: ver `app3_sistema_multiagente/README.md`, módulo 03.
 

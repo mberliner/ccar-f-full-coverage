@@ -5,32 +5,39 @@ tools, las tres opciones de `tool_choice` y su uso para forzar una primera tool 
 para garantizar que el modelo llame a una en vez de contestar con texto.
 
 QUÉ DICE LA GUÍA:
-- Dar a un agente demasiadas tools (18 en lugar de 4–5) degrada la fiabilidad de
-  su selección, porque crece la complejidad de la decisión (2.3-K1).
-- `tool_choice` admite tres formas: `"auto"` (el modelo decide si llama a una
-  tool), `"any"` (llama a alguna) y la selección forzada
-  `{"type": "tool", "name": "..."}` (llama a esa) (2.3-K4).
-- La selección forzada asegura que una tool concreta se llame primero, por
-  ejemplo extraer metadatos antes del enriquecimiento; los pasos siguientes se
-  procesan en turnos posteriores (2.3-S4).
-- `tool_choice: "any"` garantiza que el modelo llame a una tool en lugar de
-  devolver texto conversacional (2.3-S5).
+- Cuantas más tools ve un agente, más difícil es la decisión y peor elige: la
+  guía contrapone 18 tools a 4–5 (2.3-K1).
+- `tool_choice` tiene tres modos: `"auto"` (el modelo decide si llama o no),
+  `"any"` (tiene que llamar a alguna) y el forzado
+  `{"type": "tool", "name": "..."}` (tiene que llamar a esa) (2.3-K4).
+- El modo forzado sirve para que una tool determinada vaya la primera, como una
+  extracción de metadatos antes de enriquecer; lo que viene después se hace en
+  los turnos siguientes (2.3-S4).
+- `"any"` asegura que la respuesta sea una llamada a tool y no texto de
+  conversación (2.3-S5).
+- El reparto de tools entre roles (2.3-K2, K3, S1–S3) está en `app3/03`.
 
 POR QUÉ IMPORTA (inferencia propia): con `auto` el modelo puede contestar con
-texto cuando el flujo necesitaba una llamada, y con demasiadas tools elige peor o
-elige distinto cada vez. Ambas cosas se arreglan en la configuración, no en el
-prompt.
+texto cuando el flujo necesitaba una llamada, y con demasiadas tools carga más
+definiciones y puede elegir distinto cada vez. Las dos cosas se arreglan en la
+configuración, no en el prompt.
 
 ANTI-PATRÓN / TRAMPA DEL EXAMEN:
-- Hechos de la guía: dar al agente todas las tools (`--anti amplio`) en lugar de
-  las de su rol, y dejar en `auto` un paso que debe empezar por una tool.
-- Inferencias propias: un modelo reciente suele acertar igualmente con 18 tools si
-  las peticiones son claras; la señal que sí se ve es que elige entre alias
-  distintos de una misma tool según la repetición. Y `any` o la selección
-  forzada no pueden ir en todos los turnos: el modelo nunca podría responder.
-- EN PRODUCCIÓN (no evaluable): `any` y la selección forzada devuelven 400 en
-  Sonnet 5.5 (comprobado) y, según la documentación del proyecto, en Opus 5.5 y
-  Fable 5.1; Haiku 5.5 y Haiku 4.5 las aceptan. En el examen manda la guía.
+- Hechos de la guía: ofrecer 18 tools donde bastan 4–5 (`--anti amplio`) y dejar
+  en `auto` un paso que tiene que empezar por una tool concreta.
+- Inferencias propias: `any` o el forzado no pueden ir en todos los turnos,
+  porque el modelo nunca podría dar su respuesta final. Y `any` garantiza una
+  llamada, no cuál: si importa cuál, es el forzado.
+- Lo observado aquí (ver README y `docs/hallazgos.md`): con seis peticiones
+  claras, 18 tools no bajaron el acierto ni con Haiku 5.5 ni con Haiku 4.5; lo
+  que subió fue el coste por petición y, con Haiku 4.5, la dispersión entre
+  alias. El fallo de selección que describe la guía no se reprodujo.
+- EN PRODUCCIÓN (no evaluable): `any` y el forzado devuelven 400 en Sonnet 5.5
+  (comprobado) y, según el repositorio de estudio, en Opus 5.5 y Fable 5.1;
+  Haiku 5.5 y Haiku 4.5 los aceptan. La carga diferida de definiciones (*tool
+  search*) no se activó en las sondas con ningún valor de `ENABLE_TOOL_SEARCH`,
+  así que su efecto no se demuestra: se fija por precaución. En el examen manda
+  la guía.
 
 Pregunta tipo examen: ver `app1_agente_unico/README.md`, módulo 05.
 

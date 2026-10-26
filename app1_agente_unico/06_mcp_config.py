@@ -6,42 +6,51 @@ servidores disponibles a la vez, *resources* para exponer catálogos y descripci
 evitan que el agente prefiera una tool integrada.
 
 QUÉ DICE LA GUÍA:
-- Los servidores MCP se configuran en dos ámbitos: el del proyecto (`.mcp.json`), para
-  las herramientas compartidas del equipo, y el del usuario (`~/.claude.json`), para
-  los servidores personales o experimentales (2.4-K1, 2.4-S2).
-- `.mcp.json` admite expansión de variables de entorno como `${GITHUB_TOKEN}`: las
-  credenciales se gestionan sin subir secretos al repositorio (2.4-K2, 2.4-S1).
-- Las tools de todos los servidores configurados se descubren al conectar y están
-  disponibles a la vez para el agente (2.4-K3).
-- Los *MCP resources* exponen catálogos de contenido (resúmenes de issues, jerarquías de
-  documentación, esquemas de base de datos) y reducen las llamadas exploratorias
-  (2.4-K4, 2.4-S5).
-- Descripciones que detallan capacidades y salidas evitan que el agente prefiera una tool
-  integrada, como `Grep`, sobre una tool MCP más capaz (2.4-S3).
-- Servidores comunitarios para las integraciones estándar y propios para los flujos
-  específicos del equipo (2.4-S4).
+- Hay dos sitios donde declarar un servidor MCP: `.mcp.json` en el proyecto, para
+  lo que comparte el equipo, y `~/.claude.json` en el usuario, para lo personal o
+  experimental (2.4-K1, 2.4-S2).
+- En `.mcp.json` se puede escribir una referencia a una variable de entorno, como
+  `${GITHUB_TOKEN}`, que se expande al lanzar el servidor: el repositorio guarda el
+  nombre de la variable y nunca el secreto (2.4-K2, 2.4-S1).
+- Al conectar, el agente descubre las tools de todos los servidores configurados y
+  puede usarlas todas a la vez (2.4-K3).
+- Un catálogo de contenido (resúmenes de issues, la estructura de una
+  documentación, el esquema de una base de datos) se puede publicar como *MCP
+  resource*: el agente ve qué hay sin tener que explorarlo con llamadas (2.4-K4,
+  2.4-S5).
+- Si la descripción de una tool MCP cuenta qué sabe hacer y qué devuelve, el agente
+  deja de preferir una integrada como `Grep` cuando la MCP es más capaz (2.4-S3).
+- Para integraciones estándar (la guía pone Jira) se usa un servidor de la
+  comunidad; los propios se reservan para los flujos que solo tiene el equipo
+  (2.4-S4).
 
-Decisión (2.4-S4), sin código: una integración estándar y ya resuelta por otros (Jira,
-GitHub, Slack) pide un servidor comunitario: se mantiene fuera y se actualiza con su
-proyecto. Un flujo propio de la mesa de ayuda (su catálogo, sus reglas, sus datos) pide
-un servidor propio: es el único que conoce el dominio. El criterio no es el esfuerzo de
-escribirlo, sino quién debe mantener el contrato de la tool.
+Decisión (2.4-S4), sin código: una integración estándar y ya resuelta por otros
+(Jira, GitHub, Slack) pide un servidor comunitario. Un flujo propio de la mesa de
+ayuda (su catálogo, sus reglas, sus datos) pide un servidor propio. Inferencia
+propia sobre el porqué: el criterio no es el esfuerzo de escribirlo, sino quién
+debe mantener el contrato de la tool.
 
-POR QUÉ IMPORTA (inferencia propia): una configuración que funciona en la máquina de una
-persona y no en la de otra, o que deja un token en el repositorio, o que obliga al agente
-a explorar a ciegas, falla de forma silenciosa. Los ámbitos y las variables resuelven los
-dos primeros casos; los resources y las descripciones, el tercero.
+POR QUÉ IMPORTA (inferencia propia): una configuración que funciona en la máquina de
+una persona y no en la de otra, o que deja un token en el repositorio, o que obliga
+al agente a explorar a ciegas, falla de forma silenciosa. Los ámbitos y las
+variables resuelven los dos primeros casos; los resources y las descripciones, el
+tercero.
 
 ANTI-PATRÓN / TRAMPA DEL EXAMEN:
-- Hechos de la guía: no ofrecer el catálogo como resource, de modo que el agente explora
-  con llamadas repetidas (`--anti sin_recursos`), y una descripción mínima en la tool MCP,
-  con lo que el agente prefiere `Grep` (`--anti descripcion_minima`).
-- Inferencias propias: el token en un archivo versionado, o un servidor personal en
-  `.mcp.json`, son las respuestas tentadoras que el examen suele poner como distractores.
-- EN PRODUCCIÓN (no evaluable): el agente no sabe que existen resources si nadie se lo
-  dice; en el SDK se alcanzan con `ListMcpResourcesTool` y `ReadMcpResourceTool`, y la
-  aplicación debe indicarlo (aquí, en el prompt del sistema). Con `setting_sources=["project"]`
-  el SDK conecta los servidores de `.mcp.json` sin pedir aprobación.
+- Hechos de la guía: sin el catálogo como resource, el agente explora con llamadas
+  (`--anti sin_recursos`); con una descripción pobre, la guía dice que el agente
+  tiende a irse a `Grep` (`--anti descripcion_minima`).
+- Lo observado aquí (ver README y `docs/hallazgos.md`): `sin_recursos` sí multiplicó
+  las llamadas exploratorias; `descripcion_minima` **no** hizo preferir `Grep` ni
+  con Haiku 5.5 ni con Haiku 4.5. La viñeta se enseña por la guía, sin fabricar la
+  señal.
+- Inferencias propias: el token escrito en un archivo versionado, o un servidor
+  personal en `.mcp.json`, son distractores plausibles en una pregunta de ámbitos.
+- EN PRODUCCIÓN (no evaluable): el agente no usa los resources si nadie le dice que
+  existen; en la CLI fijada se alcanzan con `ListMcpResourcesTool` y
+  `ReadMcpResourceTool`, y aquí se anuncian en el prompt del sistema. Con
+  `setting_sources=["project"]` el SDK conecta los servidores de `.mcp.json` sin
+  pedir aprobación.
 
 Pregunta tipo examen: ver `app1_agente_unico/README.md`, módulo 06.
 

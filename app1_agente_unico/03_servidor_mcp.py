@@ -6,37 +6,44 @@ efecto del *system prompt* sobre la elección y las tres correcciones (describir
 renombrar, dividir).
 
 QUÉ DICE LA GUÍA:
-- Las descripciones son el mecanismo principal con el que el modelo elige entre
-  tools; si son mínimas, la selección entre tools parecidas deja de ser fiable
-  (2.1-K1).
-- Una buena descripción lleva el formato de la entrada, consultas de ejemplo,
-  casos borde y los límites de la tool (2.1-K2).
-- Descripciones ambiguas o que se solapan provocan *misrouting*, como en
-  `analyze_content` frente a `analyze_document` (2.1-K3).
-- El texto del *system prompt* también influye: una instrucción atada a una
-  palabra clave crea asociaciones con una tool que pueden anular las
-  descripciones (2.1-K4).
-- La corrección tiene tres vías: escribir descripciones que diferencien
-  propósito, entradas, salidas y cuándo usar cada tool frente a las parecidas
-  (2.1-S1); renombrar las tools y actualizar su descripción para quitar el
-  solapamiento (2.1-S2); y dividir una tool genérica en varias con propósito y
-  contrato definidos (2.1-S3). Los *system prompts* se revisan para eliminar las
-  instrucciones por palabra clave (2.1-S4).
+- Lo que el modelo consulta para decidir qué tool llamar es, sobre todo, su
+  descripción. Con descripciones escuetas, elegir entre dos tools parecidas se
+  vuelve poco fiable (2.1-K1).
+- Una descripción útil incluye cómo es la entrada, alguna consulta de ejemplo,
+  los casos borde y hasta dónde llega la tool (2.1-K2).
+- Si dos descripciones son ambiguas o cubren lo mismo, las peticiones acaban en
+  la tool equivocada (*misrouting*); la guía pone el par `analyze_content` /
+  `analyze_document` (2.1-K3).
+- La redacción del *system prompt* también pesa: una instrucción que reacciona a
+  una palabra concreta puede atar esa palabra a una tool sin que nadie lo
+  pretenda (2.1-K4).
+- Habilidades que nombra: describir cada tool de modo que se distinga su
+  propósito, sus entradas, sus salidas y cuándo usarla en lugar de la parecida
+  (2.1-S1); cambiar el nombre y la descripción para que dejen de solaparse
+  (2.1-S2); partir una tool genérica en varias con propósito y contrato propios
+  (2.1-S3); y limpiar el *system prompt* de reglas por palabra clave que
+  pisan a descripciones buenas (2.1-S4).
+- Los ejemplos de la guía son de otro dominio (renombrar a
+  `extract_web_results`; dividir en extracción, resumen y verificación contra la
+  fuente). Aquí se adaptan a la mesa de ayuda: `extract_ticket_facts`,
+  `extract_article_steps`, `summarize_article` y `verify_claim_against_article`.
 
 POR QUÉ IMPORTA (inferencia propia): el código de la tool puede ser perfecto y el
 agente fallar igual, porque lo que ve el modelo no es el código sino el nombre,
-la descripción y el esquema. Es la palanca más barata y la primera que se
-revisa ante un enrutamiento erróneo.
+la descripción y el esquema. Es la palanca más barata para revisar ante un
+enrutamiento erróneo.
 
 ANTI-PATRÓN / TRAMPA DEL EXAMEN:
-- Hechos de la guía: descripciones de una línea y solapadas (`--anti minimas`) y
-  un *system prompt* con una regla por palabra clave que gana a las
-  descripciones (`--anti palabra_clave`). La corrección de ambos es la
-  configuración correcta: tools renombradas, divididas y bien descritas, y un
-  prompt sin la regla.
-- Inferencia propia: ante un enrutamiento erróneo, las respuestas tentadoras son
-  añadir más ejemplos al prompt, un clasificador previo o fusionar tools. La
-  guía da primero la descripción, el nombre y la división.
+- Hechos de la guía: descripciones mínimas que se solapan llevan a elegir mal
+  (`--anti minimas`), y una regla por palabra clave en el *system prompt* puede
+  anular descripciones buenas (`--anti palabra_clave`). La corrección de ambos
+  es la configuración correcta: tools renombradas, divididas y bien descritas, y
+  un prompt sin la regla.
+- Inferencias propias: ante un enrutamiento erróneo, las respuestas tentadoras
+  son añadir una regla al prompt, un clasificador previo o fusionar las tools
+  en una. Ninguna figura entre las correcciones de la guía, y la primera es
+  justo la que describe 2.1-K4. Con Haiku 5.5, `minimas` bajó el acierto de
+  forma moderada y `palabra_clave` de forma fuerte (ver README).
 
 Pregunta tipo examen: ver `app1_agente_unico/README.md`, módulo 03.
 

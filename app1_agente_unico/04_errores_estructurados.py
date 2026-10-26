@@ -5,34 +5,44 @@ categorías de error, el coste de un error genérico, errores reintentables y no
 reintentables, y la diferencia entre un fallo de acceso y un resultado vacío válido.
 
 QUÉ DICE LA GUÍA:
-- Una tool MCP comunica un fallo al agente con el flag `isError` en su resultado
-  (2.2-K1), no con una excepción ni con texto suelto.
-- Los errores son de cuatro familias: transitorios (tiempo de espera, caída del
-  servicio), de validación (entrada inválida), de negocio (violación de una
-  política) y de permisos (2.2-K2).
-- Una respuesta uniforme como «Operation failed» deja al agente sin base para
-  elegir la recuperación (2.2-K3).
-- Hay que distinguir lo reintentable de lo que no lo es; los metadatos
-  estructurados evitan reintentos inútiles (2.2-K4).
-- El error lleva `errorCategory` (`transient`, `validation`, `permission`), un
-  booleano `isRetryable` y una descripción legible (2.2-S1).
-- Una violación de regla de negocio incluye `retriable: false` y una explicación
-  clara, para que el agente informe bien a la persona usuaria (2.2-S2).
-- Un fallo de acceso (hay que decidir si reintentar) no es lo mismo que un
-  resultado vacío válido, una consulta correcta sin coincidencias (2.2-S4).
+- En MCP, la tool avisa al agente de que algo salió mal marcando su resultado
+  con el flag `isError` (2.2-K1).
+- La guía separa cuatro clases de fallo: transitorios (se agotó el tiempo, el
+  servicio no responde), de validación (la entrada no es válida), de negocio
+  (se viola una política) y de permisos (2.2-K2).
+- Si todas las tools contestan lo mismo, del estilo «Operation failed», el
+  agente no tiene con qué decidir cómo recuperarse (2.2-K3).
+- Unos fallos admiten reintento y otros no; devolver metadatos estructurados
+  es lo que evita reintentar en vano (2.2-K4).
+- El error estructurado lleva `errorCategory`, un booleano `isRetryable` y una
+  descripción que se pueda leer (2.2-S1). Como valores de `errorCategory`, la
+  guía solo enumera `transient`, `validation` y `permission`: no da nombre a la
+  categoría de negocio, aunque la cuente entre las cuatro clases de K2.
+- Ante una regla de negocio, la respuesta indica que no es reintentable (la guía
+  lo escribe `retriable: false`, no `isRetryable`) y explica la regla, para que
+  el agente se lo cuente bien a la persona usuaria (2.2-S2).
+- No es lo mismo no haber podido consultar (y tener que decidir si se
+  reintenta) que haber consultado bien sin encontrar nada (2.2-S4).
+- 2.2-S3 (recuperación local en el subagente y propagación al coordinador) no
+  es de este módulo: va a `app3/04`.
 
 POR QUÉ IMPORTA (inferencia propia): lo que el agente hace ante un error depende
-de lo que el error le cuenta. Con una categoría y un `isRetryable` decide solo:
-reintenta lo transitorio, corrige lo inválido, explica lo prohibido. Sin ellos,
-reintenta lo que no tiene arreglo o se rinde ante lo que sí lo tenía.
+de lo que el error le cuenta. Con una categoría y un `isRetryable` puede
+reintentar lo transitorio, corregir lo inválido y explicar lo prohibido. Sin
+ellos, reintenta lo que no tiene arreglo o se rinde ante lo que sí lo tenía.
 
 ANTI-PATRÓN / TRAMPA DEL EXAMEN:
-- Hechos de la guía: el error genérico para todo (`--anti generico`) y devolver un
-  resultado vacío cuando en realidad hubo un fallo de acceso
-  (`--anti fallo_como_vacio`).
-- Inferencia propia: la guía escribe `retriable: false` para la regla de negocio
-  y `isRetryable` para el booleano; este proyecto usa siempre `isRetryable`, y el
-  comentario del servidor lo señala. En el examen manda la guía.
+- Hechos de la guía: el mismo error genérico para todo (`--anti generico`, 2.2-K3)
+  y confundir un fallo de acceso con un resultado vacío válido
+  (`--anti fallo_como_vacio`, 2.2-S4).
+- Decisiones de este proyecto: la categoría de negocio se llama `business`, y el
+  booleano es siempre `isRetryable`, también en la regla de negocio; el
+  comentario del servidor señala la grafía `retriable` de la guía. En el examen
+  manda la guía.
+- Inferencias propias: devolver la excepción tal cual o un texto suelto sin
+  `isError` sería otra forma del error genérico. Y la rama de validación no se
+  ve en ejecución, porque el modelo corrige el ID gracias a la descripción de
+  la tool (ver README y `docs/hallazgos.md`).
 
 Pregunta tipo examen: ver `app1_agente_unico/README.md`, módulo 04.
 
