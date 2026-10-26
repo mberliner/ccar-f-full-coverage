@@ -84,22 +84,22 @@ La salida muestra `[contexto]`, cada llamada con su resultado y, al final de cad
 
 **Predice antes de ejecutar:**
 
-1. `busqueda`: ¿qué tool usará para localizar el mensaje de error y cuál para listar los tests? ¿Cuántos `Read` hará? Y con `--anti sin_grep`, ¿cuántos más?
-2. `incremental`: ¿por qué archivo empezará? ¿Cuántos `Read` hará la variante correcta frente a `leer_todo`, y cuánto subirá el coste?
-3. `wrapper`: `calcular_sla` tiene llamadores que nunca escriben ese nombre. ¿Cuántos de los 4 encontrará cada variante?
-4. `edicion`: el ancla `TIMEOUT = 30` aparece dos veces. ¿Qué pasará con el primer `Edit`? ¿Y después?
+1. `busqueda`: ¿qué tool usará para localizar el mensaje de error y cuál para listar los tests? ¿Cuántos `Read` hará? Con `--anti sin_grep` no tiene `Grep`: ¿qué hará en su lugar y cuántos `Read` más le costará?
+2. `incremental`: ¿por qué archivo empezará y por qué ese? ¿Cuántos `Read` hará la variante correcta frente a `leer_todo`, y cambiará la calidad de la explicación o solo el coste?
+3. `wrapper`: `calcular_sla` tiene llamadores que nunca escriben ese nombre. ¿Cuántos de los 4 encontrará cada variante, y qué dirá `solo_nombre` sobre los que le faltan?
+4. `edicion`: el ancla `TIMEOUT = 30` aparece dos veces. ¿Qué devolverá el primer `Edit`? ¿Con qué tool se recuperará el agente y qué riesgo corre si reescribe el archivo entero?
 
 **Qué observar:**
 
 | Parte / variante | Señal | Qué se rompe |
 | :--- | :--- | :--- |
 | `busqueda` correcta | `Grep` → `core/sla.py` y `Glob` → los 3 tests, con 0–1 `Read` | — |
-| `busqueda` `sin_grep` | más `Read`, a veces apoyados en `Glob` | leer archivo por archivo para algo que una búsqueda resuelve |
-| `incremental` correcta | `Grep` a un punto de entrada y `Read` de lo que importa | — |
-| `incremental` `leer_todo` | un `Read` por cada `.py` y más coste | el mismo resultado, más caro, y contexto lleno de archivos irrelevantes |
+| `busqueda` `sin_grep` | `Glob` para listar y después más `Read` hasta dar con el mensaje | leer archivo por archivo para algo que una búsqueda de contenido resuelve |
+| `incremental` correcta | `Grep` a un punto de entrada y `Read` solo de lo que este importa | — |
+| `incremental` `leer_todo` | un `Read` por cada `.py` y más coste | una explicación parecida, más cara y con el contexto lleno de archivos irrelevantes |
 | `wrapper` correcta | `api.py` primero, después una búsqueda por cada nombre: 4 de 4 | — |
-| `wrapper` `solo_nombre` | 2 de 4: `informes/resumen.py` y `notificaciones/avisos.py` no salen | un rastreo incompleto que parece completo |
-| `edicion` | `Edit` con `is_error` y después `Write` (o un `Edit` con más contexto); archivo final correcto | — |
+| `wrapper` `solo_nombre` | 2 de 4: `informes/resumen.py` y `notificaciones/avisos.py` no salen | un rastreo incompleto que la respuesta presenta como completo |
+| `edicion` (sin `--anti`) | `Edit` con `is_error`, después `Read` + `Write` (o un `Edit` con más contexto); solo cambia el segundo bloque | la trampa sería repetir el mismo `Edit` o, con `Write`, tocar también el primer `TIMEOUT` |
 
 Notas:
 

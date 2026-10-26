@@ -6,31 +6,40 @@ cambio dirigido con respaldo `Read` + `Write`, exploración incremental y rastre
 de nombres exportados por módulos *wrapper*.
 
 QUÉ DICE LA GUÍA:
-- `Grep` busca dentro del contenido de los archivos: nombres de función,
-  mensajes de error, `import` (2.5-K1). Es la vía para encontrar todos los
-  llamadores de una función o localizar un mensaje de error (2.5-S1).
-- `Glob` busca por patrón de ruta: archivos por nombre o extensión (2.5-K2),
-  por ejemplo todos los archivos de tests (2.5-S2).
-- `Read` y `Write` trabajan con el archivo entero; `Edit` modifica con una
-  coincidencia de texto única (2.5-K3). Si el ancla no es única, `Edit` falla y
-  el respaldo fiable es `Read` seguido de `Write` (2.5-K4, 2.5-S3).
-- La comprensión del código se construye de forma incremental: `Grep` para dar
-  con los puntos de entrada y `Read` para seguir imports y flujos, en vez de
-  leer todos los archivos de entrada (2.5-S4).
-- Para seguir una función a través de módulos *wrapper*, primero se identifican
-  todos los nombres con que se exporta y después se busca cada nombre (2.5-S5).
+- `Grep` busca patrones dentro del contenido: nombres de función, mensajes de
+  error, sentencias `import` (2.5-K1). Se elige para dar con todos los sitios
+  que llaman a una función o con el archivo que emite un error (2.5-S1).
+- `Glob` casa patrones de ruta, es decir, encuentra archivos por su nombre o su
+  extensión (2.5-K2), como el conjunto de archivos de tests (2.5-S2).
+- `Read` y `Write` operan sobre el archivo entero; `Edit` hace un cambio
+  localizado que depende de que el texto de referencia aparezca una sola vez
+  (2.5-K3). Cuando ese texto se repite y `Edit` falla, el respaldo fiable es
+  cargar el archivo con `Read` y guardarlo completo con `Write` (2.5-K4, 2.5-S3).
+- Un código desconocido se entiende por pasos: `Grep` localiza los puntos de
+  entrada y `Read` sigue desde ahí los imports y el flujo, en lugar de leer
+  todos los archivos por adelantado (2.5-S4).
+- Para rastrear una función que pasa por módulos *wrapper*, primero se reúnen
+  todos los nombres con que se exporta y después se busca cada uno (2.5-S5).
+- El enunciado de la TS 2.5 incluye `Bash` en la lista de tools, pero ninguna
+  viñeta lo concreta. Este módulo no se lo da al agente.
 
-POR QUÉ IMPORTA: el mismo agente con las mismas tools gasta más o menos
-llamadas, lecturas y coste según elija bien. Y un rastreo que se queda en el
-nombre original da una respuesta incompleta que parece completa.
+POR QUÉ IMPORTA (inferencia propia): con las mismas tools, el agente gasta más
+o menos llamadas, lecturas y coste según cuál elija para cada pregunta. Y un
+rastreo que se queda en el nombre original devuelve una lista incompleta que
+parece completa: nada en la respuesta avisa de lo que falta.
 
-ANTI-PATRÓN / TRAMPA DEL EXAMEN: leer archivo por archivo cuando una búsqueda
-lo resuelve (`--anti sin_grep`, `--anti leer_todo`), buscar solo el nombre
-original de una función que otros módulos reexportan con alias
-(`--anti solo_nombre`) y reintentar un `Edit` que falla por ancla no única en
-vez de pasar a `Read` + `Write`. Hecho de la guía: ese es el respaldo. Inferencia
-propia: ampliar el ancla con más contexto también resuelve el fallo y es válido;
-el comprobador mira el archivo final, no el camino.
+ANTI-PATRÓN / TRAMPA DEL EXAMEN:
+- Hechos de la guía: leer todo de entrada en vez de explorar con `Grep` →
+  `Read` va contra 2.5-S4 (`--anti leer_todo`); buscar solo el nombre original
+  cuando hay reexportaciones contradice 2.5-S5 (`--anti solo_nombre`); ante un
+  `Edit` con ancla repetida, el respaldo que nombra la guía es `Read` + `Write`.
+- Inferencias propias: quitar `Grep` (`--anti sin_grep`) es una forma de forzar
+  la lectura archivo por archivo, no un caso que la guía describa; la trampa
+  probable de examen es confundir `Glob` (rutas) con `Grep` (contenido), o
+  reintentar el mismo `Edit` como si el fallo fuera pasajero. Ampliar el ancla
+  con más contexto también resuelve el fallo y es válido en la práctica; la
+  guía no lo menciona y el comprobador acepta ambos caminos porque mira el
+  archivo final.
 
 Pregunta tipo examen: ver `app1_agente_unico/README.md`, módulo 02.
 
