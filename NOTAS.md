@@ -48,7 +48,10 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
   - [x] Diseño aprobado en `docs/diseno-entrega-2.md` (2026-10-25): 55 viñetas, 76 → 131/240. Siguiente paso: rama `entrega-2`, piezas compartidas (datos, `copy_to_temp`, servidores) y después `app1/02`. Antes de los módulos afectados, las sondas de la sección «Riesgos» (aprobación de `.mcp.json`, `tool_choice` con Haiku 5.5, variable de *tool search*).
   - [x] Piezas compartidas en la rama `entrega-2` (2026-10-26), con modelo de la sesión Sonnet 5.5 según el diseño: `repo_mesa/` y `documentos.json` en el generador, `copy_to_temp`, `servers/mesa.py` (familias `routing`, `errores`, `amplio`/`acotado`), `catalogo_stdio.py` e `inventario_stdio.py` (stdio, probados lanzando el script desde otro `cwd`) y `investigacion.py` ampliado con `extended=True` (por defecto sigue igual para `app3/01` y `app3/02`). `pytest`: 303 en verde.
   - **Cambios respecto al diseño:** `FastMCP` es `MCPServer` en mcp 2.x (corregido en el diseño); un tool de `MCPServer` no admite `CallToolResult` en una unión de tipos, así que se anota `-> Any`. Los `USA` de TS 2.2-K1/S1 en `mesa.py`, `helpdesk.py` e `investigacion.py` y en `mcp-servers.md` se añaden con `app1/04`, que introduce 2.2 (`test_una_vez` no admite un `USA` sin su `INTRODUCE`); mientras, `mesa.py` lo cita en prosa.
-  - [ ] Siguiente: `app1/02` (Sonnet, código y tests), luego las sondas de «Riesgos» antes de `app1/05` y `app1/06`.
+  - [x] `app1/02_tools_integradas` (2026-10-26): 9 viñetas con `INTRODUCE` y ☑, 85/240; `pytest` 325 en verde. Código y tests con Sonnet 5.5; la cabecera `QUÉ DICE LA GUÍA` · `ANTI-PATRÓN` y la sección del README (con su pregunta) son un primer borrador de Sonnet y **quedan para la pasada con Opus 5.5** (agrupada con los demás módulos de `app1`, según el diseño).
+    - Cambio de diseño: la primera pregunta de `--parte busqueda` localiza el mensaje de error «SLA vencido para…» (2.5-S1) y no los llamadores de `calcular_sla`, que ya son el reto de `--parte wrapper` (S5).
+    - Pendiente: ejecución con modelo de las cuatro partes y sus `--anti` (señales de «Verificación» 3) y revisión por una instancia independiente.
+  - [ ] Siguiente: sondas de «Riesgos» y `app1/03`.
 - [ ] Entrega 3 · D4 y D5 (`S-2`)
 - [ ] `S-1` · repaso sin código nuevo
 - [ ] Entrega 4 · opcional, después del examen

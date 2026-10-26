@@ -30,7 +30,7 @@ Las apps se ordenan por complejidad creciente, pero se entregan por bloques de d
 
 El avance de cada entrega se registra en `NOTAS.md`.
 
-**Introducidas: 76/240**
+**Introducidas: 85/240**
 
 | Viñeta | Destino | Estado |
 | :--- | :--- | :---: |
@@ -116,15 +116,15 @@ El avance de cada entrega se registra en `NOTAS.md`.
 | TS 2.4-S3 | app1/06_mcp_config | ☐ |
 | TS 2.4-S4 | app1/06_mcp_config | ☐ |
 | TS 2.4-S5 | app1/06_mcp_config | ☐ |
-| TS 2.5-K1 | app1/02_tools_integradas | ☐ |
-| TS 2.5-K2 | app1/02_tools_integradas | ☐ |
-| TS 2.5-K3 | app1/02_tools_integradas | ☐ |
-| TS 2.5-K4 | app1/02_tools_integradas | ☐ |
-| TS 2.5-S1 | app1/02_tools_integradas | ☐ |
-| TS 2.5-S2 | app1/02_tools_integradas | ☐ |
-| TS 2.5-S3 | app1/02_tools_integradas | ☐ |
-| TS 2.5-S4 | app1/02_tools_integradas | ☐ |
-| TS 2.5-S5 | app1/02_tools_integradas | ☐ |
+| TS 2.5-K1 | app1/02_tools_integradas | ☑ |
+| TS 2.5-K2 | app1/02_tools_integradas | ☑ |
+| TS 2.5-K3 | app1/02_tools_integradas | ☑ |
+| TS 2.5-K4 | app1/02_tools_integradas | ☑ |
+| TS 2.5-S1 | app1/02_tools_integradas | ☑ |
+| TS 2.5-S2 | app1/02_tools_integradas | ☑ |
+| TS 2.5-S3 | app1/02_tools_integradas | ☑ |
+| TS 2.5-S4 | app1/02_tools_integradas | ☑ |
+| TS 2.5-S5 | app1/02_tools_integradas | ☑ |
 | TS 3.1-K1 | d3 | ☑ |
 | TS 3.1-K2 | d3 | ☑ |
 | TS 3.1-K3 | d3 | ☑ |
