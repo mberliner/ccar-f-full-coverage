@@ -88,6 +88,7 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
     - Bajos: ID inválido que gastaba el transitorio, comentario con parte del nombre de usuario, `check_paths` laxo (documentado), `tools=[]` (comprobado: ninguna tool), cifra congelada en un comentario, `recursos` que cambia dos cosas a la vez (README), servidores stdio con entorno heredado (anotado, sin fuga).
     - Consecuencia no prevista: al repetir `app1/03` la señal de `minimas` con Haiku 5.5 desapareció (89/90) y la de `palabra_clave` no existe con Haiku 4.5 (24/24). README y cabecera corregidos; ver `docs/hallazgos.md`.
   - [x] Práctica D3, cambio 2 (plan mode, 2026-10-27): variante `--anti nombre_enganoso` en `app1/03` (servidor, módulo, tests y README; sin viñetas nuevas). **Sin señal**: 30/30 con Haiku 5.5, 24/24 con Haiku 4.5 y 48/48 en dos casos más duros con Haiku 4.5; se conserva documentada. 412 tests en verde.
+  - [x] Práctica D3, cambio 3 (ejecución directa, 2026-10-27): el error de permisos de `export_audit_log` (`mesa.py`) dice ahora a quién pedir la exportación; test del mensaje y del modo genérico, que no cambia. Un archivo de código y un test; 413 tests en verde.
   - [ ] Siguiente: resto de la práctica propia de D3 (la persona: verificación en sesión nueva y sus notas), merge a `main`.
 - [ ] Entrega 3 · D4 y D5 (`S-2`)
 - [ ] `S-1` · repaso sin código nuevo

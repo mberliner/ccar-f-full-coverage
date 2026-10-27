@@ -239,7 +239,11 @@ def errores_tools(state: ErroresState, estructurado: bool, fallo_como_vacio: boo
 
     async def export_audit_log(args: dict[str, Any]) -> dict[str, Any]:
         state.calls["export_audit_log"] += 1
-        return fail("permission", "Tu rol no tiene permiso para exportar el registro de auditoría")
+        return fail(
+            "permission",
+            "Tu rol no tiene permiso para exportar el registro de auditoría. Pide la exportación a la persona "
+            "responsable de auditoría.",
+        )
 
     async def search_tickets_by_user(args: dict[str, Any]) -> dict[str, Any]:
         state.calls["search_tickets_by_user"] += 1

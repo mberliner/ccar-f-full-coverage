@@ -130,6 +130,14 @@ def test_business_error_is_not_retryable_and_has_user_message():
 def test_permission_error():
     outcome, data = run(tools("errores", state=ErroresState()), "export_audit_log", {"scope": "all"})
     assert outcome.is_error and data["errorCategory"] == "permission" and data["isRetryable"] is False
+    # El mensaje dice el siguiente paso (a quién pedirlo), para que el agente pueda informar a la persona.
+    assert "responsable de auditoría" in data["message"]
+
+
+def test_permission_error_in_generic_mode_stays_without_detail():
+    # El anti-patrón no cambia: el error genérico no dice nada, ni siquiera a quién pedirlo.
+    errores = tools("errores", state=ErroresState(), estructurado=False)
+    assert call_tool(errores["export_audit_log"], {"scope": "all"}).text == "Operation failed"
 
 
 def test_search_without_matches_is_valid_empty_list_not_error():
