@@ -42,13 +42,17 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
 - Inferencias propias: ante un enrutamiento erróneo, las respuestas tentadoras
   son añadir una regla al prompt, un clasificador previo o fusionar las tools
   en una. Ninguna figura entre las correcciones de la guía, y la primera es
-  justo la que describe 2.1-K4. Las señales dependen del modelo: `palabra_clave` se ve con Haiku 5.5 y `minimas` con
-  Haiku 4.5 (`--rol-modelo enforcement`); con Haiku 5.5, `minimas` es inestable (ver README).
-- Variante propia, sin respaldo en la guía: `--anti nombre_enganoso` renombra la tool de
-  verificación como una tool de tickets (`get_ticket_status`) y deja su descripción y su
-  handler como estaban. La guía pide renombrar para quitar solapamientos (2.1-S2); esta
-  variante hace lo contrario, un nombre que contradice la descripción, y mide si el modelo
-  se guía por el nombre o por la descripción. No es un fallo que describa la guía.
+  justo la que describe 2.1-K4.
+- Lo observado aquí (ver README y `docs/hallazgos.md`): cada señal se ve con un
+  modelo distinto. `palabra_clave` se ve con Haiku 5.5, que obedece la regla del
+  prompt, y no con Haiku 4.5. `minimas` se ve con Haiku 4.5
+  (`--rol-modelo enforcement`); con Haiku 5.5 es inestable y casi desaparece.
+- Variante propia, sin respaldo en la guía: `--anti nombre_enganoso` renombra la
+  tool de verificación como una de tickets (`get_ticket_status`) y deja su
+  descripción y su handler como estaban. La guía no describe este fallo: pide
+  renombrar para quitar solapamientos (2.1-S2), y esta variante hace lo contrario,
+  un nombre que contradice la descripción, para medir cuál de los dos pesa más.
+  Sin señal con ninguno de los dos modelos: gana la descripción.
 
 Pregunta tipo examen: ver `app1_agente_unico/README.md`, módulo 03.
 
