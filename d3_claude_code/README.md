@@ -223,7 +223,7 @@ Escribe estas peticiones, una detrás de otra, y mira la terminal justo debajo d
 | Qué escribes | Qué debes ver | Qué demuestra |
 | :--- | :--- | :--- |
 | `Lee README.md` | Ninguna línea `Loaded` de reglas | Una regla con `paths` no se carga con un `.md` (TS 3.3-K2) |
-| `Lee app1_agente_unico/01_bucle_manual.py` | `Loaded` de `.claude/rules/apps-comentarios.md`. Puede salir también la de `app1_agente_unico/CLAUDE.md` | La regla entra con un `.py` de una app (TS 3.3-K1, K2). El `CLAUDE.md` de subcarpeta es el nivel de directorio (TS 3.1-K1) |
+| `Lee app1_agente_unico/01_bucle_manual.py` | `Loaded` de `.claude/rules/apps-comentarios.md`. Sale también la de `app1_agente_unico/CLAUDE.md`, antes que la de la regla (observado el 2026-10-27) | La regla entra con un `.py` de una app (TS 3.3-K1, K2). El `CLAUDE.md` de subcarpeta es el nivel de directorio (TS 3.1-K1) |
 | `Lee tests/test_budget.py` | `Loaded` de `.claude/rules/tests.md` | Un glob por tipo de archivo, no una carpeta (TS 3.3-K3, S2) |
 | `Lee d3_claude_code/README.md` (control) | Ninguna regla de apps ni de tests | La regla no se filtra a otros archivos |
 
@@ -333,7 +333,7 @@ Qué esperar de cada paso no es opinión: sale de estas fuentes. La última colu
 | `/plugin` y `/mcp` limpios | `CLAUDE.md` («Comprobar con `/memory` y `/plugin`»); `ENABLE_CLAUDEAI_MCP_SERVERS=false` en `.claude/settings.json` | Observado al construir el repositorio (`NOTAS.md`, hito 0, aislamiento). Depende de los plugins de tu cuenta |
 | Línea `Loaded` y regla solo con un `.py` de `app*/` | Roadmap §11.5 (segundo punto); frontmatter `paths: ["app*/**/*.py"]` de `.claude/rules/apps-comentarios.md` | Observado al construir el repositorio, con contenido de la regla en contexto |
 | `tests.md` con cualquier `test_*.py` | Roadmap §11.5; frontmatter `paths: ["**/test_*.py"]` de `.claude/rules/tests.md` | Observado al construir el repositorio, con un test fuera de `app*/` |
-| Que `app1_agente_unico/CLAUDE.md` también anuncie `Loaded` | Sección 1 de este README (nivel de directorio, TS 3.1-K1) | **Sin comprobar.** Se escribe «puede salir»; anota si sale |
+| Que `app1_agente_unico/CLAUDE.md` también anuncie `Loaded` | Sección 1 de este README (nivel de directorio, TS 3.1-K1) | **Observado el 2026-10-27**: al leer `app1_agente_unico/01_bucle_manual.py` salió `Loaded app1_agente_unico\CLAUDE.md` y después la de `apps-comentarios.md` |
 | El control con `d3_claude_code/README.md` | Deducción de los `paths` de las dos reglas | **Sin comprobar.** Es una inferencia; anota lo que veas |
 | Skill: informe corto y exploración fuera de tu conversación | Roadmap §11.5 (tercer punto); `.claude/skills/verificar-concepto/SKILL.md` (`context: fork`) | Observado al construir el repositorio, con y sin argumento |
 | El aislamiento local (negación de `claudeMdExcludes`, `enabledPlugins`, `skillOverrides`) | `docs/hallazgos.md` («Patrones para excluir…»); esquema de ajustes de la CLI | Negación y `skillOverrides` por nombre: **observado el 2026-10-27** en pruebas herméticas. Efecto sobre skills y plugins reales: **observado el 2026-10-27** en el `/context` de una sesión interactiva |
