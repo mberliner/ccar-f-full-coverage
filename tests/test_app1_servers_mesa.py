@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from app1_agente_unico.servers.mesa import CANONICAL, SERVER_NAME, ErroresState, build_server, make_tools, tool_name
+from app1_agente_unico.servers.mesa import CANONICAL, RENAMED, SERVER_NAME, ErroresState, build_server, make_tools, tool_name
 from harness.data import load
 from harness.offline import call_tool
 
@@ -64,6 +64,30 @@ def test_verify_claim_supported_and_unsupported():
 def test_unknown_id_is_structured_validation_error():
     outcome, data = run(tools("routing"), "extract_ticket_facts", {"ticket_id": "TCK-0"})
     assert outcome.is_error and data["errorCategory"] == "validation" and data["isRetryable"] is False
+
+
+def test_misleading_name_renames_one_tool_keeping_its_description_and_handler():
+    original = "verify_claim_against_article"
+    new = RENAMED[original]
+    normal = {t.name: t for t in make_tools("routing")}
+    misleading = tools("routing", variante="nombre_enganoso")
+    # Un solo nombre cambia; el resto de tools y su número quedan igual.
+    assert set(misleading) == (set(normal) - {original}) | {new}
+    assert len(misleading) == len(normal) == 4
+    assert new not in normal  # el nombre engañoso no choca con ninguna otra tool
+    # Misma descripción (no se toca) y mismo contrato de entrada.
+    assert misleading[new].description == normal[original].description
+    assert misleading[new].input_schema == normal[original].input_schema
+    # El handler sigue verificando afirmaciones, aunque el nombre hable de tickets.
+    _, data = run(misleading, new, {"claim": "Hasta 500 EUR lo aprueba soporte", "article_id": "KB-114"})
+    assert data["supported"] is True
+
+
+def test_the_other_routing_variants_keep_their_names():
+    assert set(tools("routing")) == {
+        "extract_ticket_facts", "extract_article_steps", "summarize_article", "verify_claim_against_article",
+    }
+    assert set(tools("routing", variante="minimas")) == {"analyze_content", "analyze_document"}
 
 
 def test_minimal_tools_split_by_kind_so_a_misroute_has_a_consequence():

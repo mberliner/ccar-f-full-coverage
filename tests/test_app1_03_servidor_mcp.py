@@ -37,6 +37,11 @@ def test_expected_tool_depends_on_the_configuration():
     assert mod.expected_for(request, "minimas") == "analyze_document"
     ticket = next(r for r in mod.BATTERY if r.expected == "extract_ticket_facts")
     assert mod.expected_for(ticket, "minimas") == "analyze_content"
+    # `nombre_enganoso` renombra solo la tool de verificación: lo esperado sigue siendo «la que verifica», con su nombre nuevo.
+    verify = next(r for r in mod.BATTERY if r.expected == "verify_claim_against_article")
+    assert mod.expected_for(verify, "nombre_enganoso") == "get_ticket_status"
+    assert mod.expected_for(request, "nombre_enganoso") == "extract_article_steps"  # las demás no cambian
+    assert mod.expected_for(verify, None) == "verify_claim_against_article"
 
 
 def test_keyword_trap_hits_exactly_two_requests_that_do_not_expect_summarize():
@@ -80,15 +85,17 @@ def test_model_role_is_chosen_by_role_so_the_env_stays_the_source_of_the_model()
 # --- configuración -----------------------------------------------------------------
 
 def test_variants():
-    assert mod.ANTI_VARIANTS == ["minimas", "palabra_clave"]
+    assert mod.ANTI_VARIANTS == ["minimas", "palabra_clave", "nombre_enganoso"]
     assert mod.tool_variant(None) is None and mod.tool_variant("palabra_clave") is None
     assert mod.tool_variant("minimas") == "minimas"
+    assert mod.tool_variant("nombre_enganoso") == "nombre_enganoso"
+    assert all(mod.expectation(anti) for anti in (None, *mod.ANTI_VARIANTS))  # una clave nueva sin texto daría KeyError
 
 
 def test_system_prompt_has_the_keyword_rule_only_in_palabra_clave():
     assert mod.TRAP_WORD in mod.system_prompt("palabra_clave").lower()
     assert "summarize_article" in mod.system_prompt("palabra_clave")
-    for anti in (None, "minimas"):
+    for anti in (None, "minimas", "nombre_enganoso"):
         assert mod.TRAP_WORD not in mod.system_prompt(anti).lower() and "summarize_article" not in mod.system_prompt(anti)
 
 
@@ -99,3 +106,6 @@ def test_options_expose_only_the_mcp_tools_with_budget_and_isolation():
     assert options.permission_mode == "dontAsk" and "mesa" in options.mcp_servers
     minimal = mod.build_options("minimas", budget=0.1, model="m")
     assert set(minimal.allowed_tools) == {"mcp__mesa__analyze_content", "mcp__mesa__analyze_document"}
+    renamed = mod.build_options("nombre_enganoso", budget=0.1, model="m")
+    names = (SPLIT - {"verify_claim_against_article"}) | {"get_ticket_status"}
+    assert set(renamed.allowed_tools) == {f"mcp__mesa__{n}" for n in names}

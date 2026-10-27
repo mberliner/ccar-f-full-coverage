@@ -44,12 +44,17 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
   en una. Ninguna figura entre las correcciones de la guía, y la primera es
   justo la que describe 2.1-K4. Las señales dependen del modelo: `palabra_clave` se ve con Haiku 5.5 y `minimas` con
   Haiku 4.5 (`--rol-modelo enforcement`); con Haiku 5.5, `minimas` es inestable (ver README).
+- Variante propia, sin respaldo en la guía: `--anti nombre_enganoso` renombra la tool de
+  verificación como una tool de tickets (`get_ticket_status`) y deja su descripción y su
+  handler como estaban. La guía pide renombrar para quitar solapamientos (2.1-S2); esta
+  variante hace lo contrario, un nombre que contradice la descripción, y mide si el modelo
+  se guía por el nombre o por la descripción. No es un fallo que describa la guía.
 
 Pregunta tipo examen: ver `app1_agente_unico/README.md`, módulo 03.
 
 INTRODUCE: TS 2.1-K1, TS 2.1-K2, TS 2.1-K3, TS 2.1-K4, TS 2.1-S1, TS 2.1-S2, TS 2.1-S3, TS 2.1-S4
 
-Uso: `uv run python app1_agente_unico/03_servidor_mcp.py [--anti minimas|palabra_clave] [--repeat N]`
+Uso: `uv run python app1_agente_unico/03_servidor_mcp.py [--anti minimas|palabra_clave|nombre_enganoso] [--repeat N]`
 """
 
 import asyncio
@@ -62,7 +67,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from claude_agent_sdk import ClaudeAgentOptions, query  # noqa: E402
 
-from app1_agente_unico.servers.mesa import SERVER_NAME, build_server, make_tools, tool_name  # noqa: E402
+from app1_agente_unico.servers.mesa import RENAMED, SERVER_NAME, build_server, make_tools, tool_name  # noqa: E402
 from harness import credentials  # noqa: E402
 from harness.cli import build_parser, report_budget  # noqa: E402
 from harness.config import report_model  # noqa: E402
@@ -70,7 +75,7 @@ from harness.data import load  # noqa: E402
 from harness.options import isolated_options  # noqa: E402
 from harness.recorder import RunRecord, record  # noqa: E402
 
-ANTI_VARIANTS = ["minimas", "palabra_clave"]
+ANTI_VARIANTS = ["minimas", "palabra_clave", "nombre_enganoso"]
 # Roles de modelo que admite `--rol-modelo`. La señal de cada variante depende del modelo: `palabra_clave` se ve con
 # Haiku 5.5 (rol `agent`, el que obedece la regla del prompt) y `minimas` con Haiku 4.5 (rol `enforcement`). Se elige
 # el ROL; el nombre del modelo sigue saliendo de `.env`.
@@ -109,12 +114,17 @@ BATTERY = [
 
 
 def tool_variant(anti: str | None) -> str | None:
-    """`minimas` cambia las tools; `palabra_clave` deja las buenas y cambia solo el prompt."""
-    return "minimas" if anti == "minimas" else None
+    """`minimas` y `nombre_enganoso` cambian las tools; `palabra_clave` deja las buenas y cambia solo el prompt."""
+    return anti if anti in ("minimas", "nombre_enganoso") else None
 
 
 def expected_for(request: Request, anti: str | None) -> str:
-    return request.expected_minimal if anti == "minimas" else request.expected
+    if anti == "minimas":
+        return request.expected_minimal
+    if anti == "nombre_enganoso":
+        # Lo esperado sigue siendo «la tool que hace esto» (por su descripción), con el nombre que lleva ahora.
+        return RENAMED.get(request.expected, request.expected)
+    return request.expected
 
 
 # --- Medida ------------------------------------------------------------------------
@@ -173,6 +183,7 @@ def expectation(anti: str | None) -> str:
         None: "acierta casi todas: cada tool tiene un propósito y una descripción que la distingue",
         "minimas": "falla más: `analyze_content` y `analyze_document` no dicen en qué se diferencian",
         "palabra_clave": "las dos peticiones con «documento» van a `summarize_article` aunque piden pasos o verificar",
+        "nombre_enganoso": "si gana la descripción, las dos de verificación van a `get_ticket_status`; si gana el nombre, la evitan (y alguna de tickets puede ir a ella)",
     }[anti]
 
 

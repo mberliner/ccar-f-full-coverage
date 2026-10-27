@@ -132,6 +132,7 @@ Un agente de mantenimiento debe encontrar todos los llamadores de `process_refun
 uv run python app1_agente_unico/03_servidor_mcp.py                          # correcta
 uv run python app1_agente_unico/03_servidor_mcp.py --anti minimas           # dos tools solapadas de una línea
 uv run python app1_agente_unico/03_servidor_mcp.py --anti palabra_clave     # prompt con una regla por palabra clave
+uv run python app1_agente_unico/03_servidor_mcp.py --anti nombre_enganoso   # la verificación se llama como una tool de tickets
 uv run python app1_agente_unico/03_servidor_mcp.py --anti minimas --rol-modelo enforcement   # Haiku 4.5, ~15× más caro
 uv run python app1_agente_unico/03_servidor_mcp.py --repeat 3 --budget 0.15 # tasa en 18 peticiones
 ```
@@ -144,6 +145,7 @@ Seis peticiones de mesa de ayuda (dos sobre tickets y cuatro sobre artículos de
 2. Con `--anti minimas` solo hay `analyze_content` y `analyze_document`, de una línea cada una. ¿En qué peticiones podrá el modelo guiarse por las palabras de la propia petición, y en cuáles no tendrá ninguna pista?
 3. Con `--anti palabra_clave` las descripciones son las buenas y el prompt añade una regla. Cuando las dos cosas apuntan a tools distintas, ¿cuál crees que pesará más? ¿Qué peticiones lo pondrán a prueba?
 4. ¿Qué variante esperas más estable entre repeticiones, y por qué?
+5. Con `--anti nombre_enganoso` la tool de verificación se llama `get_ticket_status`, pero su descripción dice que verifica afirmaciones. ¿Se guiará el modelo por el nombre o por la descripción? ¿Cambiaría con un modelo más débil?
 
 **Qué observar:**
 
@@ -152,12 +154,14 @@ Seis peticiones de mesa de ayuda (dos sobre tickets y cuatro sobre artículos de
 | correcta | 4 tools renombradas y divididas, con descripciones de propósito, entrada, ejemplo, casos borde y diferencias | 18/18 | 24/24 |
 | `minimas` | 2 tools genéricas con una línea cada una | **inestable**: 15/18 en una medida y 89/90 en otras tres | 14/24 y 14/18 (58–78 %) |
 | `palabra_clave` | las descripciones buenas, pero el prompt dice «si menciona un documento, usa `summarize_article`» | 12/18: las 2 peticiones con «documento», siempre | 24/24: **no obedece la regla** |
+| `nombre_enganoso` | la tool de verificación se llama `get_ticket_status` (nombre de tickets) con su descripción de siempre | 30/30 | 24/24 (y 48/48 en dos casos más duros, ver notas) |
 
 Notas:
 
 - **La señal depende del modelo, y en sentidos opuestos.** `palabra_clave` se ve con Haiku 5.5, que obedece la regla del prompt, y no con Haiku 4.5, que la ignora. `minimas` se ve con Haiku 4.5 y, con Haiku 5.5, es inestable: la primera medida dio 15/18 y las tres siguientes (30 peticiones cada una) dieron 30/30, 30/30 y 29/30. Ningún modelo muestra las dos a la vez, por eso `--rol-modelo` permite elegir el rol (el nombre del modelo sigue saliendo de `.env`).
 - **`minimas`:** con Haiku 5.5 apenas empeora el acierto. Se guía por las palabras de la propia petición («documento» lleva a `analyze_document`). Con Haiku 4.5 fallan sobre todo las peticiones de tickets, que van a `analyze_document`, y el resumen de un «artículo», que va a `analyze_content`. Lo que se mide es la ambigüedad, no la capacidad: con descripciones reales no hay nada que adivinar.
 - **`palabra_clave`:** con Haiku 5.5 es la señal más estable. La regla del prompt gana a la descripción en las dos peticiones con la palabra, en todas las repeticiones, y deja intacto el resto. La corrección es la configuración correcta: quitar la regla del prompt y confiar en las descripciones.
+- **`nombre_enganoso` (variante propia, sin respaldo en la guía): sin señal.** Con Haiku 5.5 (30/30) y con Haiku 4.5 (24/24) gana la descripción: el modelo no evitó la tool de verificación por llamarse como una de tickets, ni usó `get_ticket_status` donde no tocaba. Con una sonda desechable y solo con Haiku 4.5 se probaron dos casos más duros, renombrar la verificación como `delete_ticket` y cruzar los nombres de `extract_article_steps` y `summarize_article`: 24/24 en ambos. Con estos modelos la descripción pesa más que el nombre, en la línea de TS 2.1-K1 (la descripción es el mecanismo principal de selección). No prueba que el nombre no importe con otros modelos ni con descripciones pobres. La guía pide renombrar para quitar solapamientos (TS 2.1-S2); esta variante hace lo contrario y por eso es una inferencia propia.
 - **Tool esperada con `minimas`:** como solo hay dos tools, se espera «tickets → `analyze_content`, artículos → `analyze_document`». Es una convención del módulo, no algo que diga la guía. Para que equivocarse tenga consecuencias, cada tool atiende solo ese tipo de ID y la otra devuelve un error de validación; antes las dos hacían lo mismo y un «fallo» de enrutamiento no costaba nada (revisión independiente).
 - Los contratos de cada tool (entrada y salida) y la medida de acierto se prueban sin modelo en `tests/test_app1_servers_mesa.py` y `tests/test_app1_03_servidor_mcp.py`.
 

@@ -25,7 +25,7 @@ USA: TS 2.2-K1, TS 2.2-S1
 import json
 import re
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Awaitable, Callable
 
 from claude_agent_sdk import SdkMcpTool, create_sdk_mcp_server, tool
@@ -35,6 +35,9 @@ from harness.data import load
 SERVER_NAME = "mesa"
 LICENSE_QUOTA = 10  # cupo de puestos por licencia (regla de negocio de `errores`)
 USER_ID_PATTERN = re.compile(r"^EMP-\d{4}$")
+# Variante `nombre_enganoso` de `routing`: la tool de verificación pasa a llamarse como una tool de tickets, pero
+# conserva su descripción y su handler. Mide si el modelo se guía por el nombre o por la descripción.
+RENAMED = {"verify_claim_against_article": "get_ticket_status"}
 
 Handler = Callable[[dict[str, Any]], Awaitable[dict[str, Any]]]
 
@@ -146,7 +149,7 @@ def routing_tools(variante: str | None) -> list[SdkMcpTool[Any]]:
         supported = bool(claim_words) and len(hits) / len(claim_words) >= 0.6
         return ok({"article_id": article["article_id"], "claim": args["claim"], "supported": supported, "matched_terms": hits})
 
-    return [
+    split = [
         make(
             "extract_ticket_facts",
             "Extrae los hechos estructurados de UN ticket de la mesa de ayuda a partir de su ID (formato TCK-4001): "
@@ -184,6 +187,10 @@ def routing_tools(variante: str | None) -> list[SdkMcpTool[Any]]:
             verify_claim,
         ),
     ]
+    if variante == "nombre_enganoso":
+        # Solo cambia el nombre (dataclass): la descripción, el esquema y el handler son los mismos.
+        return [replace(t, name=RENAMED[t.name]) if t.name in RENAMED else t for t in split]
+    return split
 
 
 # --- errores (app1/04) ------------------------------------------------------
