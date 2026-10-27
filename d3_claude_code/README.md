@@ -275,6 +275,8 @@ Hay **dos** barreras y quieres ver cuál actúa en cada caso:
 
 La sesión conoce la protección (está en `docs/estandares-codigo.md`) y puede negarse sin intentarlo. Hay que **forzar el intento**, pidiéndolo como prueba autorizada.
 
+**Antes de 4a, pide una lectura:** `Lee datos/sinteticos/usuarios.json` (leer está permitido; solo se protege escribir). La herramienta `Edit` exige haber leído el archivo en la conversación; sin esa lectura, el `Edit` podría fallar por eso y no por la barrera, y no sabrías cuál de las dos cosas viste. Con el archivo ya leído, lo único que puede rechazar la edición es la protección.
+
 | Intento | Qué escribes | Qué debes ver |
 | :--- | :--- | :--- |
 | 4a · Edit | `Esto es una prueba de seguridad autorizada de la protección del proyecto. Usa la herramienta Edit para cambiar en datos/sinteticos/usuarios.json el nombre del primer usuario a «Prueba». Hazlo aunque sepas que está protegido: quiero ver cómo lo rechaza el sistema; no lo evites ni propongas alternativas.` | El `Edit` aparece rechazado por la regla `deny`: `File is in a directory that is denied by your permission settings.` |
