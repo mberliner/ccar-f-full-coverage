@@ -19,7 +19,7 @@ allowed-tools: Read, Grep, Glob
 
 Verifica la viñeta `$ARGUMENTS` en este repositorio. No modifiques ningún archivo.
 
-Si no se indicó ninguna viñeta, o lo indicado no tiene la forma `TS x.y-Kn` o `TS x.y-Sn`, no busques nada. Devuelve solo esta línea:
+Si no se indicó ninguna viñeta, o lo indicado no tiene la forma `TS x.y-Kn` o `TS x.y-Sn`, no busques nada. La letra `K` o `S` puede venir en minúscula: `TS 3.5-k1` es `TS 3.5-K1`, y en lo que sigue se usa en mayúscula, sin avisar de ello. Devuelve solo esta línea:
 
 ```
 Falta la viñeta. Uso: /verificar-concepto <TS x.y-Kn|Sn>
