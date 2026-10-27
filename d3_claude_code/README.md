@@ -233,6 +233,8 @@ Si el segundo paso no muestra `Loaded`: comprueba que es sesión nueva (si ya le
 
 #### Paso 3 · La skill
 
+Antes, escribe `/skills` y busca dos líneas del proyecto: `verificar-concepto … project` (la skill) y `nuevo-modulo … project` (el comando: esta versión del producto lista los comandos de proyecto junto a las skills). El resto de la lista no es del proyecto: las `claude.ai sync` y las `locked by plugin` vienen de tu cuenta. En una cuenta con sincronización de claude.ai la lista tiene más de una docena de skills ajenas al repositorio; no afectan a la comprobación.
+
 1. Escribe `/verificar-concepto` **sin pulsar Intro** y mira el autocompletado: debe mostrar la pista `<TS x.y-Kn|Sn>` (es `argument-hint`).
 2. Escribe `/verificar-concepto TS 3.5-K1` y pulsa Intro.
    - **Debe volver:** un informe corto cuya primera línea es del estilo `Viñeta: TS 3.5-K1 · destino: d3 · estado: ☑`.
@@ -314,6 +316,7 @@ Qué esperar de cada paso no es opinión: sale de estas fuentes. La última colu
 | Que `app1_agente_unico/CLAUDE.md` también anuncie `Loaded` | Sección 1 de este README (nivel de directorio, TS 3.1-K1) | **Sin comprobar.** Se escribe «puede salir»; anota si sale |
 | El control con `d3_claude_code/README.md` | Deducción de los `paths` de las dos reglas | **Sin comprobar.** Es una inferencia; anota lo que veas |
 | Skill: informe corto y exploración fuera de tu conversación | Roadmap §11.5 (tercer punto); `.claude/skills/verificar-concepto/SKILL.md` (`context: fork`) | Observado al construir el repositorio, con y sin argumento |
+| `/skills` lista la skill y el comando de proyecto | `.claude/skills/verificar-concepto/SKILL.md`; `.claude/commands/nuevo-modulo.md` | **Observado el 2026-10-27** (Claude Code 2.1.311): `verificar-concepto · project` y `nuevo-modulo · project`, más 13 `claude.ai sync` y 2 `locked by plugin` de la cuenta |
 | `argument-hint` solo en el autocompletado; sin argumento se lanza igual | `docs/hallazgos.md` («`argument-hint` no obliga…»); `SKILL.md` (la comprobación de `$ARGUMENTS`) | Observado al construir el repositorio (Claude Code 2.1.310) |
 | Texto de la línea `Falta la viñeta…` y primera línea del informe | `SKILL.md` (plantillas de salida); `CONCEPTOS.md` (la fila de TS 3.5-K1 es `d3` y ☑) | Leído del archivo; lo que devuelve el modelo puede variar de redacción |
 | `Edit` y `Write` rechazados por la regla `deny` | Roadmap §11.5 (cuarto punto); `.claude/settings.json` (`permissions.deny`) | **Observado el 2026-10-27** al intentarlo desde otra sesión: ambas dieron «File is in a directory that is denied by your permission settings.» y los datos no cambiaron |
