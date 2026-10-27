@@ -44,7 +44,8 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
   lo que toca a `agent_id` y al alcance de `tools`): `tools=["Agent"]` solo limita
   las tools integradas; las del servidor MCP siguen visibles para el agente
   principal, y «no busques tú» en su prompt es una petición, no una barrera. Aquí la
-  barrera es un hook `PreToolUse` (`coordinator_gate`) que las deniega al agente
+  barrera es un hook `PreToolUse` (`coordinator_gate`, en `coordinator_gate.py`,
+  compartido con 01 y 02) que las deniega al agente
   principal y deja pasar a los subagentes, que traen `agent_id`. Sin ella, `fuera de
   rol` y las delegaciones medirían también lo que el coordinador hiciera por su
   cuenta. Solo se vio que las usara cuando se le pidió expresamente.
@@ -60,13 +61,14 @@ import asyncio
 import json
 import sys
 from pathlib import Path
-from typing import Any
 
 # Los módulos se ejecutan como script: la raíz del repositorio va al path para importar `harness`.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from claude_agent_sdk import AgentDefinition, ClaudeAgentOptions, HookMatcher, query  # noqa: E402
+from claude_agent_sdk import AgentDefinition, ClaudeAgentOptions, query  # noqa: E402
 
+# La barrera es compartida con 01 y 02; aquí se importa (y queda accesible como `coordinator_gate`).
+from app3_sistema_multiagente.coordinator_gate import coordinator_attempts, coordinator_gate, coordinator_hooks  # noqa: E402, F401
 from app3_sistema_multiagente.servers.investigacion import SERVER_NAME, build_server, tool_name  # noqa: E402
 from harness import credentials  # noqa: E402
 from harness.cli import build_parser, report_budget  # noqa: E402
@@ -161,28 +163,6 @@ def coordinator_prompt() -> str:
     )
 
 
-async def coordinator_gate(hook_input: dict[str, Any], tool_use_id: str | None, context: Any) -> dict[str, Any]:
-    """Deniega al agente principal las tools del servidor: son de los subagentes."""
-    # Un subagente trae `agent_id` en la entrada del hook; el agente principal, no.
-    if hook_input.get("agent_id"):
-        return {}
-    return {
-        "hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "permissionDecision": "deny",
-            "permissionDecisionReason": (
-                "El coordinador no usa las tools de investigación: son de los subagentes. "
-                "Delega con Agent en researcher o synthesizer."
-            ),
-        }
-    }
-
-
-def build_hooks() -> dict[str, list[HookMatcher]]:
-    # El matcher casa con cualquier tool del servidor `investigacion`.
-    return {"PreToolUse": [HookMatcher(matcher=f"mcp__{SERVER_NAME}__.*", hooks=[coordinator_gate])]}
-
-
 def build_options(anti: str | None, *, budget: float, model: str, subagent_model: str) -> ClaudeAgentOptions:
     return isolated_options(
         max_budget_usd=budget,
@@ -195,7 +175,7 @@ def build_options(anti: str | None, *, budget: float, model: str, subagent_model
         allowed_tools=["Agent", *ALL_TOOLS],
         permission_mode="dontAsk",
         agents=build_agents(anti, subagent_model),
-        hooks=build_hooks(),
+        hooks=coordinator_hooks(),
         env={
             "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "1",  # coste acotado: un subagente no lanza otros
             "CLAUDE_CODE_FORK_SUBAGENT": "0",  # sin fork: la lección es que el subagente no hereda contexto
@@ -216,11 +196,6 @@ def out_of_role(rec: RunRecord) -> dict[str, int]:
         if expected is not None and call.name not in expected:
             counts[call.agent] = counts.get(call.agent, 0) + 1
     return counts
-
-
-def coordinator_attempts(rec: RunRecord) -> int:
-    """Intentos del agente principal de usar tools del servidor (los deniega `coordinator_gate`)."""
-    return out_of_role(rec).get(MAIN, 0)
 
 
 def junk_urls_fetched(rec: RunRecord) -> int:

@@ -2,10 +2,18 @@
 
 import pytest
 
+from app3_sistema_multiagente.coordinator_gate import coordinator_gate
 from harness.recorder import RunRecord, ToolCall
 from tests.cargar import load
 
 mod = load("app3_sistema_multiagente/02_paralelo_y_descomposicion.py")
+
+
+def test_coordinator_options_carry_the_gate():
+    # Lo usan paralelo, refinamiento y la parte adaptativa de descomposicion; la cadena fija y legacy no tienen coordinador.
+    options = mod.coordinator_options("x", budget=0.5, model="sonnet", subagent_model="haiku")
+    (matcher,) = options.hooks["PreToolUse"]
+    assert matcher.hooks == [coordinator_gate]
 
 
 def agent(cid, subagent, response):

@@ -4,6 +4,7 @@ import json
 
 import pytest
 
+from app3_sistema_multiagente.coordinator_gate import coordinator_gate
 from harness.recorder import RunRecord, ToolCall
 from tests.cargar import load
 
@@ -29,6 +30,9 @@ def test_coordinator_options():
     assert options.env["CLAUDE_CODE_FORK_SUBAGENT"] == "0"
     assert options.env["CLAUDE_CODE_DISABLE_BACKGROUND_TASKS"] == "1"
     assert options.setting_sources == [] and options.max_budget_usd == 1.0
+    # La barrera es el hook, no `tools=["Agent"]` ni el prompt: las tools MCP siguen visibles para el coordinador.
+    (matcher,) = options.hooks["PreToolUse"]
+    assert matcher.hooks == [coordinator_gate]
 
 
 @pytest.mark.parametrize("anti", [None, *mod.ANTI_VARIANTS])

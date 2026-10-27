@@ -31,7 +31,10 @@ lo contrario); y empezar a escribir tests de un código *legacy* archivo por
 archivo, sin mapearlo antes.
 
 Inferencia propia: el comprobador de brechas es determinista (subtemas
-esperados en el texto), para que el bucle se pueda probar sin modelo.
+esperados en el texto), para que el bucle se pueda probar sin modelo. Y «No
+buscas tú» en el prompt del coordinador es una petición: lo que se lo impide
+es el hook `PreToolUse` compartido (`coordinator_gate.py`, explicado en
+`03_tools_entre_roles`). La cadena fija y `legacy` no tienen coordinador.
 
 Pregunta tipo examen: ver `app3_sistema_multiagente/README.md`, módulo 02.
 
@@ -51,6 +54,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from claude_agent_sdk import AgentDefinition, ClaudeAgentOptions, ClaudeSDKClient, query  # noqa: E402
 
+from app3_sistema_multiagente.coordinator_gate import coordinator_attempts, coordinator_hooks  # noqa: E402
 from app3_sistema_multiagente.servers.investigacion import (  # noqa: E402
     NETWORK_SUBTOPICS,
     SERVER_NAME,
@@ -114,6 +118,8 @@ def coordinator_options(system_prompt: str, *, budget: float, model: str, subage
         allowed_tools=["Agent", SEARCH_TICKETS, SEARCH_KB],
         permission_mode="dontAsk",
         agents=build_agents(subagent_model),
+        # `tools=["Agent"]` no oculta las tools MCP al coordinador: la barrera es este hook, no el prompt.
+        hooks=coordinator_hooks(),
         env=SUBAGENT_ENV,
         max_turns=20,  # red de seguridad
     )
@@ -169,7 +175,7 @@ async def part_parallel(args: Any, budget: float, model: str, subagent_model: st
         rec, seconds = await timed_run(PARALLEL_TASK, options)
         elapsed[mode] = seconds
         print(f"[medida] subagentes por respuesta: {agent_groups(rec)} · máximo en una respuesta: {max_parallel(rec)}")
-        print(f"[medida] latencia: {seconds:.1f} s")
+        print(f"[medida] latencia: {seconds:.1f} s · intentos del coordinador, denegados: {coordinator_attempts(rec)}")
     if len(elapsed) == 2:
         ratio = speedup(parallel_s=elapsed["paralelo"], sequential_s=elapsed["secuencial"])
         print(f"\n[resumen] paralelo {elapsed['paralelo']:.1f} s · secuencial {elapsed['secuencial']:.1f} s · "
@@ -206,7 +212,7 @@ async def part_refinement(args: Any, budget: float, model: str, subagent_model: 
             await client.query(message)
             rec = await record(client.receive_response())
             missing = gaps(rec.final_text)
-            print(f"[medida] brechas: {missing or 'ninguna'}")
+            print(f"[medida] brechas: {missing or 'ninguna'} · intentos del coordinador, denegados: {coordinator_attempts(rec)}")
             if not missing or round_number > MAX_REFINEMENT_ROUNDS:
                 break
             # El coordinador recibe solo las brechas: re-delegación dirigida.
@@ -260,7 +266,8 @@ async def part_decomposition(args: Any, budget: float, model: str, subagent_mode
     for response, agents in agent_groups(rec).items():
         prompts = [c.input.get("prompt", "")[:120] for c in rec.tool_calls if c.response == response and c.name in SUBAGENT_TOOLS]
         print(f"[subtareas {response}] {agents}: {prompts}")
-    print(f"[medida] rondas de delegación: {len(agent_groups(rec))}\n[respuesta completa]\n{rec.final_text}")
+    print(f"[medida] rondas de delegación: {len(agent_groups(rec))} · intentos del coordinador, denegados: "
+          f"{coordinator_attempts(rec)}\n[respuesta completa]\n{rec.final_text}")
 
 
 # --- Parte legacy (1.6-S3) -----------------------------------------------------

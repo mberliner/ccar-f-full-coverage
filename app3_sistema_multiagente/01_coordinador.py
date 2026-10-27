@@ -37,6 +37,10 @@ pasar siempre por todos los subagentes; reducir «problemas de red» a «VPN»
 coordinador, no en los subagentes); y escribir el prompt del coordinador como
 una receta de pasos.
 
+Barrera del coordinador (inferencia propia): «No busques tú» en su prompt es
+una petición; lo que se lo impide es el hook `PreToolUse` compartido
+(`coordinator_gate.py`, explicado en `03_tools_entre_roles`).
+
 Guía frente a producto: la guía llama `Task` a la tool; en el producto se llama
 `Agent` y es la que se pone en `allowed_tools` (el recorder acepta las dos).
 
@@ -58,6 +62,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from claude_agent_sdk import AgentDefinition, ClaudeAgentOptions, query  # noqa: E402
 
+from app3_sistema_multiagente.coordinator_gate import coordinator_attempts, coordinator_hooks  # noqa: E402
 from app3_sistema_multiagente.servers.investigacion import (  # noqa: E402
     NETWORK_SUBTOPICS,
     SERVER_NAME,
@@ -189,6 +194,8 @@ def build_options(*, anti: str | None, budget: float, model: str, subagent_model
         allowed_tools=["Agent", SEARCH_TICKETS, SEARCH_KB],
         permission_mode="dontAsk",
         agents=build_agents(subagent_model),
+        # `tools=["Agent"]` no oculta las tools MCP al coordinador: la barrera es este hook, no el prompt.
+        hooks=coordinator_hooks(),
         env={
             # Coste acotado (roadmap §3, regla 7): un subagente no lanza otros.
             "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "1",
@@ -248,7 +255,8 @@ async def main_async() -> int:
         coverage = findings_coverage(rec)
         print(f"[respuesta completa]\n{rec.final_text}")
         print(f"[medida] subagentes invocados: {invoked_agents(rec)}")
-        print(f"[medida] llamadas por agente: { {a: len(c) for a, c in rec.by_agent().items()} }")
+        print(f"[medida] llamadas por agente: { {a: len(c) for a, c in rec.by_agent().items()} }"
+              f" · intentos del coordinador, denegados: {coordinator_attempts(rec)}")
         if "synthesizer" in invoked_agents(rec):
             print(f"[medida] hallazgos pasados al sintetizador: {len(coverage['passed'])}/{len(coverage['found'])}"
                   f" · faltan: {coverage['missing']}")
