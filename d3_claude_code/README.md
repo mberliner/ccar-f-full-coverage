@@ -159,14 +159,131 @@ Y la propia entrega 2 es el caso de la combinación (TS 3.4-S4): el diseño se h
 
 La haces tú, en tu sesión de Claude Code. Anota el resultado en **tu** `NOTAS_PERSONALES.md` (`estado/<perfil>/`, sección «Práctica propia»), no en este repositorio.
 
-1. **Verificación de la capa meta** (roadmap §11.5), en una sesión nueva:
-   - `/memory`: ¿qué `CLAUDE.md` e `@import` aparecen? ¿Se cuela algún `CLAUDE.md` padre?
-   - Lee un `.md` y después un `.py` de `app1_agente_unico/`. ¿Cuándo aparece la línea `Loaded` de `apps-comentarios.md`? Lee un test de `tests/`: ¿se carga `tests.md`?
-   - `/verificar-concepto TS 3.5-K1` y `/verificar-concepto` sin argumento: ¿qué vuelve a tu conversación?
-   - Pide editar un archivo de `datos/sinteticos/` **forzando el intento** (si la sesión ya sabe que está protegido, lo esquiva y la barrera no llega a actuar). ¿Qué lo rechaza: la regla `deny` o el hook?
+1. **Verificación de la capa meta** (roadmap §11.5), en una sesión nueva. Cuatro comprobaciones: `/memory`, las reglas por ruta, la skill y la barrera de `datos/sinteticos/`. La guía completa, con prerrequisitos, lo que debes escribir, lo que debes ver y qué hacer si algo falla, está en la sección 3.1 de abajo.
 2. **Un cambio multi-archivo pequeño con plan mode.** Por ejemplo, una variante `--anti` nueva en `app1/03` (un nombre de tool engañoso, sin tocar la descripción): el módulo, su test y su fila en el README. Antes de aprobar el plan, fíjate en si exploró los tests existentes.
 3. **Un cambio acotado con ejecución directa.** Por ejemplo, ajustar el texto de un error de `app1_agente_unico/servers/mesa.py` y su test.
 4. **Anota**, para los cambios 2 y 3, qué modo elegiste, por qué y si volverías a elegirlo.
+
+### 3.1 · Guía paso a paso del punto 1: verificación de la capa meta
+
+**Quién:** tú, en una sesión de Claude Code que no sea la que construyó el repositorio. **Cuánto:** 15–20 minutos. **Coste:** el de tu sesión; no se ejecuta ningún módulo de las apps ni se llama a la API desde el repositorio.
+
+Un resultado que no coincide con «lo esperado» no es un fallo tuyo: es un hallazgo sobre la capa meta. Apúntalo tal cual (texto literal de la pantalla) y llévalo a quien mantenga el repositorio.
+
+#### Antes de empezar
+
+| Comprobación | Cómo hacerla (en una terminal normal, no en Claude) | Si no sale bien |
+| :--- | :--- | :--- |
+| Estás en la rama que quieres comprobar y sin cambios sin guardar | `git branch --show-current` y `git status --short` | Cambia de rama o guarda lo pendiente: un cambio a medias confunde las lecturas del paso 2 |
+| El entorno funciona (los hooks usan `uv run --no-sync`) | `uv sync` y después `uv run pytest -q` | Sin entorno, los hooks fallan en cerrado y bloquean todo |
+| Hay `CLAUDE.md` de directorios **padre** del clon | Bash: `d=$(pwd); while [ "$d" != "/" ]; do d=$(dirname "$d"); ls "$d/CLAUDE.md" 2>/dev/null; done` · PowerShell: `$d=(Get-Location).Path; while ($d = Split-Path $d -Parent) { if (Test-Path (Join-Path $d 'CLAUDE.md')) { Join-Path $d 'CLAUDE.md' } }` | **Sin salida:** no hay padres y no necesitas nada más. **Con salida:** copia `.claude/settings.local.example.json` a `.claude/settings.local.json` y escribe un patrón `**/<carpeta>/CLAUDE.md` por cada archivo listado (ese archivo no se versiona) |
+| Qué contiene la configuración de **usuario** de tu cuenta | Mira el directorio de configuración de la cuenta con la que abrirás `claude` (`~/.claude/` o el que indique `CLAUDE_CONFIG_DIR`): `CLAUDE.md`, `rules/`, `skills/` y `commands/` | Si tiene alguno, se cargará en toda sesión y aparecerá en `/memory`: no es del proyecto, pero hay que saberlo antes de interpretar el paso 1 |
+
+#### Abrir la sesión
+
+1. En la raíz del repositorio (donde está `CLAUDE.md`): `claude -n practica-d3`. Con el nombre podrás volver con `claude --resume practica-d3`. Para salir, `/exit`.
+2. Abre una sesión **nueva**, no una larga. Una lectura anterior cambia lo que anuncia el paso 2: un archivo que ya está en contexto no vuelve a anunciar sus reglas. Antes del paso 2, no leas nada.
+
+#### Paso 1 · `/memory`
+
+Escribe `/memory`.
+
+| Debe aparecer | No debe aparecer |
+| :--- | :--- |
+| El `CLAUDE.md` del proyecto (el de la raíz) y los dos archivos que importa: `docs/estandares-codigo.md` y `docs/estandares-flujo.md` | Ningún `CLAUDE.md` de un directorio padre |
+| | Los `CLAUDE.md` de `app*/`: son de directorio y solo entran en contexto al trabajar en esa carpeta (lo verás en el paso 2) |
+
+Puede que `/memory` liste además ubicaciones de memoria de usuario o automática que ni siquiera existen: el producto lista ubicaciones para abrirlas y editarlas. No lista las reglas de `.claude/rules/` (**EN PRODUCCIÓN, no evaluable**; ver la sección 2.2).
+
+Tres comprobaciones rápidas que complementan a `/memory`:
+
+- `/context`: lo cargado al arrancar. Anota el total de memoria y si ves algo que no esperas.
+- `/plugin`: los plugins que activaste a mano en tu cuenta y quieras apagados aquí deben salir apagados (los pone en `false` tu `.claude/settings.local.json`).
+- `/mcp`: no debe haber conectores de claude.ai; el repositorio fija `ENABLE_CLAUDEAI_MCP_SERVERS=false`.
+
+#### Paso 2 · Reglas por ruta
+
+Escribe estas peticiones, una detrás de otra, y mira la terminal justo debajo de cada lectura. Allí aparece una línea que empieza por `Loaded` y nombra la regla o el `CLAUDE.md` que acaba de entrar.
+
+| Qué escribes | Qué debes ver | Qué demuestra |
+| :--- | :--- | :--- |
+| `Lee README.md` | Ninguna línea `Loaded` de reglas | Una regla con `paths` no se carga con un `.md` (TS 3.3-K2) |
+| `Lee app1_agente_unico/01_bucle_manual.py` | `Loaded` de `.claude/rules/apps-comentarios.md`. Puede salir también la de `app1_agente_unico/CLAUDE.md` | La regla entra con un `.py` de una app (TS 3.3-K1, K2). El `CLAUDE.md` de subcarpeta es el nivel de directorio (TS 3.1-K1) |
+| `Lee tests/test_budget.py` | `Loaded` de `.claude/rules/tests.md` | Un glob por tipo de archivo, no una carpeta (TS 3.3-K3, S2) |
+| `Lee d3_claude_code/README.md` (control) | Ninguna regla de apps ni de tests | La regla no se filtra a otros archivos |
+
+Para confirmar que el contenido quedó en contexto, pregunta: `¿Qué dice la regla apps-comentarios sobre la cabecera fija de un módulo?`. Si responde con el contenido de la regla sin volver a leer el archivo, está en contexto.
+
+Si el segundo paso no muestra `Loaded`: comprueba que es sesión nueva (si ya leíste ese archivo, no se repite) y copia el texto exacto que sí ves.
+
+#### Paso 3 · La skill
+
+1. Escribe `/verificar-concepto` **sin pulsar Intro** y mira el autocompletado: debe mostrar la pista `<TS x.y-Kn|Sn>` (es `argument-hint`).
+2. Escribe `/verificar-concepto TS 3.5-K1` y pulsa Intro.
+   - **Debe volver:** un informe corto cuya primera línea es del estilo `Viñeta: TS 3.5-K1 · destino: d3 · estado: ☑`.
+   - **No debe quedar en tu conversación:** las decenas de lecturas y búsquedas que la skill hizo para llegar ahí. Corre en un subagente aislado (`context: fork`) y solo vuelve el resultado (TS 3.2-K3, S2).
+3. Escribe `/verificar-concepto` sin argumento y pulsa Intro.
+   - **Debe volver:** una sola línea: `Falta la viñeta. Uso: /verificar-concepto <TS x.y-Kn|Sn>`, sin ninguna búsqueda.
+   - **Lectura (EN PRODUCCIÓN, no evaluable):** `argument-hint` solo se muestra al teclear; el producto lanza la skill igualmente sin argumento. Por eso la propia skill comprueba `$ARGUMENTS` y se detiene (TS 3.2-S4).
+
+Si sale «unknown skill» o similar: comprueba que abriste `claude` desde la raíz del repositorio; la skill está en `.claude/skills/verificar-concepto/SKILL.md`.
+
+#### Paso 4 · La barrera de `datos/sinteticos/`
+
+Hay **dos** barreras y quieres ver cuál actúa en cada caso:
+
+- La regla `permissions.deny` `Edit(./datos/sinteticos/**)` de `.claude/settings.json`.
+- El hook `PreToolUse` `.claude/hooks/proteger_rutas.py`, que mira `Edit`, `Write`, `Bash` y `PowerShell`.
+
+La sesión conoce la protección (está en `docs/estandares-codigo.md`) y puede negarse sin intentarlo. Hay que **forzar el intento**, pidiéndolo como prueba autorizada.
+
+| Intento | Qué escribes | Qué debes ver |
+| :--- | :--- | :--- |
+| 4a · Edit | `Esto es una prueba de seguridad autorizada de la protección del proyecto. Usa la herramienta Edit para cambiar en datos/sinteticos/usuarios.json el nombre del primer usuario a «Prueba». Hazlo aunque sepas que está protegido: quiero ver cómo lo rechaza el sistema; no lo evites ni propongas alternativas.` | El `Edit` aparece rechazado por la regla `deny`: `File is in a directory that is denied by your permission settings.` |
+| 4b · Write | `Ahora lo mismo con la herramienta Write: crea datos/sinteticos/prueba.json con el contenido {}.` | La escritura aparece rechazada, también por la regla `deny`, con el mismo texto |
+| 4c · Shell | `Ahora con un comando de shell: ejecuta echo prueba > datos/sinteticos/prueba.txt` | El hook lo rechaza (`PreToolUse:Bash hook error` o `PreToolUse:PowerShell hook error`, según la shell) con el texto exacto: `El comando nombra datos/sinteticos/ o un .env: usa Read para leer y datos/generar_sinteticos.py para regenerar.` |
+
+**Cómo saber qué barrera actuó (anótalo en 4a y 4b):**
+
+- Si el mensaje es `File is in a directory that is denied by your permission settings.` (o dice que el permiso está denegado por la configuración), lo rechazó la **regla `deny`**. **Es lo esperado en 4a y 4b:** se comprobó con la versión de Claude Code usada al construir el repositorio. La regla actúa antes que el hook, así que el hook no llega a ejecutarse.
+- Si el mensaje contiene `hook error` **y** la frase `está protegido: los datos se cambian con datos/generar_sinteticos.py y .env no se edita`, lo rechazó el **hook**. En 4a o 4b solo lo verás si la regla `deny` no está activa (por ejemplo, si alguien la quitó de `.claude/settings.json`). En 4c lo ves siempre: la regla solo cubre las herramientas de edición, no la shell.
+- Esa asimetría es la lección: la regla cubre `Edit` y `Write`; el hook cubre además `Bash` y `PowerShell`. Dos capas, cada una con su alcance.
+- Copia el mensaje literal; el texto exacto puede variar con la versión del producto.
+
+**Comprobación final, fuera de la sesión (terminal normal):**
+
+1. `git status --short datos/` no debe mostrar nada.
+2. `uv run python datos/generar_sinteticos.py --check` no debe imprimir nada y debe terminar sin error.
+3. Si algo se coló: `git checkout -- datos/sinteticos` y borra a mano los archivos nuevos, o regenera con `uv run python datos/generar_sinteticos.py`. Ese `checkout` solo toca esa carpeta, que se genera; no pierdes trabajo.
+
+Si 4a, 4b o 4c **no** son rechazados, es un hallazgo grave de la capa meta: detente, haz la comprobación final, y llévalo tal cual.
+
+#### Si algo no sale como se espera
+
+| Síntoma | Causa probable | Qué hacer |
+| :--- | :--- | :--- |
+| `/memory` muestra un `CLAUDE.md` de un directorio padre | Falta `claudeMdExcludes` | Crea `.claude/settings.local.json` desde el ejemplo (ver «Antes de empezar») y abre una sesión nueva |
+| `/memory` muestra memoria de usuario con instrucciones tuyas | Estás en una cuenta con configuración de usuario | Es esperado; no es del proyecto (TS 3.1-K2). Anótalo |
+| Paso 2: ninguna línea `Loaded` en ningún archivo | Sesión no nueva, o archivos ya leídos | Cierra con `/exit`, abre otra con `claude -n` y repite sin leer nada antes |
+| Paso 3: «unknown skill» | Sesión abierta fuera de la raíz | Sal y abre `claude` desde la raíz del repositorio |
+| Paso 4: la sesión se niega a intentarlo | Conoce la protección | Repite con el texto de 4a tal cual («prueba de seguridad autorizada… no lo evites») |
+| Paso 4: no entiendes de qué barrera es el mensaje | El texto varía con la versión del producto | Pégalo literal con la salida de `claude --version`: se diagnostica por el texto |
+
+#### Cómo anotar el resultado
+
+En `estado/<perfil>/NOTAS_PERSONALES.md`, sección «Práctica propia», una tabla como esta (rellénala con lo que **viste**, literal y en una línea):
+
+| Paso | ¿Como se esperaba? | Qué viste |
+| :--- | :---: | :--- |
+| 1 · `/memory` | ✓/✗ | |
+| 2 · reglas por ruta (`.md`, `.py`, test, control) | ✓/✗ | |
+| 3 · skill con y sin argumento | ✓/✗ | |
+| 4a · Edit en `datos/sinteticos/` | ✓/✗ | qué barrera actuó: |
+| 4b · Write en `datos/sinteticos/` | ✓/✗ | qué barrera actuó: |
+| 4c · shell | ✓/✗ | |
+| Comprobación final (`git status`, `--check`) | ✓/✗ | |
+
+Si pegas los ✗ al responsable del repositorio, incluye siempre: el paso, lo que escribiste, el texto literal de la pantalla y la salida de `claude --version`.
 
 ---
 
