@@ -282,8 +282,8 @@ Es parte del buen funcionamiento del repositorio: la sesión que construye debe 
 | Escribes | Debe verse | Qué demuestra |
 | :--- | :--- | :--- |
 | `/memory` | El `CLAUDE.md` del proyecto con sus dos `@import`. La línea `User instructions … ~/.claude/CLAUDE.md` puede seguir saliendo como ubicación | Que la negación **no** excluyó el `CLAUDE.md` del propio proyecto. Si falta, la carpeta del clon no se llama como el patrón: corrígelo |
-| `/context` | Sin memoria de usuario en lo cargado al arrancar | Que lo de fuera del proyecto no entra en contexto |
-| `/skills` | Solo las dos del proyecto: `verificar-concepto` y `nuevo-modulo`. Antes del archivo eran 17 (13 `claude.ai sync` + 2 `locked by plugin` + 2 `project`) | Que `skillOverrides` y `enabledPlugins` apagan las ajenas |
+| `/context` | En «Memory files»: `CLAUDE.md` y los dos `docs/estandares-*.md`, sin nada de usuario. En «Skills»: **Project** con `verificar-concepto` y `nuevo-modulo`, y **Built-in** con las skills que trae Claude Code (en la observación fueron 16, unos 2,5k tokens: `dataviz`, `code-review`, `claude-api`, `init`…) | Que lo de fuera del proyecto no entra en contexto. Las Built-in no son de tu cuenta ni del proyecto: salen igual para cualquiera con tu versión |
+| `/skills` | Ya no aparecen las 13 `claude.ai sync` ni las 2 `locked by plugin` (antes eran 17 con las 2 del proyecto) | Que `skillOverrides` y `enabledPlugins` apagan las ajenas |
 | `/plugin` | `cowork-plugin-management` apagado | Que `enabledPlugins` se aplica |
 
 Si queda alguna skill ajena en `/skills`, apunta su nombre exacto y la etiqueta (`claude.ai sync` o `locked by plugin`): `skillOverrides` solo admite nombres exactos, sin comodines, y un nombre mal escrito no hace nada.
@@ -292,7 +292,8 @@ Si queda alguna skill ajena en `/skills`, apunta su nombre exacto y la etiqueta 
 
 - Comprobado (pruebas herméticas, 2026-10-27): la negación deja pasar solo el `CLAUDE.md` y las reglas del proyecto y excluye un `CLAUDE.md` padre y la memoria de usuario (`CLAUDE.md` y reglas); y el repositorio real sigue cargando su `CLAUDE.md` con ese archivo puesto.
 - Comprobado: `skillOverrides` oculta una skill con su nombre exacto (skills de proyecto y una incluida con Claude Code) y los comodines no hacen nada.
-- **Sin comprobar:** que apague tus 13 skills sincronizadas reales (no se cargan en una sesión por API; solo puedes verlo tú), el efecto de `enabledPlugins` sobre `/skills` y la línea `User instructions` de `/memory` tras excluir.
+- Comprobado en una sesión interactiva (2026-10-27, `/context`): con el archivo puesto, «Memory files» lista solo el `CLAUDE.md` del proyecto y sus dos `@import`, y «Skills» deja las 2 del proyecto y las Built-in; ya no están las 13 sincronizadas ni las 2 de plugin. Es decir, `skillOverrides` apaga las sincronizadas reales y `enabledPlugins` las del plugin.
+- **Sin comprobar:** la línea `User instructions` de `/memory` tras excluir (puede seguir mostrando la ubicación vacía) y `disableBundledSkills` (apagaría las Built-in; no se ha probado y no hace falta para el aislamiento, porque no dependen de la cuenta).
 
 #### Si algo no sale como se espera
 
@@ -335,7 +336,7 @@ Qué esperar de cada paso no es opinión: sale de estas fuentes. La última colu
 | Que `app1_agente_unico/CLAUDE.md` también anuncie `Loaded` | Sección 1 de este README (nivel de directorio, TS 3.1-K1) | **Sin comprobar.** Se escribe «puede salir»; anota si sale |
 | El control con `d3_claude_code/README.md` | Deducción de los `paths` de las dos reglas | **Sin comprobar.** Es una inferencia; anota lo que veas |
 | Skill: informe corto y exploración fuera de tu conversación | Roadmap §11.5 (tercer punto); `.claude/skills/verificar-concepto/SKILL.md` (`context: fork`) | Observado al construir el repositorio, con y sin argumento |
-| El aislamiento local (negación de `claudeMdExcludes`, `enabledPlugins`, `skillOverrides`) | `docs/hallazgos.md` («Patrones para excluir…»); esquema de ajustes de la CLI | Negación y `skillOverrides` por nombre: **observado el 2026-10-27** en pruebas herméticas. Efecto sobre tus skills y plugins reales: **sin comprobar** |
+| El aislamiento local (negación de `claudeMdExcludes`, `enabledPlugins`, `skillOverrides`) | `docs/hallazgos.md` («Patrones para excluir…»); esquema de ajustes de la CLI | Negación y `skillOverrides` por nombre: **observado el 2026-10-27** en pruebas herméticas. Efecto sobre skills y plugins reales: **observado el 2026-10-27** en el `/context` de una sesión interactiva |
 | `/skills` lista la skill y el comando de proyecto | `.claude/skills/verificar-concepto/SKILL.md`; `.claude/commands/nuevo-modulo.md` | **Observado el 2026-10-27** (Claude Code 2.1.311): `verificar-concepto · project` y `nuevo-modulo · project`, más 13 `claude.ai sync` y 2 `locked by plugin` de la cuenta |
 | `argument-hint` solo en el autocompletado; sin argumento se lanza igual | `docs/hallazgos.md` («`argument-hint` no obliga…»); `SKILL.md` (la comprobación de `$ARGUMENTS`) | Observado al construir el repositorio (Claude Code 2.1.310) |
 | Texto de la línea `Falta la viñeta…` y primera línea del informe | `SKILL.md` (plantillas de salida); `CONCEPTOS.md` (la fila de TS 3.5-K1 es `d3` y ☑) | Leído del archivo; lo que devuelve el modelo puede variar de redacción |
