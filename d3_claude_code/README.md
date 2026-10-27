@@ -66,21 +66,21 @@ Las 13 viñetas de esta parte describen diagnósticos, decisiones o formas de tr
 
 <!-- INTRODUCE: TS 3.1-S1 -->
 
-**Qué dice la guía (TS 3.1-S1):** un fallo típico de jerarquía es que una persona nueva no recibe unas instrucciones porque estaban en el nivel de usuario y no en el de proyecto. Diagnosticarlo es preguntarse en qué nivel vive la instrucción y quién lo carga.
+**Qué dice la guía (TS 3.1-S1):** hay que saber diagnosticar problemas de jerarquía; su ejemplo es una persona nueva del equipo que no recibe unas instrucciones porque estaban en el nivel de usuario y no en el de proyecto.
 
 **Caso de este proyecto:** si una regla del proyecto se escribe en `~/.claude/CLAUDE.md`, la sesión que la escribió la cumple y parece que funciona. Pero no llega a nadie más, y tampoco a **tu propia sesión** abierta con otro directorio de configuración (`CLAUDE_CONFIG_DIR`, por ejemplo una cuenta personal y otra de empresa): para Claude Code son dos «usuarios» distintos. Por eso `docs/estandares-flujo.md` (sección «Directivas») prohíbe guardar directivas del proyecto en la memoria automática o en la configuración de usuario. El síntoma («a mí me funciona y a ti no») es el mismo que el del compañero nuevo de la guía.
 
 Lo inverso también ocurre: los `CLAUDE.md` de directorios **padre** del clon se cargan aunque no sean del proyecto. Aquí se excluyen con `claudeMdExcludes` (ver `CLAUDE.md`, «Contexto heredado»), porque contaminarían las pruebas.
 
-**Por qué importa (inferencia propia):** un fallo de jerarquía no da error: la instrucción simplemente no llega, y quien lo sufre ve un asistente que «no cumple» sin ninguna pista. Preguntarse en qué nivel vive la instrucción y quién lo carga evita buscar el fallo en su redacción, que es la dirección equivocada.
+**Por qué importa (inferencia propia):** un fallo de jerarquía no da error: la instrucción simplemente no llega, y quien lo sufre ve un asistente que «no cumple» sin ninguna pista. La primera pregunta útil no es «¿está bien redactada?», sino «¿en qué nivel vive y quién carga ese nivel?».
 
-**Anti-patrón / trampa del examen:** el diagnóstico equivocado es reescribir la instrucción, o pedir a la persona afectada que copie el `~/.claude/CLAUDE.md` de otra: el problema es de nivel y no de texto, y la copia sigue sin viajar por git. La corrección coherente con la guía (TS 3.1-K2: lo de usuario no se comparte por control de versiones) es subir la instrucción al nivel de proyecto. En un examen, la opción que arregla el síntoma sin cambiar el nivel es la trampa.
+**Anti-patrón / trampa del examen:** reescribir la instrucción o repetirla en el prompt, o pedir a la persona afectada que copie el `~/.claude/CLAUDE.md` de otra. El problema es de nivel y no de texto, y la copia sigue sin viajar por git: la siguiente incorporación tendrá el mismo fallo. Lo coherente con la guía (TS 3.1-K2: lo de usuario no se comparte por control de versiones) es llevar la instrucción al nivel de proyecto. En una pregunta tipo examen, la trampa plausible es la opción que arregla el síntoma de esa persona sin cambiar el nivel (inferencia propia sobre el formato de las preguntas).
 
 ### 2.2 Comprobar qué memoria está cargada: `/memory`
 
 <!-- INTRODUCE: TS 3.1-S4 -->
 
-**Qué dice la guía (TS 3.1-S4):** `/memory` es el comando para ver qué archivos de memoria están cargados y diagnosticar por qué dos sesiones se comportan distinto.
+**Qué dice la guía (TS 3.1-S4):** `/memory` sirve para comprobar qué archivos de memoria están cargados y diagnosticar comportamientos inconsistentes entre sesiones.
 
 **Caso de este proyecto:** es la primera comprobación de §11.5 del roadmap y la de «Contexto heredado» de `CLAUDE.md`: en `/memory` deben salir el `CLAUDE.md` del proyecto y sus dos `@import`, y ningún `CLAUDE.md` padre.
 
@@ -88,19 +88,19 @@ Lo inverso también ocurre: los `CLAUDE.md` de directorios **padre** del clon se
 
 **Por qué importa (inferencia propia):** cuando dos sesiones se comportan distinto, lo primero es saber qué instrucciones tiene cargadas cada una. Discutir el comportamiento sin mirar eso es adivinar.
 
-**Anti-patrón / trampa del examen:** diagnosticar la inconsistencia sin mirar qué se cargó: repetir la instrucción en el prompt, reinstalar o suponer que el modelo «se olvidó». La guía da el comando que lo comprueba, `/memory` (TS 3.1-S4), aunque el producto reparta hoy esa información entre `/memory`, `/context` y la línea `Loaded` (ver arriba, EN PRODUCCIÓN).
+**Anti-patrón / trampa del examen:** tratar la inconsistencia como un problema del modelo sin mirar qué se cargó: repetir la instrucción en el prompt, suponer que «se olvidó» o preguntarle al propio asistente qué instrucciones sigue (su respuesta es una descripción, no una comprobación). La guía da el comando que lo comprueba, `/memory` (TS 3.1-S4). Que el producto reparta hoy esa información entre `/memory`, `/context` y la línea `Loaded` es EN PRODUCCIÓN (ver arriba) y no cambia la respuesta de examen.
 
 ### 2.3 Variantes personales de una skill
 
 <!-- INTRODUCE: TS 3.2-K4 -->
 
-**Qué dice la guía (TS 3.2-K4):** para personalizar una skill sin afectar al equipo, se crea una variante en `~/.claude/skills/` **con otro nombre**.
+**Qué dice la guía (TS 3.2-K4):** para personalizar una skill sin afectar a los compañeros, se crea una variante personal en `~/.claude/skills/` **con un nombre distinto**.
 
-**Caso de este proyecto:** si quieres una versión de `verificar-concepto` que se salte la comprobación de la pregunta tipo examen, no edites `.claude/skills/verificar-concepto/`: ese cambio llegaría a todos por git. Crea `~/.claude/skills/verificar-concepto-rapido/SKILL.md`. Con el mismo nombre, una taparía a la otra: dejarías de ver los cambios que el equipo haga en la suya, y nadie que lea el repositorio sabría que tú ejecutas otra cosa. Con otro nombre, las dos conviven. Lo mismo vale para un comando: la variante va en `~/.claude/commands/`, con otro nombre.
+**Caso de este proyecto:** si quieres una versión de `verificar-concepto` que se salte la comprobación de la pregunta tipo examen, no edites `.claude/skills/verificar-concepto/`: ese cambio llegaría a todos por git. Crea `~/.claude/skills/verificar-concepto-rapido/SKILL.md`. Con otro nombre, las dos conviven y cada una se invoca por el suyo. Con el mismo nombre, las dos responderían a `/verificar-concepto` y no sabrías a simple vista cuál se ejecuta (cuál gana es comportamiento del producto: EN PRODUCCIÓN, no evaluable). La guía solo lo dice de las skills; aplicar lo mismo a un comando personal en `~/.claude/commands/` es extensión propia.
 
 **Por qué importa (inferencia propia):** personalizar una skill es legítimo, pero la copia personal no debe cambiar lo que recibe el equipo ni esconder sus cambios. Un nombre distinto deja claro que son dos cosas.
 
-**Anti-patrón / trampa del examen:** editar la skill de proyecto «solo para mí» (el cambio viaja por git a todos) o crear la variante en `~/.claude/skills/` **con el mismo nombre** y dar por hecho que no pasa nada. La guía pide otro nombre (TS 3.2-K4); por qué el mismo nombre es peor (taparía la del equipo) es razonamiento propio, no un hecho de la guía.
+**Anti-patrón / trampa del examen:** editar la skill de proyecto «solo para mí» (el cambio viaja por git a todos) o crear la variante en `~/.claude/skills/` **con el mismo nombre** y dar por hecho que no pasa nada. El hecho de la guía es «otro nombre» (TS 3.2-K4); por qué el mismo nombre es peor (las dos compiten por la misma invocación) es razonamiento propio.
 
 ### 2.4 Skill frente a `CLAUDE.md`
 
@@ -117,7 +117,7 @@ Lo inverso también ocurre: los `CLAUDE.md` de directorios **padre** del clon se
 
 La prueba rápida: si la instrucción tiene que cumplirse aunque nadie la recuerde, es de `CLAUDE.md` (o de una regla). Si es un procedimiento que alguien lanza, es una skill o un comando.
 
-**Por qué importa (inferencia propia):** `CLAUDE.md` se carga en toda sesión y su coste es fijo; una skill solo cuesta su descripción hasta que se invoca. En el `/context` de la práctica (2026-10-27): `CLAUDE.md`, 1,1k tokens, frente a unos 80 tokens de la descripción de `verificar-concepto`.
+**Por qué importa (inferencia propia):** `CLAUDE.md` se carga en toda sesión, así que lo que se pone ahí se paga siempre; lo que solo se usa a veces es contexto desperdiciado el resto del tiempo. **EN PRODUCCIÓN (no evaluable):** en el producto actual, una skill ocupa solo su descripción hasta que se invoca; en el `/context` de la práctica (2026-10-27), `CLAUDE.md` ocupaba 1,1k tokens y la descripción de `verificar-concepto`, unos 80.
 
 **Anti-patrón / trampa del examen:** meter en `CLAUDE.md` un procedimiento que solo se lanza a veces (engorda cada sesión) o, al revés, convertir en skill una regla que debe cumplirse siempre (si nadie la invoca, no se aplica). La guía da el criterio: una skill, bajo demanda, para un flujo concreto; `CLAUDE.md`, para los estándares universales (TS 3.2-S5).
 
@@ -125,7 +125,7 @@ La prueba rápida: si la instrucción tiene que cumplirse aunque nadie la recuer
 
 <!-- INTRODUCE: TS 3.5-K1, TS 3.5-K2, TS 3.5-K3, TS 3.5-K4, TS 3.5-S1, TS 3.5-S2, TS 3.5-S3, TS 3.5-S4, TS 3.5-S5 -->
 
-**Qué dice la guía (TS 3.5):** reúne cuatro técnicas para que Claude converja hacia lo que quieres: ejemplos concretos de entrada y salida, iteración guiada por tests, entrevista previa (*interview pattern*) y distinguir los problemas que interactúan de los independientes. Cada una, con su caso en el repositorio:
+**Qué dice la guía (TS 3.5):** reúne cuatro técnicas de refinamiento iterativo: ejemplos concretos de entrada y salida, iteración guiada por tests, el *interview pattern* (que Claude pregunte antes de implementar) y distinguir los problemas que interactúan de los independientes. Cada una, con lo que dice la guía y su caso en el repositorio:
 
 **Ejemplos de entrada y salida (TS 3.5-K1, TS 3.5-S1).** La guía dice que, cuando una descripción en prosa se interpreta de formas distintas, lo más eficaz son 2–3 ejemplos concretos. Caso: «normaliza la fecha del ticket a ISO 8601» admite varias lecturas (¿qué zona horaria?, ¿qué hacer con una fecha ISO sin zona?). Los casos de `tests/test_app2_02_hooks_pre_post.py` (`test_dates_to_iso`) la fijan sin ambigüedad:
 
@@ -137,17 +137,24 @@ La prueba rápida: si la instrucción tiene que cumplirse aunque nadie la recuer
 
 El tercero es el que la prosa nunca habría dejado claro.
 
-**Iteración guiada por tests (TS 3.5-K2, TS 3.5-S2).** La guía propone escribir primero los tests (comportamiento esperado, casos borde y, si importa, rendimiento) e iterar compartiendo los fallos. Caso: es el paso 3 de `/nuevo-modulo` («crea el test y comprueba que falla») y la regla «Tests primero» de `docs/estandares-flujo.md` y de `.claude/rules/tests.md`. Los módulos de las apps siguen ese orden: el fallo de `pytest`, con su traza, es lo que se le pasa a Claude en la iteración siguiente.
+**Iteración guiada por tests (TS 3.5-K2, TS 3.5-S2).** La guía propone escribir primero la suite de tests (comportamiento esperado, casos borde y rendimiento) e iterar compartiendo los fallos. Caso: es el paso 3 de `/nuevo-modulo` («crea el test y comprueba que falla») y la regla «Tests primero» de `docs/estandares-flujo.md` y de `.claude/rules/tests.md`. Los módulos de las apps siguen ese orden: el fallo de `pytest`, con su traza, es lo que se le pasa a Claude en la iteración siguiente.
 
 **Casos de prueba para los casos borde (TS 3.5-S4).** Para corregir un caso borde, la guía recomienda dar el caso con su entrada y su salida esperada (su ejemplo son los valores nulos en una migración). Caso: el hook de umbral de `app2/02`. «Bloquea los reembolsos de más de 500 EUR» no dice qué pasa con 500 justos. Los tests lo dicen: `500.0` pasa, `500.01` se deniega; y `None`, `"seiscientos"` y `"600,50"` también se deniegan (falla en cerrado: un importe que no se puede leer no se aprueba).
 
-**Interview pattern (TS 3.5-K3, TS 3.5-S3).** La guía describe pedirle a Claude que **pregunte primero**, para que salgan consideraciones que no habías previsto, sobre todo en un terreno poco conocido (sus ejemplos: cómo invalidar una caché, qué modos de fallo hay). Caso: el diseño de la capa meta del hito 0. Antes de escribir hooks y reglas, las preguntas útiles eran del tipo: ¿qué pasa si alguien escribe en `datos/sinteticos/` por shell en vez de con `Edit`?, ¿qué `CLAUDE.md` de directorios padre se van a colar?, ¿qué ocurre si el hook falla? Las respuestas están hoy en el proyecto: el *matcher* del hook cubre también `Bash` y `PowerShell` (`.claude/settings.json`), `claudeMdExcludes` excluye los padres y los hooks de la sesión fallan en cerrado (`docs/hallazgos.md`). Un prompt para provocarlo: «Antes de proponer nada, hazme las preguntas que necesites sobre lo que hay que proteger y por qué vías se podría saltar».
+**Interview pattern (TS 3.5-K3, TS 3.5-S3).** La guía describe pedirle a Claude que **pregunte primero**, para que salgan consideraciones que no habías previsto, sobre todo en un terreno poco conocido (sus ejemplos: cómo invalidar una caché, qué modos de fallo hay). Caso (reconstruido como ejemplo, no es el registro de una entrevista real): el diseño de la capa meta del hito 0. Antes de escribir hooks y reglas, una entrevista habría tenido que sacar preguntas del tipo: ¿qué pasa si alguien escribe en `datos/sinteticos/` por shell en vez de con `Edit`?, ¿qué `CLAUDE.md` de directorios padre se van a colar?, ¿qué ocurre si el hook falla? Las respuestas están hoy en el proyecto: el *matcher* del hook cubre también `Bash` y `PowerShell` (`.claude/settings.json`), `claudeMdExcludes` excluye los padres y los hooks de la sesión fallan en cerrado (`docs/hallazgos.md`). Un prompt para provocarlo: «Antes de proponer nada, hazme las preguntas que necesites sobre lo que hay que proteger y por qué vías se podría saltar».
 
 **Todos a la vez o de uno en uno (TS 3.5-K4, TS 3.5-S5).** La guía distingue dos casos: si los problemas interactúan, se dan todos en un único mensaje detallado; si son independientes, se corrigen en secuencia. Caso: los 21 hallazgos de la revisión de la entrega 1 (`NOTAS.md`). El criterio de presupuesto (`CCARF_BUDGET_*` como tope de toda la ejecución, repartido entre repeticiones y configuraciones) toca `harness/cli.py` y a todos los módulos que lo usan: si se arregla por partes, cada módulo queda con un reparto distinto, así que va en un mensaje con todos los afectados. En cambio, el fallo en cerrado del hook de umbral de `app2/02` y los falsos positivos de la señal de dependencia de `app3/02` no comparten código ni criterio: se corrigen de uno en uno, y cada arreglo se comprueba con su test.
 
-**Por qué importa (inferencia propia):** las cuatro técnicas cambian cómo te comunicas, no el modelo: le dan un criterio comprobable (un ejemplo, un test, un caso borde) en lugar de más prosa, y evitan iteraciones a ciegas. Se nota en el coste: cada ronda que se podía haber evitado es otra ejecución.
+**Por qué importa (inferencia propia):** las cuatro técnicas cambian lo que le das a Claude, no el modelo: un criterio comprobable (un ejemplo, un test, un caso borde, una respuesta a su pregunta) en lugar de más prosa. Cada ronda que se podía haber evitado es otra ejecución y otro coste.
 
-**Anti-patrón / trampa del examen:** insistir con una instrucción en prosa más larga cuando ya se interpreta de formas distintas, en vez de dar 2–3 ejemplos (TS 3.5-K1, S1); dar la regla sin su caso borde con entrada y salida esperada (TS 3.5-S4); pedir una solución sin dejar que Claude pregunte en terreno poco conocido (TS 3.5-K3, S3); y mezclar en un solo mensaje problemas independientes, o corregir de uno en uno los que interactúan (TS 3.5-K4, S5). La pregunta 3 de la sección 4 lo pone a prueba: la opción que explica mejor el formato en prosa es la trampa.
+**Anti-patrón / trampa del examen:** cada técnica tiene su contrario, y es el que parece razonable:
+
+- Ante una instrucción que se interpreta de formas distintas, alargar la prosa en vez de dar 2–3 ejemplos de entrada y salida (TS 3.5-K1, S1).
+- Para un caso borde, repetir la regla general en vez de dar el caso con su entrada y su salida esperada (TS 3.5-S4).
+- En un terreno poco conocido, pedir directamente la implementación sin dejar que Claude pregunte antes (TS 3.5-K3, S3).
+- Mezclar en un mensaje problemas independientes, o corregir de uno en uno los que interactúan (TS 3.5-K4, S5).
+
+La pregunta 3 de la sección 4 pone a prueba la primera: la opción que explica mejor el formato en prosa es la trampa plausible, porque «dar más detalle» suena a buena práctica (inferencia propia).
 
 ### 2.6 Reglas por ruta frente a `CLAUDE.md` por subdirectorio
 
@@ -179,7 +186,7 @@ Y la propia entrega 2 es el caso de la combinación (TS 3.4-S4): el diseño se h
 
 La haces tú, en tu sesión de Claude Code. Anota el resultado en **tu** `NOTAS_PERSONALES.md` (`estado/<perfil>/`, sección «Práctica propia»), no en este repositorio.
 
-1. **Verificación de la capa meta** (roadmap §11.5), en una sesión nueva. Cuatro comprobaciones: `/memory`, las reglas por ruta, la skill y la barrera de `datos/sinteticos/`. La guía completa, con prerrequisitos, lo que debes escribir, lo que debes ver y qué hacer si algo falla, está en la sección 3.1 de abajo.
+1. **Verificación de la capa meta** (roadmap §11.5), en una sesión nueva. Cuatro comprobaciones: `/memory`, las reglas por ruta, la skill y la barrera de `datos/sinteticos/`; un quinto paso comprueba el aislamiento local (`.claude/settings.local.json`). La guía completa, con prerrequisitos, lo que debes escribir, lo que debes ver y qué hacer si algo falla, está en la sección 3.1 de abajo.
 2. **Un cambio multi-archivo pequeño con plan mode.** Por ejemplo, una variante `--anti` nueva en `app1/03` (un nombre de tool engañoso, sin tocar la descripción): el módulo, su test y su fila en el README. Antes de aprobar el plan, fíjate en si exploró los tests existentes.
 3. **Un cambio acotado con ejecución directa.** Por ejemplo, ajustar el texto de un error de `app1_agente_unico/servers/mesa.py` y su test.
 4. **Anota**, para los cambios 2 y 3, qué modo elegiste, por qué y si volverías a elegirlo.
@@ -225,7 +232,7 @@ Escribe `/memory`.
 ```
 
 - **`Project instructions` con las dos líneas `L … @-imported`:** es lo esperado. El `CLAUDE.md` del proyecto, con sus dos `@import` (TS 3.1-K3).
-- **`User instructions  Saved in ~/.claude/CLAUDE.md`:** es el **nivel de usuario** (TS 3.1-K1, K2), no un `CLAUDE.md` de un directorio padre, así que no incumple «ningún padre». Y **no implica que el archivo exista**: `/memory` lista la ubicación para poder abrirla y editarla (**EN PRODUCCIÓN, no evaluable**). Lo decide el sistema de archivos: PowerShell `Test-Path "$HOME/.claude/CLAUDE.md"`, Bash `ls ~/.claude/CLAUDE.md`. Si da `False` o «No such file», la línea es solo una ubicación vacía y no se carga nada. Si existe, se carga en toda sesión (TS 3.1-K2): anota su contenido, porque entra en tu contexto aunque no sea del proyecto.
+- **`User instructions  Saved in ~/.claude/CLAUDE.md`:** es el **nivel de usuario** (TS 3.1-K1, K2), no un `CLAUDE.md` de un directorio padre, así que no incumple «ningún padre». Y **no implica que el archivo exista**: `/memory` lista la ubicación para poder abrirla y editarla (**EN PRODUCCIÓN, no evaluable**). Lo decide el sistema de archivos: PowerShell `Test-Path "$HOME/.claude/CLAUDE.md"`, Bash `ls ~/.claude/CLAUDE.md`. Si da `False` o «No such file», la línea es solo una ubicación vacía y no se carga nada. Si existe, se carga en todas tus sesiones, también en esta (salvo que lo excluyas con el archivo local del paso 5): anota su contenido, porque entra en tu contexto aunque no sea del proyecto.
 - **`Auto-memory  true`:** la memoria automática está activa en tu sesión interactiva. Es normal. Las **apps** la apagan (`CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` en `harness/options.py`) para que cada ejecución sea nueva, y el proyecto prohíbe guardar directivas suyas ahí (`docs/estandares-flujo.md`, «Directivas»).
 
 `/memory` no lista las reglas de `.claude/rules/` (**EN PRODUCCIÓN, no evaluable**; ver la sección 2.2).
@@ -249,7 +256,7 @@ Escribe estas peticiones, una detrás de otra, y mira la terminal justo debajo d
 
 Para confirmar que el contenido quedó en contexto, pregunta: `¿Qué dice la regla apps-comentarios sobre la cabecera fija de un módulo?`. Si responde con el contenido de la regla sin volver a leer el archivo, está en contexto.
 
-Si el segundo paso no muestra `Loaded`: comprueba que es sesión nueva (si ya leíste ese archivo, no se repite) y copia el texto exacto que sí ves.
+Si la segunda petición (el `.py` de `app1`) no muestra `Loaded`: comprueba que es sesión nueva (si ya leíste ese archivo, no se repite) y copia el texto exacto que sí ves.
 
 #### Paso 3 · La skill
 
@@ -257,7 +264,7 @@ Antes, escribe `/skills` y busca dos líneas del proyecto: `verificar-concepto �
 
 1. Escribe `/verificar-concepto` **sin pulsar Intro** y mira el autocompletado: debe mostrar la pista `<TS x.y-Kn|Sn>` (es `argument-hint`).
 2. Escribe `/verificar-concepto TS 3.5-K1` y pulsa Intro.
-   - **Debe volver:** un informe corto con el destino (`d3`), el estado (☑), dónde está el `INTRODUCE`, si hay pregunta tipo examen y cuántos `USA` hay, más los problemas que encuentre. El asistente principal reformula el informe, así que no esperes la plantilla literal de `SKILL.md`. Escribe la viñeta con la `K` o la `S` **en mayúscula**. La skill acepta también la minúscula y la trata como mayúscula (así lo indica ahora `SKILL.md`; el 2026-10-27, antes de ese cambio, la aceptó pero avisó de que un formato estricto la rechazaría). Es una instrucción, no una validación de código.
+   - **Debe volver:** un informe corto con el destino (`d3`), el estado (☑), dónde está el `INTRODUCE`, si hay pregunta tipo examen y cuántos `USA` hay, más los problemas que encuentre. El asistente principal reformula el informe, así que no esperes la plantilla literal de `SKILL.md`. Escribe la viñeta con la `K` o la `S` **en mayúscula**. Con la minúscula, `SKILL.md` le indica ahora que la trate como mayúscula sin avisar, pero ese cambio está **sin comprobar** en ejecución; el 2026-10-27, antes de él, la aceptó y avisó de que un formato estricto la rechazaría. Es una instrucción al modelo, no una validación de código: puede variar entre ejecuciones.
    - **Verás un aviso de segundo plano:** en la observación del 2026-10-27 salió «Running in the background as @verificar-concepto» y, unos 30 s después, el informe como notificación. Es normal con `context: fork` en esta versión.
    - **No debe quedar en tu conversación:** las decenas de lecturas y búsquedas que la skill hizo para llegar ahí. Corre en un subagente aislado (`context: fork`) y solo vuelve el resultado (TS 3.2-K3, S2).
 3. Escribe `/verificar-concepto` sin argumento y pulsa Intro.
@@ -285,8 +292,9 @@ La sesión conoce la protección (está en `docs/estandares-codigo.md`) y puede 
 
 **Cómo saber qué barrera actuó (anótalo en 4a y 4b):**
 
-- Si el mensaje es `File is in a directory that is denied by your permission settings.` (o dice que el permiso está denegado por la configuración), lo rechazó la **regla `deny`**. **Es lo esperado en 4a y 4b:** se comprobó con la versión de Claude Code usada al construir el repositorio. La regla actúa antes que el hook, así que el hook no llega a ejecutarse.
-- Si el mensaje contiene `hook error` **y** la frase `está protegido: los datos se cambian con datos/generar_sinteticos.py y .env no se edita`, lo rechazó el **hook**. En 4a o 4b solo lo verás si la regla `deny` no está activa (por ejemplo, si alguien la quitó de `.claude/settings.json`). En 4c lo ves siempre: la regla solo cubre las herramientas de edición, no la shell.
+- Si el mensaje es `File is in a directory that is denied by your permission settings.` (o dice que el permiso está denegado por la configuración), lo rechazó la **regla `deny`**. **Es lo esperado en 4a y 4b** (observado el 2026-10-27; ver la tabla de orígenes). Que salga el texto de la regla y no el del hook indica que, en esta versión, la regla decide antes; es una lectura del mensaje, no algo comprobado dentro del hook.
+- Si el mensaje contiene `hook error` **y** la frase `está protegido: los datos se cambian con datos/generar_sinteticos.py y .env no se edita`, lo rechazó el **hook** en su rama de `Edit` y `Write`. En 4a o 4b solo lo verás si la regla `deny` no está activa (por ejemplo, si alguien la quitó de `.claude/settings.json`).
+- En 4c siempre actúa el hook, porque la regla solo cubre las herramientas de edición, no la shell; pero su texto es el de la rama de shell (`El comando nombra datos/sinteticos/ o un .env…`, el de la tabla), no el de la viñeta anterior.
 - Esa asimetría es la lección: la regla cubre `Edit` y `Write`; el hook cubre además `Bash` y `PowerShell`. Dos capas, cada una con su alcance.
 - Copia el mensaje literal; el texto exacto puede variar con la versión del producto.
 
@@ -323,7 +331,7 @@ Si queda alguna skill ajena en `/skills`, apunta su nombre exacto y la etiqueta 
 | Síntoma | Causa probable | Qué hacer |
 | :--- | :--- | :--- |
 | `/memory` muestra un `CLAUDE.md` de un directorio padre | Falta `claudeMdExcludes` | Crea `.claude/settings.local.json` desde el ejemplo (ver «Antes de empezar») y abre una sesión nueva |
-| `/memory` muestra `User instructions  Saved in ~/.claude/CLAUDE.md` | Es la ubicación de usuario; el archivo puede no existir | Comprueba con `Test-Path "$HOME/.claude/CLAUDE.md"` (PowerShell) o `ls ~/.claude/CLAUDE.md` (Bash). Si no existe, no hay nada que hacer. Si existe, es esperado pero se carga en tu contexto: no es del proyecto (TS 3.1-K2) y no se puede apagar desde el repositorio. Anota su contenido |
+| `/memory` muestra `User instructions  Saved in ~/.claude/CLAUDE.md` | Es la ubicación de usuario; el archivo puede no existir | Comprueba con `Test-Path "$HOME/.claude/CLAUDE.md"` (PowerShell) o `ls ~/.claude/CLAUDE.md` (Bash). Si no existe, no hay nada que hacer. Si existe, es esperado pero se carga en tu contexto: no es del proyecto (TS 3.1-K2) y la configuración versionada no lo apaga; el archivo local del paso 5 sí lo excluye. Anota su contenido |
 | Paso 2: ninguna línea `Loaded` en ningún archivo | Sesión no nueva, o archivos ya leídos | Cierra con `/exit`, abre otra con `claude -n` y repite sin leer nada antes |
 | Paso 3: «unknown skill» | Sesión abierta fuera de la raíz | Sal y abre `claude` desde la raíz del repositorio |
 | Paso 4: la sesión se niega a intentarlo | Conoce la protección | Repite con el texto de 4a tal cual («prueba de seguridad autorizada… no lo evites») |
@@ -342,6 +350,7 @@ En `estado/<perfil>/NOTAS_PERSONALES.md`, sección «Práctica propia», una tab
 | 4b · Write en `datos/sinteticos/` | ✓/✗ | qué barrera actuó: |
 | 4c · shell | ✓/✗ | |
 | Comprobación final (`git status`, `--check`) | ✓/✗ | |
+| 5 · aislamiento local (`/memory`, `/context`, `/skills`, `/plugin`) | ✓/✗ | |
 
 Si pegas los ✗ al responsable del repositorio, incluye siempre: el paso, lo que escribiste, el texto literal de la pantalla y la salida de `claude --version`.
 
@@ -361,6 +370,7 @@ Qué esperar de cada paso no es opinión: sale de estas fuentes. La última colu
 | Skill: informe corto y exploración fuera de tu conversación | Roadmap §11.5 (tercer punto); `.claude/skills/verificar-concepto/SKILL.md` (`context: fork`) | Observado al construir el repositorio, con y sin argumento |
 | El aislamiento local (negación de `claudeMdExcludes`, `enabledPlugins`, `skillOverrides`) | `docs/hallazgos.md` («Patrones para excluir…»); esquema de ajustes de la CLI | Negación y `skillOverrides` por nombre: **observado el 2026-10-27** en pruebas herméticas. Efecto sobre skills y plugins reales: **observado el 2026-10-27** en el `/context` de una sesión interactiva |
 | `/skills` lista la skill y el comando de proyecto | `.claude/skills/verificar-concepto/SKILL.md`; `.claude/commands/nuevo-modulo.md` | **Observado el 2026-10-27** (Claude Code 2.1.311): `verificar-concepto · project` y `nuevo-modulo · project`, más 13 `claude.ai sync` y 2 `locked by plugin` de la cuenta |
+| La minúscula en la viñeta (`TS 3.5-k1`), tratada como mayúscula sin aviso | `SKILL.md` (frase añadida tras la práctica) | **Sin comprobar** con el texto actual. Antes del cambio (2026-10-27) la aceptó con un aviso |
 | `argument-hint` solo en el autocompletado; sin argumento se lanza igual | `docs/hallazgos.md` («`argument-hint` no obliga…»); `SKILL.md` (la comprobación de `$ARGUMENTS`) | Observado al construir el repositorio (Claude Code 2.1.310) |
 | Texto de la línea `Falta la viñeta…` y primera línea del informe | `SKILL.md` (plantillas de salida); `CONCEPTOS.md` (la fila de TS 3.5-K1 es `d3` y ☑) | La línea sin argumento: **observada el 2026-10-27** (la skill se detuvo y la devolvió; el asistente añadió una frase suya). El informe con argumento: **observado el 2026-10-27**, en segundo plano (32 s), sin líneas de herramienta en la conversación y reformulado por el asistente principal. Repetido tras completar los rótulos de D3: la cabecera salió «completa» y el `CONCEPTO` se tomó del título de la sección |
 | `Edit` y `Write` rechazados por la regla `deny` | Roadmap §11.5 (cuarto punto); `.claude/settings.json` (`permissions.deny`) | **Observado el 2026-10-27** al intentarlo desde otra sesión: ambas dieron «File is in a directory that is denied by your permission settings.» y los datos no cambiaron. **Repetido por la persona en su sesión interactiva el mismo día**, con el mismo texto, y la sesión no intentó ninguna vía alternativa |
