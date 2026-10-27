@@ -213,7 +213,7 @@ Escribe `/memory`.
 Tres comprobaciones rápidas que complementan a `/memory`:
 
 - `/context`: lo cargado al arrancar. Anota el total de memoria y si ves algo que no esperas.
-- `/plugin`: los plugins que activaste a mano en tu cuenta y quieras apagados aquí deben salir apagados (los pone en `false` tu `.claude/settings.local.json`).
+- `/plugin`: en la sección **Built-in** salen los plugins que trae Claude Code, siempre activos y ajenos a tu cuenta (observados el 2026-10-27: `cc-plugin-agents-md`, `cc-plugin-diff`, `cc-plugin-plugin-authoring` y `cc-plugin-telemetry`). Ningún plugin de tu cuenta debe aparecer activado: los que apagues en tu `.claude/settings.local.json` (`enabledPlugins`) salen apagados o no salen. La lista continúa más abajo («more below»), con las skills: desplázate para verla entera.
 - `/mcp`: no debe haber conectores de claude.ai; el repositorio fija `ENABLE_CLAUDEAI_MCP_SERVERS=false`.
 
 #### Paso 2 · Reglas por ruta
