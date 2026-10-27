@@ -193,7 +193,22 @@ Escribe `/memory`.
 | El `CLAUDE.md` del proyecto (el de la raíz) y los dos archivos que importa: `docs/estandares-codigo.md` y `docs/estandares-flujo.md` | Ningún `CLAUDE.md` de un directorio padre |
 | | Los `CLAUDE.md` de `app*/`: son de directorio y solo entran en contexto al trabajar en esa carpeta (lo verás en el paso 2) |
 
-Puede que `/memory` liste además ubicaciones de memoria de usuario o automática que ni siquiera existen: el producto lista ubicaciones para abrirlas y editarlas. No lista las reglas de `.claude/rules/` (**EN PRODUCCIÓN, no evaluable**; ver la sección 2.2).
+**Salida real observada (2026-10-27)**, con los significados:
+
+```
+> Auto-memory  true
+
+> Project instructions          Checked in at ./CLAUDE.md
+  L docs\estandares-codigo.md   @-imported
+  L docs\estandares-flujo.md    @-imported
+  User instructions             Saved in ~/.claude/CLAUDE.md
+```
+
+- **`Project instructions` con las dos líneas `L … @-imported`:** es lo esperado. El `CLAUDE.md` del proyecto, con sus dos `@import` (TS 3.1-K3).
+- **`User instructions  Saved in ~/.claude/CLAUDE.md`:** es el **nivel de usuario** (TS 3.1-K1, K2), no un `CLAUDE.md` de un directorio padre, así que no incumple «ningún padre». Y **no implica que el archivo exista**: `/memory` lista la ubicación para poder abrirla y editarla (**EN PRODUCCIÓN, no evaluable**). Lo decide el sistema de archivos: PowerShell `Test-Path "$HOME/.claude/CLAUDE.md"`, Bash `ls ~/.claude/CLAUDE.md`. Si da `False` o «No such file», la línea es solo una ubicación vacía y no se carga nada. Si existe, se carga en toda sesión (TS 3.1-K2): anota su contenido, porque entra en tu contexto aunque no sea del proyecto.
+- **`Auto-memory  true`:** la memoria automática está activa en tu sesión interactiva. Es normal. Las **apps** la apagan (`CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` en `harness/options.py`) para que cada ejecución sea nueva, y el proyecto prohíbe guardar directivas suyas ahí (`docs/estandares-flujo.md`, «Directivas»).
+
+`/memory` no lista las reglas de `.claude/rules/` (**EN PRODUCCIÓN, no evaluable**; ver la sección 2.2).
 
 Tres comprobaciones rápidas que complementan a `/memory`:
 
@@ -263,7 +278,7 @@ Si 4a, 4b o 4c **no** son rechazados, es un hallazgo grave de la capa meta: dete
 | Síntoma | Causa probable | Qué hacer |
 | :--- | :--- | :--- |
 | `/memory` muestra un `CLAUDE.md` de un directorio padre | Falta `claudeMdExcludes` | Crea `.claude/settings.local.json` desde el ejemplo (ver «Antes de empezar») y abre una sesión nueva |
-| `/memory` muestra memoria de usuario con instrucciones tuyas | Estás en una cuenta con configuración de usuario | Es esperado; no es del proyecto (TS 3.1-K2). Anótalo |
+| `/memory` muestra `User instructions  Saved in ~/.claude/CLAUDE.md` | Es la ubicación de usuario; el archivo puede no existir | Comprueba con `Test-Path "$HOME/.claude/CLAUDE.md"` (PowerShell) o `ls ~/.claude/CLAUDE.md` (Bash). Si no existe, no hay nada que hacer. Si existe, es esperado pero se carga en tu contexto: no es del proyecto (TS 3.1-K2) y no se puede apagar desde el repositorio. Anota su contenido |
 | Paso 2: ninguna línea `Loaded` en ningún archivo | Sesión no nueva, o archivos ya leídos | Cierra con `/exit`, abre otra con `claude -n` y repite sin leer nada antes |
 | Paso 3: «unknown skill» | Sesión abierta fuera de la raíz | Sal y abre `claude` desde la raíz del repositorio |
 | Paso 4: la sesión se niega a intentarlo | Conoce la protección | Repite con el texto de 4a tal cual («prueba de seguridad autorizada… no lo evites») |
@@ -291,7 +306,7 @@ Qué esperar de cada paso no es opinión: sale de estas fuentes. La última colu
 
 | Comprobación | Fuente | Estado de la verificación |
 | :--- | :--- | :--- |
-| `/memory` lista los `CLAUDE.md` y sus `@import`, no las reglas | Roadmap §11.5 (primer punto de «Capa meta»); `CLAUDE.md` (sección «Contexto heredado»); sección 2.2 de este README | Observado en una sesión nueva al construir el repositorio (`NOTAS.md`, hito 0). No repetido desde entonces |
+| `/memory` lista los `CLAUDE.md` y sus `@import`, no las reglas | Roadmap §11.5 (primer punto de «Capa meta»); `CLAUDE.md` (sección «Contexto heredado»); sección 2.2 de este README | Observado en una sesión nueva al construir el repositorio (`NOTAS.md`, hito 0) y **repetido el 2026-10-27**: salió el `CLAUDE.md` del proyecto con sus dos `@import`, `Auto-memory  true` y la ubicación de usuario `~/.claude/CLAUDE.md`, cuyo archivo no existe (comprobado en esa máquina) |
 | Ningún `CLAUDE.md` de directorio padre | `CLAUDE.md` («Contexto heredado»); `.claude/settings.local.example.json` | En un equipo concreto se comprobó que no había padres (búsqueda hacia arriba desde el clon). En el tuyo lo compruebas en «Antes de empezar» |
 | `/plugin` y `/mcp` limpios | `CLAUDE.md` («Comprobar con `/memory` y `/plugin`»); `ENABLE_CLAUDEAI_MCP_SERVERS=false` en `.claude/settings.json` | Observado al construir el repositorio (`NOTAS.md`, hito 0, aislamiento). Depende de los plugins de tu cuenta |
 | Línea `Loaded` y regla solo con un `.py` de `app*/` | Roadmap §11.5 (segundo punto); frontmatter `paths: ["app*/**/*.py"]` de `.claude/rules/apps-comentarios.md` | Observado al construir el repositorio, con contenido de la regla en contexto |
