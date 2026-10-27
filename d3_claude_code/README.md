@@ -285,6 +285,28 @@ En `estado/<perfil>/NOTAS_PERSONALES.md`, sección «Práctica propia», una tab
 
 Si pegas los ✗ al responsable del repositorio, incluye siempre: el paso, lo que escribiste, el texto literal de la pantalla y la salida de `claude --version`.
 
+#### De dónde sale cada comprobación
+
+Qué esperar de cada paso no es opinión: sale de estas fuentes. La última columna dice **cuánto se ha comprobado** y cuándo, para que sepas qué es un hecho observado y qué es una lectura de la configuración.
+
+| Comprobación | Fuente | Estado de la verificación |
+| :--- | :--- | :--- |
+| `/memory` lista los `CLAUDE.md` y sus `@import`, no las reglas | Roadmap §11.5 (primer punto de «Capa meta»); `CLAUDE.md` (sección «Contexto heredado»); sección 2.2 de este README | Observado en una sesión nueva al construir el repositorio (`NOTAS.md`, hito 0). No repetido desde entonces |
+| Ningún `CLAUDE.md` de directorio padre | `CLAUDE.md` («Contexto heredado»); `.claude/settings.local.example.json` | En un equipo concreto se comprobó que no había padres (búsqueda hacia arriba desde el clon). En el tuyo lo compruebas en «Antes de empezar» |
+| `/plugin` y `/mcp` limpios | `CLAUDE.md` («Comprobar con `/memory` y `/plugin`»); `ENABLE_CLAUDEAI_MCP_SERVERS=false` en `.claude/settings.json` | Observado al construir el repositorio (`NOTAS.md`, hito 0, aislamiento). Depende de los plugins de tu cuenta |
+| Línea `Loaded` y regla solo con un `.py` de `app*/` | Roadmap §11.5 (segundo punto); frontmatter `paths: ["app*/**/*.py"]` de `.claude/rules/apps-comentarios.md` | Observado al construir el repositorio, con contenido de la regla en contexto |
+| `tests.md` con cualquier `test_*.py` | Roadmap §11.5; frontmatter `paths: ["**/test_*.py"]` de `.claude/rules/tests.md` | Observado al construir el repositorio, con un test fuera de `app*/` |
+| Que `app1_agente_unico/CLAUDE.md` también anuncie `Loaded` | Sección 1 de este README (nivel de directorio, TS 3.1-K1) | **Sin comprobar.** Se escribe «puede salir»; anota si sale |
+| El control con `d3_claude_code/README.md` | Deducción de los `paths` de las dos reglas | **Sin comprobar.** Es una inferencia; anota lo que veas |
+| Skill: informe corto y exploración fuera de tu conversación | Roadmap §11.5 (tercer punto); `.claude/skills/verificar-concepto/SKILL.md` (`context: fork`) | Observado al construir el repositorio, con y sin argumento |
+| `argument-hint` solo en el autocompletado; sin argumento se lanza igual | `docs/hallazgos.md` («`argument-hint` no obliga…»); `SKILL.md` (la comprobación de `$ARGUMENTS`) | Observado al construir el repositorio (Claude Code 2.1.310) |
+| Texto de la línea `Falta la viñeta…` y primera línea del informe | `SKILL.md` (plantillas de salida); `CONCEPTOS.md` (la fila de TS 3.5-K1 es `d3` y ☑) | Leído del archivo; lo que devuelve el modelo puede variar de redacción |
+| `Edit` y `Write` rechazados por la regla `deny` | Roadmap §11.5 (cuarto punto); `.claude/settings.json` (`permissions.deny`) | **Observado el 2026-10-27** al intentarlo desde otra sesión: ambas dieron «File is in a directory that is denied by your permission settings.» y los datos no cambiaron |
+| La shell rechazada por el hook, con su texto | `.claude/hooks/proteger_rutas.py` (el texto exacto del bloqueo) | **Observado el 2026-10-27**: varios comandos que nombraban la carpeta fueron bloqueados con ese texto |
+| La variante de PowerShell del hook | `.claude/settings.json` (el *matcher* incluye `PowerShell`); cabecera de `proteger_rutas.py` | **Sin comprobar** en ejecución |
+| Hay que forzar el intento | Roadmap §11.5 (último punto); `docs/estandares-codigo.md` («Datos») | Razonado: la sesión conoce la protección y puede negarse sin intentarlo |
+| La lectura de `.env` denegada | `.claude/settings.json` (`Read(./.env)`) | **Sin comprobar** en ejecución |
+
 ---
 
 ## 4 · Preguntas tipo examen
