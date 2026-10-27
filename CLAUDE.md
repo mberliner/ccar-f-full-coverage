@@ -16,7 +16,7 @@ Apps agénticas de demostración para practicar todas las viñetas del examen CC
 
 ## Contexto heredado
 
-Los `CLAUDE.md` de directorios padre no aplican aquí y contaminarían las pruebas. Se excluyen con `claudeMdExcludes` en `.claude/settings.local.json`, que no se versiona porque el patrón depende de la ubicación de cada persona. Se crea copiando `.claude/settings.local.example.json`: un patrón por cada `CLAUDE.md` padre que aparezca en `/memory`, y en `enabledPlugins` los plugins de la cuenta propia que deban apagarse aquí (o la clave vacía). Comprobar con `/memory` y `/plugin`; si alguno vuelve a aparecer en contexto, se ignora y se corrige el patrón.
+Los `CLAUDE.md` de directorios padre y la memoria de usuario (`~/.claude/CLAUDE.md` y sus reglas) no aplican aquí y contaminarían las pruebas. Se excluyen con `claudeMdExcludes` en `.claude/settings.local.json`, que no se versiona porque depende del clon de cada persona. Se crea copiando `.claude/settings.local.example.json`: un único patrón con negación, `!**/<carpeta-del-clon>/**`, que excluye todo lo que queda fuera del proyecto; en `enabledPlugins`, los plugins de la cuenta propia que deban apagarse aquí (o la clave vacía); y en `skillOverrides`, por nombre exacto (no admite comodines), las skills sincronizadas de la cuenta. Comprobar con `/memory`, `/plugin` y `/skills`; si alguno vuelve a aparecer en contexto, se ignora y se corrige el patrón. Si el clon cambia de nombre, el patrón excluye el propio `CLAUDE.md` del proyecto, y `/memory` lo delata.
 
 ## Jerarquía
 

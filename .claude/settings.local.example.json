@@ -1,9 +1,12 @@
 {
   "claudeMdExcludes": [
-    "**/<ruta-del-directorio-padre>/CLAUDE.md"
+    "!**/<nombre-de-la-carpeta-de-este-clon>/**"
   ],
   "enabledPlugins": {
     "<plugin-sincronizado>@synced": false,
     "<plugin>@<marketplace>": false
+  },
+  "skillOverrides": {
+    "<skill-sincronizada>": "off"
   }
 }

@@ -176,7 +176,7 @@ Un resultado que no coincide con «lo esperado» no es un fallo tuyo: es un hall
 | :--- | :--- | :--- |
 | Estás en la rama que quieres comprobar y sin cambios sin guardar | `git branch --show-current` y `git status --short` | Cambia de rama o guarda lo pendiente: un cambio a medias confunde las lecturas del paso 2 |
 | El entorno funciona (los hooks usan `uv run --no-sync`) | `uv sync` y después `uv run pytest -q` | Sin entorno, los hooks fallan en cerrado y bloquean todo |
-| Hay `CLAUDE.md` de directorios **padre** del clon | Bash: `d=$(pwd); while [ "$d" != "/" ]; do d=$(dirname "$d"); ls "$d/CLAUDE.md" 2>/dev/null; done` · PowerShell: `$d=(Get-Location).Path; while ($d = Split-Path $d -Parent) { if (Test-Path (Join-Path $d 'CLAUDE.md')) { Join-Path $d 'CLAUDE.md' } }` | **Sin salida:** no hay padres y no necesitas nada más. **Con salida:** copia `.claude/settings.local.example.json` a `.claude/settings.local.json` y escribe un patrón `**/<carpeta>/CLAUDE.md` por cada archivo listado (ese archivo no se versiona) |
+| Hay `CLAUDE.md` de directorios **padre** del clon | Bash: `d=$(pwd); while [ "$d" != "/" ]; do d=$(dirname "$d"); ls "$d/CLAUDE.md" 2>/dev/null; done` · PowerShell: `$d=(Get-Location).Path; while ($d = Split-Path $d -Parent) { if (Test-Path (Join-Path $d 'CLAUDE.md')) { Join-Path $d 'CLAUDE.md' } }` | **Sin salida:** no hay padres y no necesitas nada más. **Con salida:** copia `.claude/settings.local.example.json` a `.claude/settings.local.json` y deja el patrón con negación `!**/<carpeta-del-clon>/**`, que excluye todo lo que queda fuera del proyecto, también la memoria de usuario (ese archivo no se versiona) |
 | Qué contiene la configuración de **usuario** de tu cuenta | Mira el directorio de configuración de la cuenta con la que abrirás `claude` (`~/.claude/` o el que indique `CLAUDE_CONFIG_DIR`): `CLAUDE.md`, `rules/`, `skills/` y `commands/` | Si tiene alguno, se cargará en toda sesión y aparecerá en `/memory`: no es del proyecto, pero hay que saberlo antes de interpretar el paso 1 |
 
 #### Abrir la sesión
@@ -275,6 +275,25 @@ La sesión conoce la protección (está en `docs/estandares-codigo.md`) y puede 
 
 Si 4a, 4b o 4c **no** son rechazados, es un hallazgo grave de la capa meta: detente, haz la comprobación final, y llévalo tal cual.
 
+#### Paso 5 · Aislamiento del entorno (`.claude/settings.local.json`)
+
+Es parte del buen funcionamiento del repositorio: la sesión que construye debe ver solo lo del proyecto. El archivo local (no versionado) tiene tres partes: `claudeMdExcludes` (negación `!**/<carpeta-del-clon>/**`), `enabledPlugins` (apaga los plugins sincronizados de tu cuenta) y `skillOverrides` (apaga por nombre las skills sincronizadas). **Se aplica al abrir una sesión nueva**: haz esta comprobación en una que arranques después de crearlo.
+
+| Escribes | Debe verse | Qué demuestra |
+| :--- | :--- | :--- |
+| `/memory` | El `CLAUDE.md` del proyecto con sus dos `@import`. La línea `User instructions … ~/.claude/CLAUDE.md` puede seguir saliendo como ubicación | Que la negación **no** excluyó el `CLAUDE.md` del propio proyecto. Si falta, la carpeta del clon no se llama como el patrón: corrígelo |
+| `/context` | Sin memoria de usuario en lo cargado al arrancar | Que lo de fuera del proyecto no entra en contexto |
+| `/skills` | Solo las dos del proyecto: `verificar-concepto` y `nuevo-modulo`. Antes del archivo eran 17 (13 `claude.ai sync` + 2 `locked by plugin` + 2 `project`) | Que `skillOverrides` y `enabledPlugins` apagan las ajenas |
+| `/plugin` | `cowork-plugin-management` apagado | Que `enabledPlugins` se aplica |
+
+Si queda alguna skill ajena en `/skills`, apunta su nombre exacto y la etiqueta (`claude.ai sync` o `locked by plugin`): `skillOverrides` solo admite nombres exactos, sin comodines, y un nombre mal escrito no hace nada.
+
+**Qué se ha comprobado y qué no:**
+
+- Comprobado (pruebas herméticas, 2026-10-27): la negación deja pasar solo el `CLAUDE.md` y las reglas del proyecto y excluye un `CLAUDE.md` padre y la memoria de usuario (`CLAUDE.md` y reglas); y el repositorio real sigue cargando su `CLAUDE.md` con ese archivo puesto.
+- Comprobado: `skillOverrides` oculta una skill con su nombre exacto (skills de proyecto y una incluida con Claude Code) y los comodines no hacen nada.
+- **Sin comprobar:** que apague tus 13 skills sincronizadas reales (no se cargan en una sesión por API; solo puedes verlo tú), el efecto de `enabledPlugins` sobre `/skills` y la línea `User instructions` de `/memory` tras excluir.
+
 #### Si algo no sale como se espera
 
 | Síntoma | Causa probable | Qué hacer |
@@ -316,6 +335,7 @@ Qué esperar de cada paso no es opinión: sale de estas fuentes. La última colu
 | Que `app1_agente_unico/CLAUDE.md` también anuncie `Loaded` | Sección 1 de este README (nivel de directorio, TS 3.1-K1) | **Sin comprobar.** Se escribe «puede salir»; anota si sale |
 | El control con `d3_claude_code/README.md` | Deducción de los `paths` de las dos reglas | **Sin comprobar.** Es una inferencia; anota lo que veas |
 | Skill: informe corto y exploración fuera de tu conversación | Roadmap §11.5 (tercer punto); `.claude/skills/verificar-concepto/SKILL.md` (`context: fork`) | Observado al construir el repositorio, con y sin argumento |
+| El aislamiento local (negación de `claudeMdExcludes`, `enabledPlugins`, `skillOverrides`) | `docs/hallazgos.md` («Patrones para excluir…»); esquema de ajustes de la CLI | Negación y `skillOverrides` por nombre: **observado el 2026-10-27** en pruebas herméticas. Efecto sobre tus skills y plugins reales: **sin comprobar** |
 | `/skills` lista la skill y el comando de proyecto | `.claude/skills/verificar-concepto/SKILL.md`; `.claude/commands/nuevo-modulo.md` | **Observado el 2026-10-27** (Claude Code 2.1.311): `verificar-concepto · project` y `nuevo-modulo · project`, más 13 `claude.ai sync` y 2 `locked by plugin` de la cuenta |
 | `argument-hint` solo en el autocompletado; sin argumento se lanza igual | `docs/hallazgos.md` («`argument-hint` no obliga…»); `SKILL.md` (la comprobación de `$ARGUMENTS`) | Observado al construir el repositorio (Claude Code 2.1.310) |
 | Texto de la línea `Falta la viñeta…` y primera línea del informe | `SKILL.md` (plantillas de salida); `CONCEPTOS.md` (la fila de TS 3.5-K1 es `d3` y ☑) | Leído del archivo; lo que devuelve el modelo puede variar de redacción |
