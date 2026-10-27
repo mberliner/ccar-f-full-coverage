@@ -40,12 +40,14 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
   propone.
 - Guía frente a producto: la guía llama `Task` a la tool de subagentes; en el
   producto es `Agent`.
-- Barrera del coordinador (revisión independiente): `tools=["Agent"]` solo limita las
-  tools integradas; las del servidor MCP siguen visibles para el agente principal, y
-  «no busques tú» en su prompt es una petición, no una barrera. Aquí la barrera es un
-  hook `PreToolUse` (`coordinator_gate`) que las deniega al agente principal y deja
-  pasar a los subagentes, que traen `agent_id`. Sin ella, `fuera de rol` y las
-  delegaciones medirían también lo que el coordinador hiciera por su cuenta.
+- Barrera del coordinador (revisión independiente; EN PRODUCCIÓN, no evaluable, en
+  lo que toca a `agent_id` y al alcance de `tools`): `tools=["Agent"]` solo limita
+  las tools integradas; las del servidor MCP siguen visibles para el agente
+  principal, y «no busques tú» en su prompt es una petición, no una barrera. Aquí la
+  barrera es un hook `PreToolUse` (`coordinator_gate`) que las deniega al agente
+  principal y deja pasar a los subagentes, que traen `agent_id`. Sin ella, `fuera de
+  rol` y las delegaciones medirían también lo que el coordinador hiciera por su
+  cuenta. Solo se vio que las usara cuando se le pidió expresamente.
 
 Pregunta tipo examen: ver `app3_sistema_multiagente/README.md`, módulo 03.
 
