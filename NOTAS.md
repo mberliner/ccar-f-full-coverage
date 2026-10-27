@@ -96,7 +96,8 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
   - [x] Práctica propia de D3 completada por la persona (verificación de la capa meta, cambio con plan mode, cambio con ejecución directa y su nota en el estado personal) y merge a `main` hecho (2026-10-27).
   - **Pendientes tras el cierre** (ninguno bloquea la entrega 3):
     - [x] Pasada de Opus sobre los textos didácticos de `app1/03`–`06`, `app3/03` y las cabeceras nuevas de D3 (2026-10-27): D3 separa guía, inferencia y EN PRODUCCIÓN en 2.1–2.5 y corrige el texto del hook en 4c; `app1/03` sitúa el 15/18 de `minimas` antes del cambio del servidor; `app3/03` precisa que el coordinador solo usó las tools pidiéndoselo; ninguna cifra cambia.
-    - Barrera del coordinador en `app3/01` y `app3/02` (de la entrega 1): hoy el coordinador ve las tools MCP y solo el prompt se lo impide; allí solo se mide, no se enseña.
+    - [x] Barrera del coordinador en `app3/01` y `app3/02` (2026-10-27, plan mode): el hook de `app3/03` pasa a `app3_sistema_multiagente/coordinator_gate.py` y lo usan los tres módulos; tests primero (418 en verde). Sonda: sin hook el coordinador usa `search_tickets` si se le pide, con hook lo rechaza y delega. Medida repetida: 0 intentos y señales iguales; el detector de subtemas de `01` dio un falso positivo de wifi en `estrecha` (`docs/hallazgos.md`).
+    - Detector de subtemas de `app3/01` (`subtopics_covered`): cuenta la palabra aunque la respuesta diga que no se buscó; candidato a medirse sobre las consultas delegadas.
     - Sin comprobar de la práctica de D3: el control con `d3_claude_code/README.md`, la variante de PowerShell del hook, la línea `User instructions` de `/memory` tras excluir y la minúscula en la viñeta.
     - Publicar `main` en el remoto (decisión de la persona).
 - [ ] Entrega 3 · D4 y D5 (`S-2`)
