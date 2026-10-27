@@ -3,6 +3,7 @@
 import json
 
 from harness.data import load
+from harness.offline import run_hook
 from harness.recorder import RunRecord, ToolCall
 from tests.cargar import load as load_module
 
@@ -10,6 +11,7 @@ mod = load_module("app3_sistema_multiagente/03_tools_entre_roles.py")
 
 P = "mcp__investigacion__"
 SEARCH_KB, LOAD, FETCH, VERIFY, SEARCH_T = (P + n for n in ("search_kb", "load_document", "fetch_url", "verify_fact", "search_tickets"))
+ALL = [SEARCH_T, SEARCH_KB, FETCH, LOAD, VERIFY]
 CATALOG = load("documentos.json")
 DOC_URL = next(u["url"] for u in CATALOG["urls"] if u["is_document"])
 JUNK_URL = next(u["url"] for u in CATALOG["urls"] if not u["is_document"])
@@ -129,6 +131,30 @@ def test_coordinator_prompt_does_not_name_the_cross_role_tool_or_the_url_rule():
     prompt = mod.coordinator_prompt().lower()
     for word in ("verify_fact", "load_document", "fetch_url"):
         assert word not in prompt
+
+
+def test_coordinator_gate_denies_the_main_agent_and_lets_subagents_through():
+    # `tools=["Agent"]` solo limita las integradas: las tools MCP siguen visibles para el coordinador.
+    # La barrera es este hook, no el prompt. Un subagente trae `agent_id`; el agente principal, no.
+    for name in ALL:
+        denied = run_hook(mod.coordinator_gate, "PreToolUse", name, {"url": DOC_URL})
+        assert denied.decision == "deny" and "subagentes" in denied.reason
+        assert run_hook(mod.coordinator_gate, "PreToolUse", name, {"url": DOC_URL}, agent_id="agent-1").decision is None
+
+
+def test_gate_is_registered_for_the_investigation_tools_only():
+    options = mod.build_options(None, budget=0.5, model="m", subagent_model="s")
+    (matcher,) = options.hooks["PreToolUse"]
+    assert matcher.matcher == "mcp__investigacion__.*" and matcher.hooks == [mod.coordinator_gate]
+    assert set(options.hooks) == {"PreToolUse"}
+
+
+def test_coordinator_attempts_are_counted_as_out_of_role():
+    # La barrera deniega la llamada, pero el intento queda en el registro y se ve como fuera de rol.
+    rec = RunRecord(tool_calls=[call("c1", VERIFY, "principal", {"claim_id": "C-1"}, error=True, text="denegado")])
+    assert mod.out_of_role(rec) == {"principal": 1}
+    assert mod.coordinator_attempts(rec) == 1
+    assert mod.coordinator_attempts(RunRecord()) == 0
 
 
 def test_options_follow_the_subagent_pattern_with_the_extended_server():

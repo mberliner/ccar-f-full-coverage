@@ -66,10 +66,16 @@ def test_unknown_id_is_structured_validation_error():
     assert outcome.is_error and data["errorCategory"] == "validation" and data["isRetryable"] is False
 
 
-def test_minimal_tools_accept_both_kinds_of_id():
+def test_minimal_tools_split_by_kind_so_a_misroute_has_a_consequence():
+    # `analyze_content` es para tickets y `analyze_document` para artículos: elegir la otra devuelve un error.
     minimal = tools("routing", variante="minimas")
-    assert not run(minimal, "analyze_content", {"content_id": "KB-109"})[0].is_error
+    ticket_id = load("tickets.json")[0]["ticket_id"]
+    assert not run(minimal, "analyze_content", {"content_id": ticket_id})[0].is_error
     assert not run(minimal, "analyze_document", {"document_id": "KB-109"})[0].is_error
+    wrong_a, data_a = run(minimal, "analyze_content", {"content_id": "KB-109"})
+    wrong_b, data_b = run(minimal, "analyze_document", {"document_id": ticket_id})
+    for outcome, data in ((wrong_a, data_a), (wrong_b, data_b)):
+        assert outcome.is_error and data["errorCategory"] == "validation" and data["isRetryable"] is False
 
 
 # --- errores ---------------------------------------------------------------
@@ -127,6 +133,21 @@ def run_text(tool_map, name, args):
     return call_tool(tool_map[name], args), None
 
 
+def test_non_numeric_seats_is_a_structured_validation_error_not_an_exception():
+    outcome, data = run(tools("errores", state=ErroresState()), "reassign_license", {"user_id": "EMP-1001", "license": "editor", "seats": "doce"})
+    assert outcome.is_error and data["errorCategory"] == "validation" and data["isRetryable"] is False
+    assert "ValueError" not in outcome.text
+
+
+def test_invalid_ticket_id_does_not_consume_the_transient_failure():
+    errores = tools("errores", state=ErroresState())
+    first, data = run(errores, "fetch_ticket_history", {"ticket_id": "TCK-0000"})
+    assert first.is_error and data["errorCategory"] == "validation"
+    # La primera llamada VÁLIDA es la que sufre el timeout: el ID inválido no la ha gastado.
+    valid, valid_data = run(errores, "fetch_ticket_history", {"ticket_id": "TCK-4001"})
+    assert valid.is_error and valid_data["errorCategory"] == "transient"
+
+
 # --- amplio / acotado ------------------------------------------------------
 
 def test_scope_sizes():
@@ -138,6 +159,26 @@ def test_every_wide_tool_maps_to_a_narrow_canonical_one():
     narrow = {t.name for t in make_tools("acotado")}
     assert {t.name for t in make_tools("amplio")} == set(CANONICAL)
     assert set(CANONICAL.values()) == narrow
+
+
+def test_search_tickets_by_user_id_returns_exactly_that_users_tickets():
+    # Antes, la búsqueda partía «EMP-1002» en «emp» y «1002» y devolvía tickets cuyo texto contenía «emp».
+    tickets = load("tickets.json")
+    for user_id in ("EMP-1002", "EMP-1010", "EMP-1020"):
+        expected = [t["ticket_id"] for t in tickets if t["user_id"] == user_id]
+        for family in ("acotado", "amplio"):
+            _, data = run(tools(family), "search_tickets" if family == "acotado" else "list_tickets_by_user", {"query": user_id})
+            assert data["ticket_ids"] == expected[:8] and data["total"] == len(expected)
+
+
+def test_search_tickets_by_user_id_without_tickets_is_an_empty_list():
+    _, data = run(tools("acotado"), "search_tickets", {"query": "EMP-9999"})
+    assert data["ticket_ids"] == [] and data["total"] == 0
+
+
+def test_search_tickets_by_words_still_works():
+    _, data = run(tools("acotado"), "search_tickets", {"query": "wifi salas reuniones"})
+    assert data["total"] >= 1
 
 
 def test_wide_alias_returns_same_data_as_canonical():

@@ -42,8 +42,8 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
 - Inferencias propias: ante un enrutamiento erróneo, las respuestas tentadoras
   son añadir una regla al prompt, un clasificador previo o fusionar las tools
   en una. Ninguna figura entre las correcciones de la guía, y la primera es
-  justo la que describe 2.1-K4. Con Haiku 5.5, `minimas` bajó el acierto de
-  forma moderada y `palabra_clave` de forma fuerte (ver README).
+  justo la que describe 2.1-K4. Las señales dependen del modelo: `palabra_clave` se ve con Haiku 5.5 y `minimas` con
+  Haiku 4.5 (`--rol-modelo enforcement`); con Haiku 5.5, `minimas` es inestable (ver README).
 
 Pregunta tipo examen: ver `app1_agente_unico/README.md`, módulo 03.
 
@@ -71,6 +71,10 @@ from harness.options import isolated_options  # noqa: E402
 from harness.recorder import RunRecord, record  # noqa: E402
 
 ANTI_VARIANTS = ["minimas", "palabra_clave"]
+# Roles de modelo que admite `--rol-modelo`. La señal de cada variante depende del modelo: `palabra_clave` se ve con
+# Haiku 5.5 (rol `agent`, el que obedece la regla del prompt) y `minimas` con Haiku 4.5 (rol `enforcement`). Se elige
+# el ROL; el nombre del modelo sigue saliendo de `.env`.
+MODEL_ROLES = ["agent", "enforcement"]
 # Palabra que la regla del *system prompt* de `palabra_clave` asocia a una tool.
 TRAP_WORD = "documento"
 MCP_PREFIX = f"mcp__{SERVER_NAME}__"
@@ -177,10 +181,14 @@ def expectation(anti: str | None) -> str:
 
 async def main_async() -> int:
     parser = build_parser(__doc__.splitlines()[0], anti_variants=ANTI_VARIANTS)
+    parser.add_argument(
+        "--rol-modelo", choices=MODEL_ROLES, default="agent",
+        help="rol del modelo (por defecto agent, Haiku 5.5): `minimas` se ve mejor con enforcement (Haiku 4.5, ~15× más caro)",
+    )
     args = parser.parse_args()
     print(credentials.describe())
-    model = report_model("agent")
-    budget = report_budget(args.budget, "agent")
+    model = report_model(args.rol_modelo)
+    budget = report_budget(args.budget, args.rol_modelo)
 
     print(f"\n=== variante {args.anti or 'correcta'} · {len(BATTERY)} peticiones × {args.repeat} ===")
     print(f"[esperado] {expectation(args.anti)}")

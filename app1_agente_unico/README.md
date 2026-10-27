@@ -132,6 +132,7 @@ Un agente de mantenimiento debe encontrar todos los llamadores de `process_refun
 uv run python app1_agente_unico/03_servidor_mcp.py                          # correcta
 uv run python app1_agente_unico/03_servidor_mcp.py --anti minimas           # dos tools solapadas de una línea
 uv run python app1_agente_unico/03_servidor_mcp.py --anti palabra_clave     # prompt con una regla por palabra clave
+uv run python app1_agente_unico/03_servidor_mcp.py --anti minimas --rol-modelo enforcement   # Haiku 4.5, ~15× más caro
 uv run python app1_agente_unico/03_servidor_mcp.py --repeat 3 --budget 0.15 # tasa en 18 peticiones
 ```
 
@@ -146,17 +147,18 @@ Seis peticiones de mesa de ayuda (dos sobre tickets y cuatro sobre artículos de
 
 **Qué observar:**
 
-| Variante | Qué cambia | Acierto observado (Haiku 5.5, 18 peticiones) |
-| :--- | :--- | :--- |
-| correcta | 4 tools renombradas y divididas, con descripciones de propósito, entrada, ejemplo, casos borde y diferencias | 18/18 |
-| `minimas` | 2 tools genéricas con una línea cada una | 15/18: falla `articulo-resumen` siempre |
-| `palabra_clave` | las descripciones buenas, pero el prompt dice «si menciona un documento, usa `summarize_article`» | 12/18: las 2 peticiones con «documento» (pasos y verificar) siempre |
+| Variante | Qué cambia | Haiku 5.5 (`--rol-modelo agent`, por defecto) | Haiku 4.5 (`--rol-modelo enforcement`) |
+| :--- | :--- | :--- | :--- |
+| correcta | 4 tools renombradas y divididas, con descripciones de propósito, entrada, ejemplo, casos borde y diferencias | 18/18 | 24/24 |
+| `minimas` | 2 tools genéricas con una línea cada una | **inestable**: 15/18 en una medida y 89/90 en otras tres | 14/24 y 14/18 (58–78 %) |
+| `palabra_clave` | las descripciones buenas, pero el prompt dice «si menciona un documento, usa `summarize_article`» | 12/18: las 2 peticiones con «documento», siempre | 24/24: **no obedece la regla** |
 
 Notas:
 
-- **`minimas`:** con un modelo reciente, la caída es moderada. Acierta lo que su vocabulario sugiere (la petición con «documento» va a `analyze_document`) y falla donde la petición no da pista: el resumen de un «artículo». Con un modelo más flojo o más tools solapadas cabe esperar más caída (hipótesis sin comprobar; la variante a repetir sería esta con Haiku 4.5). Lo que se mide aquí es la ambigüedad, no la capacidad: con descripciones reales no hay nada que adivinar.
-- **`palabra_clave`:** es la señal más fuerte y estable. La regla del prompt gana a la descripción en las dos peticiones con la palabra, en todas las repeticiones, y deja intacto el resto. La corrección es la configuración correcta: quitar la regla del prompt y confiar en las descripciones.
-- **Tool esperada con `minimas`:** como solo hay dos tools, se espera «tickets → `analyze_content`, artículos → `analyze_document`». Es una convención del módulo, no algo que diga la guía.
+- **La señal depende del modelo, y en sentidos opuestos.** `palabra_clave` se ve con Haiku 5.5, que obedece la regla del prompt, y no con Haiku 4.5, que la ignora. `minimas` se ve con Haiku 4.5 y, con Haiku 5.5, es inestable: la primera medida dio 15/18 y las tres siguientes (30 peticiones cada una) dieron 30/30, 30/30 y 29/30. Ningún modelo muestra las dos a la vez, por eso `--rol-modelo` permite elegir el rol (el nombre del modelo sigue saliendo de `.env`).
+- **`minimas`:** con Haiku 5.5 apenas empeora el acierto. Se guía por las palabras de la propia petición («documento» lleva a `analyze_document`). Con Haiku 4.5 fallan sobre todo las peticiones de tickets, que van a `analyze_document`, y el resumen de un «artículo», que va a `analyze_content`. Lo que se mide es la ambigüedad, no la capacidad: con descripciones reales no hay nada que adivinar.
+- **`palabra_clave`:** con Haiku 5.5 es la señal más estable. La regla del prompt gana a la descripción en las dos peticiones con la palabra, en todas las repeticiones, y deja intacto el resto. La corrección es la configuración correcta: quitar la regla del prompt y confiar en las descripciones.
+- **Tool esperada con `minimas`:** como solo hay dos tools, se espera «tickets → `analyze_content`, artículos → `analyze_document`». Es una convención del módulo, no algo que diga la guía. Para que equivocarse tenga consecuencias, cada tool atiende solo ese tipo de ID y la otra devuelve un error de validación; antes las dos hacían lo mismo y un «fallo» de enrutamiento no costaba nada (revisión independiente).
 - Los contratos de cada tool (entrada y salida) y la medida de acierto se prueban sin modelo en `tests/test_app1_servers_mesa.py` y `tests/test_app1_03_servidor_mcp.py`.
 
 ### Pregunta tipo examen
@@ -203,7 +205,7 @@ La salida muestra los reintentos idénticos por tool, cuántos son inútiles, la
 | :--- | :--- | :--- |
 | correcta | solo `fetch_ticket_history` (1), que se recupera | — |
 | `generico` | `export_audit_log` se repite sin arreglo posible (1 inútil por ejecución) y el transitorio también se reintenta, sin nada que diga que lo es | sin categoría ni `isRetryable`, el agente no distingue lo reintentable de lo que no lo es |
-| `fallo_como_vacio` | ninguno: el transitorio no se reintenta | el agente cree que el ticket no tiene histórico (4 de 5) y lo cuenta como un dato |
+| `fallo_como_vacio` | ninguno: el transitorio no se reintenta | acepta el histórico vacío sin reintentar (5 de 5, medido sobre el registro) y lo cuenta como un dato; un detector de texto aproximado lo vio en 4 de 5 |
 
 Notas:
 
@@ -211,7 +213,7 @@ Notas:
 - **`generico` depende del modelo:** con Haiku 4.5 (sonda) no hubo reintentos inútiles, porque no reintentó nada; lo que cambió fue que se rindió ante el *timeout* (lo recuperó 2 de 5 veces con metadatos y 0 de 5 con el error genérico). Muestra pequeña: la señal del módulo es la de Haiku 5.5.
 - **`isRetryable` frente a `retriable`:** la guía escribe `retriable: false` para la regla de negocio; el proyecto usa `isRetryable` en todos los errores. Con la regla de negocio, además, el mensaje explica la política para que el agente informe a la persona usuaria (TS 2.2-S2).
 - **Vacío válido:** la búsqueda de `EMP-9999` devuelve una lista vacía correcta, que no es un error. Lo que `fallo_como_vacio` rompe es lo contrario: un fallo de acceso disfrazado de lista vacía (TS 2.2-S4).
-- Las señales sobre el `RunRecord` (reintentos idénticos, categorías) se prueban sin modelo en `tests/test_app1_04_errores_estructurados.py`. «Dice que no hay histórico» es un detector de texto aproximado; la señal robusta es «transitorio recuperado».
+- Las señales sobre el `RunRecord` (reintentos idénticos, categorías) se prueban sin modelo en `tests/test_app1_04_errores_estructurados.py`. «El texto dice que no hay histórico» es un detector aproximado (la revisión independiente encontró frases positivas que lo activaban y se corrigieron); las señales robustas salen del registro: «transitorio recuperado» e «histórico vacío aceptado sin reintento».
 
 ### Pregunta tipo examen
 
@@ -324,14 +326,14 @@ Tres partes:
 | Parte / variante | Señal observada | Qué dice |
 | :--- | :--- | :--- |
 | `conexion` | `mcp=['catalogo','inventario','mesa']`, 9 tools con prefijos `mcp__<servidor>__`, `token_recibido: true`, una llamada ok a cada servidor | todas las tools, a la vez; el token se expande sin escribirse en el archivo |
-| `recursos` correcta | 2 llamadas a resources (`ListMcpResourcesTool`, `ReadMcpResourceTool`), 0 exploratorias, ~0,0009 $ | el catálogo da visibilidad de qué hay sin explorar |
+| `recursos` correcta | 2 llamadas a resources (`ListMcpResourcesTool`, `ReadMcpResourceTool`), 0 exploratorias, ~0,0009 $ | el catálogo da visibilidad de qué hay sin explorar; la mejora sale de las tools de resources **y** de la frase que las anuncia, juntas |
 | `recursos` `sin_recursos` | 19–31 llamadas exploratorias, 0,0021–0,0033 $ (×2,3–3,7) | el agente adivina con búsquedas y lecturas por ID, incluidos IDs que no existen |
 | `descripcion` correcta | `Grep` 0/6, `search_kb` MCP 6/6 | — |
 | `descripcion` `descripcion_minima` | `Grep` 0/6, `search_kb` MCP 6/6 | **sin diferencia** con Haiku 5.5 |
 
 Notas:
 
-- **Los resources no los descubre el modelo solo.** Con las tools de resources disponibles pero sin avisar, el agente exploró con búsquedas: la aplicación debe decirle que existen (aquí, una frase en el prompt del sistema). En el SDK se alcanzan con `ListMcpResourcesTool` y `ReadMcpResourceTool`. Es una nota de producto (no evaluable).
+- **Los resources no los descubre el modelo solo.** La variante correcta cambia dos cosas a la vez, las tools de resources y la frase que las anuncia. Con las tools solas, sin avisar, el agente exploró con búsquedas: la aplicación debe decirle que existen (aquí, una frase en el prompt del sistema). En el SDK se alcanzan con `ListMcpResourcesTool` y `ReadMcpResourceTool`. Es una nota de producto (no evaluable).
 - **`descripcion`: la señal que dice la guía no se vio.** Según la guía, una descripción mínima hace que el agente prefiera `Grep`. Con Haiku 5.5 y con Haiku 4.5 (sondas, 6 repeticiones por condición) no cambió la preferencia: sin avisar de que hay archivos, `Grep` salió 0/6 con las dos descripciones, y avisando salió igual de a menudo con una que con otra (4/6 y 5/6 con Haiku 5.5). Lo que movió al agente a `Grep` fue saber que los archivos existían, no la descripción. La viñeta se enseña igualmente (cabecera y pregunta); en el examen manda la guía.
 - **`init` puede traer la lista de tools incompleta:** en 2 de unas 8 ejecuciones, los servidores stdio constaban como conectados pero sus tools no estaban aún en `init`; el módulo lo avisa con `[aviso]`. Las llamadas funcionan igualmente.
 - **Sin aprobación:** con `setting_sources=["project"]` el SDK conecta los servidores de `.mcp.json` sin pedir aprobación; la CLI interactiva sí puede pedirla.

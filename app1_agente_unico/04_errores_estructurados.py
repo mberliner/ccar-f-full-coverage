@@ -145,15 +145,31 @@ def transient_recovered(rec: RunRecord) -> bool:
     return failed is not None and any(not c.is_error for c in calls[failed + 1:])
 
 
+# «sin» y «no hay» solo cuentan seguidos de «histórico» o «eventos»: «sin problemas», «sin errores» o «no hay ningún
+# problema» describen una consulta que fue bien (falsos positivos de la versión anterior).
 NO_HISTORY_RE = re.compile(
-    r"(no tiene|no hay|sin|no se registr\w+|no consta)\b.{0,40}\b(hist[oó]rico|eventos)\b|hist[oó]rico\s+(est[aá]\s+)?vac[ií]o",
+    r"\b(no tiene|no hay|no registra|no consta|no se registr\w+|no devolvi\w+)\s+(ning[uú]n\s+)?(hist[oó]rico|eventos?)\b"
+    r"|\bsin\s+(hist[oó]rico|eventos?)\b"
+    r"|hist[oó]rico\s+(est[aá]\s+)?vac[ií]o"
+    r"|lista\s+vac[ií]a",
     re.IGNORECASE,
 )
 
 
 def says_no_history(text: str | None) -> bool:
-    """¿Afirma la respuesta que el ticket no tiene histórico? (señal de `fallo_como_vacio`)."""
+    """¿Afirma la respuesta que el ticket no tiene histórico? Detector de texto APROXIMADO (señal de `fallo_como_vacio`)."""
     return bool(text and NO_HISTORY_RE.search(text))
+
+
+def empty_history_accepted(rec: RunRecord) -> bool:
+    """Señal robusta de `fallo_como_vacio`: el histórico llegó vacío y nadie lo volvió a consultar."""
+    calls = [c for c in rec.tool_calls if short_name(c.name) == TRANSIENT_TOOL]
+    if len(calls) != 1:
+        return False  # sin llamada, o consultado más de una vez (se reintentó)
+    try:
+        return json.loads(calls[0].result_text or "").get("events") == []
+    except (json.JSONDecodeError, AttributeError):
+        return False
 
 
 # --- Configuración ------------------------------------------------------------------
@@ -186,7 +202,8 @@ def report(rec: RunRecord, anti: str | None) -> None:
     analysis = analyze(rec)
     print(f"[medida] llamadas={analysis.calls} · reintentos idénticos={analysis.retries} · reintentos inútiles={useless_retries(analysis)}")
     print(f"[medida] categorías por tool={analysis.categories}")
-    print(f"[medida] transitorio recuperado={transient_recovered(rec)} · dice que no hay histórico={says_no_history(rec.final_text)}")
+    print(f"[medida] transitorio recuperado={transient_recovered(rec)} · histórico vacío aceptado sin reintento={empty_history_accepted(rec)} "
+          f"· el texto dice que no hay histórico={says_no_history(rec.final_text)} (detector aproximado)")
 
 
 # --- Ejecución ---------------------------------------------------------------------

@@ -263,7 +263,7 @@ def report(part: str, rec: RunRecord) -> None:
         print(f"[medida] tools por servidor={servers} · otras={builtins}")
         partial = servers_without_tools(rec.init)
         if partial:
-            # Observado (1 de 4 ejecuciones): `init` se emite antes de que un servidor stdio termine de cargar
+            # Observado de forma intermitente (frecuencia en docs/hallazgos.md): `init` se emite antes de que un servidor stdio termine de cargar
             # sus tools. Las llamadas de la ejecución sí lo usan: la lista de `init` no es la verdad completa.
             print(f"[aviso] lista de tools parcial en init: sin tools de {partial} (conectados); se usan igualmente")
         print(f"[medida] token recibido={token_received(rec)} · coste=${rec.cost_usd or 0:.4f}")

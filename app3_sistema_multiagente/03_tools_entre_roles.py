@@ -32,14 +32,20 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
 - Lo observado aquí (ver README y `docs/hallazgos.md`): solo `fetch_url` dio la
   señal prevista (páginas que no son documentos en los hallazgos). Con `todas`, el
   sintetizador no salió de su rol en ninguna ejecución. Con `sin_verify` hubo
-  **menos** delegaciones, no más: el coordinador dejó de invocar al sintetizador y
-  verificó él.
+  **menos** delegaciones, no más: el coordinador casi nunca invocó al sintetizador (1 de 6
+  ejecuciones) y verificó él.
 - Inferencias propias: la respuesta tentadora a «el sintetizador busca de más» es
   reforzar el prompt («no busques»), no quitar la tool. Y dar `verify_fact` también
   al coordinador, o fusionar investigador y sintetizador, son vías que la guía no
   propone.
 - Guía frente a producto: la guía llama `Task` a la tool de subagentes; en el
   producto es `Agent`.
+- Barrera del coordinador (revisión independiente): `tools=["Agent"]` solo limita las
+  tools integradas; las del servidor MCP siguen visibles para el agente principal, y
+  «no busques tú» en su prompt es una petición, no una barrera. Aquí la barrera es un
+  hook `PreToolUse` (`coordinator_gate`) que las deniega al agente principal y deja
+  pasar a los subagentes, que traen `agent_id`. Sin ella, `fuera de rol` y las
+  delegaciones medirían también lo que el coordinador hiciera por su cuenta.
 
 Pregunta tipo examen: ver `app3_sistema_multiagente/README.md`, módulo 03.
 
@@ -52,11 +58,12 @@ import asyncio
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 # Los módulos se ejecutan como script: la raíz del repositorio va al path para importar `harness`.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from claude_agent_sdk import AgentDefinition, ClaudeAgentOptions, query  # noqa: E402
+from claude_agent_sdk import AgentDefinition, ClaudeAgentOptions, HookMatcher, query  # noqa: E402
 
 from app3_sistema_multiagente.servers.investigacion import SERVER_NAME, build_server, tool_name  # noqa: E402
 from harness import credentials  # noqa: E402
@@ -152,6 +159,28 @@ def coordinator_prompt() -> str:
     )
 
 
+async def coordinator_gate(hook_input: dict[str, Any], tool_use_id: str | None, context: Any) -> dict[str, Any]:
+    """Deniega al agente principal las tools del servidor: son de los subagentes."""
+    # Un subagente trae `agent_id` en la entrada del hook; el agente principal, no.
+    if hook_input.get("agent_id"):
+        return {}
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": (
+                "El coordinador no usa las tools de investigación: son de los subagentes. "
+                "Delega con Agent en researcher o synthesizer."
+            ),
+        }
+    }
+
+
+def build_hooks() -> dict[str, list[HookMatcher]]:
+    # El matcher casa con cualquier tool del servidor `investigacion`.
+    return {"PreToolUse": [HookMatcher(matcher=f"mcp__{SERVER_NAME}__.*", hooks=[coordinator_gate])]}
+
+
 def build_options(anti: str | None, *, budget: float, model: str, subagent_model: str) -> ClaudeAgentOptions:
     return isolated_options(
         max_budget_usd=budget,
@@ -159,10 +188,12 @@ def build_options(anti: str | None, *, budget: float, model: str, subagent_model
         system_prompt=coordinator_prompt(),
         mcp_servers={SERVER_NAME: build_server(extended=True)},
         tools=["Agent"],  # solo la tool integrada que lanza subagentes (la guía la llama "Task")
-        # Se pre-aprueban todas las tools MCP: cada subagente solo ve las de su `AgentDefinition`.
+        # Se pre-aprueban todas las tools MCP: cada subagente solo ve las de su `AgentDefinition`. El agente
+        # principal también las vería: `tools=["Agent"]` no las oculta, así que las deniega `coordinator_gate`.
         allowed_tools=["Agent", *ALL_TOOLS],
         permission_mode="dontAsk",
         agents=build_agents(anti, subagent_model),
+        hooks=build_hooks(),
         env={
             "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "1",  # coste acotado: un subagente no lanza otros
             "CLAUDE_CODE_FORK_SUBAGENT": "0",  # sin fork: la lección es que el subagente no hereda contexto
@@ -183,6 +214,11 @@ def out_of_role(rec: RunRecord) -> dict[str, int]:
         if expected is not None and call.name not in expected:
             counts[call.agent] = counts.get(call.agent, 0) + 1
     return counts
+
+
+def coordinator_attempts(rec: RunRecord) -> int:
+    """Intentos del agente principal de usar tools del servidor (los deniega `coordinator_gate`)."""
+    return out_of_role(rec).get(MAIN, 0)
 
 
 def junk_urls_fetched(rec: RunRecord) -> int:
@@ -247,7 +283,7 @@ async def main_async() -> int:
         print(f"[esperado] {expectation(args.anti)}")
         rec = await record(query(prompt=REQUEST, options=options))
         print(f"[medida] llamadas por agente: { {a: len(c) for a, c in rec.by_agent().items()} }")
-        print(f"[medida] fuera de rol: {out_of_role(rec) or 'ninguna'}")
+        print(f"[medida] fuera de rol: {out_of_role(rec) or 'ninguna'} (intentos del coordinador, denegados: {coordinator_attempts(rec)})")
         print(f"[medida] URLs no documento abiertas con fetch_url: {junk_urls_fetched(rec)} · rechazadas por load_document: {rejected_loads(rec)}")
         print(f"[medida] delegaciones: {delegations(rec)} (total {total_delegations(rec)})")
         print(f"[medida] verify_fact: {verify_calls(rec)} llamadas · devueltas al coordinador por complejas: {routed_to_coordinator(rec)}")

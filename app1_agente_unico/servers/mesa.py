@@ -95,15 +95,23 @@ def make(name: str, description: str, properties: dict[str, str], handler: Handl
 
 def routing_tools(variante: str | None) -> list[SdkMcpTool[Any]]:
     if variante == "minimas":
-        async def analyze(args: dict[str, Any]) -> dict[str, Any]:
-            value = args.get("content_id") or args.get("document_id") or ""
-            record = find_ticket(value) or find_article(value)
-            return ok(record) if record else not_found("contenido", value)
+        # Cada tool atiende un solo tipo de ID: `analyze_content`, tickets; `analyze_document`, artículos.
+        # Las descripciones no lo dicen, así que elegir la equivocada devuelve un error con consecuencias
+        # (antes las dos hacían lo mismo y el «fallo» de enrutamiento no costaba nada).
+        async def analyze_content(args: dict[str, Any]) -> dict[str, Any]:
+            value = args.get("content_id") or ""
+            ticket = find_ticket(value)
+            return ok(ticket) if ticket else not_found("ticket (esta tool solo analiza tickets)", value)
+
+        async def analyze_document(args: dict[str, Any]) -> dict[str, Any]:
+            value = args.get("document_id") or ""
+            article = find_article(value)
+            return ok(article) if article else not_found("artículo (esta tool solo analiza artículos)", value)
 
         # Descripciones de una línea y solapadas: el modelo no tiene con qué elegir.
         return [
-            make("analyze_content", "Analiza contenido.", {"content_id": "ID del contenido"}, analyze),
-            make("analyze_document", "Analiza un documento.", {"document_id": "ID del documento"}, analyze),
+            make("analyze_content", "Analiza contenido.", {"content_id": "ID del contenido"}, analyze_content),
+            make("analyze_document", "Analiza un documento.", {"document_id": "ID del documento"}, analyze_document),
         ]
 
     async def extract_ticket_facts(args: dict[str, Any]) -> dict[str, Any]:
@@ -189,7 +197,9 @@ def errores_tools(state: ErroresState, estructurado: bool, fallo_como_vacio: boo
         ticket = find_ticket(args["ticket_id"])
         if ticket is None:
             return fail("validation", f"ticket no encontrado: {args['ticket_id']}")
-        if state.calls["fetch_ticket_history"] == 1:
+        # El transitorio lo sufre la primera llamada VÁLIDA: un ID inválido antes no lo gasta.
+        state.calls["fetch_ticket_history:valid"] += 1
+        if state.calls["fetch_ticket_history:valid"] == 1:
             # Transitorio: falla la primera vez y responde a partir de la segunda.
             if fallo_como_vacio:
                 # Anti-patrón: el fallo de acceso se disfraza de resultado vacío válido.
@@ -207,7 +217,11 @@ def errores_tools(state: ErroresState, estructurado: bool, fallo_como_vacio: boo
 
     async def reassign_license(args: dict[str, Any]) -> dict[str, Any]:
         state.calls["reassign_license"] += 1
-        if int(args.get("seats", 1)) > LICENSE_QUOTA:
+        try:
+            seats = int(args.get("seats", 1))
+        except (TypeError, ValueError):
+            return fail("validation", f"seats debe ser un número entero de puestos, no {args.get('seats')!r}", input=str(args.get("seats")))
+        if seats > LICENSE_QUOTA:
             # Regla de negocio: no es reintentable. La guía (2.2-S2) lo escribe `retriable: false`;
             # aquí el campo se llama `isRetryable`, como en el resto del proyecto.
             return fail(
@@ -266,11 +280,16 @@ def scope_handlers() -> dict[str, Handler]:
         return ok(ticket) if ticket else not_found("ticket", args["ticket_id"])
 
     async def search_tickets(args: dict[str, Any]) -> dict[str, Any]:
+        user_ids = set(re.findall(r"EMP-\d{4}", args["query"].upper()))
+        if user_ids:
+            # Un ID de usuario se compara entero. Partido en «emp» y «1002», coincidía con cualquier
+            # descripción que contuviera «emp» (p. ej. «tiempo»), y EMP-9999 devolvía un ticket ajeno.
+            hits = [t["ticket_id"] for t in load("tickets.json") if t["user_id"] in user_ids]
+            return ok({"query": args["query"], "total": len(hits), "ticket_ids": hits[:8]})
         words = {w for w in words_of(args["query"]) if len(w) >= 3}
         hits = [
             t["ticket_id"] for t in load("tickets.json")
-            if t["category"] in words or (t["user_id"] or "").lower() in words
-            or any(w in t["description"].lower() for w in words)
+            if t["category"] in words or any(w in t["description"].lower() for w in words)
         ]
         return ok({"query": args["query"], "total": len(hits), "ticket_ids": hits[:8]})
 

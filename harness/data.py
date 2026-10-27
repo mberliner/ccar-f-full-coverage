@@ -36,7 +36,7 @@ def copy_to_temp(name: str) -> Path:
     salir del proceso.
     """
     source = DATA_DIR / name
-    # `resolve()`: en Windows `mkdtemp` devuelve una ruta corta (`FMARTI~1`); la CLI no la
+    # `resolve()`: en Windows `mkdtemp` devuelve una ruta corta (`USUARIO~1`); la CLI no la
     # reconoce como el directorio de trabajo y deniega `Edit`/`Write` en `dontAsk`.
     target = Path(tempfile.mkdtemp(prefix="ccarf-")).resolve()
     # ignore_errors: en Windows el directorio puede seguir en uso al salir.

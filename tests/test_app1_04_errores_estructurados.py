@@ -104,6 +104,40 @@ def test_says_no_history_detects_a_claim_of_no_data():
     assert not mod.says_no_history(None)
 
 
+def test_says_no_history_ignores_positive_phrases_with_sin_or_no_hay():
+    # Contraejemplos de la revisión independiente: frases que cuentan que SÍ hubo histórico.
+    for text in (
+        "Histórico: obtenido sin problemas tras reintentar; eventos: creación y cambio de estado.",
+        "El histórico se consultó sin errores y muestra 2 eventos.",
+        "No hay ningún problema con el histórico: 2 eventos.",
+    ):
+        assert not mod.says_no_history(text), text
+
+
+def test_says_no_history_still_catches_the_other_ways_of_saying_it():
+    for text in (
+        "La herramienta no devolvió ningún evento.",
+        "El ticket no tiene eventos registrados.",
+        "Devolvió una lista vacía.",
+        "Ticket sin histórico.",
+    ):
+        assert mod.says_no_history(text), text
+
+
+def empty_events(n=1):
+    return [call(n, "fetch_ticket_history", {"ticket_id": "TCK-4001"}, text='{"ticket_id": "TCK-4001", "events": []}')]
+
+
+def test_empty_history_accepted_is_a_signal_from_the_record_not_from_the_text():
+    # El histórico vino vacío y nadie volvió a consultarlo: se aceptó un fallo de acceso como dato.
+    assert mod.empty_history_accepted(record(*empty_events())) is True
+    retried = record(*empty_events(1), call(2, "fetch_ticket_history", {"ticket_id": "TCK-4001"}, text='{"events": [1]}'))
+    assert mod.empty_history_accepted(retried) is False
+    full = record(call(1, "fetch_ticket_history", {"ticket_id": "TCK-4001"}, text='{"events": [1, 2]}'))
+    assert mod.empty_history_accepted(full) is False
+    assert mod.empty_history_accepted(RunRecord()) is False
+
+
 # --- configuración ----------------------------------------------------------------
 
 def test_variants():

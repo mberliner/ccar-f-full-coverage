@@ -67,6 +67,16 @@ def test_rate_text():
     assert mod.rate_text((0, 0)) == "sin datos"
 
 
+def test_model_role_is_chosen_by_role_so_the_env_stays_the_source_of_the_model():
+    # La señal de cada variante depende del modelo (`minimas` se ve con el rol `enforcement`, `palabra_clave` con `agent`):
+    # se elige el ROL, nunca el nombre del modelo, que sigue saliendo de `.env` (harness/config.py).
+    from harness import config
+
+    assert mod.MODEL_ROLES == ["agent", "enforcement"]
+    for role in mod.MODEL_ROLES:
+        assert role in config.MODEL_DEFAULTS and role in config.BUDGET_DEFAULTS
+
+
 # --- configuración -----------------------------------------------------------------
 
 def test_variants():

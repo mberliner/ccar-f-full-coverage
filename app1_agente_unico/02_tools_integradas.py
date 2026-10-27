@@ -139,7 +139,11 @@ def expected_tests(root: Path) -> set[str]:
 
 
 def check_paths(answer: str | None, expected: set[str]) -> tuple[set[str], set[str]]:
-    """(encontrados, que faltan): qué rutas esperadas aparecen en la respuesta."""
+    """(encontrados, que faltan): qué rutas esperadas aparecen en la respuesta.
+
+    Es una comprobación de menciones: «ninguno de estos la llama: informes/resumen.py» cuenta como encontrado.
+    Para estas respuestas basta, porque el resultado estable (2 de 4 con `solo_nombre`) no depende de ello.
+    """
     # Barras unificadas y sin que un nombre cuente por estar dentro de otro más largo.
     text = (answer or "").replace("\\", "/")
     found = {path for path in expected if re.search(r"(?<!\w)" + re.escape(path), text)}
