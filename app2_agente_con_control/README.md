@@ -25,6 +25,7 @@ Ciclo de cada módulo: **predecir → ejecutar (correcto y `--anti`) → contras
 | `04_few_shot_y_escalamiento.py` | TS 4.2 · TS 5.2 | 3 |
 | [`05_multi_concern_y_handoff.py`](05_multi_concern_y_handoff.py) | TS 1.4-K3, S2, S3 · TS 5.1-K1, S1, S2 | 1 |
 | [`06_sesiones.py`](06_sesiones.py) | TS 1.7-K1…K4, S1…S4 · TS 1.3-K4 | 1 |
+| [`07_hook_reescritura.py`](07_hook_reescritura.py) | apoyo, sin viñeta propia (sobre TS 1.4-K1, K2 · TS 1.5-K2) | 1 |
 
 ---
 
@@ -209,4 +210,50 @@ Ayer un desarrollador analizó un módulo con Claude Code en una sesión con nom
 <summary>Respuesta</summary>
 
 **B.** Con la mayor parte del contexto aún válida, se reanuda (TS 1.7-S3) informando de los cambios concretos para un reanálisis dirigido (TS 1.7-K3, 1.7-S4). A responde con resultados obsoletos; C desperdicia el análisis válido (empezar de nuevo con un resumen conviene cuando lo obsoleto es la mayoría, TS 1.7-K4); D sirve para explorar enfoques divergentes desde una base común (TS 1.7-K2, 1.7-S2), no para incorporar cambios.
+</details>
+
+---
+
+## 07 · Reescribir argumentos con `updatedInput`
+
+**Sin modelo, sin coste.** Este módulo no llama al modelo: ejecuta el hook y el handler reales sobre una llamada con el ID equivocado.
+
+```bash
+uv run python app2_agente_con_control/07_hook_reescritura.py           # allow + updatedInput
+uv run python app2_agente_con_control/07_hook_reescritura.py --anti    # deny con el ID correcto en el motivo
+```
+
+`EMP-1028` está verificado. El modelo escribe `EMP-1082` (dos dígitos cambiados, un ID que no es de nadie) al pagar su ticket `TCK-4047`. Un hook `PreToolUse` sobre `process_reimbursement` garantiza que `user_id` sea el verificado. No añade ninguna viñeta: aplica TS 1.5-K2 (interceptar la llamada saliente) al requisito de TS 1.4-K1/K2 (cumplimiento determinista).
+
+**EN PRODUCCIÓN (no evaluable):** `updatedInput` es una salida de `PreToolUse` del SDK que la guía no nombra. El patrón que la guía enseña para hacer cumplir una regla es bloquear (TS 1.4-S1, TS 1.5-S2), y en el examen esa es la respuesta evaluable.
+
+**Predice** (en texto libre, antes de ejecutar): con deny, ¿se ejecuta alguna vez un pago con `EMP-1082`? ¿Y se completa el pago de `TCK-4047`? ¿De qué depende?
+
+**Qué observar:**
+
+- **`[control]`:** sin hook, la tool recibe `EMP-1082` tal cual y el handler lo rechaza por validación (el ticket no es de ese ID). Es un resultado de este escenario: un ID erróneo que perteneciera a otro empleado con un ticket del mismo importe sí se pagaría, y no se ha probado.
+- **`updatedInput`:** el hook sobrescribe `user_id` y la tool recibe `EMP-1028` en la primera llamada. Un desenlace, siempre el mismo.
+- **`--anti` (deny):** la tool no se ejecuta y el modelo recibe el ID correcto como texto. Las tres líneas de `[hipótesis]` son lo que *podría* pasar después. No son observaciones: dependen de que el modelo reintente bien, y el hook no lo controla.
+- **El matiz:** en ninguna variante se ejecuta un pago con el ID erróneo. La diferencia no es de seguridad, es que el pago correcto deja de depender de un reintento.
+- **El límite de reescribir:** el hook solo garantiza `user_id`. Que el ticket y el importe sean del verificado lo comprueba el handler. Si el modelo intentara pagar el ticket de un compañero con el ID del compañero, el hook pondría en silencio el ID verificado y solo el handler frenaría el pago. Un deny, en cambio, habría dejado ver el intento.
+
+**Por qué no se mide una tasa:** con Haiku 5.5 el modelo no escribió un ID erróneo en 6 de 6 ejecuciones, y con Haiku 4.5 el escenario de prueba se confundía con otro problema (ver `docs/hallazgos.md`). La diferencia entre deny y `updatedInput` es de estructura, no de probabilidad, y un modelo que casi no se equivoca no la muestra.
+
+### Pregunta tipo examen
+
+Práctica de diseño con formato de examen: la respuesta correcta usa un mecanismo que la guía no nombra (ver la nota EN PRODUCCIÓN).
+
+Un flujo de reembolsos exige que `process_refund` se llame siempre con el `customer_id` que devolvió `get_customer`. A veces el modelo escribe un ID con los dígitos cambiados. ¿Qué solución garantiza el valor?
+
+- A. Un hook `PreToolUse` que permite la llamada y sustituye `customer_id` por el ID verificado antes de ejecutarla.
+- B. Un hook `PreToolUse` que deniega la llamada y escribe en el motivo el `customer_id` verificado para el modelo.
+- C. Un hook `PostToolUse` que revisa el resultado de `process_refund` y corrige el ID cuando no coincide.
+- D. Una línea en el prompt de sistema que ordena copiar literalmente el `customer_id` devuelto por `get_customer`.
+
+<details>
+<summary>Respuesta</summary>
+
+**A.** El hook actúa sobre la propia llamada y fija el valor: la tool recibe siempre el ID verificado (TS 1.5-K2), sin depender del modelo (TS 1.4-K2). B bloquea, pero el pago correcto exige que el modelo reintente bien: deny devuelve texto, no un valor. C corre cuando la tool ya se ejecutó (`PostToolUse` no impide una acción, TS 1.5-K2). D es guía en el prompt, con una tasa de fallo distinta de cero (TS 1.4-K1).
+
+**Y si la guía no nombra `updatedInput`:** esta práctica no permite saber qué ofrecerá una pregunta real. Si una opción propone reescribir el argumento para fijar el valor, es la que lo garantiza (A). Si no la hay, el hook `PreToolUse` que bloquea es el patrón que la guía sostiene (TS 1.4-S1, TS 1.5-S2). B no es un error: lo único que no hace es fijar el valor.
 </details>
