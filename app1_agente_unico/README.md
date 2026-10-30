@@ -20,22 +20,52 @@ Cada módulo sigue el ciclo de `README.md` del proyecto: **predecir → ejecutar
 
 ## 01 · Bucle manual
 
+### Antes de empezar
+
+Si llegas de cero, estos son los términos que usa el ejercicio:
+
+- **El sistema:** un agente de mesa de ayuda TI con datos sintéticos. Recibe un ticket y tiene que redactar una respuesta. El modelo no toca los datos: solo puede pedirle al código que ejecute *tools*.
+- **Tool:** una función que el código ofrece al modelo, con nombre, descripción y parámetros. El modelo decide cuándo pedirla y con qué datos; el código la ejecuta y devuelve el resultado.
+- **Bucle agéntico:** el código envía el historial al modelo. El modelo responde con texto o pidiendo tools. El código ejecuta las tools, añade sus resultados al historial y vuelve a preguntar. Se repite hasta que el modelo termina.
+- **Iteración:** una vuelta del bucle, es decir, una petición al modelo. En una iteración el modelo puede pedir varias tools a la vez, así que iteraciones y llamadas a tools no son lo mismo.
+- **`stop_reason`:** campo de cada respuesta que dice por qué se detuvo el modelo. Puede tener varios valores, y el bucle lo consulta para decidir qué hacer a continuación.
+- **Historial:** la lista de mensajes que se reenvía completa en cada petición. El modelo no recuerda nada entre peticiones si no está en el historial.
+
+### Las tres tools del ejercicio
+
+| Tool | Qué recibe | Qué devuelve |
+| :--- | :--- | :--- |
+| `get_ticket` | `ticket_id` (formato `TCK-NNNN`) | El ticket: descripción, categoría, estado, fecha y `user_id` (`null` si quien escribe no está identificado). Si no existe, un error. |
+| `get_user` | `user_id` (formato `EMP-NNNN`) o `name` (nombre y apellido) | Todos los empleados que coinciden. Con un nombre puede haber varios. Sin ninguno de los dos datos, o sin coincidencias, un error. |
+| `search_kb` | `query` (palabras clave) | Hasta 3 artículos de la base de conocimiento (*KB*, los procedimientos de la mesa de ayuda) con ID, título y texto, y el ID del artículo que lo sustituye si está obsoleto. |
+
+### El ejercicio
+
+El agente atiende el ticket ambiguo «Soy Laura Gómez y necesito que me restablezcáis la contraseña», que no trae `user_id`. Hay dos empleadas con ese nombre, así que lo razonable es leer el ticket, buscar a la persona, consultar la base de conocimiento y pedir un identificador.
+
+Además de la versión correcta, el módulo trae variantes construidas mal a propósito (`--anti`), para ver cómo falla cada error. Esto es lo que cambia en el código de las tres que vas a predecir:
+
+- **`tope`:** un tope de 2 iteraciones. El bucle se corta tras la segunda vuelta, pase lo que pase, aunque el modelo siga pidiendo tools.
+- **`sin_historial`:** en cada petición solo se envía el mensaje inicial, sin los resultados de las tools anteriores.
+- **`arbol_fijo`:** un «árbol de decisión» fijo, es decir, una secuencia de pasos que decide el código y no el modelo. No hay bucle: el código llama siempre a `get_ticket`, `get_user` y `search_kb`, en ese orden y con los datos del ticket, y después pide una sola respuesta al modelo.
+
+La salida muestra la credencial y las versiones (§11.1), el modelo y el presupuesto con su origen, cada iteración con su `stop_reason` y sus tools, y la causa de la parada.
+
+**Predice antes de ejecutar** (con tus palabras; no hay un número que acertar):
+
+1. ¿Qué valor de `stop_reason` indica que el modelo pide tools y cuál que ha terminado? ¿Qué debería hacer el código con cualquier otro valor?
+2. De `get_ticket`, `get_user` y `search_kb`, ¿cuáles necesitan el resultado de otra y cuáles podrían pedirse a la vez?
+3. Con eso, ¿entre qué mínimo y máximo de iteraciones puede acabar la variante correcta?
+4. Sea cual sea el número de iteraciones, ¿qué tendrá la última que no tenga ninguna de las anteriores?
+5. Con `--anti tope` (tope de 2 iteraciones), `--anti sin_historial` y `--anti arbol_fijo` (secuencia fija decidida por el código), ¿qué trabajo queda sin hacer en cada una y cuál es la causa, en una frase?
+
+### Ejecutar
+
 ```bash
 uv run python app1_agente_unico/01_bucle_manual.py                  # correcto
 uv run python app1_agente_unico/01_bucle_manual.py --anti texto     # o tope, texto_asistente, sin_historial, arbol_fijo
 uv run python app1_agente_unico/01_bucle_manual.py --budget 0.05    # prueba barata (el tope solo baja)
 ```
-
-El agente atiende el ticket ambiguo «Soy Laura Gómez y necesito que me restablezcáis la contraseña», que no trae `user_id`. Hay dos empleadas con ese nombre, así que necesita encadenar `get_ticket` → `get_user` → `search_kb` y pedir un identificador.
-
-La salida muestra la credencial y las versiones (§11.1), el modelo y el presupuesto con su origen, cada iteración con su `stop_reason` y sus tools, y la causa de la parada.
-
-**Predice antes de ejecutar:**
-
-1. ¿Cuántas iteraciones necesitará la variante correcta? ¿Cuál será su `stop_reason` final?
-2. Con `--anti tope` (tope de 2), ¿llegará a pedir el identificador?
-3. Con `--anti sin_historial`, ¿qué hará el modelo en la segunda petición?
-4. Con `--anti arbol_fijo`, ¿qué devolverá `get_user` y qué respuesta redactará el modelo?
 
 **Qué observar:**
 
@@ -47,6 +77,15 @@ La salida muestra la credencial y las versiones (§11.1), el modelo y el presupu
 | `texto_asistente` | en cuanto hay texto junto a un `tool_use` | el texto «voy a mirar el ticket» no es una respuesta |
 | `sin_historial` | red de seguridad (12) | el modelo no ve sus resultados y repite la misma llamada |
 | `arbol_fijo` | una llamada al modelo | la secuencia no se adapta: `get_user` falla sin `user_id` y no hay rama para buscar por nombre |
+
+**Qué es estable y qué varía en la variante correcta:**
+
+| Estable | Varía (lo decide el modelo) |
+| :--- | :--- |
+| La última iteración trae `end_turn` y ninguna tool | El número de iteraciones: entre 2 y 4 |
+| Cada `tool_use` recibe su `tool_result` antes de la iteración siguiente | Qué llamadas independientes agrupa en una misma iteración |
+| `get_user` no puede ir antes de saber de quién se trata, y `get_ticket` informa de eso | Si `search_kb` va con `get_ticket`, con `get_user` o al final |
+| Las iteraciones son como mucho las llamadas más una | |
 
 La variabilidad entre ejecuciones es parte de la lección: según la ejecución, el modelo puede no escribir texto junto a sus llamadas, y entonces `texto_asistente` no corta. Las variantes se prueban de forma determinista en `tests/test_app1_01_bucle_manual.py`.
 
