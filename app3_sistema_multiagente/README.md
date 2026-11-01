@@ -2,6 +2,8 @@
 
 Un coordinador (Sonnet) y subagentes (Haiku) que investigan los tickets y la base de conocimiento de la mesa de ayuda (escenarios E3 y E4 del examen). El servidor MCP en proceso [`servers/investigacion.py`](servers/investigacion.py) devuelve cada resultado con el contenido separado de sus metadatos.
 
+Términos: [glosario común](../docs/glosario.md).
+
 ## Ruta de lectura
 
 Ciclo de cada módulo: **predecir → ejecutar (correcto y `--anti`) → contrastar → responder → anotar los fallos en tu `FALLOS.md` (`estado/<perfil>/`)**.

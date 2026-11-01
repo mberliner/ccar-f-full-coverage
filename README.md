@@ -27,6 +27,20 @@ Las apps siguen el temario por dominios:
 
 Cada módulo introduce las viñetas que `CONCEPTOS.md` le asigna, así que una app puede cubrir varios dominios. Además, el propio repositorio muestra la configuración de Claude Code (`CLAUDE.md`, `.claude/`, `docs/`) y `d3_claude_code/` la recorre: ahí están las viñetas del dominio D3 que no son de ninguna app.
 
+## Por dónde empezar
+
+**Qué se aprende.** A construir agentes con Claude: el bucle agéntico, las tools y los servidores MCP, cómo hacer cumplir reglas con código, las sesiones, los sistemas con coordinador y subagentes, y la configuración de Claude Code. Es lo que evalúa el examen CCAR-F, cuyo temario sale de su Exam Guide v1.0, organizada en dominios (D1–D5) y viñetas. Aquí no se copia la guía: cada módulo explica su concepto con sus palabras y cierra con una pregunta propia en formato de examen.
+
+**Qué conviene saber antes.** Leer Python y usar la terminal. No hace falta haber construido un agente: los términos que usan los módulos están en el [glosario](docs/glosario.md).
+
+**Coste.** Los tests no llaman al modelo y no cuestan nada. Las ejecuciones con modelo sí, y todas llevan un tope (`max_budget_usd`); `--budget` lo baja para una prueba barata.
+
+**Orden recomendado.** Las apps van de lo simple a lo compuesto, y cada una se apoya en la anterior. Dentro de cada app, el orden es el de la tabla «Ruta de lectura» de su `README.md`:
+
+1. [`app1_agente_unico/`](app1_agente_unico/README.md): `01` (bucle escrito a mano) → `02` a `06` (Agent SDK, tools integradas, MCP, errores, scoping y configuración MCP).
+2. [`app2_agente_con_control/`](app2_agente_con_control/README.md): `01`, `02`, `03`, `05`, `06` y `07` (reglas en código, hooks, permisos, *handoff*, sesiones).
+3. [`app3_sistema_multiagente/`](app3_sistema_multiagente/README.md): `01` → `03` (coordinador y subagentes, paralelo, tools por rol).
+
 ## Qué encontrarás aquí
 
 | Ruta | Contenido |

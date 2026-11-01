@@ -2,6 +2,8 @@
 
 Garantías, escalamiento y sesiones sobre un agente de mesa de ayuda (escenario E1 del examen). Todos los módulos usan el servidor MCP en proceso [`servers/helpdesk.py`](servers/helpdesk.py).
 
+Términos: [glosario común](../docs/glosario.md).
+
 ## Equivalencias con el vocabulario del examen
 
 | Examen | Aquí |

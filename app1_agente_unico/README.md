@@ -2,6 +2,8 @@
 
 Un agente, sus tools y su bucle: la base sobre la que se apoyan app2 y app3. El dominio es una mesa de ayuda TI con datos sintéticos (`datos/sinteticos/`).
 
+Términos: [glosario común](../docs/glosario.md).
+
 ## Ruta de lectura
 
 Cada módulo sigue el ciclo de `README.md` del proyecto: **predecir → ejecutar (correcto y `--anti`) → contrastar → responder la pregunta → anotar los fallos en tu `FALLOS.md` (`estado/<perfil>/`)**.
