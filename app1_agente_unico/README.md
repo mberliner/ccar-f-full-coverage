@@ -24,14 +24,9 @@ Cada módulo sigue el ciclo de `README.md` del proyecto: **predecir → ejecutar
 
 ### Antes de empezar
 
-Si llegas de cero, estos son los términos que usa el ejercicio:
+Términos comunes en el [glosario](../docs/glosario.md#el-agente-y-su-bucle): Messages API, tool, bucle agéntico, iteración, `stop_reason`, historial. Lo propio de este módulo:
 
 - **El sistema:** un agente de mesa de ayuda TI con datos sintéticos. Recibe un ticket y tiene que redactar una respuesta. El modelo no toca los datos: solo puede pedirle al código que ejecute *tools*.
-- **Tool:** una función que el código ofrece al modelo, con nombre, descripción y parámetros. El modelo decide cuándo pedirla y con qué datos; el código la ejecuta y devuelve el resultado.
-- **Bucle agéntico:** el código envía el historial al modelo. El modelo responde con texto o pidiendo tools. El código ejecuta las tools, añade sus resultados al historial y vuelve a preguntar. Se repite hasta que el modelo termina.
-- **Iteración:** una vuelta del bucle, es decir, una petición al modelo. En una iteración el modelo puede pedir varias tools a la vez, así que iteraciones y llamadas a tools no son lo mismo.
-- **`stop_reason`:** campo de cada respuesta que dice por qué se detuvo el modelo. Puede tener varios valores, y el bucle lo consulta para decidir qué hacer a continuación.
-- **Historial:** la lista de mensajes que se reenvía completa en cada petición. El modelo no recuerda nada entre peticiones si no está en el historial.
 
 ### Las tres tools del ejercicio
 
@@ -51,9 +46,11 @@ Además de la versión correcta, el módulo trae variantes construidas mal a pro
 - **`sin_historial`:** en cada petición solo se envía el mensaje inicial, sin los resultados de las tools anteriores.
 - **`arbol_fijo`:** un «árbol de decisión» fijo, es decir, una secuencia de pasos que decide el código y no el modelo. No hay bucle: el código llama siempre a `get_ticket`, `get_user` y `search_kb`, en ese orden y con los datos del ticket, y después pide una sola respuesta al modelo.
 
-La salida muestra la credencial y las versiones (§11.1), el modelo y el presupuesto con su origen, cada iteración con su `stop_reason` y sus tools, y la causa de la parada.
+La salida muestra la credencial detectada y las versiones, el modelo y el presupuesto con su origen, cada iteración con su `stop_reason` y sus tools, y la causa de la parada.
 
-**Predice antes de ejecutar** (con tus palabras; no hay un número que acertar):
+### Predice antes de ejecutar
+
+Con tus palabras; no hay un número que acertar:
 
 1. ¿Qué valor de `stop_reason` indica que el modelo pide tools y cuál que ha terminado? ¿Qué debería hacer el código con cualquier otro valor?
 2. De `get_ticket`, `get_user` y `search_kb`, ¿cuáles necesitan el resultado de otra y cuáles podrían pedirse a la vez?
@@ -69,7 +66,14 @@ uv run python app1_agente_unico/01_bucle_manual.py --anti texto     # o tope, te
 uv run python app1_agente_unico/01_bucle_manual.py --budget 0.05    # prueba barata (el tope solo baja)
 ```
 
-**Qué observar:**
+**Ejecución ligera:** las variantes se prueban de forma determinista sin modelo (`tests/test_app1_01_bucle_manual.py`); ejecutar sirve para ver el bucle con tu modelo.
+
+### Qué observar
+
+La causa de la parada de cada variante y, en la correcta, cuántas iteraciones hubo y qué tools se pidieron en cada una.
+
+<details>
+<summary>Resultado de referencia (ábrelo después de contrastar tu predicción)</summary>
 
 | Variante | Parada | Qué se rompe |
 | :--- | :--- | :--- |
@@ -90,6 +94,7 @@ uv run python app1_agente_unico/01_bucle_manual.py --budget 0.05    # prueba bar
 | Las iteraciones son como mucho las llamadas más una | |
 
 La variabilidad entre ejecuciones es parte de la lección: según la ejecución, el modelo puede no escribir texto junto a sus llamadas, y entonces `texto_asistente` no corta. Las variantes se prueban de forma determinista en `tests/test_app1_01_bucle_manual.py`.
+</details>
 
 ### Pregunta tipo examen
 
@@ -110,6 +115,54 @@ Un agente de soporte construido con la Messages API a veces deja tareas a medias
 
 ## 02 · Tools integradas
 
+### Antes de empezar
+
+Términos comunes en el [glosario](../docs/glosario.md): Agent SDK, tool, tools integradas, anti-patrón, `--repeat`, `--budget`. Lo propio de este módulo:
+
+- **El sistema:** el agente ya no atiende tickets: explora un repositorio. Es `repo_mesa/`, un paquete Python pequeño de la mesa de ayuda (generado por `datos/generar_sinteticos.py`), y el agente trabaja sobre una **copia temporal** que se crea de nuevo para cada petición: `Edit` y `Write` escriben en la copia y los datos sintéticos originales no se tocan nunca. Solo tiene tools integradas del Agent SDK, aprobadas sin preguntar (`permission_mode="dontAsk"`).
+- **Cuatro partes independientes** (`--parte`), cada una con su petición. `--anti` solo vale con la parte a la que pertenece.
+- **Ancla (`old_string`):** el texto que `Edit` busca en el archivo para sustituirlo por `new_string`.
+- **Módulo *wrapper* (reexportación):** un módulo que importa una función y la ofrece con otro nombre (`from x import f as g`). Quien importa desde el *wrapper* usa el nombre nuevo y nunca escribe el original. En `repo_mesa/`, `api.py` reexporta `calcular_sla` con otro nombre, y otro módulo la reimporta con un tercero.
+- **Punto de entrada:** el archivo por el que empieza un flujo (la función que se llama desde fuera) y desde el que se siguen sus imports.
+- **`[comprobación]`:** lo que el módulo calcula en código para contrastar la respuesta. Los llamadores esperados salen de analizar el código con `ast` (siguiendo los alias encadenados y sin contar la definición ni la reexportación), los tests esperados de buscar `test_*.py`, y en `edicion` se compara el archivo final con el esperado.
+
+### Las tools del ejercicio
+
+| Tool | Qué recibe | Qué devuelve |
+| :--- | :--- | :--- |
+| `Grep` | un patrón (expresión regular) y, si se quiere, una ruta o un filtro de archivos | las líneas o los archivos cuyo **contenido** casa con el patrón |
+| `Glob` | un patrón de ruta, como `**/test_*.py` | los archivos cuya **ruta** casa con el patrón |
+| `Read` | la ruta de un archivo | su contenido completo, con números de línea |
+| `Write` | una ruta y el contenido | escribe el archivo entero: lo crea o lo sustituye |
+| `Edit` | una ruta, `old_string` y `new_string` | el archivo con el ancla sustituida; si el ancla no aparece exactamente una vez, un error |
+
+`busqueda`, `incremental` y `wrapper` tienen `Read`, `Grep` y `Glob` (nunca `Write` ni `Edit`); `edicion` tiene `Read`, `Write`, `Edit` y `Grep`.
+
+### El ejercicio
+
+Qué se le pide al agente en cada parte y qué cambia en su variante `--anti`:
+
+- **`busqueda`:** dos peticiones: en qué archivo se lanza el error «SLA vencido para…» y la lista de todos los archivos de tests.
+  - **`sin_grep`:** las mismas peticiones, con `Grep` quitado de la lista de tools; le quedan `Read` y `Glob`.
+- **`incremental`:** explicar cómo se calcula el SLA de un ticket, citando los archivos que intervienen.
+  - **`leer_todo`:** el prompt añade «Antes de responder, lee todos los archivos .py del repositorio».
+- **`wrapper`:** encontrar todos los usos de `calcular_sla` y listar los archivos que la llaman. El *system prompt* de la variante correcta dice que, si una función se reexporta con otro nombre, primero se identifican todos los nombres exportados y después se busca cada uno.
+  - **`solo_nombre`:** el *system prompt* dice en su lugar que busque solo el nombre original con `Grep` y liste los archivos que lo contienen.
+- **`edicion`** (sin `--anti`): `config.py` tiene dos asignaciones `TIMEOUT = 30` y hay que cambiar solo la segunda (la del cliente de notificaciones) a 60. El prompt pide un único `Edit` con `old_string` exactamente `TIMEOUT = 30` y, si no funciona, deja libre cómo resolverlo: no nombra `Read` ni `Write`. La comprobación mira el archivo final, no el camino, y registra qué tools usó el agente para llegar a él.
+
+La salida muestra `[contexto]`, cada llamada con su resultado y, al final de cada petición, `[medida]` (llamadas por tool, número de `Read` y coste) y `[comprobación]` (calculada en código, no leída del texto del modelo).
+
+### Predice antes de ejecutar
+
+Con tus palabras; no hay un número que acertar:
+
+1. `busqueda`: de las dos preguntas, ¿cuál es una búsqueda dentro del contenido de los archivos y cuál una búsqueda por su ruta, y qué tool corresponde a cada una? Con `--anti sin_grep`, ¿qué camino le queda para dar con el mensaje de error, y cómo crecería su número de `Read` con el tamaño del repositorio?
+2. `incremental`: ¿por qué clase de archivo tiene sentido empezar, y qué decide qué se lee después? Frente a `leer_todo`, ¿qué esperas que cambie más: la calidad de la explicación, el número de `Read` o el coste?
+3. `wrapper`: `calcular_sla` tiene llamadores que nunca escriben ese nombre. ¿Qué llamadores no puede encontrar, por construcción, una búsqueda del nombre original? ¿Esperas que la respuesta de `solo_nombre` avise de que le faltan, y por qué?
+4. `edicion`: el ancla `TIMEOUT = 30` aparece dos veces. Si el `Edit` pedido falla, ¿qué caminos tiene el agente con sus tools para cambiar solo la segunda, y qué riesgo corre cada uno? ¿Qué sería un error volver a intentar?
+
+### Ejecutar
+
 ```bash
 uv run python app1_agente_unico/02_tools_integradas.py --parte busqueda                    # Grep y Glob
 uv run python app1_agente_unico/02_tools_integradas.py --parte busqueda --anti sin_grep
@@ -119,18 +172,14 @@ uv run python app1_agente_unico/02_tools_integradas.py --parte edicion
 uv run python app1_agente_unico/02_tools_integradas.py --parte wrapper --repeat 3 --budget 0.10   # prueba barata
 ```
 
-Mismo agente que en `01`, ahora con el Agent SDK y sus tools integradas (`Read`, `Write`, `Edit`, `Grep`, `Glob`). Trabaja sobre una **copia temporal** de `repo_mesa/` (un paquete pequeño de la mesa de ayuda, generado por `datos/generar_sinteticos.py`): `Edit` y `Write` escriben en la copia y los datos sintéticos originales no se tocan nunca. `--anti` solo vale con la parte a la que pertenece.
+**Ejecución ligera:** las funciones de comprobación se prueban sin modelo; ejecutar sirve para ver qué tools elige el agente en cada parte.
 
-La salida muestra `[contexto]`, cada llamada con su resultado y, al final de cada petición, `[medida]` (llamadas por tool, número de `Read` y coste) y `[comprobación]` (calculada en código, no leída del texto del modelo).
+### Qué observar
 
-**Predice antes de ejecutar:**
+Por parte, qué tools usa el agente y cuántos `Read` hace; en `wrapper`, cuántos de los llamadores esperados encuentra (`[comprobación]`); en `edicion`, si algún `Edit` devolvió error y cómo quedó el archivo.
 
-1. `busqueda`: ¿qué tool usará para localizar el mensaje de error y cuál para listar los tests? ¿Cuántos `Read` hará? Con `--anti sin_grep` no tiene `Grep`: ¿qué hará en su lugar y cuántos `Read` más le costará?
-2. `incremental`: ¿por qué archivo empezará y por qué ese? ¿Cuántos `Read` hará la variante correcta frente a `leer_todo`, y cambiará la calidad de la explicación o solo el coste?
-3. `wrapper`: `calcular_sla` tiene llamadores que nunca escriben ese nombre. ¿Cuántos de los 4 encontrará cada variante, y qué dirá `solo_nombre` sobre los que le faltan?
-4. `edicion`: el ancla `TIMEOUT = 30` aparece dos veces. ¿Qué devolverá el primer `Edit`? ¿Con qué tool se recuperará el agente y qué riesgo corre si reescribe el archivo entero?
-
-**Qué observar:**
+<details>
+<summary>Resultado de referencia (ábrelo después de contrastar tu predicción)</summary>
 
 | Parte / variante | Señal | Qué se rompe |
 | :--- | :--- | :--- |
@@ -149,6 +198,7 @@ Notas:
   - En las 3 recuperaciones observadas, el modelo usó un segundo `Edit` con más contexto y nunca `Write`. `[comprobación]` indica qué camino tomó.
 - **`busqueda`:** la primera pregunta localiza el mensaje de error «SLA vencido para…» y no los llamadores de la función, porque estos son el reto de `wrapper` (TS 2.5-S5).
 - **Variabilidad:** con un modelo capaz, `sin_grep` o `leer_todo` pueden salir casi iguales en un repositorio de este tamaño. Lo estable es el comprobador de `wrapper` y el fallo de `Edit`. Usa `--repeat` para ver tasas. Las funciones de comprobación se prueban sin modelo en `tests/test_app1_02_tools_integradas.py`.
+</details>
 
 ### Pregunta tipo examen
 
@@ -169,26 +219,85 @@ Un agente de mantenimiento debe encontrar todos los llamadores de `process_refun
 
 ## 03 · Servidor MCP: descripciones de tools
 
-```bash
-uv run python app1_agente_unico/03_servidor_mcp.py                          # correcta
-uv run python app1_agente_unico/03_servidor_mcp.py --anti minimas           # dos tools solapadas de una línea
-uv run python app1_agente_unico/03_servidor_mcp.py --anti palabra_clave     # prompt con una regla por palabra clave
-uv run python app1_agente_unico/03_servidor_mcp.py --anti nombre_enganoso   # la verificación se llama como una tool de tickets
-uv run python app1_agente_unico/03_servidor_mcp.py --anti minimas --rol-modelo enforcement   # Haiku 4.5, ~15× más caro
-uv run python app1_agente_unico/03_servidor_mcp.py --repeat 3 --budget 0.15 # tasa en 18 peticiones
-```
+### Antes de empezar
 
-Seis peticiones de mesa de ayuda (dos sobre tickets y cuatro sobre artículos de la base de conocimiento), cada una con su tool esperada. Cada petición es una conversación nueva con `query()` y se registra la **primera** llamada a una tool del servidor `mesa` (`servers/mesa.py`, familia `routing`). La salida da, por petición, la tool esperada y la elegida, y al final la tasa de acierto.
+Términos comunes en el [glosario](../docs/glosario.md): tool, MCP, servidor en proceso, *system prompt*, rol de modelo, `--repeat`. Lo propio de este módulo:
 
-**Predice antes de ejecutar:**
+- **El sistema:** el agente de la mesa de ayuda atiende seis peticiones, una a una. No tiene tools integradas: solo las del servidor MCP en proceso `mesa` (`servers/mesa.py`, familia `routing`), así que para elegir solo cuenta con el nombre, la descripción y los parámetros de cada tool. Cada petición es una conversación nueva con `query()`, sin historial previo.
+- **Qué se mide:** de cada petición se registra la **primera** llamada a una tool de `mesa` y se compara con la tool esperada. La tasa de acierto es cuántas coinciden; una petición sin ninguna llamada cuenta como fallo.
+- **Enrutamiento (*routing*):** elegir qué tool atiende una petición. Elegir otra distinta de la adecuada es un *misrouting*.
+- **`--rol-modelo`:** elige el rol de modelo del arnés con el que se ejecuta (`agent`, por defecto, o `enforcement`); el modelo concreto de cada rol sale de `.env`.
 
-1. Con la variante correcta y sus cuatro tools, ¿qué tasa de acierto esperas? Si alguna petición fallara, ¿qué tendría que tener para confundir al modelo?
+### Las tools del ejercicio
+
+Variante correcta (también `palabra_clave` y, con un nombre cambiado, `nombre_enganoso`). Cada descripción dice el propósito, el formato de la entrada con un ejemplo, los casos borde y en qué se diferencia de las otras:
+
+| Tool | Qué recibe | Qué devuelve |
+| :--- | :--- | :--- |
+| `extract_ticket_facts` | `ticket_id` (`TCK-NNNN`) | usuario, categoría, estado, fecha, importe en EUR y texto original del ticket; un ID desconocido, un error de validación |
+| `extract_article_steps` | `article_id` (`KB-NNN`) | el título y los pasos del artículo como lista ordenada |
+| `summarize_article` | `article_id` (`KB-NNN`) | el título y una frase de resumen (la primera del artículo) |
+| `verify_claim_against_article` | `claim` (la afirmación) y `article_id` | `supported` (verdadero o falso) y los términos coincidentes; compara palabras, no significado |
+
+Variante `minimas`:
+
+| Tool | Qué recibe | Qué devuelve |
+| :--- | :--- | :--- |
+| `analyze_content` | `content_id` | descripción «Analiza contenido.»; solo atiende IDs de tickets y con cualquier otro devuelve un error de validación |
+| `analyze_document` | `document_id` | descripción «Analiza un documento.»; solo atiende IDs de artículos y con cualquier otro devuelve un error de validación |
+
+Las descripciones de `minimas` no dicen qué tipo de ID atiende cada una.
+
+### El ejercicio
+
+Las seis peticiones y su tool esperada en la variante correcta:
+
+| Petición | Tool esperada |
+| :--- | :--- |
+| los datos (usuario, estado y fecha) de un ticket | `extract_ticket_facts` |
+| la categoría y el importe de otro ticket | `extract_ticket_facts` |
+| los pasos que hay que seguir «según el documento KB-109» | `extract_article_steps` |
+| un resumen de una frase del «artículo KB-114» | `summarize_article` |
+| si una afirmación es cierta «según el documento KB-114» | `verify_claim_against_article` |
+| verificar con KB-112 una afirmación | `verify_claim_against_article` |
+
+Qué cambia en el código de cada variante `--anti`:
+
+- **`minimas`:** el servidor solo ofrece las dos tools genéricas de una línea. La tool esperada pasa a ser `analyze_content` para los tickets y `analyze_document` para los artículos.
+- **`palabra_clave`:** las cuatro tools buenas, con sus descripciones, y el *system prompt* añade «Si la petición menciona un documento, usa siempre summarize_article».
+- **`nombre_enganoso`** (variante propia, sin respaldo en la guía): `verify_claim_against_article` pasa a llamarse `get_ticket_status`, con la misma descripción, los mismos parámetros y el mismo código. La tool esperada para verificar sigue siendo esa, con su nombre nuevo.
+
+La salida da, por petición, la tool esperada y la elegida, y al final la tasa de acierto y las peticiones falladas.
+
+### Predice antes de ejecutar
+
+Con tus palabras; no hay un número que acertar:
+
+1. Con la variante correcta y sus cuatro tools, ¿en qué rango esperas el acierto (todas, casi todas, la mitad…)? Si alguna petición fallara, ¿qué tendría que tener para confundir al modelo?
 2. Con `--anti minimas` solo hay `analyze_content` y `analyze_document`, de una línea cada una. ¿En qué peticiones podrá el modelo guiarse por las palabras de la propia petición, y en cuáles no tendrá ninguna pista?
 3. Con `--anti palabra_clave` las descripciones son las buenas y el prompt añade una regla. Cuando las dos cosas apuntan a tools distintas, ¿cuál crees que pesará más? ¿Qué peticiones lo pondrán a prueba?
 4. ¿Qué variante esperas más estable entre repeticiones, y por qué?
 5. Con `--anti nombre_enganoso` la tool de verificación se llama `get_ticket_status`, pero su descripción dice que verifica afirmaciones. ¿Se guiará el modelo por el nombre o por la descripción? ¿Cambiaría con un modelo más débil?
 
-**Qué observar:**
+### Ejecutar
+
+```bash
+uv run python app1_agente_unico/03_servidor_mcp.py                          # correcta
+uv run python app1_agente_unico/03_servidor_mcp.py --anti minimas           # dos tools solapadas de una línea
+uv run python app1_agente_unico/03_servidor_mcp.py --anti palabra_clave     # prompt con una regla por palabra clave
+uv run python app1_agente_unico/03_servidor_mcp.py --anti nombre_enganoso   # la verificación se llama como una tool de tickets
+uv run python app1_agente_unico/03_servidor_mcp.py --anti minimas --rol-modelo enforcement   # Haiku 4.5, ~15× más caro en este módulo
+uv run python app1_agente_unico/03_servidor_mcp.py --repeat 3 --budget 0.15 # tasa en 18 peticiones
+```
+
+**Ejecución ligera:** los contratos de las tools y la medida de acierto se prueban sin modelo; ejecutar sirve para ver la tasa con tu modelo, y `--rol-modelo` permite repetirla con el otro rol.
+
+### Qué observar
+
+La tasa de acierto y las peticiones falladas de cada variante; si repites con `--rol-modelo`, cómo cambian con el otro modelo.
+
+<details>
+<summary>Resultado de referencia (ábrelo después de contrastar tu predicción)</summary>
 
 | Variante | Qué cambia | Haiku 5.5 (`--rol-modelo agent`, por defecto) | Haiku 4.5 (`--rol-modelo enforcement`) |
 | :--- | :--- | :--- | :--- |
@@ -205,6 +314,7 @@ Notas:
 - **`nombre_enganoso` (variante propia, sin respaldo en la guía): sin señal.** Con Haiku 5.5 (30/30) y con Haiku 4.5 (24/24) gana la descripción: el modelo no evitó la tool de verificación por llamarse como una de tickets, ni usó `get_ticket_status` donde no tocaba. Con una sonda desechable y solo con Haiku 4.5 se probaron dos casos más duros, renombrar la verificación como `delete_ticket` y cruzar los nombres de `extract_article_steps` y `summarize_article`: 24/24 en ambos. Con estos modelos la descripción pesa más que el nombre, en la línea de TS 2.1-K1 (la descripción es el mecanismo principal de selección). No prueba que el nombre no importe con otros modelos ni con descripciones pobres. La guía no describe este fallo: pide renombrar para quitar solapamientos (TS 2.1-S2), y esta variante hace lo contrario; que un nombre engañoso desvíe al modelo era una hipótesis propia, y aquí no se confirmó.
 - **Tool esperada con `minimas`:** como solo hay dos tools, se espera «tickets → `analyze_content`, artículos → `analyze_document`». Es una convención del módulo, no algo que diga la guía. Para que equivocarse tenga consecuencias, cada tool atiende solo ese tipo de ID y la otra devuelve un error de validación; antes las dos hacían lo mismo y un «fallo» de enrutamiento no costaba nada (revisión independiente).
 - Los contratos de cada tool (entrada y salida) y la medida de acierto se prueban sin modelo en `tests/test_app1_servers_mesa.py` y `tests/test_app1_03_servidor_mcp.py`.
+</details>
 
 ### Pregunta tipo examen
 
@@ -225,6 +335,50 @@ Un agente de soporte dispone de dos tools, `analyze_content` y `analyze_document
 
 ## 04 · Errores estructurados
 
+### Antes de empezar
+
+Términos comunes en el [glosario](../docs/glosario.md): error estructurado, tool, MCP, *system prompt*, registro de la ejecución (`RunRecord`), `--repeat`. Lo propio de este módulo:
+
+- **El sistema:** un único mensaje pide al agente cinco tareas del caso de un ticket, y cada tarea usa una tool del servidor `mesa` (familia `errores`). Cuatro de las cinco tools fallan a propósito, cada una de una forma distinta. El agente no tiene tools integradas y el *system prompt* no dice qué hacer con cada error: solo que, si una tool falla, decida qué hacer y explique el resultado de cada tarea. Cada ejecución empieza con el estado del servidor a cero.
+- **`is_error`:** la marca del resultado de una tool que dice que la llamada falló. El fallo llega como un resultado más, no como una excepción.
+- **`errorCategory`:** el tipo de fallo en los errores de este proyecto: `transient` (pasajero, como un tiempo de espera agotado), `validation` (entrada mal formada o que no existe), `business` (una regla de negocio lo impide) o `permission` (el rol no tiene permiso).
+- **`isRetryable`:** campo del error que dice si tiene sentido repetir la misma llamada.
+- **Reintento idéntico:** una llamada con exactamente la misma entrada que otra que ya falló. Corregir la entrada (por ejemplo, el formato de un ID) no cuenta como reintento. Un **reintento inútil** es uno idéntico sobre una tool cuyo fallo no se arregla repitiendo, es decir, sobre cualquiera menos la del histórico.
+- **Vacío válido:** una consulta que funciona y no encuentra nada, a diferencia de una que no ha podido consultar.
+
+### Las tools del ejercicio
+
+| Tool | Qué recibe | Qué devuelve |
+| :--- | :--- | :--- |
+| `fetch_ticket_history` | `ticket_id` | los eventos del ticket (creación y estado). La primera llamada válida de cada ejecución falla con un tiempo de espera (`transient`, reintentable); a partir de la segunda, responde |
+| `get_user_profile` | `user_id` (su descripción da el formato `EMP-1001`) | el perfil de la persona; un ID mal formado o inexistente, un error `validation` |
+| `reassign_license` | `user_id`, `license` y `seats` (puestos) | la reasignación hecha; con más de 10 puestos, un error `business` no reintentable cuyo mensaje explica el cupo y a quién pedir una ampliación |
+| `export_audit_log` | `scope` | siempre un error `permission` no reintentable cuyo mensaje dice a quién pedir la exportación |
+| `search_tickets_by_user` | `user_id` | la lista de IDs de sus tickets; si no tiene ninguno, una lista vacía, que no es un error |
+
+### El ejercicio
+
+Las cinco tareas del mensaje: el histórico del ticket `TCK-4001`; el perfil de la persona con ID «1001» (sin el prefijo `EMP-`, mal formado a propósito); reasignar 12 puestos de la licencia «editor» a `EMP-1001`; exportar el registro de auditoría completo, y la lista de tickets de `EMP-9999`.
+
+Qué cambia en el código de cada variante `--anti`:
+
+- **`generico`:** las mismas tools con los mismos fallos, pero todo error se devuelve como «Operation failed», con la marca de error y sin categoría, sin `isRetryable` y sin explicación.
+- **`fallo_como_vacio`:** los errores siguen estructurados salvo el tiempo de espera del histórico, que se devuelve como un resultado correcto con la lista de eventos vacía.
+
+La salida muestra, por tool, los reintentos idénticos (y cuántos son inútiles) y las categorías de error; si el transitorio llegó a recuperarse; y, sobre el histórico, si se reintentó tras recibirlo vacío (leído del registro) y si el texto final dice que no hay histórico (un detector de texto aproximado).
+
+### Predice antes de ejecutar
+
+Con tus palabras; no hay un número que acertar:
+
+1. Con la variante correcta, ¿esperas que el agente repita alguna llamada con la misma entrada? ¿Cuál tendría sentido repetir, y qué le dice que no repita las demás?
+2. ¿Cómo explicará el agente el fallo del cupo y el del permiso, y en qué se apoyará para distinguir uno de otro?
+3. El perfil se pide con «1001», un ID mal formado. ¿Llegará a producirse el error de validación? ¿De qué depende?
+4. Con `--anti generico` todos los errores dicen lo mismo. ¿Reintentará el agente algo que no tiene arreglo? ¿Y dejará de reintentar algo que sí lo tenía?
+5. Con `--anti fallo_como_vacio`, ¿qué dirá el agente del histórico del ticket, y habrá un segundo intento?
+
+### Ejecutar
+
 ```bash
 uv run python app1_agente_unico/04_errores_estructurados.py                          # correcta
 uv run python app1_agente_unico/04_errores_estructurados.py --anti generico          # todos los errores: «Operation failed»
@@ -232,19 +386,14 @@ uv run python app1_agente_unico/04_errores_estructurados.py --anti fallo_como_va
 uv run python app1_agente_unico/04_errores_estructurados.py --repeat 5 --budget 0.25
 ```
 
-Un único mensaje pide cinco tareas al servidor `mesa` (familia `errores`): el histórico de un ticket (**tiempo de espera** la primera vez), el perfil de «1001» (ID mal formado: **validación**), reasignar 12 puestos de licencia (**regla de negocio**: el cupo es 10), exportar el registro de auditoría (**permisos**) y listar los tickets de `EMP-9999` (una **búsqueda sin coincidencias**). El prompt del sistema no dice qué hacer con cada error: lo decide el agente con lo que el error le cuenta.
+**Ejecución ligera:** la forma de cada error y las señales sobre el registro se prueban sin modelo; ejecutar sirve para ver qué hace el agente con cada error (reintentar, corregir, explicar).
 
-La salida muestra los reintentos idénticos por tool, cuántos son inútiles, las categorías de error por tool y si el transitorio se recuperó.
+### Qué observar
 
-**Predice antes de ejecutar:**
+Por variante, qué tools se repiten con la misma entrada y cuántos de esos reintentos son inútiles, si el transitorio se recupera y qué dice el texto final del histórico.
 
-1. Con la variante correcta, ¿qué tools se llamarán más de una vez y por qué esas?
-2. ¿Cómo explicará el agente el fallo del cupo y el del permiso, y en qué se apoyará para distinguir uno de otro?
-3. El perfil se pide con «1001», un ID mal formado. ¿Llegará a producirse el error de validación? ¿De qué depende?
-4. Con `--anti generico` todos los errores dicen lo mismo. ¿Reintentará el agente algo que no tiene arreglo? ¿Y dejará de reintentar algo que sí lo tenía?
-5. Con `--anti fallo_como_vacio`, ¿qué dirá el agente del histórico del ticket, y habrá un segundo intento?
-
-**Qué observar:**
+<details>
+<summary>Resultado de referencia (ábrelo después de contrastar tu predicción)</summary>
 
 | Variante | Reintentos | Qué se rompe |
 | :--- | :--- | :--- |
@@ -259,6 +408,7 @@ Notas:
 - **`isRetryable` frente a `retriable`:** la guía escribe `retriable: false` para la regla de negocio; el proyecto usa `isRetryable` en todos los errores. Con la regla de negocio, además, el mensaje explica la política para que el agente informe a la persona usuaria (TS 2.2-S2).
 - **Vacío válido:** la búsqueda de `EMP-9999` devuelve una lista vacía correcta, que no es un error. Lo que `fallo_como_vacio` rompe es lo contrario: un fallo de acceso disfrazado de lista vacía (TS 2.2-S4).
 - Las señales sobre el `RunRecord` (reintentos idénticos, categorías) se prueban sin modelo en `tests/test_app1_04_errores_estructurados.py`. «El texto dice que no hay histórico» es un detector aproximado (la revisión independiente encontró frases positivas que lo activaban y se corrigieron); las señales robustas salen del registro: «transitorio recuperado» e «histórico vacío aceptado sin reintento».
+</details>
 
 ### Pregunta tipo examen
 
@@ -279,6 +429,55 @@ Una tool MCP de reembolsos devuelve «Operation failed» ante cualquier fallo. E
 
 ## 05 · Scoping y `tool_choice`
 
+### Antes de empezar
+
+Términos comunes en el [glosario](../docs/glosario.md): scoping, `tool_choice`, Agent SDK, Messages API, iteración (turno), `stop_reason`, MCP. Lo propio de este módulo:
+
+- **El sistema:** dos partes independientes sobre la mesa de ayuda.
+  - **`scoping` (Agent SDK):** seis peticiones al agente, cada una en una conversación nueva, con solo las tools del servidor `mesa` (sin integradas). De cada petición se registra la primera llamada a una tool de `mesa`, si esa elección cambia entre repeticiones y el coste.
+  - **`tool_choice` (Messages API, con un bucle propio como el de `01`):** una misma petición con dos tools locales, enviada con tres valores distintos de `tool_choice`. De cada respuesta se imprime si empieza por texto o por una llamada a tool, y cuál.
+- **Alias (casi duplicado):** una tool con otro nombre que hace exactamente lo mismo que una de las cinco básicas y repite su descripción con otras palabras, como `lookup_ticket` para `get_ticket` o `get_employee` para `get_user`. En `scoping`, elegir un alias de la tool esperada cuenta como acierto.
+- **Carga diferida de definiciones (*tool search*):** un mecanismo que carga las definiciones de las tools bajo demanda en lugar de enviarlas todas. El módulo fija `ENABLE_TOOL_SEARCH=false` por precaución y la salida cuenta las cargas diferidas.
+- **Modos de `tool_choice` del ejercicio:** `auto`, `any` y el forzado de una tool concreta (`{"type": "tool", "name": "extract_ticket_metadata"}`). Qué garantiza cada uno es lo que se practica.
+
+### Las tools del ejercicio
+
+`scoping`, familia `acotado` (variante correcta):
+
+| Tool | Qué recibe | Qué devuelve |
+| :--- | :--- | :--- |
+| `get_ticket` | `ticket_id` (`TCK-NNNN`) | el ticket completo; un ID desconocido, un error |
+| `search_tickets` | `query`: palabras clave, una categoría o un ID de usuario (`EMP-NNNN`) | el total de tickets que coinciden y hasta 8 IDs |
+| `search_kb` | `query`: palabras clave o una categoría | el total de artículos que coinciden y hasta 8 IDs |
+| `get_article` | `article_id` (`KB-NNN`) | el artículo completo; un ID desconocido, un error |
+| `get_user` | `user_id` (`EMP-NNNN`) | la persona usuaria; un ID desconocido, un error |
+
+La familia `amplio` (`--anti amplio`) ofrece esas cinco más 13 alias: `lookup_ticket`, `fetch_ticket_details` y `get_ticket_status` (de `get_ticket`); `find_tickets` y `list_tickets_by_user` (de `search_tickets`); `query_kb`, `kb_lookup` y `find_kb_articles` (de `search_kb`); `read_article` y `get_kb_entry` (de `get_article`); `find_user`, `get_employee` y `lookup_user_profile` (de `get_user`).
+
+`tool_choice`:
+
+| Tool | Qué recibe | Qué devuelve |
+| :--- | :--- | :--- |
+| `extract_ticket_metadata` | `ticket_text`, el texto del ticket | la categoría y la urgencia (alta o normal), deducidas por palabras clave |
+| `search_kb` | `query`, palabras clave | hasta 3 artículos con su ID y su título |
+
+### El ejercicio
+
+- **`scoping`:** las seis peticiones piden los datos de un ticket, quién es una persona usuaria, leer completo el artículo KB-109, buscar artículos sobre la VPN, buscar tickets sobre la wifi de las salas de reuniones y listar los tickets de una persona. Cada una tiene una de las cinco tools como esperada.
+  - **`amplio`:** las mismas peticiones y el mismo *system prompt*, con las 18 tools en lugar de las 5.
+- **`tool_choice`** (sin `--anti`; se comparan los tres modos): una petición de opinión sobre el texto de un ticket («¿crees que este tipo de tickets suelen ser un problema grave?»). El código envía el modo elegido solo en el primer turno y `auto` en los siguientes, y el bucle termina según `stop_reason`, como en `01`.
+
+### Predice antes de ejecutar
+
+Con tus palabras; no hay un número que acertar:
+
+1. `scoping`: con 18 tools frente a 5, ¿qué esperas que cambie: el acierto, la tool elegida entre repeticiones, el coste? ¿Qué tendrían que tener las peticiones para que el acierto se resintiera?
+2. `tool_choice`: ante una petición de opinión, ¿qué modo deja al modelo contestar solo con texto? ¿Cuáles obligan a que la primera respuesta empiece por una tool? ¿Esperas que eso cambie entre repeticiones?
+3. Con `any`, ¿de qué depende qué tool se llame? Con la forzada, ¿cuál se llama, y qué puede hacer el modelo en los turnos siguientes, ya con `auto`?
+4. ¿Qué pasaría si `any` o la forzada se enviaran en **todos** los turnos?
+
+### Ejecutar
+
 ```bash
 uv run python app1_agente_unico/05_scoping_y_tool_choice.py --parte scoping                  # 5 tools
 uv run python app1_agente_unico/05_scoping_y_tool_choice.py --parte scoping --anti amplio    # 18 tools
@@ -286,20 +485,16 @@ uv run python app1_agente_unico/05_scoping_y_tool_choice.py --parte tool_choice 
 uv run python app1_agente_unico/05_scoping_y_tool_choice.py --parte scoping --repeat 5 --budget 0.20
 ```
 
-Dos partes independientes.
+**Ejecución ligera** en las dos partes: la petición por modo y el clasificador de la primera respuesta se prueban sin modelo. Ejecutar `tool_choice` sirve para ver con qué empieza la primera respuesta en cada modo, y `scoping`, el acierto, la consistencia y el coste por petición.
 
-**`scoping` (Agent SDK):** las mismas seis peticiones sobre el servidor `mesa` con la familia `acotado` (5 tools) o `amplio` (18: las mismas 5 más 13 alias casi iguales, como `lookup_ticket` o `get_employee`). Se mide el acierto de la primera llamada (un alias de la tool esperada cuenta como acierto), si la tool elegida cambia entre repeticiones y el coste. La carga diferida de definiciones (*tool search*) se fija en `ENABLE_TOOL_SEARCH=false` por precaución y la salida confirma `cargas diferidas=0`. En las sondas no se activó con ningún valor de la variable, así que no hay prueba de que `false` apague algo: solo de que aquí no interviene (`docs/hallazgos.md`).
+### Qué observar
 
-**`tool_choice` (Messages API, como `01`):** una misma petición de opinión sobre un ticket («¿crees que este tipo de tickets suelen ser un problema grave?») con `auto`, con `any` y con la tool `extract_ticket_metadata` forzada. En el primer turno va el modo elegido y en los siguientes `auto`, para que el modelo pueda enriquecer y responder. Se imprime con qué empieza cada respuesta.
+En `scoping`, el acierto, si la elección cambia entre repeticiones y el coste por petición con 5 y con 18 tools. En `tool_choice`, con qué empieza la primera respuesta en cada modo y qué pasa en el turno siguiente.
 
-**Predice antes de ejecutar:**
+<details>
+<summary>Resultado de referencia (ábrelo después de contrastar tu predicción)</summary>
 
-1. `scoping`: con 18 tools frente a 5, ¿qué esperas que cambie: el acierto, la tool elegida entre repeticiones, el coste? ¿Qué tendrían que tener las peticiones para que el acierto se resintiera?
-2. `tool_choice`: con `auto`, ¿cuántas respuestas empezarán por una tool? ¿Y con `any` y con la forzada?
-3. ¿Qué tool llamará `any`? ¿Y la forzada?
-4. ¿Qué pasaría si `any` o la forzada se enviaran en **todos** los turnos?
-
-**Qué observar (Haiku 5.5):**
+Haiku 5.5:
 
 | Parte / variante | Señal observada | Qué dice |
 | :--- | :--- | :--- |
@@ -312,10 +507,12 @@ Dos partes independientes.
 Notas:
 
 - **`scoping`:** la guía dice que 18 tools degradan la fiabilidad de selección; aquí no se vio en el acierto. Con Haiku 5.5 y con Haiku 4.5 (sonda: 18/18 y 18/18) las peticiones son claras y el modelo elige bien. Lo que sí se vio: más coste con 18 tools (+36 % con Haiku 5.5, +58 % con Haiku 4.5) y, con Haiku 4.5, una petición cuya tool cambió entre repeticiones (`get_user` o `get_employee`). Con peticiones más ambiguas o más tools, la degradación de acierto sería previsiblemente más fácil de provocar (hipótesis sin comprobar). En el examen manda la guía.
+- ***Tool search*:** `ENABLE_TOOL_SEARCH=false` se fija por precaución y la salida confirma `cargas diferidas=0`. En las sondas no se activó con ningún valor de la variable, así que no hay prueba de que `false` apague algo: solo de que aquí no interviene (`docs/hallazgos.md`).
 - **`auto`:** depende de la petición. Con «¿qué te parece?» o «¿es urgente?» Haiku 5.5 sí llamaba a la tool y el contraste no se veía; con una petición de opinión contesta con texto. Ese es el caso que `any` y el forzado resuelven.
 - **Un turno, no todos:** el modo forzado o `any` solo va en el primer turno. En todos los turnos, el modelo estaría obligado a llamar a una tool también después de recibir los resultados y no podría dar su respuesta final.
 - **En producción (no evaluable):** `any` y la forzada devuelven 400 en Sonnet 5.5 (comprobado) y, según la documentación del repositorio de estudio, en Opus 5.5 y Fable 5.1. Haiku 5.5 y Haiku 4.5 las aceptan. En el examen manda la guía.
 - La petición por modo, la secuencia forzado → `auto` y el clasificador de la primera respuesta se prueban sin modelo en `tests/test_app1_05_scoping_y_tool_choice.py`.
+</details>
 
 ### Pregunta tipo examen
 
@@ -336,21 +533,40 @@ Un flujo de soporte necesita extraer los metadatos de cada ticket nuevo antes de
 
 ## 06 · Configuración MCP
 
-```bash
-uv run python app1_agente_unico/06_mcp_config.py --parte conexion                          # tres servidores y el token
-uv run python app1_agente_unico/06_mcp_config.py --parte recursos                          # catálogo como resource
-uv run python app1_agente_unico/06_mcp_config.py --parte recursos --anti sin_recursos
-uv run python app1_agente_unico/06_mcp_config.py --parte descripcion [--anti descripcion_minima]
-uv run python app1_agente_unico/06_mcp_config.py --parte recursos --repeat 4 --budget 0.20
-```
+### Antes de empezar
 
-El módulo genera, en una copia temporal (el `cwd` del agente), un `.mcp.json` con dos servidores stdio: `catalogo` (`servers/catalogo_stdio.py`) e `inventario`. Los lanza con `uv run --no-sync --project <raíz>` y entrega el token con `"env": {"CATALOGO_TOKEN": "${CCARF_DEMO_TOKEN}"}`: el archivo lleva la **variable**, no el valor, y el módulo pone un valor sintético en el entorno del proceso. El agente se ejecuta con `setting_sources=["project"]` (la excepción al aislamiento: lee el `.mcp.json` del `cwd`, no el del repositorio ni la configuración de usuario).
+Términos comunes en el [glosario](../docs/glosario.md): MCP, servidor en proceso / stdio, resource, `.mcp.json`, tools integradas, arnés. Lo propio de este módulo:
 
-Tres partes:
+- **El sistema:** el agente de la mesa de ayuda se conecta a servidores MCP que son programas aparte. En cada ejecución el módulo crea una copia temporal (el `cwd` del agente) y escribe en ella un `.mcp.json` con dos servidores stdio: `catalogo` (`servers/catalogo_stdio.py`) e `inventario` (`servers/inventario_stdio.py`). Los lanza con `uv run --no-sync --project <raíz>` y entrega el token con `"env": {"CATALOGO_TOKEN": "${CCARF_DEMO_TOKEN}"}`: el archivo lleva la **variable**, no el valor, y el módulo pone un valor sintético en el entorno del proceso. El agente se ejecuta con `setting_sources=["project"]` (la excepción al aislamiento: lee el `.mcp.json` del `cwd`, no el del repositorio ni la configuración de usuario).
+- **Ámbito de un servidor MCP:** dónde se declara. El de proyecto es el `.mcp.json` del repositorio, que viaja con git; el de usuario se guarda en `~/.claude.json`, en tu máquina, y vale para todos tus proyectos.
+- **Expansión de variables (`${VAR}`):** al conectar el servidor, `${VAR}` se sustituye por el valor de esa variable en el entorno del proceso.
+- **`setting_sources`:** qué configuraciones de Claude Code carga el agente. El arnés la deja vacía para aislarlo; `["project"]` carga solo la del ámbito de proyecto del `cwd`.
+- **`ListMcpResourcesTool` y `ReadMcpResourceTool`:** las tools del SDK que listan y leen los resources de los servidores conectados.
+- **Llamada exploratoria:** en la parte `recursos`, cada llamada a `search_kb` o `get_article` del catálogo, es decir, buscar o leer por ID para averiguar qué hay.
 
-- **`conexion`:** además de los dos servidores del `.mcp.json`, el servidor en proceso `mesa`. La petición usa una tool de cada uno. La salida muestra las tools por servidor, si el servidor recibió el token (solo dice sí o no, nunca el valor) y el comando de **ámbito de usuario** (`claude mcp add --scope user …`), que se imprime y no se ejecuta: `~/.claude.json` es personal.
-- **`recursos`:** «¿qué artículos hay en el catálogo?» con el catálogo expuesto como *resource* (`kb://catalogo`) frente a `--anti sin_recursos`. Se cuentan las llamadas exploratorias (`search_kb` y `get_article`).
-- **`descripcion`:** los artículos están además como archivos en el `cwd`, y el agente tiene `Grep` y `Read` junto a la tool MCP. Se cuentan `Grep` frente a `search_kb`. Con `--anti descripcion_minima` la descripción de `search_kb` es una línea.
+### Las tools del ejercicio
+
+| Servidor | Tool o resource | Qué recibe | Qué devuelve |
+| :--- | :--- | :--- | :--- |
+| `catalogo` | `search_kb` | `query` y, si se quiere, `include_superseded` | hasta 8 artículos ordenados por relevancia (`score`), sin los obsoletos salvo que se pidan, y cuántos obsoletos excluyó |
+| `catalogo` | `get_article` | `article_id` (`KB-NNN`) | el artículo completo; un ID desconocido, un error de validación |
+| `catalogo` | `token_status` | nada | solo si el servidor recibió `CATALOGO_TOKEN` (sí o no), nunca su valor |
+| `catalogo` | resource `kb://catalogo` | — | el índice de todos los artículos (ID, título y categoría) |
+| `catalogo` | resources `kb://articulos/<ID>` | — | cada artículo |
+| `inventario` | `stock_equipo` | `tipo` (`portatil`, `monitor`, `movil` o `periferico`) | las unidades disponibles, de una tabla fija; un tipo desconocido, 0 |
+| `mesa` (en proceso) | las cinco tools de la familia `acotado` de `05` | | |
+
+La descripción completa de `search_kb` detalla el ranking, el filtro de obsoletos (`superseded_by`) y sus salidas; la mínima es «Busca en la base de conocimiento.».
+
+### El ejercicio
+
+Tres partes, cada una con su petición y sus tools. `--anti` solo vale con la parte a la que pertenece.
+
+- **`conexion`** (sin `--anti`): además de los dos servidores del `.mcp.json`, el servidor en proceso `mesa`. La petición pide expresamente una llamada a una tool de cada servidor: `token_status`, `stock_equipo` con `portatil` y `get_ticket`. La salida muestra las tools por servidor, si el servidor recibió el token (solo dice sí o no, nunca el valor) y el comando de **ámbito de usuario** (`claude mcp add --scope user …`), que se imprime y no se ejecuta: `~/.claude.json` es personal.
+- **`recursos`:** «¿qué artículos hay en el catálogo?», pidiendo los IDs y títulos de todos. En la variante correcta el agente tiene las dos tools de resources y el *system prompt* añade una frase que dice que los catálogos están expuestos como resources y con qué tools consultarlos. Se cuentan las llamadas exploratorias (`search_kb` y `get_article`) y las de resources.
+  - **`sin_recursos`:** ni las tools de resources ni esa frase; quedan las tools de `catalogo` e `inventario`.
+- **`descripcion`:** «¿qué artículo vigente explica cómo arreglar una VPN inestable desde casa?», pidiendo su ID y los pasos. Los artículos están además como archivos `.md` en `articulos/` del `cwd` (con su línea `superseded_by`), y el agente tiene `Grep` y `Read` junto a `search_kb` y `get_article` del catálogo. El *system prompt* no menciona esos archivos. Se cuentan `Grep` frente a `search_kb`.
+  - **`descripcion_minima`:** el `.mcp.json` pasa `CATALOGO_DESCRIPCION=minima` al servidor, y la descripción de `search_kb` es una línea.
 
 **Comunitario frente a propio (TS 2.4-S4), sin código:**
 
@@ -359,14 +575,35 @@ Tres partes:
 | estándar y ya resuelta (Jira, GitHub, Slack) | **comunitario** | se mantiene fuera y se actualiza con su proyecto |
 | un flujo de la mesa de ayuda (su catálogo, sus reglas, sus datos) | **propio** | es el único que conoce el dominio y cuyo contrato debe mantener el equipo |
 
-**Predice antes de ejecutar:**
+### Predice antes de ejecutar
 
-1. `conexion`: ¿verás las tools de los tres servidores a la vez? ¿Qué prefijo llevan?
-2. `recursos`: sin avisar de que existen, ¿usará el agente los resources por su cuenta? ¿Cuántas llamadas exploratorias hará sin ellos?
+Con tus palabras; no hay un número que acertar:
+
+1. `conexion`: ¿verás las tools de los tres servidores a la vez? ¿Qué prefijo llevan? ¿Cómo sabrás que el token llegó sin ver su valor?
+2. `recursos`: si el agente tuviera las tools de resources pero nadie le avisara de que existen, ¿crees que las usaría por su cuenta? Sin resources, ¿cómo averiguará qué artículos hay, y esperas que necesite unas pocas llamadas exploratorias o decenas?
 3. `descripcion`: el agente tiene `Grep` y `search_kb` para lo mismo. ¿Qué crees que decidirá cuál usa: la descripción de la tool MCP, saber que los artículos están también como archivos, otra cosa? ¿Cambiará algo con la descripción de una línea?
 4. ¿Dónde pondrías un servidor experimental de una sola persona, y dónde uno que debe tener todo el equipo?
 
-**Qué observar (Haiku 5.5):**
+### Ejecutar
+
+```bash
+uv run python app1_agente_unico/06_mcp_config.py --parte conexion                          # tres servidores y el token
+uv run python app1_agente_unico/06_mcp_config.py --parte recursos                          # catálogo como resource
+uv run python app1_agente_unico/06_mcp_config.py --parte recursos --anti sin_recursos
+uv run python app1_agente_unico/06_mcp_config.py --parte descripcion [--anti descripcion_minima]
+uv run python app1_agente_unico/06_mcp_config.py --parte recursos --repeat 4 --budget 0.20
+```
+
+**Ejecución ligera** en las tres partes: el `.mcp.json` generado y los contadores se prueban sin modelo; ejecutar `recursos` sirve para ver cuánto explora el agente en cada variante.
+
+### Qué observar
+
+En `conexion`, las tools por servidor y `token_recibido`. En `recursos`, cuántas llamadas exploratorias y a resources hace cada variante, y su coste. En `descripcion`, cuántas veces usa `Grep` frente a `search_kb`.
+
+<details>
+<summary>Resultado de referencia (ábrelo después de contrastar tu predicción)</summary>
+
+Haiku 5.5:
 
 | Parte / variante | Señal observada | Qué dice |
 | :--- | :--- | :--- |
@@ -383,6 +620,7 @@ Notas:
 - **`init` puede traer la lista de tools incompleta:** en 2 de unas 8 ejecuciones, los servidores stdio constaban como conectados pero sus tools no estaban aún en `init`; el módulo lo avisa con `[aviso]`. Las llamadas funcionan igualmente.
 - **Sin aprobación:** con `setting_sources=["project"]` el SDK conecta los servidores de `.mcp.json` sin pedir aprobación; la CLI interactiva sí puede pedirla.
 - El `.mcp.json` generado, el comando de ámbito de usuario, los contadores y la agrupación de tools por servidor se prueban sin modelo en `tests/test_app1_06_mcp_config.py`.
+</details>
 
 ### Pregunta tipo examen
 

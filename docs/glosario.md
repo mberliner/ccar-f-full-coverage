@@ -14,6 +14,7 @@ Términos que usan los módulos de las tres apps y el arnés, para quien llega d
 - **Arnés (`harness/`):** código común que no enseña ninguna viñeta: construye las opciones aisladas del agente, impone el presupuesto, lee la configuración, registra lo que pasa en cada ejecución y permite probar hooks y tools sin modelo.
 - **Presupuesto (`max_budget_usd`):** tope de gasto en dólares de una ejecución con modelo. Al alcanzarlo, la ejecución se corta. En los módulos de la Messages API lo aplica el arnés.
 - **Rol de modelo:** nombre con el que el arnés elige qué modelo usar (`agent`, `coordinator`, `subagent`, `enforcement`). El modelo concreto de cada rol sale de `.env`.
+- **Ejecución obligatoria / ligera:** cómo se consume un módulo. En modo ligero (para cuando falta tiempo) se predice y se contrasta sobre el código, sus comentarios y el resultado de referencia plegado del `README.md`, sin ejecutar. Un módulo de **ejecución obligatoria** se ejecuta incluso en modo ligero, porque su lección es un resultado variable o temporal (una tasa, una latencia) que leer el código no transmite; uno de **ejecución ligera** se puede seguir sin ejecutar. Cada módulo lo indica en su sección «Ejecutar».
 - **Registro de la ejecución (`RunRecord`):** lo que el arnés recoge de una ejecución (llamadas a tools, quién las hizo, turnos, coste, denegaciones) para comprobarlo en código en lugar de leerlo del texto del modelo.
 
 ## El agente y su bucle
@@ -23,6 +24,7 @@ Términos que usan los módulos de las tres apps y el arnés, para quien llega d
 - **Agent SDK (`claude-agent-sdk`):** una biblioteca que trae el bucle hecho, tools integradas, hooks, permisos, sesiones y subagentes. La usan casi todos los módulos.
 - ***System prompt*:** las instrucciones generales que recibe el modelo al principio, aparte de los mensajes de la conversación.
 - **Tool:** una función que el código ofrece al modelo, con nombre, descripción y parámetros. El modelo decide cuándo pedirla y con qué datos; el código la ejecuta y devuelve el resultado. La descripción es lo que el modelo lee para elegir.
+- **Handler:** la función del código (o del servidor MCP) que ejecuta una tool cuando el modelo la pide y devuelve su resultado.
 - **Tools integradas:** las que trae el Agent SDK, como `Read`, `Write`, `Edit`, `Grep` (buscar en el contenido de archivos) y `Glob` (buscar archivos por su ruta).
 - **Bucle agéntico:** el código envía el historial al modelo. El modelo responde con texto o pidiendo tools. El código ejecuta las tools, añade sus resultados al historial y vuelve a preguntar. Se repite hasta que el modelo termina.
 - **Iteración (turno):** una vuelta del bucle, es decir, una petición al modelo. En una iteración el modelo puede pedir varias tools a la vez, así que iteraciones y llamadas a tools no son lo mismo.
@@ -46,7 +48,9 @@ Términos que usan los módulos de las tres apps y el arnés, para quien llega d
 - ***Enforcement* (cumplimiento programático):** hacer cumplir una regla con código (una comprobación, una puerta, un hook) en lugar de pedirlo en el prompt.
 - **Puerta (*gate*):** una comprobación en código que impide una acción hasta que se cumple una condición previa.
 - **Hook:** código propio que el SDK ejecuta en puntos fijos del ciclo del agente, por ejemplo antes de que se ejecute una tool (`PreToolUse`) o después, con su resultado (`PostToolUse`). Puede dejar pasar, bloquear o modificar.
+- **Deny con motivo:** la respuesta de un hook `PreToolUse` que impide una llamada. La tool no se ejecuta, y el texto del motivo (`permissionDecisionReason`) le llega al modelo en lugar del resultado.
 - **Permiso:** la decisión de si una llamada a tool se ejecuta, se pregunta a alguien o se deniega. Lo configuran el modo de permisos (`permission_mode`) y las listas de tools del agente (`allowed_tools`, `disallowed_tools`).
+- **Pre-aprobar:** que las llamadas a una tool se ejecuten sin pedir permiso. En el SDK se hace listándola en `allowed_tools`.
 - ***Few-shot*:** ejemplos de casos resueltos que se incluyen en el prompt para mostrar al modelo cómo actuar.
 - **Escalamiento:** pasar un caso a una persona cuando el agente no debe o no puede resolverlo.
 - ***Handoff* (traspaso):** el paquete de información que acompaña a un escalamiento, para que quien recibe el caso pueda seguir sin volver a preguntar.

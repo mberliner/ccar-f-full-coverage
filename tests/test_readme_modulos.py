@@ -1,12 +1,15 @@
 """Tests de estructura de los README de módulo (roadmap §13, regla 5). Sin modelo.
 
 PROPÓSITO: comprobar que cada sección `## NN · …` de `app*/README.md` contiene
-los bloques «Antes de empezar» y «Pregunta tipo examen».
+los bloques «Antes de empezar» y «Pregunta tipo examen», y que sigue la forma de
+la plantilla en lo que es determinista: «Predice antes de ejecutar» antes de
+«Ejecutar» (el ciclo de §13), el resultado medido plegado en «Resultado de
+referencia» y la indicación de ejecución obligatoria o ligera.
 
 POR QUÉ EXISTE: la incorporación de quien llega de cero se quedó sin dueño y solo
 `app1/01` la cumplía. Un test barato impide que un módulo nuevo nazca sin ella.
 
-QUÉ NO HACE: no juzga la calidad. Que el contexto no adelante el resultado o que
+QUÉ NO HACE: no juzga la calidad ni decide qué módulos son obligatorios. Que el contexto no adelante el resultado o que
 la predicción pida patrones y no valores lo comprueba la revisión independiente.
 """
 
@@ -21,13 +24,7 @@ REQUIRED = ("Antes de empezar", "Pregunta tipo examen")
 # Módulos entregados antes de la regla 5 que aún no tienen «Antes de empezar».
 # Se vacía según avanza la retroadaptación; al quedar vacía, el hito T está cerrado.
 # `test_pending_really_fail` obliga a borrar una entrada en cuanto el módulo cumple.
-PENDING_ONBOARDING = {
-    "app1_agente_unico 02", "app1_agente_unico 03", "app1_agente_unico 04",
-    "app1_agente_unico 05", "app1_agente_unico 06",
-    "app2_agente_con_control 01", "app2_agente_con_control 02", "app2_agente_con_control 03",
-    "app2_agente_con_control 05", "app2_agente_con_control 06", "app2_agente_con_control 07",
-    "app3_sistema_multiagente 01", "app3_sistema_multiagente 02", "app3_sistema_multiagente 03",
-}
+PENDING_ONBOARDING: set[str] = set()
 
 
 def split_sections(text: str) -> dict[str, str]:
@@ -48,6 +45,26 @@ def split_sections(text: str) -> dict[str, str]:
 
 def missing_blocks(section: str) -> list[str]:
     return [block for block in REQUIRED if block not in section]
+
+
+PREDICT = "### Predice antes de ejecutar"
+RUN = "### Ejecutar"
+FOLDED = "<summary>Resultado de referencia"
+RUN_MODE = re.compile(r"Ejecución (obligatoria|ligera)", re.IGNORECASE)
+
+
+def shape_problems(section: str) -> list[str]:
+    """Desvíos deterministas de la plantilla: orden del ciclo, resultado plegado y modo."""
+    problems = []
+    if PREDICT not in section or RUN not in section:
+        problems.append("faltan «Predice antes de ejecutar» o «Ejecutar» como `###`")
+    elif section.index(PREDICT) > section.index(RUN):
+        problems.append("«Predice antes de ejecutar» va después de «Ejecutar»")
+    if FOLDED not in section:
+        problems.append("sin «Resultado de referencia» plegado")
+    if not RUN_MODE.search(section):
+        problems.append("no dice si la ejecución es obligatoria o ligera")
+    return problems
 
 
 def all_sections() -> dict[str, str]:
@@ -73,6 +90,15 @@ def test_missing_blocks_reports_each_absent_block():
     assert missing_blocks("nada") == list(REQUIRED)
 
 
+def test_shape_problems_detects_each_deviation():
+    good = f"{PREDICT}\n1. ?\n{RUN}\n**Ejecución ligera:** x\n{FOLDED}</summary>\n"
+    assert shape_problems(good) == []
+    swapped = f"{RUN}\n**Ejecución obligatoria** x\n{PREDICT}\n{FOLDED}</summary>\n"
+    assert shape_problems(swapped) == ["«Predice antes de ejecutar» va después de «Ejecutar»"]
+    bare = f"**Predice antes de ejecutar**\n{RUN}\n"
+    assert len(shape_problems(bare)) == 3
+
+
 # --- Comprobación sobre los README reales -------------------------------------
 
 def test_readmes_have_module_sections():
@@ -86,6 +112,15 @@ def test_every_module_has_required_blocks():
         if missing_blocks(body) and name not in PENDING_ONBOARDING
     }
     assert not failing, f"módulos sin los bloques exigidos (roadmap §13, regla 5): {failing}"
+
+
+def test_every_module_follows_template_shape():
+    failing = {
+        name: shape_problems(body)
+        for name, body in all_sections().items()
+        if shape_problems(body)
+    }
+    assert not failing, f"módulos que se desvían de plantillas/modulo/README.md: {failing}"
 
 
 @pytest.mark.parametrize("name", sorted(PENDING_ONBOARDING))

@@ -28,7 +28,7 @@ Criterio del proyecto (`NOTAS.md`): Sonnet escribe código y tests; **Opus 5.5 p
 Orden: 1 → 2 → 3+4 (en paralelo; el test arranca con excepciones que se vacían según avanza el paso 5) → 5 (por tandas, tests en verde tras cada una) → 6 → 7. Todo antes de diseñar la entrega 3, que ya nacería con plantilla.
 
 ## Archivos críticos
-- Roadmap: `claude-cert-ccar-f/docs/roadmap-apps-demo-ccar-f.md` (repositorio de estudio) (§4.1, §10, §13, §14). Es **otro repositorio**: commit aparte allí.
+- Roadmap: `claude-cert-ccar-f/docs/roadmap-apps-demo-ccar-f.md` (repositorio de estudio) (§4.1, §10, §13, §14). Está fuera de este repositorio y no es un repositorio git: se edita, sin commit.
 - Este repo: `README.md`, `docs/glosario.md` (nuevo), `plantillas/modulo/README.md` (nuevo), `.claude/commands/nuevo-modulo.md`, `tests/test_readme_modulos.py` (nuevo), `app{1,2,3}_*/README.md`, `NOTAS.md`, `docs/hallazgos.md`.
 - Reutilizar: bloque «Antes de empezar» y tabla de tools de `app1_agente_unico/README.md` (l.23–40) como modelo; `tests/cargar.py` si sirve para localizar módulos.
 - Regla «una vez»: el glosario no lleva marcadores `INTRODUCE`; no cambia `CONCEPTOS.md`.
@@ -43,7 +43,6 @@ Orden: 1 → 2 → 3+4 (en paralelo; el test arranca con excepciones que se vac�
 ## Decisiones tomadas
 - Alcance del paso 5: todos los módulos (el problema es transversal, no puntual).
 - Roadmap: Hito T en §10 y regla 5 en §13 (confirmado).
-- Pendiente menor: commit del roadmap en su propio repositorio (se confirma antes de commitear).
 
 ## Adaptación (2026-10-31): Opus no está disponible como subagente
 Los subagentes con `model: opus` dieron 429 con la configuración de la cuenta de construcción y no editaron nada. Reparto corregido:

@@ -8,10 +8,10 @@ El repositorio es un **curso práctico en código**. La guía del examen se divi
 
 Una sesión de estudio típica:
 
-1. **Elige una viñeta** y busca en `CONCEPTOS.md` el módulo que la introduce.
-2. **Lee la cabecera del módulo.** Explica el concepto, qué dice la guía, por qué importa y cuál es el anti-patrón o la trampa del examen.
-3. **Predice** qué hará el agente y ejecuta el módulo. El agente trabaja sobre una mesa de ayuda TI con datos sintéticos.
-4. **Ejecútalo con `--anti`** (si la viñeta describe un error) y compara el resultado con el comportamiento correcto.
+1. **Elige un módulo:** en orden, con «Por dónde empezar» (más abajo), o por viñeta, buscando en `CONCEPTOS.md` qué módulo la introduce.
+2. **Abre su sección en el `README.md` de la app.** Lee «Antes de empezar» y escribe tus predicciones antes de ejecutar nada. El agente trabaja sobre una mesa de ayuda TI con datos sintéticos.
+3. **Ejecútalo, también con `--anti`** (si la viñeta describe un error), y contrasta con lo que predijiste. El resultado de referencia está plegado en «Qué observar».
+4. **Lee la cabecera del módulo** (concepto, qué dice la guía, por qué importa y la trampa del examen) y responde la pregunta tipo examen.
 5. **Anota tus fallos** en tu `FALLOS.md` (`estado/<perfil>/`, ver «Primeros pasos»): las predicciones y respuestas que no acertaste.
 6. **Repasa la cobertura** con `/verificar-concepto TS x.y-Kn`, que comprueba que la viñeta está introducida una sola vez y en su sitio.
 
@@ -33,7 +33,9 @@ Cada módulo introduce las viñetas que `CONCEPTOS.md` le asigna, así que una a
 
 **Qué conviene saber antes.** Leer Python y usar la terminal. No hace falta haber construido un agente: los términos que usan los módulos están en el [glosario](docs/glosario.md).
 
-**Coste.** Los tests no llaman al modelo y no cuestan nada. Las ejecuciones con modelo sí, y todas llevan un tope (`max_budget_usd`); `--budget` lo baja para una prueba barata.
+**Coste.** Los tests no llaman al modelo y no cuestan nada. Las ejecuciones con modelo sí, y todas llevan un tope (`max_budget_usd`); `--budget` lo baja para una prueba barata, salvo en los módulos que miden una tasa, donde un tope menor puede cortar repeticiones (lo avisa su «Ejecutar»). La credencial se prepara en [Configurar la credencial](#4-configurar-la-credencial-solo-para-ejecuciones-con-modelo).
+
+**Si falta tiempo.** Cada módulo se puede consumir en modo ligero, prediciendo y contrastando sobre el código sin ejecutar, salvo los de ejecución obligatoria. Cada módulo lo indica en «Ejecutar» (ver [ejecución obligatoria / ligera](docs/glosario.md#el-repositorio-y-el-ejercicio)).
 
 **Orden recomendado.** Las apps van de lo simple a lo compuesto, y cada una se apoya en la anterior. Dentro de cada app, el orden es el de la tabla «Ruta de lectura» de su `README.md`:
 
