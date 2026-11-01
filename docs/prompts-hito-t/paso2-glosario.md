@@ -1,0 +1,6 @@
+Trabajas en la raíz de este repositorio. Lee `CLAUDE.md` y `docs/estandares-*.md` y respétalos (español; sin copiar texto de la guía oficial; el glosario NO lleva marcadores INTRODUCE/USA ni toca `CONCEPTOS.md`). No hagas commit ni ejecuciones con modelo.
+
+1. Crea `docs/glosario.md`: glosario común único para quien llega de cero. Solo términos que los módulos usan de verdad (comprueba `app*/README.md` y `harness/`): tool, bucle agéntico, iteración, `stop_reason`, historial, anti-patrón, hook, permiso, sesión/resume/fork, case facts, handoff, subagente, coordinador, MCP, scoping, tool_choice, etc. Base: el bloque «Antes de empezar» de `app1_agente_unico/README.md`. Definiciones cortas de qué ES cada cosa; nunca qué ocurre al ejecutar un módulo ni valores de señales que se piden predecir; sin cifras medidas.
+2. `README.md` raíz: sección «Por dónde empezar» tras «Cómo se usa»: qué se aprende y de dónde sale el examen (sin copiar la guía), qué hay que saber de antemano, coste (solo lo que el README ya dice), orden recomendado de apps/módulos (de las tablas de cada README de app) y enlace al glosario. Edición mínima, sin duplicar.
+3. En los tres `app*/README.md`, una sola línea cerca del inicio que enlace al glosario. Nada más.
+Al final `uv run pytest -q` en verde. Resumen de 6 líneas.

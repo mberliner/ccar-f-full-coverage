@@ -23,5 +23,5 @@ Crea el módulo `$ARGUMENTS`.
    - un marcador `INTRODUCE` con todas las viñetas del paso 1;
    - las opciones construidas con `harness/options.py` (con `max_budget_usd`) y ejecutadas con `harness/recorder.py`;
    - la variante `--anti` si la viñeta describe un error.
-5. **Registro:** en el mismo cambio, marca ☑ esas filas en `CONCEPTOS.md` y actualiza el contador. Añade al `README.md` de la app la fila viñeta→módulo, las predicciones y la pregunta tipo examen con la respuesta en `<details>`.
+5. **Registro:** en el mismo cambio, marca ☑ esas filas en `CONCEPTOS.md` y actualiza el contador. Añade al `README.md` de la app la fila viñeta→módulo y la sección del módulo copiando `plantillas/modulo/README.md` (con «Antes de empezar», predicciones por patrón y la pregunta tipo examen con la respuesta en `<details>`); los términos comunes se enlazan a `docs/glosario.md`, no se repiten.
 6. **Comprobación:** ejecuta `uv run pytest -q` y deja los tests en verde.

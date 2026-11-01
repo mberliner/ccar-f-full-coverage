@@ -106,6 +106,13 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
     - Detector de subtemas de `app3/01` (`subtopics_covered`): cuenta la palabra aunque la respuesta diga que no se buscó; candidato a medirse sobre las consultas delegadas.
     - Sin comprobar de la práctica de D3: el control con `d3_claude_code/README.md`, la variante de PowerShell del hook, la línea `User instructions` de `/memory` tras excluir y la minúscula en la viñeta.
     - Publicar `main` en el remoto (decisión de la persona).
+- [ ] **Hito T · Incorporación transversal** (plan aprobado 2026-10-31; sin viñetas, antes de la entrega 3). Regla: roadmap §13, «Incorporación de quien llega de cero». Diseño en `docs/diseno-hito-t.md`, con el reparto de modelos, y prompts de los pasos con Opus en `docs/prompts-hito-t/` (que se ejecutan fuera de esta sesión: los subagentes con Opus dan 429 con la configuración actual).
+  - [x] Plantilla `plantillas/modulo/README.md` y `/nuevo-modulo` que la usa (Sonnet 5.5, 2026-10-31).
+  - [x] `tests/test_readme_modulos.py`: exige «Antes de empezar» y «Pregunta tipo examen» por módulo; 14 módulos entregados en la lista `PENDING_ONBOARDING`, que se vacía con la retroadaptación (453 tests en verde).
+  - [ ] Roadmap origen: regla 5 en §13, fila del Hito T en §10, §4.1 y §14 (Opus, `paso1-roadmap.md`).
+  - [ ] `docs/glosario.md` y «Por dónde empezar» en el `README.md` raíz (Opus, `paso2-glosario.md`).
+  - [ ] Retroadaptación de los 14 módulos, por tandas: `app1/02`–`06`, `app2/01`–`07`, `app3/01`–`03` (Opus, `paso5-retroadaptacion.md`; solo texto, sin tocar cifras medidas).
+  - [ ] Revisión independiente (instancia nueva, `paso6-revision.md`) y, al cerrar, `docs/hallazgos.md:75` pasa a puntero `✓ roadmap`.
 - [ ] Entrega 3 · D4 y D5 (`S-2`)
 - [ ] `S-1` · repaso sin código nuevo
 - [ ] Entrega 4 · opcional, después del examen
