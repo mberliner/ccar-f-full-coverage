@@ -2,20 +2,45 @@
 
 Apps agénticas de demostración para practicar, con código ejecutable, todas las viñetas de la **Exam Guide v1.0 del examen CCAR-F**. Cada concepto de la guía se introduce **una sola vez**, en un módulo pequeño que se puede ejecutar y romper a propósito para ver el anti-patrón.
 
-## Cómo se usa
+## Empieza aquí
 
-El repositorio es un **curso práctico en código**. La guía del examen se divide en viñetas (conocimientos `K` y destrezas `S`, identificadas como `TS x.y-Kn` o `TS x.y-Sn`). Cada viñeta tiene asignado un módulo pequeño que la demuestra.
+**Qué es.** Un curso práctico en código para el examen CCAR-F: aprender a construir agentes con Claude (el bucle agéntico, las tools y los servidores MCP, hacer cumplir reglas con código, las sesiones, los sistemas con coordinador y subagentes, y la configuración de Claude Code). El temario sale de la Exam Guide v1.0, organizada en dominios (D1–D5) y en **viñetas**, cada uno de sus puntos evaluables (`TS x.y-Kn` o `TS x.y-Sn`). Aquí no se copia la guía: cada módulo explica su concepto con sus palabras y cierra con una pregunta propia en formato de examen.
 
-Una sesión de estudio típica:
+**Qué es un módulo.** Un ejercicio, con dos partes: un script de una app (por ejemplo, `app1_agente_unico/05_scoping_y_tool_choice.py`) y su sección `## NN` en el `README.md` de esa app. **Se estudia leyendo esa sección, no el script**: ella te dice qué hacer en cada paso.
 
-1. **Elige un módulo:** en orden, con «Por dónde empezar» (más abajo), o por viñeta, buscando en `CONCEPTOS.md` qué módulo la introduce.
-2. **Abre su sección en el `README.md` de la app.** Lee «Antes de empezar» y escribe tus predicciones antes de ejecutar nada. El agente trabaja sobre una mesa de ayuda TI con datos sintéticos.
-3. **Ejecútalo, también con `--anti`** (si la viñeta describe un error), y contrasta con lo que predijiste. El resultado de referencia está plegado en «Qué observar».
-4. **Lee la cabecera del módulo** (concepto, qué dice la guía, por qué importa y la trampa del examen) y responde la pregunta tipo examen.
-5. **Anota tus fallos** en tu `FALLOS.md` (`estado/<perfil>/`, ver «Primeros pasos»): las predicciones y respuestas que no acertaste.
-6. **Repasa la cobertura** con `/verificar-concepto TS x.y-Kn`, que comprueba que la viñeta está introducida una sola vez y en su sitio.
+**Qué necesitas.** Usar la terminal. Saber leer Python ayuda, pero no es imprescindible: el ciclo se sigue con los textos y la salida. Para ejecutar con modelo hace falta una API key ([Instalación](#instalación-una-vez)); sin ella puedes hacer los módulos en modo ligero. Los términos están en el [glosario](docs/glosario.md).
 
-Las ejecuciones con modelo tienen coste, por eso todas llevan un presupuesto máximo (`max_budget_usd`). Los tests con `pytest` no llaman al modelo y no cuestan nada.
+**Tu primer módulo:** [app1 · 01 · Bucle manual](app1_agente_unico/README.md#01--bucle-manual).
+
+### Cómo se hace un módulo
+
+Cada sección de módulo tiene las mismas partes, en este orden:
+
+1. **Oriéntate.** Lee la ficha del principio (qué vas a hacer, qué necesitas antes y el **Modo**), «Antes de empezar» y «El ejercicio».
+2. **Predice.** Responde por escrito, con tus palabras, las preguntas de «Predice antes de ejecutar». No hay un número que acertar.
+3. **Ejecuta o no, y contrasta.** Si el Modo es *ejecución ligera*, puedes hacerlo sin ejecutar nada; si es *obligatoria*, ejecuta los comandos de «Ejecutar». Después abre el bloque plegado **«Paso 3 · Contrastar»** de «Qué observar» y compáralo con lo que predijiste.
+4. **Responde.** Contesta la «Pregunta tipo examen» y, después, abre **«Paso 4 · Respuesta»**.
+5. **Anota.** Cada predicción o respuesta fallida va en tu `FALLOS.md` ([estado personal](#5-crear-tu-estado-personal)): es lo que repasarás antes del examen.
+
+Para profundizar, la cabecera del script explica el concepto, qué dice la guía, por qué importa y la trampa del examen.
+
+### Orden, tiempo y coste
+
+**Orden recomendado.** Las apps van de lo simple a lo compuesto, y cada una se apoya en la anterior. Dentro de cada app, el orden es el de la tabla «Ruta de lectura» de su `README.md`:
+
+1. [`app1_agente_unico/`](app1_agente_unico/README.md): `01` (bucle escrito a mano) → `02` a `06` (Agent SDK, tools integradas, MCP, errores, scoping y configuración MCP).
+2. [`app2_agente_con_control/`](app2_agente_con_control/README.md): `01`, `02`, `03`, `05`, `06` y `07` (reglas en código, hooks, permisos, *handoff*, sesiones).
+3. [`app3_sistema_multiagente/`](app3_sistema_multiagente/README.md): `01` → `03` (coordinador y subagentes, paralelo, tools por rol).
+
+Si prefieres ir por viñeta, `CONCEPTOS.md` dice qué módulo introduce cada una.
+
+**Tiempo orientativo.** Unos 10 minutos por módulo sin ejecutar y unos 25 ejecutando las variantes.
+
+**Coste.** Los tests no llaman al modelo y no cuestan nada. Las ejecuciones con modelo sí, y todas llevan un tope (`max_budget_usd`); `--budget` lo baja para una prueba barata, salvo en los módulos que miden una tasa, donde un tope menor puede cortar repeticiones (lo avisa su «Ejecutar»). La credencial se prepara en [Configurar la credencial](#4-configurar-la-credencial-solo-para-ejecuciones-con-modelo).
+
+**Si falta tiempo.** Haz los módulos en modo ligero: predices y contrastas con el resultado de referencia plegado, sin ejecutar. Los de ejecución obligatoria lo dicen en su ficha y conviene ejecutarlos igualmente (ver [modo ligero](docs/glosario.md#el-repositorio-y-el-ejercicio)).
+
+## Qué encontrarás aquí
 
 Las apps siguen el temario por dominios:
 
@@ -26,24 +51,6 @@ Las apps siguen el temario por dominios:
 | `app3_sistema_multiagente/` | D1 a D5 | Coordinador y subagentes, tools entre roles, procedencia, extracción, lotes y CI |
 
 Cada módulo introduce las viñetas que `CONCEPTOS.md` le asigna, así que una app puede cubrir varios dominios. Además, el propio repositorio muestra la configuración de Claude Code (`CLAUDE.md`, `.claude/`, `docs/`) y `d3_claude_code/` la recorre: ahí están las viñetas del dominio D3 que no son de ninguna app.
-
-## Por dónde empezar
-
-**Qué se aprende.** A construir agentes con Claude: el bucle agéntico, las tools y los servidores MCP, cómo hacer cumplir reglas con código, las sesiones, los sistemas con coordinador y subagentes, y la configuración de Claude Code. Es lo que evalúa el examen CCAR-F, cuyo temario sale de su Exam Guide v1.0, organizada en dominios (D1–D5) y viñetas. Aquí no se copia la guía: cada módulo explica su concepto con sus palabras y cierra con una pregunta propia en formato de examen.
-
-**Qué conviene saber antes.** Leer Python y usar la terminal. No hace falta haber construido un agente: los términos que usan los módulos están en el [glosario](docs/glosario.md).
-
-**Coste.** Los tests no llaman al modelo y no cuestan nada. Las ejecuciones con modelo sí, y todas llevan un tope (`max_budget_usd`); `--budget` lo baja para una prueba barata, salvo en los módulos que miden una tasa, donde un tope menor puede cortar repeticiones (lo avisa su «Ejecutar»). La credencial se prepara en [Configurar la credencial](#4-configurar-la-credencial-solo-para-ejecuciones-con-modelo).
-
-**Si falta tiempo.** Cada módulo se puede consumir en modo ligero, prediciendo y contrastando sobre el código sin ejecutar, salvo los de ejecución obligatoria. Cada módulo lo indica en «Ejecutar» (ver [ejecución obligatoria / ligera](docs/glosario.md#el-repositorio-y-el-ejercicio)).
-
-**Orden recomendado.** Las apps van de lo simple a lo compuesto, y cada una se apoya en la anterior. Dentro de cada app, el orden es el de la tabla «Ruta de lectura» de su `README.md`:
-
-1. [`app1_agente_unico/`](app1_agente_unico/README.md): `01` (bucle escrito a mano) → `02` a `06` (Agent SDK, tools integradas, MCP, errores, scoping y configuración MCP).
-2. [`app2_agente_con_control/`](app2_agente_con_control/README.md): `01`, `02`, `03`, `05`, `06` y `07` (reglas en código, hooks, permisos, *handoff*, sesiones).
-3. [`app3_sistema_multiagente/`](app3_sistema_multiagente/README.md): `01` → `03` (coordinador y subagentes, paralelo, tools por rol).
-
-## Qué encontrarás aquí
 
 | Ruta | Contenido |
 | :--- | :--- |
@@ -58,44 +65,14 @@ Cada módulo introduce las viñetas que `CONCEPTOS.md` le asigna, así que una a
 | `estado/<perfil>/` | **Tu** estado de estudio: fallos, sesiones, práctica. Lo crea `harness/estado.py`; git lo ignora |
 | `docs/` | Estándares de código y de flujo de trabajo |
 
-## Si la guía cambia
+## Instalación (una vez)
 
-Las 240 viñetas (113 `K` y 127 `S`) corresponden a la **Exam Guide v1.0**. Si la guía cambia, el repositorio debe cambiar con ella:
-
-- Se actualiza `CONCEPTOS.md`: se añaden, quitan o renombran filas y se corrige el total.
-- Se mueven o crean los módulos y sus marcadores `INTRODUCE` para que cada viñeta nueva tenga su destino. Los de viñetas eliminadas se retiran.
-- Se ajusta `tests/perimetro_excluido.yaml` si cambia qué mecanismos entran en la guía.
-- Los tests `test_una_vez.py` y `test_perimetro.py` fallan mientras `CONCEPTOS.md`, los marcadores y el perímetro no coincidan. Así se detecta lo que falta.
-- `claude-agent-sdk` sigue fijado y solo se actualiza de forma deliberada, por si la guía nueva lo exige.
-
-## El proyecto practica lo que enseña
-
-El repositorio se construye con las mismas prácticas que evalúa la certificación, así que también sirve de ejemplo:
-
-- **Configuración de Claude Code versionada:** `CLAUDE.md` con `@import`, reglas por tipo de archivo en `.claude/rules/`, skills, comandos de proyecto y hooks.
-- **Plan mode** para diseñar y ejecución directa para módulos acotados; subagente `Explore` para el descubrimiento verboso.
-- **Enforcement por código, no por prompt:** el presupuesto se exige en `harness/options.py` y la protección de `datos/sinteticos/` y de `.env` la aplican un hook y reglas `deny`.
-- **Tests primero** y revisión por una instancia independiente de la que escribió el código.
-- **Aislamiento de contexto** y sesiones con nombre por app.
-
-Detalle en `docs/estandares-flujo.md`.
-
-## Reglas que conviene conocer
-
-- **Una vez:** cada viñeta tiene un único marcador `INTRODUCE`; después solo `USA`. Lo comprueba `tests/test_una_vez.py`.
-- **Perímetro:** solo los mecanismos que nombra la guía. Lo comprueba `tests/test_perimetro.py`.
-- **Datos siempre sintéticos:** `datos/sinteticos/` se cambia solo ejecutando el generador; un hook bloquea la edición directa.
-- **Coste acotado:** toda ejecución con modelo exige `max_budget_usd` (lo impone `harness/options.py`).
-- **Aislamiento:** los agentes de las apps no heredan `CLAUDE.md`, skills, hooks ni memoria del repositorio.
-
-## Requisitos
+### Requisitos
 
 - Python ≥ 3.10
 - [`uv`](https://docs.astral.sh/uv/)
 - [Claude Code](https://claude.com/claude-code) (para trabajar en el proyecto, no para ejecutar los tests)
 - Una `ANTHROPIC_API_KEY` solo para las ejecuciones con modelo
-
-## Primeros pasos
 
 ### 1. Clonar e instalar
 
@@ -150,7 +127,31 @@ uv run python -m harness.estado where                 # muestra la ruta y de dó
 - `init` solo crea lo que falta y nunca sobrescribe lo que ya escribiste.
 - `uv run pytest` no necesita este estado: un clon recién hecho pasa los tests igual.
 
-### 6. Si trabajas con Claude Code en este repositorio
+## Para quien construye el repositorio
+
+Lo que sigue no hace falta para estudiar: es para mantener y ampliar el repositorio.
+
+### El proyecto practica lo que enseña
+
+El repositorio se construye con las mismas prácticas que evalúa la certificación, así que también sirve de ejemplo:
+
+- **Configuración de Claude Code versionada:** `CLAUDE.md` con `@import`, reglas por tipo de archivo en `.claude/rules/`, skills, comandos de proyecto y hooks.
+- **Plan mode** para diseñar y ejecución directa para módulos acotados; subagente `Explore` para el descubrimiento verboso.
+- **Enforcement por código, no por prompt:** el presupuesto se exige en `harness/options.py` y la protección de `datos/sinteticos/` y de `.env` la aplican un hook y reglas `deny`.
+- **Tests primero** y revisión por una instancia independiente de la que escribió el código.
+- **Aislamiento de contexto** y sesiones con nombre por app.
+
+Detalle en `docs/estandares-flujo.md`.
+
+### Reglas que conviene conocer
+
+- **Una vez:** cada viñeta tiene un único marcador `INTRODUCE`; después solo `USA`. Lo comprueba `tests/test_una_vez.py`.
+- **Perímetro:** solo los mecanismos que nombra la guía. Lo comprueba `tests/test_perimetro.py`.
+- **Datos siempre sintéticos:** `datos/sinteticos/` se cambia solo ejecutando el generador; un hook bloquea la edición directa.
+- **Coste acotado:** toda ejecución con modelo exige `max_budget_usd` (lo impone `harness/options.py`).
+- **Aislamiento:** los agentes de las apps no heredan `CLAUDE.md`, skills, hooks ni memoria del repositorio.
+
+### Si trabajas con Claude Code en este repositorio
 
 Los `CLAUDE.md` de directorios padre contaminarían las pruebas, así que se excluyen en un archivo local que no se versiona:
 
@@ -160,7 +161,7 @@ cp .claude/settings.local.example.json .claude/settings.local.json
 
 Edítalo: un patrón en `claudeMdExcludes` por cada `CLAUDE.md` padre que aparezca en `/memory`, y en `enabledPlugins` los plugins de tu cuenta que deban apagarse aquí. Comprueba con `/memory` y `/plugin`.
 
-## Flujo de trabajo para añadir un módulo
+### Flujo de trabajo para añadir un módulo
 
 1. Consulta en `CONCEPTOS.md` qué viñetas asigna el módulo.
 2. Crea el esqueleto, tests primero, con el comando de proyecto:
@@ -174,7 +175,17 @@ Edítalo: un patrón en `claudeMdExcludes` por cada `CLAUDE.md` padre que aparez
 
 Cada módulo debería poder ejecutarse con y sin `--anti` cuando la viñeta describe un error, para comparar el comportamiento correcto con el anti-patrón.
 
-## Convenciones de código
+### Si la guía cambia
+
+Las 240 viñetas (113 `K` y 127 `S`) corresponden a la **Exam Guide v1.0**. Si la guía cambia, el repositorio debe cambiar con ella:
+
+- Se actualiza `CONCEPTOS.md`: se añaden, quitan o renombran filas y se corrige el total.
+- Se mueven o crean los módulos y sus marcadores `INTRODUCE` para que cada viñeta nueva tenga su destino. Los de viñetas eliminadas se retiran.
+- Se ajusta `tests/perimetro_excluido.yaml` si cambia qué mecanismos entran en la guía.
+- Los tests `test_una_vez.py` y `test_perimetro.py` fallan mientras `CONCEPTOS.md`, los marcadores y el perímetro no coincidan. Así se detecta lo que falta.
+- `claude-agent-sdk` sigue fijado y solo se actualiza de forma deliberada, por si la guía nueva lo exige.
+
+### Convenciones de código
 
 - Comentarios en español, identificadores en inglés.
 - Cabecera de módulo de app: `CONCEPTO` · `QUÉ DICE LA GUÍA` · `POR QUÉ IMPORTA` · `ANTI-PATRÓN / TRAMPA DEL EXAMEN`.

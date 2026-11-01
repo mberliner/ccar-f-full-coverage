@@ -6,7 +6,7 @@ Términos: [glosario común](../docs/glosario.md).
 
 ## Ruta de lectura
 
-Ciclo de cada módulo: **predecir → ejecutar (correcto y `--anti`) → contrastar → responder → anotar los fallos en tu `FALLOS.md` (`estado/<perfil>/`)**.
+Cada módulo se hace en 5 pasos: orientarte con su ficha, predecir, ejecutar o no según su **Modo** y contrastar, responder la pregunta y anotar tus fallos en `FALLOS.md`. Si es tu primera vez, lee antes [Empieza aquí](../README.md#empieza-aquí).
 
 | Módulo | Viñetas | Entrega |
 | :--- | :--- | :---: |
@@ -18,6 +18,12 @@ Ciclo de cada módulo: **predecir → ejecutar (correcto y `--anti`) → contras
 ---
 
 ## 01 · Coordinador y subagentes
+
+> **Qué vas a hacer:** Ver cómo un coordinador reparte una pregunta entre subagentes y qué cambia cuando su prompt está mal construido.
+>
+> **Necesitas antes:** Nada.
+>
+> **Modo:** Ejecución ligera (puedes hacerlo entero sin ejecutar).
 
 ### Antes de empezar
 
@@ -74,14 +80,14 @@ uv run python app3_sistema_multiagente/01_coordinador.py --pregunta simple    # 
 uv run python app3_sistema_multiagente/01_coordinador.py --anti estrecha      # o pipeline_completo, sin_hallazgos, procedimental
 ```
 
-**Ejecución ligera:** la barrera, las tools por subagente y las medidas sobre el registro se prueban sin modelo; ejecutar sirve para ver qué subagentes elige el coordinador y qué les pasa.
+**Si ejecutas:** la barrera, las tools por subagente y las medidas sobre el registro se prueban sin modelo; ejecutar sirve para ver qué subagentes elige el coordinador y qué les pasa.
 
 ### Qué observar
 
 Las líneas `[medida]`: qué subagentes se invocan, cuántos hallazgos llegan al sintetizador y qué subtemas aparecen; y las líneas `[llamada rN · …]`: qué consultas delegó el coordinador y qué tool usó cada subagente.
 
 <details>
-<summary>Resultado de referencia (ábrelo después de contrastar tu predicción)</summary>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
 En la primera ejecución con modelo:
 
@@ -110,14 +116,22 @@ Un sistema de investigación tiene un coordinador y tres subagentes: búsqueda w
 - D. Falta `"Task"` en las `allowedTools` del sintetizador.
 
 <details>
-<summary>Respuesta</summary>
+<summary>Paso 4 · Respuesta</summary>
 
 **B.** El contexto del subagente es aislado y no hereda el historial del coordinador (TS 1.2-K2, 1.3-K2): los hallazgos completos se incluyen en su prompt (TS 1.3-S1), con los metadatos separados del contenido para conservar la atribución. C contradice que no comparten memoria entre invocaciones. D confunde quién necesita `Task`: es el coordinador, para lanzar subagentes (TS 1.3-K1).
 </details>
 
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
 ---
 
 ## 02 · Paralelo, refinamiento y descomposición
+
+> **Qué vas a hacer:** Lanzar subagentes en paralelo o en secuencia, refinar una síntesis incompleta y comparar dos formas de descomponer una tarea.
+>
+> **Necesitas antes:** El [módulo 01](#01--coordinador-y-subagentes): sus tools y la barrera del coordinador.
+>
+> **Modo:** Ejecución obligatoria en la parte `paralelo` (hay que ejecutarla: su lección es una latencia); las otras tres partes, ligeras.
 
 ### Antes de empezar
 
@@ -161,14 +175,14 @@ uv run python app3_sistema_multiagente/02_paralelo_y_descomposicion.py --parte d
 uv run python app3_sistema_multiagente/02_paralelo_y_descomposicion.py --parte legacy
 ```
 
-**Ejecución obligatoria:** `--parte paralelo`, cuya lección es una latencia. Ejecuta los dos modos seguidos y los compara; con `--anti` solo ejecuta el secuencial. Las otras tres partes son de **ejecución ligera**: el comprobador de subtemas, la cadena y las medidas se prueban sin modelo.
+**Al ejecutar:** `--parte paralelo` ejecuta los dos modos seguidos y los compara; con `--anti`, solo el secuencial. Las otras tres partes se prueban sin modelo (el comprobador de subtemas, la cadena y las medidas).
 
 ### Qué observar
 
 En `paralelo`, cómo se agrupan las llamadas `Agent` por respuesta y la latencia de cada modo; en `refinamiento`, las brechas de cada ronda; en `descomposicion`, de dónde salen las subtareas de la segunda ronda; en `legacy`, qué lee el agente antes del plan y qué dependencias nombra.
 
 <details>
-<summary>Resultado de referencia (ábrelo después de contrastar tu predicción)</summary>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
 En la primera ejecución con modelo:
 
@@ -189,14 +203,22 @@ Un coordinador debe investigar tres temas independientes con tres subagentes. Ho
 - D. Pedir a cada subagente que lance al siguiente cuando termine.
 
 <details>
-<summary>Respuesta</summary>
+<summary>Paso 4 · Respuesta</summary>
 
 **A.** Los subagentes en paralelo se lanzan con varias llamadas a Task en la misma respuesta (TS 1.3-S3). B pierde la especialización y el reparto del alcance; C es usar un tope como mecanismo de control (el anti-patrón de TS 1.1-S3); D rompe el hub-and-spoke, en el que toda la comunicación pasa por el coordinador.
 </details>
 
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
 ---
 
 ## 03 · Tools entre roles
+
+> **Qué vas a hacer:** Ver qué hace cada subagente según las tools que recibe: las de su rol, todas o una genérica.
+>
+> **Necesitas antes:** El [módulo 01](#01--coordinador-y-subagentes).
+>
+> **Modo:** Ejecución ligera (puedes hacerlo entero sin ejecutar).
 
 ### Antes de empezar
 
@@ -251,7 +273,7 @@ uv run python app3_sistema_multiagente/03_tools_entre_roles.py --anti sin_verify
 uv run python app3_sistema_multiagente/03_tools_entre_roles.py --repeat 3 --budget 0.60
 ```
 
-**Ejecución ligera:** las tools por rol y las medidas sobre el registro se prueban sin modelo; ejecutar sirve para ver qué hace cada rol con las tools que recibe.
+**Si ejecutas:** las tools por rol y las medidas sobre el registro se prueban sin modelo; ejecutar sirve para ver qué hace cada rol con las tools que recibe.
 
 La salida muestra las llamadas por agente, las llamadas fuera de rol (la vara es la configuración correcta), las URLs que no son documentos abiertas con `fetch_url`, las rechazadas por `load_document`, las delegaciones y las llamadas a `verify_fact`, con cuántas volvieron al coordinador.
 
@@ -260,7 +282,7 @@ La salida muestra las llamadas por agente, las llamadas fuera de rol (la vara es
 Por variante, las llamadas fuera de rol, las URLs que no son documentos abiertas o rechazadas, las delegaciones y las llamadas a `verify_fact` que vuelven al coordinador.
 
 <details>
-<summary>Resultado de referencia (ábrelo después de contrastar tu predicción)</summary>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
 Coordinador Sonnet 5.5, subagentes Haiku 5.5, 3 repeticiones:
 
@@ -291,7 +313,9 @@ Un agente de síntesis recibe todas las tools del sistema y, aunque su cometido 
 - D. Quitarle todas las tools y hacer que cada comprobación, simple o compleja, pase por el coordinador para centralizar el control.
 
 <details>
-<summary>Respuesta</summary>
+<summary>Paso 4 · Respuesta</summary>
 
 **C.** Un agente con tools fuera de su especialización tiende a malusarlas (TS 2.3-K2); la solución es el acceso acotado, con las tools de su rol (TS 2.3-S1) y una tool cross-role muy limitada para las necesidades de alta frecuencia, con los casos complejos por el coordinador (TS 2.3-K3, TS 2.3-S3). A pide por prosa lo que la configuración debería garantizar, y el agente conserva las tools que malusa; B deja un agente con todas las tools, lo contrario del acceso acotado (TS 2.3-K3); D elimina la tool acotada, y cada verificación simple pasa a depender del coordinador (el anti-patrón de TS 2.3-S3).
 </details>
+
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).

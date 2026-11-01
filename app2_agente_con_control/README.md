@@ -32,7 +32,7 @@ El estado del servidor (verificados, pagos, escalamientos y los cambios simulado
 
 ## Ruta de lectura
 
-Ciclo de cada módulo: **predecir → ejecutar (correcto y `--anti`) → contrastar → responder → anotar los fallos en tu `FALLOS.md` (`estado/<perfil>/`)**.
+Cada módulo se hace en 5 pasos: orientarte con su ficha, predecir, ejecutar o no según su **Modo** y contrastar, responder la pregunta y anotar tus fallos en `FALLOS.md`. Si es tu primera vez, lee antes [Empieza aquí](../README.md#empieza-aquí).
 
 | Módulo | Viñetas | Entrega |
 | :--- | :--- | :---: |
@@ -47,6 +47,12 @@ Ciclo de cada módulo: **predecir → ejecutar (correcto y `--anti`) → contras
 ---
 
 ## 01 · Regla en el prompt frente a puerta programática
+
+> **Qué vas a hacer:** Comparar una regla escrita solo en el prompt con la misma regla impuesta por código, repitiendo la ejecución para ver una tasa.
+>
+> **Necesitas antes:** Nada (la tabla del [servidor `helpdesk`](#el-servidor-helpdesk-y-sus-tools), al principio de esta app).
+>
+> **Modo:** Ejecución obligatoria (hay que ejecutarlo: su lección es una tasa, y leer el código no la transmite).
 
 ### Antes de empezar
 
@@ -77,7 +83,7 @@ Con tus palabras; no hay un número que acertar.
 
 ### Ejecutar
 
-**Ejecución obligatoria** (su lección es una tasa, y leer el código no la transmite). Usa el rol de modelo `enforcement` (`CCARF_MODEL_ENFORCEMENT`, por defecto `claude-haiku-4-5`) y su presupuesto propio (`CCARF_BUDGET_ENFORCEMENT`, por defecto 0,50 $ por ejecución del script). No lo bajes con `--budget`: con un tope menor, algunas repeticiones se cortan y la tasa deja de ser comparable.
+**Al ejecutar:** usa el rol de modelo `enforcement` (`CCARF_MODEL_ENFORCEMENT`, por defecto `claude-haiku-4-5`) y su presupuesto propio (`CCARF_BUDGET_ENFORCEMENT`, por defecto 0,50 $ por ejecución del script). No lo bajes con `--budget`: con un tope menor, algunas repeticiones se cortan y la tasa deja de ser comparable.
 
 ```bash
 uv run python app2_agente_con_control/01_prompt_vs_enforcement.py --anti --repeat 10   # regla solo en el prompt
@@ -89,7 +95,7 @@ uv run python app2_agente_con_control/01_prompt_vs_enforcement.py --repeat 10   
 La línea `[resumen]`: en cuántas ejecuciones hubo pagos **intentados** sin verificación y en cuántas pagos **ejecutados**, con puerta y sin ella.
 
 <details>
-<summary>Resultado de referencia (ábrelo después de contrastar tu predicción)</summary>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
 Con la puerta, los ejecutados son 0 por construcción. Sin puerta, depende del modelo (2026-10-24):
 
@@ -111,14 +117,22 @@ Un agente de soporte debe verificar la identidad del cliente con `get_customer` 
 - D. Cambiar a un modelo más capaz, que sigue mejor las instrucciones.
 
 <details>
-<summary>Respuesta</summary>
+<summary>Paso 4 · Respuesta</summary>
 
 **C.** Cuando el cumplimiento tiene que ser determinista, las instrucciones del prompt tienen una tasa de fallo distinta de cero (TS 1.4-K2), y lo que se pide es un prerrequisito programático que bloquee la llamada posterior (TS 1.4-S1). A, B y D mejoran la probabilidad, pero siguen siendo guía en el prompt, no enforcement (TS 1.4-K1).
 </details>
 
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
 ---
 
 ## 02 · Hooks PreToolUse y PostToolUse
+
+> **Qué vas a hacer:** Hacer cumplir un umbral de importe y normalizar fechas con hooks, frente a pedirlo en el prompt.
+>
+> **Necesitas antes:** La puerta de [`01`](#01--regla-en-el-prompt-frente-a-puerta-programática).
+>
+> **Modo:** Ejecución ligera (puedes hacerlo entero sin ejecutar).
 
 ### Antes de empezar
 
@@ -164,14 +178,14 @@ uv run python app2_agente_con_control/02_hooks_pre_post.py           # con hooks
 uv run python app2_agente_con_control/02_hooks_pre_post.py --anti    # umbral y fechas solo en el prompt
 ```
 
-**Ejecución ligera:** la frontera del umbral y la normalización se prueban sin modelo; ejecutar sirve para ver qué hace el modelo tras el deny y, sin hooks, con el timestamp crudo.
+**Si ejecutas:** la frontera del umbral y la normalización se prueban sin modelo; ejecutar sirve para ver qué hace el modelo tras el deny y, sin hooks, con el timestamp crudo.
 
 ### Qué observar
 
 Con hooks, la línea `[resultado]` de `get_ticket` y lo que recibe el modelo al pedir el pago; sin hooks, si paga o escala y qué fecha da, frente a la línea `[esperado]`. `[medida]` confirma los pagos y escalamientos.
 
 <details>
-<summary>Resultado de referencia (ábrelo después de contrastar tu predicción)</summary>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
 - Con hooks, la línea `[resultado]` de `get_ticket` ya trae `created_at` en ISO y `status` canónico: el modelo nunca ve el timestamp. El pago llega como `error` con el motivo del hook, que redirige a `escalate_to_human`, y el modelo escala.
 - Sin hooks, el modelo recibe el timestamp crudo y la regla solo está en el prompt. Puede cumplirla (lo hizo en la primera ejecución con modelo), pero es probabilístico. Compara la fecha que da con la línea `[esperado]`.
@@ -188,14 +202,22 @@ Varias tools MCP de un agente devuelven fechas en formatos distintos (timestamps
 - D. Pidiendo al modelo que convierta todas las fechas a ISO antes de razonar.
 
 <details>
-<summary>Respuesta</summary>
+<summary>Paso 4 · Respuesta</summary>
 
 **B.** `PostToolUse` intercepta el resultado y lo transforma antes de que lo vea el modelo (TS 1.5-K1, 1.5-S1). C actúa sobre la llamada saliente, no sobre el resultado (el uso de `PreToolUse` es bloquear o redirigir, TS 1.5-K2, 1.5-S2). A y D dejan la corrección en manos del modelo, que es cumplimiento probabilístico (TS 1.5-K3).
 </details>
 
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
 ---
 
 ## 03 · Permisos
+
+> **Qué vas a hacer:** Lanzar el mismo pedido de pago con cuatro configuraciones de permisos y comparar qué permite cada una.
+>
+> **Necesitas antes:** Nada.
+>
+> **Modo:** Ejecución ligera (puedes hacerlo entero sin ejecutar).
 
 ### Antes de empezar
 
@@ -232,14 +254,14 @@ uv run python app2_agente_con_control/03_permisos.py                     # las c
 uv run python app2_agente_con_control/03_permisos.py --config dontAsk
 ```
 
-**Ejecución ligera:** cada configuración se lee en el código; ejecutar sirve para ver qué deja pasar cada una en la práctica.
+**Si ejecutas:** cada configuración se lee en el código; ejecutar sirve para ver qué deja pasar cada una en la práctica.
 
 ### Qué observar
 
 Mismo pedido de pago con cuatro configuraciones. La línea `[medida]` dice si `process_reimbursement` aparece en las tools de `init`, cuántas veces se intentó y si se pagó.
 
 <details>
-<summary>Resultado de referencia (ábrelo después de contrastar tu predicción)</summary>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
 | Configuración | Qué dice la documentación | Observado (CLI 2.1.309) |
 | :--- | :--- | :--- |
@@ -261,14 +283,22 @@ Un agente tiene `allowed_tools=["Read", "Grep"]` y modo de permisos por defecto.
 - D. `Bash` solo se bloquea si además se pasa `permission_mode="bypassPermissions"`.
 
 <details>
-<summary>Respuesta</summary>
+<summary>Paso 4 · Respuesta</summary>
 
 **B.** `allowed_tools` pre-aprueba, no restringe. Para quitar una tool se usa `disallowed_tools`; para un agente cerrado, `dontAsk` con `allowed_tools`; para una regla que debe cumplirse siempre, un hook `PreToolUse` (ver TS 1.5, módulo 02). `bypassPermissions` haría lo contrario de D.
 </details>
 
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
 ---
 
 ## 05 · Varios asuntos, case facts y handoff
+
+> **Qué vas a hacer:** Atender un caso con varios asuntos a lo largo de tres mensajes y escalarlo a una persona, con solo un resumen o con un bloque de hechos aparte.
+>
+> **Necesitas antes:** Nada.
+>
+> **Modo:** Ejecución ligera (puedes hacerlo entero sin ejecutar).
 
 ### Antes de empezar
 
@@ -309,14 +339,14 @@ uv run python app2_agente_con_control/05_multi_concern_y_handoff.py --anti resum
 uv run python app2_agente_con_control/05_multi_concern_y_handoff.py --anti handoff_libre  # escalamiento en texto libre
 ```
 
-**Ejecución ligera:** la extracción de los case facts y la comprobación del handoff se prueban sin modelo; ejecutar sirve para ver qué conserva el resumen con tu modelo.
+**Si ejecutas:** la extracción de los case facts y la comprobación del handoff se prueban sin modelo; ejecutar sirve para ver qué conserva el resumen con tu modelo.
 
 ### Qué observar
 
 La línea `[medida]` compara el handoff con los case facts: qué campos faltan o no coinciden en cada variante.
 
 <details>
-<summary>Resultado de referencia (ábrelo después de contrastar tu predicción)</summary>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
 En la primera ejecución con modelo, el resumen conservó el importe pero perdió la fecha de compra y el año de los plazos («hasta el 30/10»); con case facts, el handoff llegó completo. Con `handoff_libre`, faltan todos los campos que la persona necesita.
 </details>
@@ -331,14 +361,22 @@ Un agente de soporte resume la conversación cada pocos turnos para no llenar el
 - D. Eliminar la sumarización y truncar los mensajes más antiguos.
 
 <details>
-<summary>Respuesta</summary>
+<summary>Paso 4 · Respuesta</summary>
 
 **B.** El riesgo de la sumarización progresiva es justo condensar importes y fechas en expresiones vagas (TS 5.1-K1), y el remedio es un bloque persistente de hechos transaccionales fuera del resumen (TS 5.1-S1), con una capa por asunto si hay varios (TS 5.1-S2). C sigue confiando en la prosa; D pierde los datos antiguos sin más. Al escalar, esos mismos hechos van en un handoff estructurado (TS 1.4-K3, 1.4-S3).
 </details>
 
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
 ---
 
 ## 06 · Sesiones
+
+> **Qué vas a hacer:** Seguir el trabajo de una sesión después de que cambien los datos: empezar de nuevo, bifurcar o reanudar.
+>
+> **Necesitas antes:** Nada.
+>
+> **Modo:** Ejecución ligera (puedes hacerlo entero sin ejecutar).
 
 ### Antes de empezar
 
@@ -383,14 +421,14 @@ uv run python app2_agente_con_control/06_sesiones.py                            
 uv run python app2_agente_con_control/06_sesiones.py --anti --rama reanudar       # reanudar sin aviso
 ```
 
-**Ejecución ligera:** la proporción obsoleta y los textos que genera el código se prueban sin modelo; ejecutar sirve para ver qué hace cada rama con los cambios y cuánto cuesta.
+**Si ejecutas:** la proporción obsoleta y los textos que genera el código se prueban sin modelo; ejecutar sirve para ver qué hace cada rama con los cambios y cuánto cuesta.
 
 ### Qué observar
 
 La línea `[obsoletos]` y la decisión que toma el código; la `[respuesta completa]` de cada rama (qué vuelve a consultar y qué da por actual), y las líneas `[fin]` (coste) y `[sesión]` (`session_id`).
 
 <details>
-<summary>Resultado de referencia (ábrelo después de contrastar tu predicción)</summary>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
 Con estos datos, la proporción es del 33 %, así que la decisión es reanudar.
 
@@ -418,14 +456,22 @@ Ayer un desarrollador analizó un módulo con Claude Code en una sesión con nom
 - D. Usar `fork_session` para crear una rama y continuar en ella.
 
 <details>
-<summary>Respuesta</summary>
+<summary>Paso 4 · Respuesta</summary>
 
 **B.** Con la mayor parte del contexto aún válida, se reanuda (TS 1.7-S3) informando de los cambios concretos para un reanálisis dirigido (TS 1.7-K3, 1.7-S4). A responde con resultados obsoletos; C desperdicia el análisis válido (empezar de nuevo con un resumen conviene cuando lo obsoleto es la mayoría, TS 1.7-K4); D sirve para explorar enfoques divergentes desde una base común (TS 1.7-K2, 1.7-S2), no para incorporar cambios.
 </details>
 
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
 ---
 
 ## 07 · Reescribir argumentos con `updatedInput`
+
+> **Qué vas a hacer:** Comparar dos formas de que un hook imponga el ID verificado en un pago: reescribir el argumento o bloquear la llamada.
+>
+> **Necesitas antes:** La puerta de [`01`](#01--regla-en-el-prompt-frente-a-puerta-programática) y los hooks de [`02`](#02--hooks-pretooluse-y-posttooluse).
+>
+> **Modo:** Ejecución ligera (sin modelo y sin coste, así que conviene ejecutarlo).
 
 ### Antes de empezar
 
@@ -463,7 +509,7 @@ En texto libre. Aquí no hay modelo, así que lo que imprime el módulo es igual
 
 ### Ejecutar
 
-**Ejecución ligera**, sin modelo y sin coste: ejecuta el hook y el handler reales sobre una llamada con el ID equivocado. Como no cuesta nada, conviene ejecutarlo.
+**Si ejecutas:** no hay modelo ni coste; ejecuta el hook y el handler reales sobre una llamada con el ID equivocado. Como no cuesta nada, conviene ejecutarlo.
 
 ```bash
 uv run python app2_agente_con_control/07_hook_reescritura.py           # allow + updatedInput
@@ -475,7 +521,7 @@ uv run python app2_agente_con_control/07_hook_reescritura.py --anti    # deny co
 La línea `[control]` y, en cada variante, qué `user_id` recibe la tool y si se paga; con `--anti`, las tres líneas `[hipótesis]`.
 
 <details>
-<summary>Resultado de referencia (ábrelo después de contrastar tu predicción)</summary>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
 - **`[control]`:** sin hook, la tool recibe `EMP-1082` tal cual y el handler lo rechaza por validación (el ticket no es de ese ID). Es un resultado de este escenario: un ID erróneo que perteneciera a otro empleado con un ticket del mismo importe sí se pagaría, y no se ha probado.
 - **`updatedInput`:** el hook sobrescribe `user_id` y la tool recibe `EMP-1028` en la primera llamada. Un desenlace, siempre el mismo.
@@ -498,9 +544,11 @@ Un flujo de reembolsos exige que `process_refund` se llame siempre con el `custo
 - D. Una línea en el prompt de sistema que ordena copiar literalmente el `customer_id` devuelto por `get_customer`.
 
 <details>
-<summary>Respuesta</summary>
+<summary>Paso 4 · Respuesta</summary>
 
 **A.** El hook actúa sobre la propia llamada y fija el valor: la tool recibe siempre el ID verificado (TS 1.5-K2), sin depender del modelo (TS 1.4-K2). B bloquea, pero el pago correcto exige que el modelo reintente bien: deny devuelve texto, no un valor. C corre cuando la tool ya se ejecutó (`PostToolUse` no impide una acción, TS 1.5-K2). D es guía en el prompt, con una tasa de fallo distinta de cero (TS 1.4-K1).
 
 **Y si la guía no nombra `updatedInput`:** esta práctica no permite saber qué ofrecerá una pregunta real. Si una opción propone reescribir el argumento para fijar el valor, es la que lo garantiza (A). Si no la hay, el hook `PreToolUse` que bloquea es el patrón que la guía sostiene (TS 1.4-S1, TS 1.5-S2). B no es un error: lo único que no hace es fijar el valor.
 </details>
+
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).

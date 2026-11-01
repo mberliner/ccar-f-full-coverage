@@ -4,7 +4,8 @@ PROPÓSITO: comprobar que cada sección `## NN · …` de `app*/README.md` conti
 los bloques «Antes de empezar» y «Pregunta tipo examen», y que sigue la forma de
 la plantilla en lo que es determinista: «Predice antes de ejecutar» antes de
 «Ejecutar» (el ciclo de §13), el resultado medido plegado en «Resultado de
-referencia» y la indicación de ejecución obligatoria o ligera.
+referencia» y la indicación de ejecución obligatoria o ligera, la ficha del
+principio y los pasos 3–5 con nombre (prueba de usabilidad del Hito T).
 
 POR QUÉ EXISTE: la incorporación de quien llega de cero se quedó sin dueño y solo
 `app1/01` la cumplía. Un test barato impide que un módulo nuevo nazca sin ella.
@@ -49,21 +50,31 @@ def missing_blocks(section: str) -> list[str]:
 
 PREDICT = "### Predice antes de ejecutar"
 RUN = "### Ejecutar"
-FOLDED = "<summary>Resultado de referencia"
-RUN_MODE = re.compile(r"Ejecución (obligatoria|ligera)", re.IGNORECASE)
+BEFORE = "### Antes de empezar"
+FICHA = ("> **Qué vas a hacer:**", "> **Necesitas antes:**", "> **Modo:**")
+FOLDED = "<summary>Paso 3 · Contrastar"
+ANSWER = "<summary>Paso 4 · Respuesta"
+STEP5 = "**Paso 5 ·**"
+RUN_MODE = re.compile(r"> \*\*Modo:\*\* [Ee]jecución (obligatoria|ligera)")
 
 
 def shape_problems(section: str) -> list[str]:
-    """Desvíos deterministas de la plantilla: orden del ciclo, resultado plegado y modo."""
+    """Desvíos deterministas de la plantilla: ficha, orden del ciclo, bloques plegados y paso 5."""
     problems = []
+    start = section.find(BEFORE)
+    head = section if start < 0 else section[:start]
+    if not all(line in head for line in FICHA):
+        problems.append("falta la ficha (Qué vas a hacer · Necesitas antes · Modo) antes de «Antes de empezar»")
+    elif not RUN_MODE.search(head):
+        problems.append("la ficha no dice si la ejecución es obligatoria o ligera")
     if PREDICT not in section or RUN not in section:
         problems.append("faltan «Predice antes de ejecutar» o «Ejecutar» como `###`")
     elif section.index(PREDICT) > section.index(RUN):
         problems.append("«Predice antes de ejecutar» va después de «Ejecutar»")
     if FOLDED not in section:
-        problems.append("sin «Resultado de referencia» plegado")
-    if not RUN_MODE.search(section):
-        problems.append("no dice si la ejecución es obligatoria o ligera")
+        problems.append("sin «Paso 3 · Contrastar» plegado")
+    if ANSWER not in section or STEP5 not in section:
+        problems.append("falta «Paso 4 · Respuesta» o la línea «Paso 5»")
     return problems
 
 
@@ -91,12 +102,18 @@ def test_missing_blocks_reports_each_absent_block():
 
 
 def test_shape_problems_detects_each_deviation():
-    good = f"{PREDICT}\n1. ?\n{RUN}\n**Ejecución ligera:** x\n{FOLDED}</summary>\n"
+    ficha = "> **Qué vas a hacer:** x.\n> **Necesitas antes:** nada.\n> **Modo:** ejecución ligera (y).\n"
+    body = f"{PREDICT}\n1. ?\n{RUN}\n{FOLDED}: z</summary>\n{ANSWER}</summary>\n{STEP5} anota\n"
+    good = f"{ficha}{BEFORE}\n{body}"
     assert shape_problems(good) == []
-    swapped = f"{RUN}\n**Ejecución obligatoria** x\n{PREDICT}\n{FOLDED}</summary>\n"
+    late = f"{BEFORE}\n{ficha}{body}"
+    assert shape_problems(late) == ["falta la ficha (Qué vas a hacer · Necesitas antes · Modo) antes de «Antes de empezar»"]
+    no_mode = good.replace("ejecución ligera", "a tu gusto")
+    assert shape_problems(no_mode) == ["la ficha no dice si la ejecución es obligatoria o ligera"]
+    swapped = good.replace(f"{PREDICT}\n1. ?\n{RUN}", f"{RUN}\n{PREDICT}\n1. ?")
     assert shape_problems(swapped) == ["«Predice antes de ejecutar» va después de «Ejecutar»"]
-    bare = f"**Predice antes de ejecutar**\n{RUN}\n"
-    assert len(shape_problems(bare)) == 3
+    no_steps = good.replace(FOLDED, "<summary>Resultado").replace(STEP5, "")
+    assert len(shape_problems(no_steps)) == 2
 
 
 # --- Comprobación sobre los README reales -------------------------------------

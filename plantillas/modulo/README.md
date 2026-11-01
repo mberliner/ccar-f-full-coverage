@@ -1,12 +1,20 @@
 <!--
 PROPÓSITO: plantilla de la sección de un módulo en el `README.md` de su app (roadmap §13, reglas 1–5).
 Se copia bajo `## NN · Título` y se rellena. Lo común (tool, iteración, `stop_reason`, historial,
-hook, deny con motivo, ejecución obligatoria / ligera…) NO se repite aquí: se enlaza a docs/glosario.md
+hook, deny con motivo, modo ligero…) NO se repite aquí: se enlaza a docs/glosario.md
 y se amplía solo con términos propios.
-El orden sigue el ciclo de §13: predecir antes de ver los comandos y la salida.
-`tests/test_readme_modulos.py` exige los rótulos «Antes de empezar» y «Pregunta tipo examen».
+El orden sigue el ciclo de §13 y los 5 pasos de «Empieza aquí» del README raíz: la ficha orienta,
+se predice antes de ver los comandos y la salida, y cada bloque plegado dice a qué paso pertenece.
+`tests/test_readme_modulos.py` exige la ficha, «Antes de empezar», el orden Predice → Ejecutar,
+los `summary` de los pasos 3 y 4, la línea del paso 5 y «Pregunta tipo examen».
 Borra estos comentarios al rellenar.
 -->
+
+> **Qué vas a hacer:** la tarea en una frase, sin su resultado.
+>
+> **Necesitas antes:** nada, o el módulo del que depende, con enlace ([módulo 01](#01--titulo)).
+>
+> **Modo:** ejecución ligera (puedes hacerlo entero sin ejecutar) | ejecución obligatoria (hay que ejecutarlo: por qué).
 
 ### Antes de empezar
 
@@ -47,7 +55,7 @@ uv run python appN_nombre/NN_concepto.py            # correcta
 uv run python appN_nombre/NN_concepto.py --anti ... # variante construida mal
 ```
 
-**Ejecución obligatoria** o **ligera**: indica cuál y por qué. Obligatoria solo en los módulos que fija el roadmap (§13). Si el tope de `--budget` puede romper la medida, dilo aquí.
+**Si ejecutas:** para qué sirve ejecutar (qué se ve que no se ve leyendo). En los de ejecución obligatoria, por qué hay que hacerlo. Si el tope de `--budget` puede romper la medida, dilo aquí.
 
 <!-- Modo normal (§13): sugiere aquí un parámetro que cambiar para ver qué se rompe. -->
 
@@ -56,11 +64,19 @@ uv run python appN_nombre/NN_concepto.py --anti ... # variante construida mal
 Qué señal mirar en la salida, sin dar aquí el resultado.
 
 <details>
-<summary>Resultado de referencia (ábrelo después de contrastar tu predicción)</summary>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
 Lo medido con modelo (modelo y fecha), lo estable frente a lo que varía y las notas.
 </details>
 
 ### Pregunta tipo examen
 
-Enunciado, opciones de longitud y registro parejos (la correcta no siempre en la misma posición) y respuesta en `<details>`.
+Enunciado, opciones de longitud y registro parejos (la correcta no siempre en la misma posición).
+
+<details>
+<summary>Paso 4 · Respuesta</summary>
+
+**X.** Por qué, con las viñetas.
+</details>
+
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).

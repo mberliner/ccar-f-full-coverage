@@ -6,7 +6,7 @@ Términos: [glosario común](../docs/glosario.md).
 
 ## Ruta de lectura
 
-Cada módulo sigue el ciclo de `README.md` del proyecto: **predecir → ejecutar (correcto y `--anti`) → contrastar → responder la pregunta → anotar los fallos en tu `FALLOS.md` (`estado/<perfil>/`)**.
+Cada módulo se hace en 5 pasos: orientarte con su ficha, predecir, ejecutar o no según su **Modo** y contrastar, responder la pregunta y anotar tus fallos en `FALLOS.md`. Si es tu primera vez, lee antes [Empieza aquí](../README.md#empieza-aquí).
 
 | Módulo | Viñetas | Entrega |
 | :--- | :--- | :---: |
@@ -21,6 +21,12 @@ Cada módulo sigue el ciclo de `README.md` del proyecto: **predecir → ejecutar
 ---
 
 ## 01 · Bucle manual
+
+> **Qué vas a hacer:** Ver cómo un bucle escrito a mano decide cuándo seguir pidiendo tools y cuándo parar, y qué rompe cada variante construida mal.
+>
+> **Necesitas antes:** Nada; es el primer módulo.
+>
+> **Modo:** Ejecución ligera (puedes hacerlo entero sin ejecutar).
 
 ### Antes de empezar
 
@@ -66,14 +72,14 @@ uv run python app1_agente_unico/01_bucle_manual.py --anti texto     # o tope, te
 uv run python app1_agente_unico/01_bucle_manual.py --budget 0.05    # prueba barata (el tope solo baja)
 ```
 
-**Ejecución ligera:** las variantes se prueban de forma determinista sin modelo (`tests/test_app1_01_bucle_manual.py`); ejecutar sirve para ver el bucle con tu modelo.
+**Si ejecutas:** las variantes se prueban de forma determinista sin modelo (`tests/test_app1_01_bucle_manual.py`); ejecutar sirve para ver el bucle con tu modelo.
 
 ### Qué observar
 
 La causa de la parada de cada variante y, en la correcta, cuántas iteraciones hubo y qué tools se pidieron en cada una.
 
 <details>
-<summary>Resultado de referencia (ábrelo después de contrastar tu predicción)</summary>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
 | Variante | Parada | Qué se rompe |
 | :--- | :--- | :--- |
@@ -106,14 +112,22 @@ Un agente de soporte construido con la Messages API a veces deja tareas a medias
 - D. Fijar un máximo de 5 iteraciones para asegurar que el bucle consulta todas las tools.
 
 <details>
-<summary>Respuesta</summary>
+<summary>Paso 4 · Respuesta</summary>
 
 **B.** La parada la decide `stop_reason` (TS 1.1-K1, 1.1-S1) y los resultados vuelven al historial con su `tool_use_id` (TS 1.1-K2, 1.1-S2). A intenta arreglar en prosa un error del código de control; C es el anti-patrón de interpretar lenguaje natural y D el de usar un tope como parada principal (TS 1.1-S3). El texto junto a un `tool_use` es comentario, no una señal de fin.
 </details>
 
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
 ---
 
 ## 02 · Tools integradas
+
+> **Qué vas a hacer:** Comparar cómo explora un agente un repositorio pequeño con sus tools integradas (buscar, leer, editar) según cómo se le pida.
+>
+> **Necesitas antes:** Nada (el Agent SDK trae hecho el bucle de [`01`](#01--bucle-manual)).
+>
+> **Modo:** Ejecución ligera (puedes hacerlo entero sin ejecutar).
 
 ### Antes de empezar
 
@@ -172,14 +186,14 @@ uv run python app1_agente_unico/02_tools_integradas.py --parte edicion
 uv run python app1_agente_unico/02_tools_integradas.py --parte wrapper --repeat 3 --budget 0.10   # prueba barata
 ```
 
-**Ejecución ligera:** las funciones de comprobación se prueban sin modelo; ejecutar sirve para ver qué tools elige el agente en cada parte.
+**Si ejecutas:** las funciones de comprobación se prueban sin modelo; ejecutar sirve para ver qué tools elige el agente en cada parte.
 
 ### Qué observar
 
 Por parte, qué tools usa el agente y cuántos `Read` hace; en `wrapper`, cuántos de los llamadores esperados encuentra (`[comprobación]`); en `edicion`, si algún `Edit` devolvió error y cómo quedó el archivo.
 
 <details>
-<summary>Resultado de referencia (ábrelo después de contrastar tu predicción)</summary>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
 | Parte / variante | Señal | Qué se rompe |
 | :--- | :--- | :--- |
@@ -210,14 +224,22 @@ Un agente de mantenimiento debe encontrar todos los llamadores de `process_refun
 - D. Usar `Glob` con el patrón `**/*refund*.py` para dar con los archivos cuyo nombre menciona la función y revisar solo esos.
 
 <details>
-<summary>Respuesta</summary>
+<summary>Paso 4 · Respuesta</summary>
 
 **C.** Para rastrear una función a través de un módulo *wrapper* se identifican primero todos los nombres exportados y después se busca cada uno (TS 2.5-S5); `Grep` es la tool para el contenido (TS 2.5-K1, 2.5-S1). A pierde los llamadores por alias y parece completa; B es leer todo cuando una búsqueda lo resuelve, contra la exploración incremental (TS 2.5-S4); D confunde `Glob` (rutas, TS 2.5-K2) con una búsqueda de contenido: un llamador no tiene por qué llevar «refund» en su nombre de archivo.
 </details>
 
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
 ---
 
 ## 03 · Servidor MCP: descripciones de tools
+
+> **Qué vas a hacer:** Medir con qué acierto elige el agente entre las tools de un servidor MCP según cómo estén nombradas y descritas.
+>
+> **Necesitas antes:** Nada.
+>
+> **Modo:** Ejecución ligera (puedes hacerlo entero sin ejecutar).
 
 ### Antes de empezar
 
@@ -290,14 +312,14 @@ uv run python app1_agente_unico/03_servidor_mcp.py --anti minimas --rol-modelo e
 uv run python app1_agente_unico/03_servidor_mcp.py --repeat 3 --budget 0.15 # tasa en 18 peticiones
 ```
 
-**Ejecución ligera:** los contratos de las tools y la medida de acierto se prueban sin modelo; ejecutar sirve para ver la tasa con tu modelo, y `--rol-modelo` permite repetirla con el otro rol.
+**Si ejecutas:** los contratos de las tools y la medida de acierto se prueban sin modelo; ejecutar sirve para ver la tasa con tu modelo, y `--rol-modelo` permite repetirla con el otro rol.
 
 ### Qué observar
 
 La tasa de acierto y las peticiones falladas de cada variante; si repites con `--rol-modelo`, cómo cambian con el otro modelo.
 
 <details>
-<summary>Resultado de referencia (ábrelo después de contrastar tu predicción)</summary>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
 | Variante | Qué cambia | Haiku 5.5 (`--rol-modelo agent`, por defecto) | Haiku 4.5 (`--rol-modelo enforcement`) |
 | :--- | :--- | :--- | :--- |
@@ -326,14 +348,22 @@ Un agente de soporte dispone de dos tools, `analyze_content` y `analyze_document
 - D. Renombrar las tools según su propósito y ampliar sus descripciones con entradas, ejemplos, casos borde y en qué se diferencian de la otra.
 
 <details>
-<summary>Respuesta</summary>
+<summary>Paso 4 · Respuesta</summary>
 
 **D.** La descripción es el mecanismo con el que el modelo elige (TS 2.1-K1), y las ambiguas o solapadas causan *misrouting* (TS 2.1-K3). La corrección es describir con propósito, entradas y límites (TS 2.1-K2, TS 2.1-S1) y renombrar para quitar el solapamiento (TS 2.1-S2). A es una instrucción por palabra clave que puede anular las descripciones (TS 2.1-K4, TS 2.1-S4): arregla un caso y crea otros. B va al revés de la guía, que divide las tools genéricas en otras de contrato definido (TS 2.1-S3). C añade una pieza para compensar un defecto que se arregla en la descripción; ninguna viñeta de la guía lo propone.
 </details>
 
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
 ---
 
 ## 04 · Errores estructurados
+
+> **Qué vas a hacer:** Ver qué hace un agente cuando sus tools fallan de cuatro formas distintas, según cómo le llegue cada error.
+>
+> **Necesitas antes:** Nada.
+>
+> **Modo:** Ejecución ligera (puedes hacerlo entero sin ejecutar).
 
 ### Antes de empezar
 
@@ -386,14 +416,14 @@ uv run python app1_agente_unico/04_errores_estructurados.py --anti fallo_como_va
 uv run python app1_agente_unico/04_errores_estructurados.py --repeat 5 --budget 0.25
 ```
 
-**Ejecución ligera:** la forma de cada error y las señales sobre el registro se prueban sin modelo; ejecutar sirve para ver qué hace el agente con cada error (reintentar, corregir, explicar).
+**Si ejecutas:** la forma de cada error y las señales sobre el registro se prueban sin modelo; ejecutar sirve para ver qué hace el agente con cada error (reintentar, corregir, explicar).
 
 ### Qué observar
 
 Por variante, qué tools se repiten con la misma entrada y cuántos de esos reintentos son inútiles, si el transitorio se recupera y qué dice el texto final del histórico.
 
 <details>
-<summary>Resultado de referencia (ábrelo después de contrastar tu predicción)</summary>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
 | Variante | Reintentos | Qué se rompe |
 | :--- | :--- | :--- |
@@ -420,14 +450,22 @@ Una tool MCP de reembolsos devuelve «Operation failed» ante cualquier fallo. E
 - D. Cambiar el mensaje a «Operation failed, please try again later», para que el agente espere un poco antes de volver a intentarlo.
 
 <details>
-<summary>Respuesta</summary>
+<summary>Paso 4 · Respuesta</summary>
 
 **A.** El fallo se comunica con el flag de error y metadatos estructurados (TS 2.2-K1, TS 2.2-S1): la categoría distingue una regla de negocio de un fallo transitorio (TS 2.2-K2; la guía no da nombre al valor de esa categoría), la marca de no reintentable evita el reintento inútil (TS 2.2-K4; la guía la escribe `retriable: false` en S2 e `isRetryable` en S1) y la explicación de la política permite al agente informar bien (TS 2.2-S2). B pone un tope arbitrario en vez de dar al agente la información, y seguirá reintentando lo que no tiene arreglo; C intenta suplir en prosa lo que debería salir de la tool, y no distingue unos errores de otros; D empeora el problema: invita a reintentar justo lo que no es reintentable. Un mensaje genérico es el anti-patrón (TS 2.2-K3).
 </details>
 
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
 ---
 
 ## 05 · Scoping y `tool_choice`
+
+> **Qué vas a hacer:** Comparar cómo elige tools un agente con 5 o con 18 disponibles, y qué garantiza cada modo de `tool_choice` en la primera respuesta.
+>
+> **Necesitas antes:** El bucle de [`01`](#01--bucle-manual): la parte `tool_choice` usa uno igual.
+>
+> **Modo:** Ejecución ligera (puedes hacerlo entero sin ejecutar).
 
 ### Antes de empezar
 
@@ -485,14 +523,14 @@ uv run python app1_agente_unico/05_scoping_y_tool_choice.py --parte tool_choice 
 uv run python app1_agente_unico/05_scoping_y_tool_choice.py --parte scoping --repeat 5 --budget 0.20
 ```
 
-**Ejecución ligera** en las dos partes: la petición por modo y el clasificador de la primera respuesta se prueban sin modelo. Ejecutar `tool_choice` sirve para ver con qué empieza la primera respuesta en cada modo, y `scoping`, el acierto, la consistencia y el coste por petición.
+**Si ejecutas:** la petición por modo y el clasificador de la primera respuesta se prueban sin modelo. Ejecutar `tool_choice` sirve para ver con qué empieza la primera respuesta en cada modo, y `scoping`, el acierto, la consistencia y el coste por petición.
 
 ### Qué observar
 
 En `scoping`, el acierto, si la elección cambia entre repeticiones y el coste por petición con 5 y con 18 tools. En `tool_choice`, con qué empieza la primera respuesta en cada modo y qué pasa en el turno siguiente.
 
 <details>
-<summary>Resultado de referencia (ábrelo después de contrastar tu predicción)</summary>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
 Haiku 5.5:
 
@@ -524,14 +562,22 @@ Un flujo de soporte necesita extraer los metadatos de cada ticket nuevo antes de
 - D. Dar al asistente diez tools de enriquecimiento más junto a la de extracción, para que siempre tenga una opción disponible que llamar.
 
 <details>
-<summary>Respuesta</summary>
+<summary>Paso 4 · Respuesta</summary>
 
 **B.** La selección forzada asegura que una tool concreta se llame primero y los pasos siguientes se procesan en turnos posteriores (TS 2.3-S4, TS 2.3-K4). A fuerza una llamada en cada turno, así que el asistente nunca podría dar su respuesta final, y `"any"` además no fija cuál es la tool (garantiza una llamada, no esa llamada, TS 2.3-S5). C intenta suplir en prosa lo que debe garantizar la configuración: con `"auto"` el modelo puede seguir contestando con texto. D va en contra de TS 2.3-K1: más tools degradan la selección y no aseguran que se llame a la de extracción.
 </details>
 
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
 ---
 
 ## 06 · Configuración MCP
+
+> **Qué vas a hacer:** Conectar el agente a servidores MCP declarados en un `.mcp.json` y ver qué cambian los resources y la descripción de una tool en lo que hace.
+>
+> **Necesitas antes:** Nada (el servidor `mesa` reutiliza las tools de [`05`](#05--scoping-y-tool_choice)).
+>
+> **Modo:** Ejecución ligera (puedes hacerlo entero sin ejecutar).
 
 ### Antes de empezar
 
@@ -594,14 +640,14 @@ uv run python app1_agente_unico/06_mcp_config.py --parte descripcion [--anti des
 uv run python app1_agente_unico/06_mcp_config.py --parte recursos --repeat 4 --budget 0.20
 ```
 
-**Ejecución ligera** en las tres partes: el `.mcp.json` generado y los contadores se prueban sin modelo; ejecutar `recursos` sirve para ver cuánto explora el agente en cada variante.
+**Si ejecutas:** el `.mcp.json` generado y los contadores se prueban sin modelo; ejecutar `recursos` sirve para ver cuánto explora el agente en cada variante.
 
 ### Qué observar
 
 En `conexion`, las tools por servidor y `token_recibido`. En `recursos`, cuántas llamadas exploratorias y a resources hace cada variante, y su coste. En `descripcion`, cuántas veces usa `Grep` frente a `search_kb`.
 
 <details>
-<summary>Resultado de referencia (ábrelo después de contrastar tu predicción)</summary>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
 Haiku 5.5:
 
@@ -632,7 +678,9 @@ Un agente tiene `Grep` y un servidor MCP propio con una tool `search_kb` que ord
 - D. Sustituir el servidor propio por uno comunitario genérico de búsqueda, que ya traerá descripciones más largas.
 
 <details>
-<summary>Respuesta</summary>
+<summary>Paso 4 · Respuesta</summary>
 
 **C.** Una descripción que detalla capacidades y salidas evita que el agente prefiera una tool integrada sobre una tool MCP más capaz (TS 2.4-S3): lo que decide la elección es lo que el agente ve de cada tool (TS 2.1-K1). A quita una herramienta que el agente sigue necesitando para otras cosas y no arregla la descripción; B es una instrucción en el prompt que compensa una descripción pobre y puede crear asociaciones no deseadas (TS 2.1-K4); D no aplica el criterio de TS 2.4-S4: una búsqueda sobre el catálogo propio de la mesa es un flujo específico del equipo y pide servidor propio.
 </details>
+
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
