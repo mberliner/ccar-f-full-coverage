@@ -6,17 +6,26 @@ Apps agénticas de demostración para practicar, con código ejecutable, todas l
 
 **Qué es.** Un curso práctico en código para el examen CCAR-F: aprender a construir agentes con Claude (el bucle agéntico, las tools y los servidores MCP, hacer cumplir reglas con código, las sesiones, los sistemas con coordinador y subagentes, y la configuración de Claude Code). El temario sale de la Exam Guide v1.0, organizada en dominios (D1–D5) y en **viñetas**, cada uno de sus puntos evaluables (`TS x.y-Kn` o `TS x.y-Sn`). Aquí no se copia la guía: cada módulo explica su concepto con sus palabras y cierra con una pregunta propia en formato de examen.
 
-**Qué es un módulo.** Un ejercicio, con dos partes: un script de una app (por ejemplo, `app1_agente_unico/05_scoping_y_tool_choice.py`) y su sección `## NN` en el `README.md` de esa app. **Se estudia leyendo esa sección, no el script**: ella te dice qué hacer en cada paso.
+**Qué es un módulo.** Un ejercicio, con dos partes: un script de una app (por ejemplo, `app1_agente_unico/05_scoping_y_tool_choice.py`) y su sección `## NN` en el `README.md` de esa app. La sección dice qué hacer en cada paso; el script no hace falta leerlo.
 
 **Qué necesitas.** Usar la terminal. Saber leer Python ayuda, pero no es imprescindible: el ciclo se sigue con los textos y la salida. Para ejecutar con modelo hace falta una API key ([Instalación](#instalación-una-vez)); sin ella puedes hacer los módulos en modo ligero. Los términos están en el [glosario](docs/glosario.md).
 
-**Tu primer módulo:** [app1 · 01 · Bucle manual](app1_agente_unico/README.md#01--bucle-manual).
+### Cómo empezar: con guía (recomendado)
 
-**Si prefieres que te guíen:** abre `claude` en la carpeta del repositorio y escribe `/practica-guiada`. Un asistente te narra el módulo paso a paso, espera tus predicciones y no te enseña el resultado ni la respuesta antes de tiempo. Sin argumento, muestra el menú de módulos y una «Puesta en marcha» para comprobar la instalación.
+Un asistente te narra cada módulo paso a paso: te explica de qué va, espera tus predicciones, te dice cuándo ejecutar y no te enseña el resultado ni la respuesta antes de tiempo. No tienes que abrir ningún archivo.
+
+1. Clona e instala (`git clone …`, `cd ccar-f-full-coverage`, `uv sync`; ver [Instalación](#instalación-una-vez)). Necesitas [Claude Code](https://claude.com/claude-code).
+2. Abre `claude` en la carpeta del repositorio y escribe `/practica-guiada`.
+3. La primera vez, elige **Puesta en marcha**: comprueba si tienes la credencial y tu `FALLOS.md`, y te dice qué hacer con lo que falte. Solo hace falta una vez.
+4. Elige un módulo del menú (el recomendado va marcado con ★) o escríbelo directamente: `/practica-guiada app1/01`.
+
+### Por tu cuenta
+
+Si prefieres leer a tu ritmo, cada sección de módulo se sigue sola con el ciclo de abajo. **Tu primer módulo:** [app1 · 01 · Bucle manual](app1_agente_unico/README.md#01--bucle-manual).
 
 ### Cómo se hace un módulo
 
-Cada sección de módulo tiene las mismas partes, en este orden:
+Es el mismo ciclo con guía o sin ella; con `/practica-guiada`, el asistente te lleva por cada paso. Cada sección de módulo tiene las mismas partes, en este orden:
 
 1. **Oriéntate.** Lee la ficha del principio (qué vas a hacer, qué necesitas antes y el **Modo**), «Antes de empezar» y «El ejercicio».
 2. **Predice.** Responde por escrito, con tus palabras, las preguntas de «Predice antes de ejecutar». No hay un número que acertar.
@@ -73,7 +82,7 @@ Cada módulo introduce las viñetas que `CONCEPTOS.md` le asigna, así que una a
 
 - Python ≥ 3.10
 - [`uv`](https://docs.astral.sh/uv/)
-- [Claude Code](https://claude.com/claude-code) (para trabajar en el proyecto, no para ejecutar los tests)
+- [Claude Code](https://claude.com/claude-code) (para la práctica guiada y para trabajar en el proyecto; no para ejecutar los tests ni los módulos)
 - Una `ANTHROPIC_API_KEY` solo para las ejecuciones con modelo
 
 ### 1. Clonar e instalar
