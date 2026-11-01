@@ -1,6 +1,6 @@
 # Encargo · asistente que narra la práctica (`/practica-guiada`)
 
-**Estado:** pendiente, fuera del Hito T. Es un encargo, no un diseño: el diseño se hace en su propia sesión, en plan mode, partiendo de aquí. Escrito el 2026-11-01; decisiones del análisis incorporadas el mismo día.
+**Estado:** implementado el 2026-11-01 (plan mode), con la prueba con una persona y la revisión independiente pendientes. Piezas: `harness/narrador.py` (menú, puesta en marcha y fases), `tests/test_narrador.py` y `.claude/skills/practica-guiada/SKILL.md`. Desvío del encargo: son **seis** fases, no cinco. `ejecutar` («Ejecutar» y «Qué observar» sin su bloque plegado) va aparte de `ejercicio` para que los comandos lleguen después de la predicción, como en la plantilla. Escrito el 2026-11-01; decisiones del análisis incorporadas el mismo día.
 
 ## Por qué
 

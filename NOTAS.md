@@ -118,7 +118,11 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
   - [x] `/verificar-concepto` sobre TS 2.3-S4, TS 5.1-K1 y TS 1.3-S3 en una sesión aparte (2026-11-01): las tres sin problemas, con la cabecera completa y la pregunta tipo examen presente. La skill identificó la respuesta en su `<details>` sin confundirla con el «Resultado de referencia».
   - [x] Prueba de usabilidad con una persona (`paso8-prueba-usuario.md`, 2026-11-01; `app1/05` ligero y `app3/02` paralelo, elegidos al azar): la orientación fallaba (autonomía 2/7). Corregida sin cambiar cifras: «Empieza aquí» único en el `README.md` raíz (instalación y construcción aparte), ficha por módulo (qué vas a hacer · necesitas antes · Modo), bloques «Paso 3 · Contrastar» y «Paso 4 · Respuesta» y línea «Paso 5»; el test de estructura lo exige (441 en verde). Python pasa a recomendado.
   - [x] Cierre (2026-11-01): los `→ roadmap` del Hito T, en el roadmap (§4.1, §4.2, §4.3, §5, §10, §11.8, §12, §13 y §14; la sección D3 queda fuera de la fila T) y reducidos a puntero en `docs/hallazgos.md`; traspaso temporal borrado.
-- [ ] **Asistente narrador** (fuera del Hito T, antes de la entrega 3 o con ella): encargo en `docs/encargo-asistente-narrador.md`; se diseña en su propia sesión, en plan mode.
+- [ ] **Asistente narrador** (fuera del Hito T, antes de la entrega 3 o con ella): encargo en `docs/encargo-asistente-narrador.md`.
+  - [x] Diseño en plan mode e implementación (2026-11-01). `harness/narrador.py` entrega cada módulo en seis fases (`ficha`, `ejercicio`, `ejecutar`, `contraste`, `pregunta`, `respuesta`), además de `menu` y `setup`. `tests/test_narrador.py` (tests primero) comprueba en los 15 módulos que ninguna fase adelanta los bloques plegados ni la cabecera del script. La skill `/practica-guiada` va sin fork, solo con `USA` de TS 3.2 y sin cambios en `CONCEPTOS.md`. Hay una línea en «Empieza aquí».
+  - [ ] Recorrido en una sesión nueva (`claude -n narrador`): menú, puesta en marcha y un módulo ligero de principio a fin.
+  - [ ] Prueba con una persona, en modo narrado (`docs/prompts-hito-t/paso8-prueba-usuario.md`).
+  - [ ] Revisión por una instancia independiente.
 - [ ] Entrega 3 · D4 y D5 (`S-2`)
 - [ ] `S-1` · repaso sin código nuevo
 - [ ] Entrega 4 · opcional, después del examen

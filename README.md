@@ -12,6 +12,8 @@ Apps agénticas de demostración para practicar, con código ejecutable, todas l
 
 **Tu primer módulo:** [app1 · 01 · Bucle manual](app1_agente_unico/README.md#01--bucle-manual).
 
+**Si prefieres que te guíen:** abre `claude` en la carpeta del repositorio y escribe `/practica-guiada`. Un asistente te narra el módulo paso a paso, espera tus predicciones y no te enseña el resultado ni la respuesta antes de tiempo. Sin argumento, muestra el menú de módulos y una «Puesta en marcha» para comprobar la instalación.
+
 ### Cómo se hace un módulo
 
 Cada sección de módulo tiene las mismas partes, en este orden:
