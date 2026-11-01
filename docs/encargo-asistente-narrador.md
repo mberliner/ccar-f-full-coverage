@@ -1,6 +1,6 @@
-# Encargo · asistente que narra un módulo
+# Encargo · asistente que narra la práctica (`/practica-guiada`)
 
-**Estado:** pendiente, fuera del Hito T. Es un encargo, no un diseño: el diseño se hace en su propia sesión, en plan mode, partiendo de aquí. Escrito el 2026-11-01.
+**Estado:** pendiente, fuera del Hito T. Es un encargo, no un diseño: el diseño se hace en su propia sesión, en plan mode, partiendo de aquí. Escrito el 2026-11-01; decisiones del análisis incorporadas el mismo día.
 
 ## Por qué
 
@@ -15,12 +15,17 @@ Lo que el texto no puede dar es **acompañamiento**: que alguien te diga qué to
 
 ## Qué debe hacer
 
-Un comando o una skill de proyecto, por ejemplo `/estudiar appN/NN`, que lleve a la persona por los 5 pasos de la ficha de un módulo:
-1. Presentar la ficha y el contexto del módulo («Antes de empezar», «El ejercicio») con sus palabras y sin añadir nada que no diga el README.
-2. Pedir las predicciones en texto libre y no seguir hasta tenerlas.
-3. Según el Modo, proponer el comando que hay que ejecutar o el contraste sin ejecutar, y decir cuándo abrir «Paso 3 · Contrastar».
-4. Plantear la pregunta tipo examen y, después de la respuesta de la persona, indicar que abra «Paso 4 · Respuesta».
-5. Ofrecer, al final, la fila de `FALLOS.md` (`estado/<perfil>/`) con lo que falló, para que la persona la confirme.
+Una skill de proyecto, `/practica-guiada`. El objetivo son los conceptos del examen; el módulo es el medio. La experiencia es narrada de principio a fin: abrir el README o el script queda como opción de la persona, no como paso.
+
+- **Sin argumento:** muestra un menú con todo lo disponible, sacado de las tablas «Ruta de lectura» de cada app, con el primer módulo recomendado marcado y una entrada «Puesta en marcha».
+- **Puesta en marcha (desde cero):** comprueba `uv`, que existe `.env` (solo que existe: su lectura está denegada) y el estado personal (`harness.estado init`), y dice qué hacer con lo que falte. El paso previo, abrir `claude` en el repositorio y escribir `/practica-guiada`, va en una línea de «Empieza aquí».
+- **Con un módulo,** lleva a la persona por los 5 pasos:
+  1. Narra la ficha, «Antes de empezar» y «El ejercicio». Explica con sus palabras, apoyándose en `docs/glosario.md` y en «Empieza aquí».
+  2. Pide las predicciones en texto libre y no sigue hasta tenerlas.
+  3. Según el Modo, propone el comando, que la persona lanza con `! uv run python …` para que la salida llegue a la conversación, o hace el contraste sin ejecutar. Después narra «Paso 3 · Contrastar» y lo compara con la predicción. Quién decide si falló es la persona.
+  4. Plantea la pregunta tipo examen con `AskUserQuestion`: opciones en el orden del README, ninguna marcada como recomendada; «Other» sirve para responder con sus palabras. Después narra «Paso 4 · Respuesta».
+  5. Propone la fila de `FALLOS.md` (`estado/<perfil>/`, formato de `plantillas/estado/`) y la escribe solo con confirmación explícita en texto.
+- **Dependencias:** si la ficha dice «Necesitas antes» (app1/05, app2/02, app2/06, app3/02, app3/03), pregunta si se hizo el módulo previo y ofrece ir a él o seguir. No bloquea: ningún script depende de otro para ejecutarse.
 
 ## Restricciones
 
@@ -30,13 +35,14 @@ Un comando o una skill de proyecto, por ejemplo `/estudiar appN/NN`, que lleve a
 - Dentro del perímetro de la guía: comandos y skills de proyecto son de TS 3.2, sin mecanismos que la guía no nombre.
 - Lo común no se duplica: el asistente lee la plantilla y el README del módulo, no lleva una copia propia del contenido.
 
-## Preguntas abiertas para su plan mode
+## Decisiones tomadas (2026-11-01)
 
-- ¿Comando o skill? ¿Encaja `context: fork` con una conversación interactiva? (`docs/hallazgos.md` registra que la skill con fork corre en segundo plano y devuelve un informe.)
-- ¿Cómo se impide que lea o cite el contenido de los `<details>` antes de tiempo: con una instrucción, con `allowed-tools` o leyendo la sección por partes? ¿Cómo se comprueba?
-- ¿Ejecuta el módulo o solo propone el comando? (Coste, `--budget` y la credencial.)
-- ¿Sustituye a la lectura o la acompaña?
-- ¿Cómo se registra su uso en la sección D3, si introduce o usa alguna viñeta? (Regla «una vez».)
+- **Skill sin `context: fork`:** con fork corre en segundo plano y devuelve un informe (`docs/hallazgos.md`); el narrador necesita conversar. Skill y no comando porque puede llevar archivos de apoyo.
+- **La revelación la controla un script por fases**, no `allowed-tools` ni una instrucción sola. Un script del arnés sin modelo (p. ej. `harness/narrador.py`) resuelve `appN/NN` a la carpeta real y entrega el módulo por fases: `ficha`, `ejercicio`, `pregunta`, `contraste`, `respuesta`. Las previas a la respuesta no llevan el contenido de los `<details>` que aún no toca. La skill solo lo llama a él y no lee el `README.md` ni el `.py` del módulo antes del paso 4 (la cabecera del `.py` puede dar la respuesta).
+- **Por qué no `allowed-tools`:** en una skill sin fork preautoriza las tools listadas, pero no restringe las demás (comprobado; ver `docs/hallazgos.md`). Sí se aprovecha para la escritura: `Write` no va en `allowed-tools`, así la sesión interactiva pide permiso antes de tocar `FALLOS.md`.
+- **No ejecuta el módulo:** lo propone y la persona decide el gasto (`--budget`, `--repeat`).
+- **D3:** las viñetas de TS 3.2 ya están introducidas; la skill solo lleva `USA: TS 3.2-K1, TS 3.2-S1` (y `K2`, `S3` si usa frontmatter con `allowed-tools`). Sin cambios en `CONCEPTOS.md`.
+- **Prueba sin modelo, antes del módulo:** un test del script comprueba, en todos los módulos, que ninguna fase previa contiene el texto de los bloques plegados.
 
 ## Cómo se valida
 
