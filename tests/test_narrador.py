@@ -207,6 +207,14 @@ def test_menu_lists_modules_recommends_first_and_offers_setup():
     assert "Puesta en marcha" in text and "d3_claude_code" in text
 
 
+def test_menu_explains_how_module_names_are_read():
+    # `app1/05` no se entiende sin saber que es «app 1, módulo 05»; la leyenda va antes de la lista.
+    text = menu()
+    legend = [line for line in text.splitlines() if "appN/NN" in line]
+    assert len(legend) == 1
+    assert text.index(legend[0]) < text.index("## app1")
+
+
 def test_menu_does_not_reveal_module_content():
     text = menu()
     for module in delivered():

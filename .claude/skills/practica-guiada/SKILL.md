@@ -31,6 +31,7 @@ Argumento recibido: `$ARGUMENTS`
 4. **No ejecutes los módulos.** Propones el comando y lo lanza la persona con `!` delante, para que la salida llegue a la conversación. Ella decide el gasto (`--anti`, `--budget`, `--repeat`).
 5. **Lo único que escribes es su `FALLOS.md`**, y solo tras un «sí» explícito en texto. El resto del repositorio no se toca.
 6. Para explicar términos puedes leer `docs/glosario.md` y la sección «Empieza aquí» del `README.md` raíz.
+7. **Ningún término propio del repositorio sale sin explicar.** Una persona que llega de cero no sabe qué es «mesa» (el servidor o la mesa de ayuda), «alias», «familia», «rol» ni que `app1/05` significa «módulo 05 de la app 1». La primera vez que uses uno en la conversación, di en una frase qué es, con tus palabras y sin dar por hecho que lo conoce. Lee `docs/glosario.md` al empezar el módulo para saber cuáles hay. Si un término no está en el glosario ni en la ficha, dilo con claridad en lugar de suponer su sentido. Di siempre «el módulo 05 de la app 1» o «`app1/05`» con esa lectura, y nunca «el 05» a secas.
 
 ## Qué hacer según el argumento
 

@@ -247,7 +247,16 @@ def phase(module: Module, name: str) -> str:
 def menu(root: Path = ROOT) -> str:
     """Todo lo disponible, por app, con el primer módulo recomendado marcado con ★."""
     star = recommended(root)
-    lines = ["# Práctica guiada · qué hay disponible", "", "- **Puesta en marcha**: comprobar instalación, credencial y estado personal (si empiezas de cero).", ""]
+    lines = [
+        "# Práctica guiada · qué hay disponible",
+        "",
+        # Los nombres `app1/05` son lo primero que ve quien llega de cero: se explican antes de la lista.
+        "Cómo se leen los nombres: `appN/NN` es una app y un módulo suyo. `app1/05` es el módulo 05 de la app 1 "
+        "(el script `app1_agente_unico/05_…py`). Cada app agrupa un tema y el número solo ordena los módulos dentro de ella.",
+        "",
+        "- **Puesta en marcha**: comprobar instalación, credencial y estado personal (si empiezas de cero).",
+        "",
+    ]
     seen_pending: set[str] = set()
     for app_dir in app_dirs(root):
         title = readme_text(app_dir).splitlines()[0].lstrip("# ").strip()

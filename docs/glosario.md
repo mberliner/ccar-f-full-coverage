@@ -5,7 +5,8 @@ Términos que usan los módulos de las tres apps y el arnés, para quien llega d
 ## El repositorio y el ejercicio
 
 - **Viñeta:** cada punto evaluable de la guía del examen, identificado como `TS x.y-Kn` (conocimiento) o `TS x.y-Sn` (destreza). `CONCEPTOS.md` dice qué módulo introduce cada una.
-- **Módulo:** un script pequeño de una app que demuestra una o varias viñetas. Se ejecuta con `uv run python <app>/<módulo>.py`.
+- **App:** cada una de las tres carpetas del repositorio (`app1_agente_unico`, `app2_agente_con_control`, `app3_sistema_multiagente`). Agrupa módulos de un mismo tema: un agente, un agente con control, un sistema multiagente.
+- **Módulo (`appN/NN`):** un script pequeño de una app que demuestra una o varias viñetas. Se nombra con su app y su número de orden dentro de ella: `app1/05` es el módulo 05 de la app 1, el script `app1_agente_unico/05_scoping_y_tool_choice.py`. Se ejecuta con `uv run python <carpeta-de-la-app>/<script>.py`. El número solo ordena: algunos módulos conviene hacerlos antes que otros (lo dice su ficha), pero ninguno es requisito para ejecutar otro.
 - **Anti-patrón:** una forma de construir algo que parece razonable pero es incorrecta. Los módulos lo traen como variante construida mal a propósito, que se elige con `--anti`.
 - **`--anti`, `--repeat`, `--budget`:** opciones comunes de los módulos. `--anti` ejecuta una variante anti-patrón; `--repeat N` repite la ejecución para ver una tasa; `--budget` baja el tope de coste de esa ejecución (nunca lo sube).
 - **Mesa de ayuda (*helpdesk*):** el dominio de todas las apps: un servicio de soporte TI interno con tickets, empleados y artículos. Los datos son sintéticos (`datos/sinteticos/`).
@@ -40,6 +41,7 @@ Términos que usan los módulos de las tres apps y el arnés, para quien llega d
 
 - **MCP (Model Context Protocol):** un protocolo estándar para que un programa externo, el **servidor MCP**, ofrezca tools y recursos a un agente.
 - **Servidor en proceso / stdio:** un servidor MCP puede vivir dentro del mismo programa que el agente (en proceso) o ser un programa aparte con el que se comunica por entrada y salida estándar (stdio).
+- **Servidor `mesa`:** el servidor MCP en proceso de `app1` (`app1_agente_unico/servers/mesa.py`) que ofrece al agente las tools de la mesa de ayuda (`get_ticket`, `search_kb`, `get_user`…). `mesa` es solo su nombre, por «mesa de ayuda»; no es un concepto del examen. `app2` usa otro servidor del mismo dominio, llamado `helpdesk`.
 - **Resource (recurso):** contenido que un servidor MCP expone para leerlo, como un catálogo, sin ser una acción que se ejecuta.
 - **`.mcp.json`:** archivo de configuración del proyecto que declara qué servidores MCP se conectan y cómo se lanzan. Puede referirse a variables de entorno en lugar de llevar secretos escritos.
 
