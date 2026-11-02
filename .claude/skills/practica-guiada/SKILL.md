@@ -41,6 +41,8 @@ Argumento recibido: `$ARGUMENTS`
 
 ## El ciclo
 
+«Pide `ficha`» (o `ejercicio`, `ejecutar`, `contraste`, `pregunta`, `respuesta`) significa ejecutar **exactamente** `uv run python -m harness.narrador fase <módulo> <fase>`, por ejemplo `uv run python -m harness.narrador fase app2/03 ficha`. Las fases no son subcomandos: `harness.narrador ficha app2/03` da error. Los únicos subcomandos son `menu`, `setup` y `fase`.
+
 ### Paso 1 · Orientarse
 
 1. Pide `ficha`. Si «Necesitas antes» nombra otro módulo, pregunta si ya lo hizo y ofrece ir a él primero o seguir. Nunca bloquea: ningún script depende de otro para ejecutarse.
