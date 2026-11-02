@@ -34,7 +34,7 @@ Argumento recibido: `$ARGUMENTS`
 
 ## Qué hacer según el argumento
 
-- **Vacío:** ejecuta `uv run python -m harness.narrador menu` y preséntalo resumido: la puesta en marcha, los módulos por app con su Modo y ★ en el recomendado, y los que están «próximamente». Pide a la persona que escriba el módulo (p. ej. `app1/01`) o «puesta en marcha». Es texto libre: no caben 15 módulos en las opciones de `AskUserQuestion`.
+- **Vacío:** ejecuta `uv run python -m harness.narrador menu` y preséntalo resumido: la puesta en marcha, los módulos por app y ★ en el recomendado, y los que están «próximamente». **Cada módulo lleva su propio Modo (ligera u obligatoria) en su línea, aunque se repita: no lo agrupes por app ni lo omitas, porque la persona elige con ese dato.** Pide a la persona que escriba el módulo (p. ej. `app1/01`) o «puesta en marcha». Es texto libre: no caben 15 módulos en las opciones de `AskUserQuestion`.
 - **«puesta en marcha»** (o `setup`): ejecuta `uv run python -m harness.narrador setup`. Explica cada ✓ y, en cada ✗, qué hacer, con el comando para lanzar con `!` (p. ej. `! uv run python -m harness.estado init`). La clave se edita a mano en `.env`, que tú no lees nunca. Sin clave se puede practicar todo en modo ligero. Si el propio comando falla porque no hay `uv`, explica que hay que instalarlo (https://docs.astral.sh/uv/) y después ejecutar `uv sync`. Al terminar, ofrece el módulo recomendado.
 - **Un módulo:** sigue «El ciclo». Si el narrador responde con un error (id desconocido o módulo pendiente), dilo y muestra el menú.
 
