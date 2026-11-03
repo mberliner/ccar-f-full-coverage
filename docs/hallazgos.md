@@ -79,3 +79,21 @@ Marcas para el roadmap (flujo en `docs/estandares-flujo.md`): `→ roadmap` pend
 - **El estado personal vive fuera de git y las notas `→ roadmap` van aparte de `NOTAS.md`** (2026-11-01): ✓ roadmap 2026-11-01 §4.1, §4.2, §4.3, §5, §10, §12 y §13. Lo propio de esta implementación: `estado/<perfil>/` con plantillas en `plantillas/estado/`, y este documento como notas de producto.
 - **`allowed-tools` en una skill sin `context: fork` preautoriza, no restringe** (2026-11-01, Claude Code 2.1.316): ✓ roadmap 2026-11-01 §4.3. Lo propio de esta implementación: la sonda fue `claude -p` con `--setting-sources project`, una ejecución por caso, ~0,23 $; `d3_claude_code/README.md` mantiene la lectura de la guía.
 - **Salida redirigida en Windows y `UnicodeEncodeError`** (recorrido del narrador, 2026-11-03): ✓ roadmap 2026-11-03 §4.3 y §5. Lo propio de esta implementación: visto al ejecutar `app1/05` con `!` desde Claude Code; `harness/__init__.py` reconfigura los dos flujos y lo prueba `tests/test_consola.py`.
+
+## Entrega 3 · tanda A (sondas A2, 2026-11-03)
+
+Hechas con la Messages API y `CostGuard`, con scripts desechables fuera del repositorio. Coste total ~0,35 $. Los documentos son `documentos_compra.json`.
+
+- **Message Batches con Haiku 5.5** (`app3/09`, ~0,0005 $): → roadmap §4.3 y §8 (`app3/09`).
+  - Disponible. Un lote de 3 peticiones pasó de `in_progress` a `ended` en ~2 min (`request_counts` con `processing=3` hasta el final), así que se puede esperar en una sesión; el módulo sigue sin esperar de forma obligatoria (`--enviar` y `--batch-id`).
+  - Los resultados no salen en el orden de envío (llegaron `DC-01`, `DC-12`, `DC-03`): se emparejan por `custom_id`.
+  - **Una respuesta truncada llega como `succeeded`**, con `stop_reason: max_tokens` y el `tool_use` incompleto (sin `line_items`). Detectar los fallidos exige mirar `stop_reason`, no solo el `type` del resultado; los `errored`, `expired` y `canceled` son aparte.
+  - `usage` por resultado, igual que en la API síncrona; con el 50 % (`BATCH_DISCOUNT`) las 3 peticiones costaron 0,00048 $.
+- **Reintento con error concreto frente a genérico** (`app3/08`, Haiku 5.5 y Haiku 4.5, ~0,2 $): → roadmap §4.3 y §8 (`app3/08`).
+  - **Con Haiku 5.5 no hay nada que reintentar**: 0 de 36 primeros intentos con fecha mal formateada, aunque la descripción del campo solo diga «Fecha del documento».
+  - Con **Haiku 4.5** sí: 17 de 36 salen con la fecha tal como aparece (`14/09/2026`, `22 Sep 2026`, `28-09-2026`). Reintento con el error concreto (campo, valor y regla): **12 de 12 corregidos**; reintento «Inténtalo de nuevo»: **2 de 12** (el modelo repite la misma fecha). `app3/08` usa por eso el rol `enforcement` (cambio de diseño, mismo precedente que `app2/01`).
+  - **Dato que no está en la fuente** (factura `DC-02` sin número de pedido, error «debe citar su PO»): insistir hace que el modelo lo invente. Haiku 5.5: `<UNKNOWN>`, `PO-<UNKNOWN>`, `PO-0000`; Haiku 4.5: `PO-0398`, `PO-2026`, `PO-398` (3 repeticiones por modelo, hasta 3 reintentos). El reintento inútil no es solo gasto: produce datos falsos.
+- **Señal de *nullable* y de `enum` cerrado** (`app3/07`, Haiku 5.5 y Haiku 4.5, 12 documentos, ~0,12 $): → roadmap §4.3 y §8 (`app3/07`).
+  - **Campos opcionales como obligatorios**: 21 de 21 campos ausentes se rellenan (con la cadena `'null'`, con `''`, o con un valor deducido); con el campo *nullable* y fuera de `required`, 1–2 de 21 (Haiku 5.5: el total de un presupuesto deducido de su única línea; Haiku 4.5, además, una fecha de validez como fecha del documento). Con las dos versiones del modelo.
+  - **Un `enum` cerrado casi no fuerza el tipo**: de 12 documentos, solo el ilegible (`unclear`) salió como `invoice` con Haiku 5.5; el certificado de garantía y el presupuesto salieron como `other` **aunque `other` no estaba en el `enum`** (con Haiku 4.5, el ilegible salió como `<UNKNOWN>`, también fuera). El esquema de una tool no se impone sin modo estricto: el modelo puede devolver un valor fuera de `enum`, y el módulo tiene que **validarlo**. El modo estricto y las *structured outputs* quedan fuera de la guía (`tests/perimetro_excluido.yaml`), así que no se usan.
+  - **El identificador de la petición se cuela en el dato**: con «Documento DC-07:» en el prompt, el modelo puso `document_number='DC-07'`. El prompt de los módulos no lleva el `doc_id`.

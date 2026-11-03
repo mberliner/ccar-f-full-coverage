@@ -30,7 +30,7 @@ Las apps se ordenan por complejidad creciente, pero se entregan por bloques de d
 
 El avance de cada entrega se registra en `NOTAS.md`.
 
-**Introducidas: 131/240**
+**Introducidas: 144/240**
 
 | Viñeta | Destino | Estado |
 | :--- | :--- | :---: |
@@ -183,22 +183,22 @@ El avance de cada entrega se registra en `NOTAS.md`.
 | TS 4.2-K1 | app2/04_few_shot_y_escalamiento | ☐ |
 | TS 4.2-K2 | app2/04_few_shot_y_escalamiento | ☐ |
 | TS 4.2-K3 | app2/04_few_shot_y_escalamiento | ☐ |
-| TS 4.2-K4 | app3/07_extraccion_schema | ☐ |
+| TS 4.2-K4 | app3/07_extraccion_schema | ☑ |
 | TS 4.2-S1 | app2/04_few_shot_y_escalamiento | ☐ |
 | TS 4.2-S2 | app3/11_criterios_y_ci | ☐ |
 | TS 4.2-S3 | app3/11_criterios_y_ci | ☐ |
-| TS 4.2-S4 | app3/07_extraccion_schema | ☐ |
-| TS 4.2-S5 | app3/07_extraccion_schema | ☐ |
-| TS 4.3-K1 | app3/07_extraccion_schema | ☐ |
-| TS 4.3-K2 | app3/07_extraccion_schema | ☐ |
-| TS 4.3-K3 | app3/07_extraccion_schema | ☐ |
-| TS 4.3-K4 | app3/07_extraccion_schema | ☐ |
-| TS 4.3-S1 | app3/07_extraccion_schema | ☐ |
-| TS 4.3-S2 | app3/07_extraccion_schema | ☐ |
-| TS 4.3-S3 | app3/07_extraccion_schema | ☐ |
-| TS 4.3-S4 | app3/07_extraccion_schema | ☐ |
-| TS 4.3-S5 | app3/07_extraccion_schema | ☐ |
-| TS 4.3-S6 | app3/07_extraccion_schema | ☐ |
+| TS 4.2-S4 | app3/07_extraccion_schema | ☑ |
+| TS 4.2-S5 | app3/07_extraccion_schema | ☑ |
+| TS 4.3-K1 | app3/07_extraccion_schema | ☑ |
+| TS 4.3-K2 | app3/07_extraccion_schema | ☑ |
+| TS 4.3-K3 | app3/07_extraccion_schema | ☑ |
+| TS 4.3-K4 | app3/07_extraccion_schema | ☑ |
+| TS 4.3-S1 | app3/07_extraccion_schema | ☑ |
+| TS 4.3-S2 | app3/07_extraccion_schema | ☑ |
+| TS 4.3-S3 | app3/07_extraccion_schema | ☑ |
+| TS 4.3-S4 | app3/07_extraccion_schema | ☑ |
+| TS 4.3-S5 | app3/07_extraccion_schema | ☑ |
+| TS 4.3-S6 | app3/07_extraccion_schema | ☑ |
 | TS 4.4-K1 | app3/08_validacion_reintento | ☐ |
 | TS 4.4-K2 | app3/08_validacion_reintento | ☐ |
 | TS 4.4-K3 | app3/08_validacion_reintento | ☐ |

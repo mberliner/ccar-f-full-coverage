@@ -13,7 +13,9 @@ Cada módulo se hace en 5 pasos: orientarte con su ficha, predecir, ejecutar o n
 | [`01_coordinador.py`](01_coordinador.py) | TS 1.2-K1…K4, S1, S2, S4 · TS 1.3-K1, K2, K3, S1, S4 | 1 |
 | [`02_paralelo_y_descomposicion.py`](02_paralelo_y_descomposicion.py) | TS 1.2-S3 · TS 1.3-S3 · TS 1.6-K1, K3, S1, S3 | 1 |
 | [`03_tools_entre_roles.py`](03_tools_entre_roles.py) | TS 2.3-K2, K3, S1, S2, S3 | 2 |
-| `04_errores_entre_agentes.py` … `12_revision_independiente.py` | D2, D4 y D5 | 3 |
+| `04_errores_entre_agentes.py` … `06_contexto_largo.py` | D1, D2 y D5 | 3 |
+| [`07_extraccion_schema.py`](07_extraccion_schema.py) | TS 4.2-K4, S4, S5 · TS 4.3-K1…K4, S1…S6 | 3 |
+| `08_validacion_reintento.py` … `12_revision_independiente.py` | D3, D4 y D5 | 3 |
 
 ---
 
@@ -316,6 +318,110 @@ Un agente de síntesis recibe todas las tools del sistema y, aunque su cometido 
 <summary>Paso 4 · Respuesta</summary>
 
 **C.** Un agente con tools fuera de su especialización tiende a malusarlas (TS 2.3-K2); la solución es el acceso acotado, con las tools de su rol (TS 2.3-S1) y una tool cross-role muy limitada para las necesidades de alta frecuencia, con los casos complejos por el coordinador (TS 2.3-K3, TS 2.3-S3). A pide por prosa lo que la configuración debería garantizar, y el agente conserva las tools que malusa; B deja un agente con todas las tools, lo contrario del acceso acotado (TS 2.3-K3); D elimina la tool acotada, y cada verificación simple pasa a depender del coordinador (el anti-patrón de TS 2.3-S3).
+</details>
+
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
+---
+
+## 07 · Extracción estructurada con schema
+
+<!-- BORRADOR de Sonnet 5.5 (tanda A de la entrega 3): las predicciones y la pregunta tipo examen las reescribe Opus 5.5 (paso A4). Cifras medidas: ya definitivas. -->
+
+> **Qué vas a hacer:** Extraer los metadatos de 12 documentos de compra con una tool de JSON Schema y puntuar lo que sale contra unas etiquetas que el modelo no ve.
+>
+> **Necesitas antes:** Nada.
+>
+> **Modo:** Ejecución ligera (puedes hacerlo entero sin ejecutar).
+
+### Antes de empezar
+
+Los términos comunes (Messages API, `tool_choice`, *few-shot*, presupuesto) están en el [glosario](../docs/glosario.md). Este módulo no usa el Agent SDK ni subagentes: llama a la Messages API con `harness/budget.py`, como `app1/05`, y por eso necesita una API key.
+
+- **El sistema:** una sola llamada por documento. El modelo recibe el texto del documento y una tool, `extract_metadata`, cuyo `input_schema` es un JSON Schema. Los 12 documentos son facturas, albaranes y otros tipos de una compra de equipos (`documentos_compra.json`), con formatos distintos (tabla, prosa, líneas sueltas), datos que faltan y un fragmento ilegible. Las etiquetas con los valores correctos están en otro archivo, `documentos_compra_etiquetas.json`, que solo lee el código que puntúa.
+- **Términos propios:**
+  - **Campo *nullable*:** un campo cuyo tipo admite `null` (`["string", "null"]`) y que no está en `required`: es la forma de decir «el documento puede no traerlo».
+  - **`enum` abierto:** una lista de valores permitidos con una salida (`other`, más un campo de detalle, y `unclear`) para lo que no encaja.
+  - **Forma frente a fondo:** que el JSON cumpla el esquema (forma, «sintaxis») no quiere decir que sus valores sean los de la etiqueta (fondo, «semántica»). El módulo mide las dos cosas por separado.
+  - **Campo inventado:** uno que la etiqueta dice que no está en el documento y para el que el modelo devuelve algo distinto de `null` (incluidos `'null'` como texto, `''` o un valor deducido).
+
+### Las tools del ejercicio
+
+| Tool | Qué recibe | Qué devuelve |
+| :--- | :--- | :--- |
+| `extract_metadata` | el documento (en el mensaje) | la extracción: `doc_type`, `doc_type_detail`, proveedor, número, fecha, pedido, moneda, total declarado y líneas |
+| `extract_invoice`, `extract_delivery_note`, `extract_other` | el documento | una tool por tipo, con los campos de ese tipo (solo en `--parte tipo_desconocido`) |
+
+La tool no hace nada: lo que importa es lo que el modelo escribe en su entrada, que el módulo compara con la etiqueta.
+
+### El ejercicio
+
+Tres partes (`--parte`) y, en la primera, dos variantes `--anti`:
+
+- **`forzada`:** `tool_choice` forzado a `extract_metadata`. La versión correcta tiene los campos opcionales *nullable*, el `enum` con `other` y `unclear`, y las reglas de formato (fecha ISO, número con punto decimal) en la descripción. `--anti sin_nullable` hace obligatorios todos los campos y quita `null` de los tipos. `--anti enum_cerrado` deja el `enum` solo con `invoice` y `delivery_note`.
+- **`tipo_desconocido`:** tres tools, una por tipo de documento, y `tool_choice` `any` (el modelo tiene que llamar a una, pero elige cuál). Se compara con `auto` y con forzar siempre la tool de factura.
+- **`few_shot`:** el mismo esquema sin las reglas de formato en las descripciones, con y sin tres ejemplos en el *system prompt* (una factura en tabla, otra en prosa y un albarán en líneas sueltas). Admite `--rol-modelo enforcement` (Haiku 4.5).
+
+### Predice antes de ejecutar
+
+Con tus palabras; no hay un número que acertar:
+
+1. Un documento no menciona número de pedido. ¿Qué puede escribir el modelo en `po_number` si el campo es obligatorio y de tipo `string`? ¿Y si es *nullable* y no obligatorio? ¿Qué parte de cada resultado garantiza el esquema y cuál no?
+2. Con el `enum` cerrado (solo `invoice` y `delivery_note`), ¿qué dos cosas distintas podría hacer el modelo con un certificado de garantía? ¿Cuál de ellas detecta un validador del esquema y cuál solo se ve comparando con la etiqueta?
+3. Si forzaras siempre la tool de factura con tres tools de tipo disponibles, ¿qué pasaría con los albaranes? ¿Qué cambia con `any`?
+4. ¿En qué condiciones esperarías que los ejemplos *few-shot* cambiaran el formato de las fechas, y en cuáles no? ¿Por qué podría no verse con un modelo reciente?
+
+### Ejecutar
+
+```bash
+uv run python app3_sistema_multiagente/07_extraccion_schema.py --parte forzada                          # correcta
+uv run python app3_sistema_multiagente/07_extraccion_schema.py --parte forzada --anti sin_nullable      # todo obligatorio
+uv run python app3_sistema_multiagente/07_extraccion_schema.py --parte forzada --anti enum_cerrado      # enum sin other ni unclear
+uv run python app3_sistema_multiagente/07_extraccion_schema.py --parte tipo_desconocido
+uv run python app3_sistema_multiagente/07_extraccion_schema.py --parte few_shot --rol-modelo enforcement --repeat 3
+```
+
+**Si ejecutas:** la construcción del esquema por variante, el validador de forma y la puntuación contra etiquetas se prueban sin modelo; ejecutar sirve para ver qué hace de verdad el modelo con un campo que no puede rellenar. Cada ejecución cuesta menos de 0,05 $ (el `few_shot` con Haiku 4.5 y `--repeat 3`, unos 0,22 $).
+
+### Qué observar
+
+En cada ejecución, `forma válida`, `campos ausentes rellenados`, `tipo correcto`, `fuera del enum` y `valores incorrectos`; en `tipo_desconocido`, qué tool eligió el modelo para cada documento.
+
+<details>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+Haiku 5.5 (rol `agent`), 12 documentos, tres repeticiones salvo donde se dice:
+
+| Variante | Señal observada | Qué dice |
+| :--- | :--- | :--- |
+| `forzada`, correcta | forma válida 12/12, tipo correcto 12/12, campos ausentes rellenados 1/21 en 3 repeticiones y 2/21 en otra ejecución (siempre el total de un presupuesto, deducido de su única línea), líneas correctas 11/12 | con el campo *nullable* el modelo devuelve `null` casi siempre |
+| `forzada`, `sin_nullable` | campos ausentes rellenados **21/21**, forma válida **6/12** | con campos obligatorios inventa: `'null'` como texto, `''`, un valor deducido; los que usan `'null'` en un campo numérico ni siquiera cumplen el esquema |
+| `forzada`, `enum_cerrado` | tipo correcto 11/12, **2 de 12 con un tipo fuera del `enum`** (`other` en la garantía y el presupuesto), el ilegible forzado a `invoice` | el modelo escribe `other` aunque no esté en el `enum`: un esquema no se impone solo, el validador de forma lo detecta |
+| `tipo_desconocido` | `any`: la tool de su tipo en 12/12 (3 repeticiones); `auto`: igual; **forzada a factura: 5/12**, los otros 7 se tratan como factura | forzar una tool trata como factura todo lo que no lo es; `any` deja elegir |
+| `few_shot` con Haiku 5.5 | 0 fechas incorrectas con y sin ejemplos | **sin señal**: este modelo ya escribe la fecha en ISO sin que nadie se lo pida |
+| `few_shot` con Haiku 4.5 (`--rol-modelo enforcement`, 3 repeticiones, ~0,22 $) | sin ejemplos: **5, 7 y 6 fechas incorrectas** de 12; con ejemplos: **0, 0 y 0** | los ejemplos de las tres formas arreglan el formato que la descripción no dice |
+
+Notas:
+
+- **Forma y fondo:** `DC-06` (el certificado de garantía) sale en las tres repeticiones con una línea inventada (el modelo cuenta la garantía como un artículo), con la forma válida. El esquema lo deja pasar; la etiqueta, no.
+- **El `enum` no se impone:** que el modelo devuelva un valor que no está en el `enum` no es un error de la API. El modo estricto lo evitaría, pero la guía no lo nombra y el repositorio no lo usa.
+- **El identificador de la petición:** en una primera versión de la sonda el prompt llevaba «Documento DC-07:» y el modelo lo copió como `document_number`. El prompt ya no lleva el identificador.
+- Detalle y coste de las sondas: `docs/hallazgos.md`. Lo que no depende del modelo (esquemas, validador, puntuación, petición por modo y ejemplos) se prueba en `tests/test_app3_07_extraccion_schema.py`.
+</details>
+
+### Pregunta tipo examen
+
+Un proceso extrae el número de pedido, la fecha y el total de miles de facturas con una tool de JSON Schema. Algunas facturas no traen número de pedido, y el modelo escribe en esos casos valores plausibles que no existen. El campo es `string` y obligatorio. ¿Qué cambio resuelve la causa?
+
+- A. Añadir al *system prompt* la frase «no inventes ningún dato» y mantener el campo como obligatorio.
+- B. Declarar el campo como opcional y que admita `null`, e indicar en su descripción que se deje en `null` si no figura.
+- C. Comprobar después con una expresión regular el formato del número y descartar las facturas con valores que no lo cumplan.
+- D. Cambiar a una respuesta en texto libre y extraer el número con una segunda llamada que lo busque en ese texto.
+
+<details>
+<summary>Paso 4 · Respuesta</summary>
+
+**B.** Un campo obligatorio obliga al modelo a producir algo aunque el documento no lo traiga (TS 4.3-K2); la forma de decir «puede no estar» es el campo opcional y *nullable* (TS 4.3-S1, S2). A pide por prosa lo que el esquema contradice; C llega tarde (un valor inventado con el formato correcto pasa) y deja la causa; D renuncia al esquema, que es lo que garantiza la forma (TS 4.3-K1).
 </details>
 
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
