@@ -244,3 +244,128 @@ def test_system_prompt_carries_the_examples_only_when_asked():
     shots = mod.build_request(DOCS["DC-01"], tools=[mod.build_tool("correcta")], mode="forzada", model="m", few_shot=True)
     assert plain["system"] == mod.SYSTEM
     assert shots["system"].startswith(mod.SYSTEM) and all(text in shots["system"] for text, _ in mod.FEW_SHOT)
+
+
+# --- parte enriquecimiento (4.3-S3): primero la extracción forzada, después `auto` ----------------
+
+ORDERS = load("pedidos_compra.json")
+
+
+def use(name, data, tid="tu"):
+    return SimpleNamespace(type="tool_use", name=name, id=tid, input=data)
+
+
+def reply(*blocks):
+    usage = SimpleNamespace(input_tokens=10, output_tokens=5, cache_creation_input_tokens=None, cache_read_input_tokens=None)
+    return SimpleNamespace(content=list(blocks), usage=usage)
+
+
+def text(value):
+    return SimpleNamespace(type="text", text=value)
+
+
+class Script:
+    """`create` falso: devuelve las respuestas en orden y guarda las peticiones."""
+
+    def __init__(self, *replies):
+        self.replies, self.requests = list(replies), []
+
+    def __call__(self, **request):
+        self.requests.append(request)
+        return self.replies.pop(0)
+
+
+def test_lookup_tool_takes_a_po_number_and_the_enrichment_offers_both_tools():
+    tool = mod.build_lookup_tool()
+    assert tool["name"] == "lookup_purchase_order"
+    assert tool["input_schema"]["required"] == ["po_number"]
+    assert [t["name"] for t in mod.enrichment_tools()] == ["extract_metadata", "lookup_purchase_order"]
+
+
+def test_lookup_handler_is_deterministic_and_reads_the_generated_orders():
+    found = mod.lookup_purchase_order("PO-7731", ORDERS)
+    assert found["vendor"] == "Suministros Ibéricos S.L." and found["po_number"] == "PO-7731"
+    assert mod.lookup_purchase_order("PO-7731", ORDERS) == found
+    missing = mod.lookup_purchase_order("PO-0000", ORDERS)
+    assert "error" in missing and "PO-0000" in missing["error"]
+
+
+def test_choice_by_turn_forces_the_extraction_first_and_then_goes_auto():
+    assert mod.enrichment_choice(0, None) == {"type": "tool", "name": "extract_metadata"}
+    assert mod.enrichment_choice(1, None) == {"type": "auto"}
+    # Anti-patrón: `auto` desde el primer turno.
+    assert mod.enrichment_choice(0, "auto_desde_inicio") == {"type": "auto"}
+
+
+def test_the_extraction_result_goes_back_as_tool_result_before_the_lookup_turn():
+    extraction = {"doc_type": "invoice", "po_number": "PO-7731", "line_items": []}
+    create = Script(
+        reply(use("extract_metadata", extraction, "t1")),
+        reply(use("lookup_purchase_order", {"po_number": "PO-7731"}, "t2")),
+        reply(text("El pedido PO-7731 es de Suministros Ibéricos S.L.")),
+    )
+    trace = mod.run_enrichment(create, DOCS["DC-01"], model="m", anti=None, orders=ORDERS)
+    assert [c[0] for c in trace.calls] == ["extract_metadata", "lookup_purchase_order"]
+    assert trace.extraction == extraction and "PO-7731" in trace.final_text
+    assert [r["tool_choice"]["type"] for r in create.requests] == ["tool", "auto", "auto"]
+    second = create.requests[1]["messages"]
+    assert second[1]["role"] == "assistant" and second[1]["content"][0]["id"] == "t1"
+    assert second[2]["content"][0]["type"] == "tool_result" and second[2]["content"][0]["tool_use_id"] == "t1"
+    third = create.requests[2]["messages"]
+    assert "Suministros Ibéricos" in third[-1]["content"][0]["content"]  # el resultado del pedido vuelve al modelo
+
+
+def test_the_loop_stops_at_a_turn_cap_even_if_the_model_keeps_calling_tools():
+    create = Script(*[reply(use("lookup_purchase_order", {"po_number": "PO-7731"}, f"t{n}")) for n in range(10)])
+    trace = mod.run_enrichment(create, DOCS["DC-01"], model="m", anti="auto_desde_inicio", orders=ORDERS)
+    assert len(create.requests) == mod.MAX_ENRICH_TURNS and trace.turns == mod.MAX_ENRICH_TURNS
+
+
+def test_signal_flags_a_lookup_before_the_extraction_and_a_number_not_in_the_document():
+    trace = mod.Trace(calls=[("lookup_purchase_order", {"po_number": "PO-7731"}), ("extract_metadata", {"po_number": None})], extraction={"po_number": None}, final_text="")
+    signal = mod.analyze_trace(trace, DOCS["DC-02"])  # DC-02 no cita ningún pedido
+    assert signal["lookup_before_extract"] is True
+    assert signal["lookups_not_in_document"] == ["PO-7731"]
+
+
+def test_signal_for_the_expected_order_extract_then_lookup_with_the_extracted_po():
+    trace = mod.Trace(
+        calls=[("extract_metadata", {"po_number": "PO-7731"}), ("lookup_purchase_order", {"po_number": "PO-7731"})],
+        extraction={"po_number": "PO-7731"},
+        final_text="Pedido PO-7731: Suministros Ibéricos S.L., recibido.",
+    )
+    signal = mod.analyze_trace(trace, DOCS["DC-01"])
+    assert signal["order"] == ["extract_metadata", "lookup_purchase_order"]
+    assert signal["lookup_before_extract"] is False and signal["lookups_not_in_document"] == []
+    assert signal["used_extracted_po"] is True
+
+
+def test_signal_without_any_lookup_does_not_count_as_using_the_po():
+    trace = mod.Trace(calls=[("extract_metadata", {"po_number": "PO-7731"})], extraction={"po_number": "PO-7731"}, final_text="Listo.")
+    assert mod.analyze_trace(trace, DOCS["DC-01"])["used_extracted_po"] is False
+
+
+def test_summarize_enrichment_adds_up_the_signals():
+    good = {"order": ["extract_metadata", "lookup_purchase_order"], "lookup_before_extract": False, "lookups_not_in_document": [], "used_extracted_po": True}
+    bad = {"order": ["lookup_purchase_order", "extract_metadata"], "lookup_before_extract": True, "lookups_not_in_document": ["PO-7731"], "used_extracted_po": False}
+    summary = mod.summarize_enrichment([good, bad])
+    assert summary == {"documentos": 2, "consulta_antes_de_extraer": 1, "numero_ajeno_al_documento": 1, "usa_pedido_extraido": 1}
+
+
+# --- few-shot: los campos con valor que salen vacíos ------------------------------------------------
+
+def test_summarize_counts_the_fields_that_came_out_empty_although_the_label_has_a_value():
+    schema = mod.build_tool("correcta")["input_schema"]
+    data = {**mod.label_to_extraction(LABELS["DC-01"]), "vendor": None, "issue_date": None}
+    score = mod.score_extraction(data, LABELS["DC-01"], schema)
+    assert sorted(score.missing) == ["issue_date", "vendor"]
+    assert mod.summarize([score])["faltantes"] == 2
+
+
+def test_thinking_blocks_go_back_in_the_assistant_turn_with_their_signature():
+    # Haiku 5.5 devuelve bloques `thinking`; sin ellos (o sin firma) el turno siguiente puede rechazarse.
+    thinking = SimpleNamespace(type="thinking", thinking="pienso", signature="sig")
+    create = Script(reply(thinking, use("extract_metadata", {"doc_type": "invoice", "po_number": None, "line_items": []}, "t1")), reply(text("hecho")))
+    mod.run_enrichment(create, DOCS["DC-02"], model="m", anti=None, orders=ORDERS)
+    assistant = create.requests[1]["messages"][1]["content"]
+    assert assistant[0] == {"type": "thinking", "thinking": "pienso", "signature": "sig"} and assistant[1]["type"] == "tool_use"

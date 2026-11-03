@@ -94,3 +94,17 @@ def test_documents_use_reserved_domains_and_fictional_vendors():
     for doc in docs():
         for address in re.findall(r"\S+@\S+\.\w+", doc["text"]):
             assert address.endswith(".test")
+
+
+# --- pedidos de compra (app3/07, parte enriquecimiento) ------------------------------------------
+
+
+def test_purchase_orders_cover_every_po_cited_by_a_document_and_are_deterministic():
+    files = build_all()
+    orders = json.loads(files["pedidos_compra.json"])
+    assert files["pedidos_compra.json"] == build_all()["pedidos_compra.json"]
+    cited = {label["fields"]["po_number"] for label in json.loads(files["documentos_compra_etiquetas.json"]).values() if label["fields"]["po_number"]}
+    assert cited <= {o["po_number"] for o in orders}
+    assert all(set(o) >= {"po_number", "vendor", "status", "expected_total"} for o in orders)
+    # Un número por pedido, sin repetidos.
+    assert len({o["po_number"] for o in orders}) == len(orders)

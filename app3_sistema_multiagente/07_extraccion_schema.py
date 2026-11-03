@@ -62,7 +62,7 @@ Pregunta tipo examen: ver `app3_sistema_multiagente/README.md`, módulo 07.
 
 INTRODUCE: TS 4.2-K4, TS 4.2-S4, TS 4.2-S5, TS 4.3-K1, TS 4.3-K2, TS 4.3-K3, TS 4.3-K4, TS 4.3-S1, TS 4.3-S2, TS 4.3-S3, TS 4.3-S4, TS 4.3-S5, TS 4.3-S6
 
-Uso: `uv run python app3_sistema_multiagente/07_extraccion_schema.py --parte forzada|tipo_desconocido|few_shot [--anti sin_nullable|enum_cerrado] [--repeat N]`
+Uso: `uv run python app3_sistema_multiagente/07_extraccion_schema.py --parte forzada|tipo_desconocido|few_shot|enriquecimiento [--anti sin_nullable|enum_cerrado (forzada) | auto_desde_inicio (enriquecimiento)] [--rol-modelo agent|enforcement] [--repeat N]`
 """
 
 import copy
@@ -82,8 +82,13 @@ from harness.cli import build_parser, report_budget  # noqa: E402
 from harness.config import report_model  # noqa: E402
 from harness.data import load  # noqa: E402
 
-PARTS = ["forzada", "tipo_desconocido", "few_shot"]
-ANTI_VARIANTS = ["sin_nullable", "enum_cerrado"]  # solo de la parte `forzada`
+PARTS = ["forzada", "tipo_desconocido", "few_shot", "enriquecimiento"]
+# Cada `--anti` pertenece a una parte: `sin_nullable` y `enum_cerrado` a `forzada`, `auto_desde_inicio` a `enriquecimiento`.
+ANTI_BY_PART = {"forzada": ["sin_nullable", "enum_cerrado"], "enriquecimiento": ["auto_desde_inicio"]}
+ANTI_VARIANTS = [v for variants in ANTI_BY_PART.values() for v in variants]
+LOOKUP_TOOL_NAME = "lookup_purchase_order"
+# Red de seguridad del bucle de enriquecimiento: lo que lo para es que el modelo conteste sin llamar a una tool.
+MAX_ENRICH_TURNS = 5
 MODES = ["forzada", "any", "auto"]
 TOOL_NAME = "extract_metadata"
 # Campos que un documento puede no traer: en el esquema correcto son *nullable* y no obligatorios.
@@ -376,6 +381,7 @@ def summarize(scores: list[Score]) -> dict[str, int]:
         "fuera_de_enum": sum(not s.in_enum for s in scores),
         "sintaxis_ok": sum(s.syntax_ok for s in scores),
         "lineas_ok": sum(s.lines_ok for s in scores),
+        "faltantes": sum(len(s.missing) for s in scores),  # etiqueta con valor y el modelo puso null (4.2-S5)
     }
 
 
@@ -423,6 +429,114 @@ def make_create(client: Any, guard: CostGuard) -> Callable[..., Any]:
     return create
 
 
+# --- Enriquecimiento (4.3-S3): primero la extracción forzada, después las demás tools ----------------------
+
+ORDERS = load("pedidos_compra.json")
+
+
+def build_lookup_tool() -> dict:
+    """`lookup_purchase_order`: consulta un pedido por su número. Es el paso que enriquece la extracción."""
+    return {
+        "name": LOOKUP_TOOL_NAME,
+        "description": "Consulta un pedido de compra por su número (PO-nnnn): proveedor, estado e importe esperado. Úsala con el número de pedido que figura en el documento.",
+        "input_schema": {"type": "object", "properties": {"po_number": {"type": "string", "description": "Número de pedido, PO-nnnn."}}, "required": ["po_number"]},
+    }
+
+
+def enrichment_tools() -> list[dict]:
+    return [build_tool("correcta"), build_lookup_tool()]
+
+
+def lookup_purchase_order(po_number: str, orders: list[dict] | None = None) -> dict:
+    """Handler determinista de la tool: lee los pedidos que genera `datos/generar_sinteticos.py`."""
+    for order in ORDERS if orders is None else orders:
+        if order["po_number"] == po_number:
+            return dict(order)
+    return {"error": f"no existe el pedido {po_number}"}
+
+
+def enrichment_choice(turn: int, anti: str | None) -> dict[str, str]:
+    """Correcta: el primer turno forzado a `extract_metadata` y los siguientes en `auto`.
+
+    `auto_desde_inicio` (anti-patrón): `auto` también en el primero, así que nada asegura que la
+    extracción ocurra antes de que el modelo consulte un pedido.
+    """
+    if turn == 0 and anti != "auto_desde_inicio":
+        return choice_for("forzada")
+    return choice_for("auto")
+
+
+@dataclass
+class Trace:
+    """Qué hizo el modelo en el bucle de enriquecimiento."""
+
+    calls: list[tuple[str, dict]] = field(default_factory=list)
+    extraction: dict | None = None
+    final_text: str = ""
+    turns: int = 0
+
+
+def _as_param(block: Any) -> dict:
+    """Un bloque de la respuesta como bloque de mensaje, para devolver el turno del asistente."""
+    if block.type == "tool_use":
+        return {"type": "tool_use", "id": block.id, "name": block.name, "input": dict(block.input)}
+    if block.type == "thinking":
+        return {"type": "thinking", "thinking": block.thinking, "signature": block.signature}
+    if block.type == "redacted_thinking":
+        return {"type": "redacted_thinking", "data": block.data}
+    return {"type": "text", "text": block.text}
+
+
+def run_enrichment(create: Callable[..., Any], doc_text: str, *, model: str, anti: str | None = None, orders: list[dict] | None = None) -> Trace:
+    """Bucle de varios turnos: cada `tool_use` se contesta con un `tool_result` hasta que el modelo responde con texto."""
+    request = build_request(doc_text, tools=enrichment_tools(), mode="auto", model=model)
+    messages = list(request["messages"])
+    trace = Trace()
+    for turn in range(MAX_ENRICH_TURNS):
+        response = create(**{**request, "tool_choice": enrichment_choice(turn, anti), "messages": messages})
+        trace.turns += 1
+        uses = [b for b in response.content if b.type == "tool_use"]
+        if not uses:
+            trace.final_text = " ".join(b.text for b in response.content if b.type == "text")  # sin los bloques de razonamiento
+            break
+        messages.append({"role": "assistant", "content": [_as_param(b) for b in response.content]})
+        results = []
+        for block in uses:
+            trace.calls.append((block.name, dict(block.input)))
+            if block.name == TOOL_NAME:
+                trace.extraction = dict(block.input)
+                content = "Extracción registrada. Si el documento cita un pedido, consúltalo con lookup_purchase_order y resume el resultado."
+            else:
+                content = json.dumps(lookup_purchase_order(str(block.input.get("po_number", "")), orders), ensure_ascii=False)
+            results.append({"type": "tool_result", "tool_use_id": block.id, "content": content})
+        messages.append({"role": "user", "content": results})
+    return trace
+
+
+def analyze_trace(trace: Trace, doc_text: str) -> dict:
+    """La señal de 4.3-S3: orden de las tools, consulta anterior a la extracción, número ajeno al documento y uso del pedido extraído."""
+    order = [name for name, _ in trace.calls]
+    first_lookup = order.index(LOOKUP_TOOL_NAME) if LOOKUP_TOOL_NAME in order else None
+    first_extract = order.index(TOOL_NAME) if TOOL_NAME in order else None
+    lookups = [str(data.get("po_number")) for name, data in trace.calls if name == LOOKUP_TOOL_NAME]
+    extracted_po = (trace.extraction or {}).get("po_number")
+    return {
+        "order": order,
+        "lookup_before_extract": first_lookup is not None and (first_extract is None or first_lookup < first_extract),
+        "lookups_not_in_document": [po for po in lookups if po not in doc_text],
+        "used_extracted_po": bool(extracted_po) and extracted_po in lookups and extracted_po in trace.final_text,
+    }
+
+
+def summarize_enrichment(signals: list[dict]) -> dict[str, int]:
+    return {
+        "documentos": len(signals),
+        "consulta_antes_de_extraer": sum(s["lookup_before_extract"] for s in signals),
+        "numero_ajeno_al_documento": sum(bool(s["lookups_not_in_document"]) for s in signals),
+        "usa_pedido_extraido": sum(s["used_extracted_po"] for s in signals),
+    }
+
+
 def run_forzada(args: Any, create: Callable[..., Any], model: str) -> None:
     variant = args.anti or "correcta"
     tool = build_tool(variant)
@@ -458,10 +572,37 @@ def run_few_shot(args: Any, create: Callable[..., Any], model: str) -> None:
             scores = [score_extraction(found[1] if found else {}, LABELS[d], tool["input_schema"]) for d, found in results.items()]
             summary = summarize(scores)
             date_wrong = sum("issue_date" in s.wrong for s in scores)
+            # Los dos errores de campo de la guía: un campo con valor que sale null/vacío (4.2-S5) y uno inventado (4.2-K4).
+            missing = {d: s.missing for d, s in zip(results, scores) if s.missing}
+            invented = {d: s.invented for d, s in zip(results, scores) if s.invented}
             print(
                 f"[{run}/{args.repeat}] {title}: fechas incorrectas {date_wrong} · valores incorrectos {summary['valores_incorrectos']} · "
-                f"inventados {summary['inventados']}/{summary['ausentes']} · líneas correctas {summary['lineas_ok']}/{summary['documentos']}"
+                f"faltantes {summary['faltantes']} {missing or ''} · inventados {summary['inventados']}/{summary['ausentes']} {invented or ''} · "
+                f"líneas correctas {summary['lineas_ok']}/{summary['documentos']}"
             )
+
+
+def run_enriquecimiento(args: Any, create: Callable[..., Any], model: str) -> None:
+    variant = args.anti or "correcta"
+    print(f"\n=== enriquecimiento · {variant} · {len(DOCS)} documentos × {args.repeat} ===")
+    print("[esperado] con el primer turno forzado, la extracción va antes de cualquier consulta; con `auto` desde el inicio el modelo puede consultar antes de extraer")
+    for run in range(1, args.repeat + 1):
+        signals = []
+        for doc_id, text in DOCS.items():
+            trace = run_enrichment(create, text, model=model, anti=args.anti)
+            signal = analyze_trace(trace, text)
+            signals.append(signal)
+            notes = []
+            if signal["lookup_before_extract"]:
+                notes.append("CONSULTA ANTES DE EXTRAER")
+            if signal["lookups_not_in_document"]:
+                notes.append(f"número que no sale del documento {signal['lookups_not_in_document']}")
+            print(f"  {doc_id}: orden={signal['order'] or 'sin tools'} usa el pedido extraído={'sí' if signal['used_extracted_po'] else 'no'} {' · '.join(notes)}")
+        summary = summarize_enrichment(signals)
+        print(
+            f"[{run}/{args.repeat}] consulta antes de extraer {summary['consulta_antes_de_extraer']}/{summary['documentos']} · "
+            f"número ajeno al documento {summary['numero_ajeno_al_documento']} · resultado final con el pedido extraído {summary['usa_pedido_extraido']}/{summary['documentos']}"
+        )
 
 
 def main() -> int:
@@ -470,8 +611,8 @@ def main() -> int:
     # Con Haiku 5.5 el *few-shot* no cambió nada (ya escribe bien las fechas sin ejemplos); Haiku 4.5 sí necesita ayuda.
     parser.add_argument("--rol-modelo", choices=["agent", "enforcement"], default="agent", help="rol del modelo; `enforcement` es Haiku 4.5")
     args = parser.parse_args()
-    if args.anti and args.parte != "forzada":
-        parser.error("--anti sin_nullable y enum_cerrado son de la parte forzada")
+    if args.anti and args.anti not in ANTI_BY_PART.get(args.parte, []):
+        parser.error("--anti sin_nullable y enum_cerrado son de la parte forzada; auto_desde_inicio, de la parte enriquecimiento")
     print(credentials.describe())
     # La Messages API solo admite API key. Rol `agent` (Haiku 5.5): Sonnet 5.5 devuelve 400 con `any` y forzado.
     credentials.require_api_key()
@@ -483,7 +624,7 @@ def main() -> int:
     guard = CostGuard(model, budget)
     create = make_create(anthropic.Anthropic(), guard)
     try:
-        {"forzada": run_forzada, "tipo_desconocido": run_tipo_desconocido, "few_shot": run_few_shot}[args.parte](args, create, model)
+        {"forzada": run_forzada, "tipo_desconocido": run_tipo_desconocido, "few_shot": run_few_shot, "enriquecimiento": run_enriquecimiento}[args.parte](args, create, model)
     except BudgetExceeded as exc:
         print(f"[corte] {exc}")
         return 1

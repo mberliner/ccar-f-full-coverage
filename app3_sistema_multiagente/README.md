@@ -356,11 +356,12 @@ La tool no hace nada: lo que importa es lo que el modelo escribe en su entrada, 
 
 ### El ejercicio
 
-Tres partes (`--parte`) y, en la primera, dos variantes `--anti`:
+Cuatro partes (`--parte`) y variantes `--anti` en la primera y en la última:
 
 - **`forzada`:** `tool_choice` forzado a `extract_metadata`. La versión correcta tiene los campos opcionales *nullable*, el `enum` con `other` y `unclear`, y las reglas de formato (fecha ISO, número con punto decimal) en la descripción. `--anti sin_nullable` hace obligatorios todos los campos y quita `null` de los tipos. `--anti enum_cerrado` deja el `enum` solo con `invoice` y `delivery_note`.
 - **`tipo_desconocido`:** tres tools, una por tipo de documento, y `tool_choice` `any` (el modelo tiene que llamar a una, pero elige cuál). Se compara con `auto` y con forzar siempre la tool de factura.
-- **`few_shot`:** el mismo esquema sin las reglas de formato en las descripciones, con y sin tres ejemplos en el *system prompt* (una factura en tabla, otra en prosa y un albarán en líneas sueltas). Admite `--rol-modelo enforcement` (Haiku 4.5).
+- **`few_shot`:** el mismo esquema sin las reglas de formato en las descripciones, con y sin tres ejemplos en el *system prompt* (una factura en tabla, otra en prosa y un albarán en líneas sueltas). Admite `--rol-modelo enforcement` (Haiku 4.5). Además de las fechas, imprime los campos con valor en la etiqueta que salen `null` o vacíos (**faltantes**) y los que el modelo inventa donde la etiqueta dice que no están (**inventados**), con y sin ejemplos.
+- **`enriquecimiento`:** dos tools, `extract_metadata` y `lookup_purchase_order(po_number)`, cuyo resultado sale de `pedidos_compra.json` (determinista). El primer turno va con `tool_choice` forzado a `extract_metadata`; los siguientes, en `auto`, con la extracción devuelta como `tool_result`. `--anti auto_desde_inicio` usa `auto` desde el primer turno. Se mide el orden de las llamadas, si el modelo consulta un pedido antes de extraer o con un número que no sale del documento, y si el resultado final usa el pedido extraído.
 
 ### Predice antes de ejecutar
 
@@ -379,9 +380,11 @@ uv run python app3_sistema_multiagente/07_extraccion_schema.py --parte forzada -
 uv run python app3_sistema_multiagente/07_extraccion_schema.py --parte forzada --anti enum_cerrado      # enum sin other ni unclear
 uv run python app3_sistema_multiagente/07_extraccion_schema.py --parte tipo_desconocido
 uv run python app3_sistema_multiagente/07_extraccion_schema.py --parte few_shot --rol-modelo enforcement --repeat 3
+uv run python app3_sistema_multiagente/07_extraccion_schema.py --parte enriquecimiento --repeat 3                          # extracción forzada y después auto
+uv run python app3_sistema_multiagente/07_extraccion_schema.py --parte enriquecimiento --anti auto_desde_inicio --repeat 3  # auto desde el primer turno
 ```
 
-**Si ejecutas:** la construcción del esquema por variante, el validador de forma y la puntuación contra etiquetas se prueban sin modelo; ejecutar sirve para ver qué hace de verdad el modelo con un campo que no puede rellenar. Cada ejecución cuesta menos de 0,05 $ (el `few_shot` con Haiku 4.5 y `--repeat 3`, unos 0,22 $).
+**Si ejecutas:** la construcción del esquema por variante, el validador de forma y la puntuación contra etiquetas se prueban sin modelo; ejecutar sirve para ver qué hace de verdad el modelo con un campo que no puede rellenar. Cada ejecución cuesta menos de 0,05 $ con Haiku 5.5 (`few_shot` y `enriquecimiento` con `--repeat 3`: unos 0,03–0,04 $); con Haiku 4.5 y `--repeat 3`, `few_shot` cuesta unos 0,23 $ y `enriquecimiento`, unos 0,24 $.
 
 ### Qué observar
 
@@ -398,13 +401,16 @@ Haiku 5.5 (rol `agent`), 12 documentos, tres repeticiones salvo donde se dice:
 | `forzada`, `sin_nullable` | campos ausentes rellenados **21/21**, forma válida **6/12** | con campos obligatorios inventa: `'null'` como texto, `''`, un valor deducido; los que usan `'null'` en un campo numérico ni siquiera cumplen el esquema |
 | `forzada`, `enum_cerrado` | tipo correcto 11/12, **2 de 12 con un tipo fuera del `enum`** (`other` en la garantía y el presupuesto), el ilegible forzado a `invoice` | el modelo escribe `other` aunque no esté en el `enum`: un esquema no se impone solo, el validador de forma lo detecta |
 | `tipo_desconocido` | `any`: la tool de su tipo en 12/12 (3 repeticiones); `auto`: igual; **forzada a factura: 5/12**, los otros 7 se tratan como factura | forzar una tool trata como factura todo lo que no lo es; `any` deja elegir |
-| `few_shot` con Haiku 5.5 | 0 fechas incorrectas con y sin ejemplos | **sin señal**: este modelo ya escribe la fecha en ISO sin que nadie se lo pida |
-| `few_shot` con Haiku 4.5 (`--rol-modelo enforcement`, 3 repeticiones, ~0,22 $) | sin ejemplos: **5, 7 y 6 fechas incorrectas** de 12; con ejemplos: **0, 0 y 0** | los ejemplos de las tres formas arreglan el formato que la descripción no dice |
+| `few_shot` con Haiku 5.5 | 0 fechas incorrectas con y sin ejemplos; faltantes 0 en las seis ejecuciones; inventados 0–1 de 21 (un `stated_total` en `DC-11`, o un número en `DC-07` sin ejemplos) | **sin señal**: este modelo ya escribe la fecha en ISO sin que nadie se lo pida y no deja vacío ningún campo con valor |
+| `few_shot` con Haiku 4.5 (`--rol-modelo enforcement`, 3 repeticiones, ~0,23 $) | sin ejemplos: **5, 6 y 6 fechas incorrectas** de 12, líneas correctas 10/12; con ejemplos: **0, 0 y 0**, líneas correctas 11/12. Faltantes 0 y inventados 2/21 (`DC-11`: fecha y total) en las seis ejecuciones | los ejemplos de las tres formas arreglan el formato que la descripción no dice; **no** cambian los campos faltantes (ya eran 0) ni los inventados |
+| `enriquecimiento`, correcta (Haiku 5.5, 3 repeticiones, ~0,04 $) | extracción primero en 36/36; consulta antes de extraer 0/12 en cada repetición; número ajeno al documento 0; el resultado final usa el pedido extraído en 8, 6 y 7 de 12 (en los demás o no hay pedido que consultar o el modelo no lo consulta) | el primer turno forzado asegura el orden, pero la consulta posterior no siempre se hace |
+| `enriquecimiento`, `auto_desde_inicio` (Haiku 5.5 y Haiku 4.5, 3 repeticiones cada uno) | consulta antes de extraer **0/12** y número ajeno al documento **0** con los dos modelos; el resultado final usa el pedido extraído en 7/12 (Haiku 5.5) y 9/12 (Haiku 4.5), igual que con el primer turno forzado | **sin señal**: con `auto`, ambos extraen primero porque el prompt lo pide así. Que el modelo lo haga hoy no garantiza el orden |
 
 Notas:
 
 - **Forma y fondo:** `DC-06` (el certificado de garantía) sale en las tres repeticiones con una línea inventada (el modelo cuenta la garantía como un artículo), con la forma válida. El esquema lo deja pasar; la etiqueta, no.
 - **El `enum` no se impone:** que el modelo devuelva un valor que no está en el `enum` no es un error de la API. El modo estricto lo evitaría, pero la guía no lo nombra y el repositorio no lo usa.
+- **El anti de `enriquecimiento` no se nota:** se probó con Haiku 5.5 y con Haiku 4.5 y no hay diferencia entre forzar el primer turno y no hacerlo. Lo que hace el forzado es garantizar el orden por construcción; no se ha podido mostrar el fallo que evita.
 - **El identificador de la petición:** en una primera versión de la sonda el prompt llevaba «Documento DC-07:» y el modelo lo copió como `document_number`. El prompt ya no lleva el identificador.
 - Detalle y coste de las sondas: `docs/hallazgos.md`. Lo que no depende del modelo (esquemas, validador, puntuación, petición por modo y ejemplos) se prueba en `tests/test_app3_07_extraccion_schema.py`.
 </details>

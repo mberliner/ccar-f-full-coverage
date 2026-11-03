@@ -692,6 +692,21 @@ def build_long_note() -> tuple[str, dict]:
     return text, label
 
 
+# Pedidos de compra que cita algún documento, para la parte `enriquecimiento` de app3/07
+# (la tool `lookup_purchase_order`). Más un pedido que ningún documento cita (PO-7999).
+# Texto fijo; el handler de la tool solo lee este archivo.
+PURCHASE_ORDERS = [
+    {"po_number": "PO-7731", "vendor": "Suministros Ibéricos S.L.", "status": "recibido", "expected_total": 3085.5, "lines": 2},
+    {"po_number": "PO-7745", "vendor": "Distribuciones Levante", "status": "recibido", "expected_total": 142.0, "lines": 3},
+    {"po_number": "PO-7752", "vendor": "Papelería y Oficina Costa", "status": "recibido", "expected_total": 388.0, "lines": 2},
+    {"po_number": "PO-7760", "vendor": "Suministros Ibéricos S.L.", "status": "facturado", "expected_total": 1200.0, "lines": 2},
+    {"po_number": "PO-7768", "vendor": "Global Peripherals Ltd.", "status": "facturado", "expected_total": 1250.0, "lines": 2},
+    {"po_number": "PO-7790", "vendor": "Servidores del Sur S.L.", "status": "parcial", "expected_total": 2830.0, "lines": 2},
+    {"po_number": "PO-7800", "vendor": "Almacén Central Peninsular", "status": "recibido", "expected_total": 460.0, "lines": 40},
+    {"po_number": "PO-7999", "vendor": "Tecnoequipos Norte S.A.", "status": "abierto", "expected_total": 799.0, "lines": 1},
+]
+
+
 def build_purchase_docs() -> tuple[list[dict], dict]:
     """Documentos (lo que ve el agente) y etiquetas (solo para puntuar), con el total calculado de cada uno."""
     entries = [*PURCHASE_DOCS, ("DC-12", *build_long_note())]
@@ -726,6 +741,7 @@ def build_all() -> dict[str, str]:
         "documentos.json": build_documents(),
         "documentos_compra.json": purchase_documents,
         "documentos_compra_etiquetas.json": purchase_labels,
+        "pedidos_compra.json": PURCHASE_ORDERS,
     }
     files = {name: json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True) + "\n" for name, data in datasets.items()}
     # Las rutas con subcarpeta usan «/»: mismo nombre en Windows y en Linux.
