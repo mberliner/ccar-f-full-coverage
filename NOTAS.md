@@ -130,6 +130,11 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
   - [ ] Revisión por una instancia independiente.
 - [x] **Alineación con el roadmap origen** (2026-11-03): revisión de coherencia del proyecto con el roadmap. Reparto de viñetas por módulo, perímetro, aislamiento, capa meta y modos coinciden; `pytest` 495 en verde. Llevadas al roadmap las notas `→ roadmap` pendientes de `docs/hallazgos.md` (§3, §4.3, §5–§10 y §14) y reducidas a puntero; queda solo la de *tool search*, a la espera de confirmar el efecto. `app2/07` pasa a figurar en el roadmap como **módulo opcional** (§7): sin viñeta propia, fuera de los 25 y de las entregas. Copia del roadmap previa al cambio fuera del repositorio (el roadmap no está en git).
 - [ ] Entrega 3 · D4 y D5 (`S-2`)
+  - [x] Diseño aprobado en `docs/diseno-entrega-3.md` (2026-11-03, Opus 5.5): 109 viñetas en cuatro tandas fusionadas a `main` una a una (A `app3/07`–`09`, B `app3/04`–`06`, C `app3/10`–`12`, D `app2/04` y `app1/07`), modelo mixto (Sonnet 5.5 para código y sondas, Opus 5.5 para textos, revisión y roadmap) y rol nuevo `reviewer`. Roadmap origen actualizado con el rol (§5, §14).
+  - [ ] Tanda A · `app3/07` → `08` → `09` (rama `entrega-3a`)
+  - [ ] Tanda B · `app3/04` → `05` → `06` (rama `entrega-3b`)
+  - [ ] Tanda C · `app3/10` → `11` → `12` (rama `entrega-3c`)
+  - [ ] Tanda D · `app2/04` → `app1/07` y cierre 240/240 (rama `entrega-3d`)
 - [ ] `S-1` · repaso sin código nuevo
 - [ ] Entrega 4 · opcional, después del examen
 
