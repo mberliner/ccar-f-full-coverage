@@ -328,7 +328,7 @@ Un agente de síntesis recibe todas las tools del sistema y, aunque su cometido 
 
 ## 07 · Extracción estructurada con schema
 
-> **Qué vas a hacer:** Extraer los metadatos de 12 documentos de compra con una tool de JSON Schema y puntuar lo que sale contra unas etiquetas que el modelo no ve.
+> **Qué vas a hacer:** Extraer los metadatos de 12 documentos de compra con una tool de JSON Schema, puntuar lo que sale contra unas etiquetas que el modelo no ve y, en la última parte, enriquecer la extracción consultando el pedido que cita.
 >
 > **Necesitas antes:** Nada.
 >
@@ -351,8 +351,9 @@ Los términos comunes (Messages API, `tool_choice`, *few-shot*, presupuesto) est
 | :--- | :--- | :--- |
 | `extract_metadata` | el documento (en el mensaje) | la extracción: `doc_type`, `doc_type_detail`, proveedor, número, fecha, pedido, moneda, total declarado y líneas |
 | `extract_invoice`, `extract_delivery_note`, `extract_other` | el documento | una tool por tipo, con los campos de ese tipo (solo en `--parte tipo_desconocido`) |
+| `lookup_purchase_order` | `po_number` (`PO-nnnn`) | proveedor, estado e importe esperado del pedido, leídos de `pedidos_compra.json`, o un error si no existe (solo en `--parte enriquecimiento`) |
 
-La tool no hace nada: lo que importa es lo que el modelo escribe en su entrada, que el módulo compara con la etiqueta.
+Las tools de extracción no hacen nada: lo que importa es lo que el modelo escribe en su entrada, que el módulo compara con la etiqueta. `lookup_purchase_order` sí devuelve datos, y su resultado vuelve al modelo como `tool_result`.
 
 ### El ejercicio
 
@@ -370,7 +371,8 @@ Con tus palabras; no hay un número que acertar:
 1. Un documento no menciona número de pedido. Si `po_number` es obligatorio y de tipo `string`, ¿qué opciones le quedan al modelo? ¿Y si es *nullable* y no obligatorio? En cada caso, ¿qué te garantiza el esquema y qué no?
 2. Con el `enum` cerrado (solo `invoice` y `delivery_note`), ¿qué dos salidas distintas podría dar el modelo con un certificado de garantía? ¿Cuál detectaría un validador del esquema y cuál solo se ve comparando con la etiqueta?
 3. Con las tres tools por tipo, ¿qué esperas de `any`, de `auto` y de forzar siempre la tool de factura? ¿Qué le pasa a un albarán en cada caso?
-4. La parte `few_shot` quita de las descripciones la regla de cómo escribir una fecha. ¿Qué tendría que ocurrir sin ejemplos para que los ejemplos se notaran? ¿Esperas lo mismo con dos modelos distintos?
+4. La parte `few_shot` quita de las descripciones la regla de cómo escribir una fecha. ¿Qué tendría que ocurrir sin ejemplos para que los ejemplos se notaran? ¿Esperas lo mismo con dos modelos distintos? ¿Y con los campos que el documento sí trae pero el modelo podría dejar vacíos?
+5. En `enriquecimiento`, el modelo tiene una tool para extraer y otra para consultar el pedido. Con `auto` desde el primer turno, ¿qué podría hacer mal? Si en tus ejecuciones no lo hace nunca, ¿basta eso para prescindir del primer turno forzado?
 
 ### Ejecutar
 
@@ -388,7 +390,7 @@ uv run python app3_sistema_multiagente/07_extraccion_schema.py --parte enriqueci
 
 ### Qué observar
 
-En cada ejecución, `forma válida`, `campos ausentes rellenados`, `tipo correcto`, `fuera del enum` y `valores incorrectos`; en `tipo_desconocido`, qué tool eligió el modelo para cada documento.
+En cada ejecución, `forma válida`, `campos ausentes rellenados`, `tipo correcto`, `fuera del enum` y `valores incorrectos`; en `tipo_desconocido`, qué tool eligió el modelo para cada documento; en `few_shot`, fechas incorrectas, faltantes e inventados con y sin ejemplos; en `enriquecimiento`, el orden de las tools por documento, las consultas antes de extraer, los números que no salen del documento y si el resultado final usa el pedido extraído.
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
@@ -404,7 +406,7 @@ Haiku 5.5 (rol `agent`), 12 documentos, tres repeticiones salvo donde se dice:
 | `few_shot` con Haiku 5.5 | 0 fechas incorrectas con y sin ejemplos; faltantes 0 en las seis ejecuciones; inventados 0–1 de 21 (un `stated_total` en `DC-11`, o un número en `DC-07` sin ejemplos) | **sin señal**: este modelo ya escribe la fecha en ISO sin que nadie se lo pida y no deja vacío ningún campo con valor |
 | `few_shot` con Haiku 4.5 (`--rol-modelo enforcement`, 3 repeticiones, ~0,23 $) | sin ejemplos: **5, 6 y 6 fechas incorrectas** de 12, líneas correctas 10/12; con ejemplos: **0, 0 y 0**, líneas correctas 11/12. Faltantes 0 y inventados 2/21 (`DC-11`: fecha y total) en las seis ejecuciones | los ejemplos de las tres formas arreglan el formato que la descripción no dice; **no** cambian los campos faltantes (ya eran 0) ni los inventados |
 | `enriquecimiento`, correcta (Haiku 5.5, 3 repeticiones, ~0,04 $) | extracción primero en 36/36; consulta antes de extraer 0/12 en cada repetición; número ajeno al documento 0; el resultado final usa el pedido extraído en 8, 6 y 7 de 12 (en los demás o no hay pedido que consultar o el modelo no lo consulta) | el primer turno forzado asegura el orden, pero la consulta posterior no siempre se hace |
-| `enriquecimiento`, `auto_desde_inicio` (Haiku 5.5 y Haiku 4.5, 3 repeticiones cada uno) | consulta antes de extraer **0/12** y número ajeno al documento **0** con los dos modelos; el resultado final usa el pedido extraído en 7/12 (Haiku 5.5) y 9/12 (Haiku 4.5), igual que con el primer turno forzado | **sin señal**: con `auto`, ambos extraen primero porque el prompt lo pide así. Que el modelo lo haga hoy no garantiza el orden |
+| `enriquecimiento`, `auto_desde_inicio` (Haiku 5.5 y Haiku 4.5, 3 repeticiones cada uno) | consulta antes de extraer **0/12** y número ajeno al documento **0** con los dos modelos; el resultado final usa el pedido extraído en 7/12 (Haiku 5.5) y 9/12 (Haiku 4.5), igual que con el primer turno forzado | **sin señal**: con `auto`, ambos modelos extraen primero por su cuenta. Que lo hagan hoy no garantiza el orden |
 
 Notas:
 
@@ -450,15 +452,15 @@ Un proceso extrae con una tool de JSON Schema el número de pedido, la fecha y e
 
 Los términos comunes (Messages API, presupuesto, `tool_choice`) están en el [glosario](../docs/glosario.md). Este módulo reutiliza del [módulo 07](#07--extracción-estructurada-con-schema) la tool `extract_metadata`, los 12 documentos y la puntuación contra etiquetas, y usa la Messages API (necesita una API key).
 
-- **El sistema:** por cada documento, una extracción, una validación con reglas de código (sin modelo) y, si falla, un reintento. Las reglas: el tipo está en el `enum`, la fecha es ISO, una factura cita su número de pedido (`PO-nnnn`) y el total que declara el documento coincide con la suma de sus líneas. El esquema de la tool no dice cómo se escribe una fecha: esa regla solo la aplica el validador.
+- **El sistema:** por cada documento, una extracción, una validación con reglas de código (sin modelo) y, si falla, un reintento. Las reglas: el tipo está en el `enum`, la fecha es ISO, todo documento lleva su número, una factura cita su número de pedido (`PO-nnnn`) y el total que declara el documento coincide con la suma de sus líneas. El esquema de la tool no dice cómo se escribe una fecha: esa regla solo la aplica el validador.
 - **Qué modelo:** el rol `enforcement` (Haiku 4.5), un modelo anterior al de los demás módulos. El porqué está en el Paso 3. `--rol-modelo agent` ejecuta el módulo con Haiku 5.5.
 - **Términos propios:**
   - **Reintento:** enviar de nuevo al modelo su propia llamada fallida, con el error devuelto como resultado de la tool (`is_error`), y pedirle otra extracción.
   - **Error concreto:** el mensaje del reintento nombra el campo, el valor que devolvió y la regla que incumple. Un error **genérico** solo dice «Inténtalo de nuevo».
   - **Patrón de fallo:** la causa de un fallo (`date_format`, `missing_required`, `total_mismatch`…). Se anota en cada fallo, y la salida los agrupa por causa. El `detected_pattern` de la guía, sobre los hallazgos de revisión que se descartan, llega en el módulo 11.
-  - **`conflict_detected`:** el total calculado no coincide con el declarado y, tras un reintento, sigue sin coincidir: el documento mismo no cuadra.
-  - **Dato ausente en la fuente:** que el documento no contiene lo que la regla exige (una factura sin número de pedido). El código lo comprueba con una búsqueda en el texto, sin modelo.
-  - **Efecto de un reintento** (solo para medir; el bucle no ve las etiquetas): *corregido* si el fallo desaparece y el valor coincide con la etiqueta, *persiste* si el fallo sigue, *inventado* si desaparece pero el valor no es el de la etiqueta (o la etiqueta dice que no existe).
+  - **`conflict_detected`:** el total que suma el código a partir de las líneas extraídas no coincide con el declarado. Si las líneas y el total están bien extraídos, lo que no cuadra es el documento.
+  - **Dato ausente en la fuente:** que el documento no contiene lo que la regla exige. Tiene dos causas: el dato no aparece (*no lo trae*) o el documento dice dónde está, en otro que no se ha proporcionado (*remite a otro documento*, «Ver adjunto»). El código distingue las dos con una búsqueda en el texto, sin modelo.
+  - **Efecto de un reintento** (solo para medir; el bucle no ve las etiquetas): *corregido* si el fallo desaparece y el valor coincide con la etiqueta, *persiste* si el fallo sigue, *falta* si el campo queda vacío aunque la etiqueta tiene un valor, *inventado* si desaparece pero el valor no es el de la etiqueta (o la etiqueta dice que no existe).
 
 ### El ejercicio
 
@@ -491,7 +493,7 @@ uv run python app3_sistema_multiagente/08_validacion_reintento.py --rol-modelo a
 
 ### Qué observar
 
-Por documento, los fallos del primer intento agrupados por patrón, los reintentos y el efecto de cada uno; al final, reintentos útiles, inútiles e inventados, marcados sin dato, conflictos y el coste de los reintentos.
+Por documento, los fallos del primer intento agrupados por patrón, los reintentos, el efecto de cada uno y el motivo que cerró el bucle (`parada`); al final, reintentos útiles, inútiles, inventados y que dejaron vacío, los datos marcados con su causa (no lo trae o remite a otro documento), los conflictos y el coste de los reintentos.
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
@@ -553,7 +555,7 @@ Los términos comunes (Messages API, presupuesto) están en el [glosario](../doc
   - **Lote (*batch*):** un conjunto de peticiones que la API procesa de forma asíncrona, con la mitad de precio, en hasta 24 h y sin garantía de cuándo terminan.
   - **`custom_id`:** el identificador que pones a cada petición; es lo que une cada resultado con la petición de la que sale.
   - **Fallido:** una petición del lote cuyo resultado no sirve. Puede ser que el resultado no sea una respuesta (tipos `errored`, `expired` y `canceled`) o que la respuesta no se pueda usar. El módulo clasifica cada resultado y dice por qué no sirve.
-  - **Troceo (*chunking*):** partir un documento largo en trozos, cada uno con su cabecera, para que cada respuesta quepa.
+  - **Troceo (*chunking*):** partir un documento largo en trozos, cada uno con su cabecera, para que cada respuesta quepa. Cada trozo es una petición con su propio `custom_id`, y sus resultados se unen después en una sola extracción.
   - **Ventana y SLA:** el plazo en el que se necesita el resultado (SLA) frente a las 24 h que puede tardar un lote (ventana).
 - **Lo que el módulo no guarda:** nada. El identificador del lote lo copias tú de la salida y lo pasas a `--batch-id`.
 - **Sin varios turnos:** cada petición del lote es una sola vuelta. Dentro de un lote no se puede devolver el resultado de una tool y continuar la conversación.
@@ -598,7 +600,7 @@ uv run python app3_sistema_multiagente/09_batches.py --batch-id <id> --anti por_
 
 ### Qué observar
 
-El orden de llegada frente al de envío, los tipos de resultado (qué cuenta como `ok` y qué como `truncated`), los documentos con datos de otro según el emparejado, y el coste del lote frente al del mismo trabajo síncrono.
+El acierto por campo de la muestra antes de crear el lote; el orden de llegada frente al de envío; los tipos de resultado (qué cuenta como `ok` y qué como `truncated`); los documentos con datos de otro según el emparejado («X de N»); en el reenvío, los trozos de cada documento y si la unión coincide con la etiqueta; y el coste del lote frente al del mismo trabajo síncrono.
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>

@@ -33,9 +33,13 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
   `docs/hallazgos.md`):
   - Un valor inventado con el formato correcto pasa el validador. Solo lo delata la
     comparación con la etiqueta, aquí, o con la fuente, en producción.
-  - Pedir que se revise un total que no cuadra por culpa del documento invita al modelo
-    a cambiar el total declarado para que cuadre. Por eso el conflicto se marca tras un
-    único reintento.
+  - Un total que no cuadra porque el documento es incoherente no se reintenta: se marca
+    `conflict_detected` y sigue adelante. Pedir que se revise (`--anti insistir`) hace
+    que el modelo cambie el total declarado para que cuadre, y el conflicto desaparece
+    de la salida aunque siga en la fuente.
+  - El validador separa dos causas de un dato ausente, sin modelo: el documento remite a
+    otro que no se ha proporcionado («Ver adjunto», `external_reference`) o el dato no
+    está (`missing_in_source`). Ninguna se reintenta, pero la primera dice dónde buscarlo.
   - Cada fallo de validación lleva su causa (`pattern`) y la salida los agrupa, para
     corregir el prompt o el esquema en lugar de parchear documento a documento. El
     `detected_pattern` de la guía es otra cosa: analiza qué hallazgos de una revisión

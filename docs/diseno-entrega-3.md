@@ -79,10 +79,10 @@ Cada módulo sigue `/nuevo-modulo`: tests sin modelo primero → módulo con cab
 - 4.4-K3 y S3 (`detected_pattern` para analizar los hallazgos descartados) pasan a `app3/11` tras la revisión A5: en una extracción no hay hallazgos que alguien descarte.
 
 - **Rol `enforcement` (Haiku 4.5)** con su presupuesto, no `agent`: con Haiku 5.5 no hubo fallos de fecha en 36 intentos, así que no había nada que reintentar (sonda A2; `--rol-modelo agent` lo comprueba).
-- Sobre la extracción de `07`. Un validador sin modelo calcula `calculated_total` y lo compara con `stated_total`; si no cuadran, marca `conflict_detected`.
-- Correcta: ante un fallo de validación, reintento con el **error concreto** (campo, valor y regla). Si el dato no está en la fuente, el reintento es inútil y se detiene, marcando el campo.
-- `--anti reintento_generico`: el reintento solo dice «inténtalo de nuevo». `--anti insistir`: reintenta hasta el tope también cuando el dato no existe.
-- `detected_pattern` en cada fallo, para agrupar las causas.
+- Sobre la extracción de `07`. Un validador sin modelo calcula `calculated_total` y lo compara con `stated_total`; si no cuadran, marca `conflict_detected` sin reintentar, porque lo incoherente es la fuente (cambiado tras A5: antes se reintentaba una vez).
+- Correcta: ante un fallo de validación, reintento con el **error concreto** (campo, valor y regla). Si el dato no está en la fuente, el reintento es inútil y no se hace: el campo se marca con su causa, *no lo trae* (`missing_in_source`) o *remite a otro documento* (`external_reference`, 4.4-S2), distinguidas por una búsqueda en el texto. `stopped_by` guarda el motivo que cerró el bucle.
+- `--anti reintento_generico`: el reintento solo dice «inténtalo de nuevo». `--anti insistir`: reintenta hasta el tope también cuando el dato no existe y cuando el total no cuadra.
+- Un patrón de fallo (`pattern`) en cada fallo, para agrupar las causas.
 - Señal (§11.3): un reintento útil que corrige y uno inútil, con el número de reintentos y su coste.
 - Tests: validador, mensaje de error específico, detección del caso sin dato y tope de reintentos.
 
@@ -90,10 +90,11 @@ Cada módulo sigue `/nuevo-modulo`: tests sin modelo primero → módulo con cab
 
 - Message Batches API con las peticiones de `07`, cada una con su `custom_id`.
 - `--enviar` crea el lote e imprime su id; `--batch-id <id>` lo retoma y lee resultados. El módulo no guarda nada: el id lo copia la persona.
-- Reenvío de los fallidos por `custom_id`, partiendo los documentos demasiado largos (*chunking*), y en trozos más pequeños si un trozo vuelve a truncarse. Una respuesta truncada cuenta como fallida aunque la API la dé por `succeeded`.
-- `--anti por_orden`: empareja los resultados por posición en vez de por `custom_id`.
+- Reenvío de los fallidos por `custom_id`, partiendo los documentos demasiado largos (*chunking*). Si un trozo vuelve a truncarse, el documento se parte a la mitad, hasta una línea por trozo; un trozo que falla sin truncarse se reenvía con su propio texto, y la unión no depende del orden de llegada. Una respuesta truncada cuenta como fallida aunque la API la dé por `succeeded`.
+- `--anti por_orden`: empareja los resultados por posición en vez de por `custom_id`. Se cuenta sobre los documentos con número en la etiqueta, sin los resultados vacíos.
 - Cálculo sin modelo de ventana frente a SLA: qué cabe en batch, qué tiene que ir síncrono y **cada cuánto hay que enviar** (4.5-S2). La condición es `intervalo + ventana × (1 + reenvíos) + margen ≤ SLA`, de modo que con 30 h sale enviar cada 4 h, el ejemplo de la guía. La frecuencia se añadió en A4, al comprobar la viñeta contra la guía.
-- Estimación (cota superior) del coste antes de enviar, porque la Batches API no admite un corte a mitad del lote. Muestra previa síncrona de unos pocos documentos antes de lanzar el lote.
+- Estimación (cota superior) del coste antes de enviar, porque la Batches API no admite un corte a mitad del lote. El tope es por invocación: con `--enviar`, muestra más estimación del lote; con `--reenviar`, solo la estimación del reenvío.
+- Muestra previa síncrona de unos pocos documentos, comparada con las etiquetas campo por campo (4.5-S4); por debajo de un umbral visible en el código, no se lanza el lote.
 - Comentario: sin tools de varios turnos dentro de una petición de batch.
 - Tests: construcción del lote, emparejado por `custom_id`, selección y troceo de los fallidos, cálculo de ventana, coste con descuento.
 

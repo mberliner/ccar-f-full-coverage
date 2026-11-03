@@ -45,10 +45,14 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
   - Los resultados no llegan en el orden de envío.
   - Una respuesta cortada por `max_tokens` llega como `succeeded`. Para detectar los
     fallidos hay que mirar el `stop_reason`, no solo el tipo de resultado.
-  - Un trozo también puede volver a truncarse, y entonces se trocea más fino.
-  - La muestra es síncrona y usa los mismos parámetros que el lote. Comprueba que las
-    extracciones cumplen el esquema, no cuántas acierta, porque eso se mide en el
-    módulo 07.
+  - Un trozo también puede volver a truncarse, y entonces se parte otra vez por la
+    mitad, hasta una línea. Al reenviar se manda solo el texto del trozo fallido, y la
+    unión no depende del orden en que lleguen los resultados.
+  - La muestra es síncrona, usa los mismos parámetros que el lote y compara las
+    extracciones con las etiquetas, campo por campo. Por debajo del umbral del código no
+    se lanza el lote: afinar el prompt es más barato que reenviar.
+  - Una respuesta sin datos (truncada o fallida) no cuenta como cruce de documentos al
+    emparejar por posición; el recuento es sobre los documentos que tienen número.
 - EN PRODUCCIÓN (no evaluable): los precios y el descuento están en la tabla de
   `harness/budget.py`, que se actualiza a mano. La ventana de 24 h es un máximo: aquí los
   lotes terminaron en minutos, pero no está garantizado.

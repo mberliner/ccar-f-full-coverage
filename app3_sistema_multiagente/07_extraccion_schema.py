@@ -42,6 +42,9 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
   - Confundir «el JSON es válido» con «la extracción es correcta».
   - Elegir el grado de `tool_choice` al revés: `auto` cuando hace falta una tool sí o
     sí, o una tool forzada cuando el tipo del documento es desconocido.
+  - Dejar `auto` desde el primer turno cuando la extracción tiene que ir antes del
+    enriquecimiento (`--parte enriquecimiento --anti auto_desde_inicio`): nada asegura
+    ese orden.
 - Inferencias propias, con lo observado aquí (cifras en el README y en
   `docs/hallazgos.md`):
   - Sin `null`, el modelo no deja el campo vacío. Escribe `'null'` como texto, `''` o un
@@ -50,7 +53,11 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
     modelo puede escribir un valor que el `enum` no admite, y la API no lo rechaza. Por
     eso el módulo valida la forma de lo que recibe en vez de darla por hecha.
   - El *few-shot* solo se nota si el modelo falla sin él: con Haiku 5.5 no hubo nada
-    que corregir, y con Haiku 4.5 sí (`--rol-modelo enforcement`).
+    que corregir, y con Haiku 4.5 sí (`--rol-modelo enforcement`). Lo que corrigió fueron
+    fechas mal escritas; campos con valor que salieran vacíos no hubo con ningún modelo.
+  - Con `auto` desde el inicio, ni Haiku 5.5 ni Haiku 4.5 consultaron un pedido antes de
+    extraerlo. Que el modelo acierte el orden no lo garantiza: forzar el primer turno
+    convierte en regla lo que sin él es una costumbre del modelo.
   - Las reglas de normalización van en la descripción de cada campo, que es parte del
     prompt que ve el modelo. La parte `few_shot` las quita para dejar solo los ejemplos.
   - Observado en este repositorio (`docs/hallazgos.md`): `any` y la tool forzada
