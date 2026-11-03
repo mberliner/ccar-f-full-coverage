@@ -14,7 +14,7 @@ Términos que usan los módulos de las tres apps y el arnés, para quien llega d
 - **KB (base de conocimiento):** los artículos con procedimientos de la mesa de ayuda (`KB-NNN`).
 - **Arnés (`harness/`):** código común que no enseña ninguna viñeta: construye las opciones aisladas del agente, impone el presupuesto, lee la configuración, registra lo que pasa en cada ejecución y permite probar hooks y tools sin modelo.
 - **Presupuesto (`max_budget_usd`):** tope de gasto en dólares de una ejecución con modelo. Al alcanzarlo, la ejecución se corta. En los módulos de la Messages API lo aplica el arnés.
-- **Rol de modelo:** nombre con el que el arnés elige qué modelo usar (`agent`, `coordinator`, `subagent`, `enforcement`). El modelo concreto de cada rol sale de `.env`.
+- **Rol de modelo:** nombre con el que el arnés elige qué modelo usar (`agent`, `coordinator`, `subagent`, `enforcement`, `reviewer`). El modelo concreto de cada rol sale de `.env`.
 - **Modo ligero; ejecución obligatoria / ligera:** cómo se consume un módulo. En modo ligero (para cuando falta tiempo) se predice y se contrasta sobre el código, sus comentarios y el resultado de referencia plegado del `README.md`, sin ejecutar. Un módulo de **ejecución obligatoria** se ejecuta incluso en modo ligero, porque su lección es un resultado variable o temporal (una tasa, una latencia) que leer el código no transmite; uno de **ejecución ligera** se puede seguir sin ejecutar. Cada módulo lo indica en la línea **Modo** de su ficha, al principio de su sección.
 - **Registro de la ejecución (`RunRecord`):** lo que el arnés recoge de una ejecución (llamadas a tools, quién las hizo, turnos, coste, denegaciones) para comprobarlo en código en lugar de leerlo del texto del modelo.
 
@@ -70,3 +70,11 @@ Términos que usan los módulos de las tres apps y el arnés, para quien llega d
 - ***Hub-and-spoke* (estrella):** organización en la que toda la comunicación entre subagentes pasa por el coordinador.
 - **Descomposición:** dividir una tarea en subtareas, ya sea con una cadena fija de pasos o de forma adaptativa según lo que se va encontrando.
 - **Tool cross-role (entre roles):** una tool de otro rol que se da a un agente de forma muy limitada, para lo frecuente y sencillo.
+
+## Extracción estructurada y lotes
+
+- **JSON Schema:** un formato estándar para describir la forma de un JSON: qué propiedades tiene, de qué tipo es cada una (`string`, `number`, `array`…), qué valores admite (`enum`) y cuáles son obligatorias.
+- **`input_schema`:** el JSON Schema de los parámetros de una tool. Cuando el modelo llama a la tool, escribe una entrada que sigue ese esquema. Por eso una tool sirve también para obtener una salida estructurada (`app3/07`).
+- **`required`:** la lista de propiedades obligatorias de un JSON Schema. Una propiedad que no está en esa lista puede faltar.
+- **`max_tokens`:** el tope de tokens de salida de una petición. Si el modelo lo alcanza, la respuesta se corta, y su `stop_reason` lo indica.
+- **Etiqueta:** en los módulos de extracción, el valor correcto de cada campo de un documento. Está en un archivo aparte que el modelo no ve, y el código la usa para puntuar.

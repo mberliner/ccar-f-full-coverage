@@ -444,12 +444,12 @@ Un proceso extrae con una tool de JSON Schema el número de pedido, la fecha y e
 
 Los términos comunes (Messages API, presupuesto, `tool_choice`) están en el [glosario](../docs/glosario.md). Este módulo reutiliza del [módulo 07](#07--extracción-estructurada-con-schema) la tool `extract_metadata`, los 12 documentos y la puntuación contra etiquetas, y usa la Messages API (necesita una API key).
 
-- **El sistema:** por cada documento, una extracción, una validación con reglas de código (sin modelo) y, si falla, un reintento. Las reglas: el tipo está en el `enum`, la fecha es ISO, una factura cita su número de pedido (`PO-nnnn`) y el total que declara el documento coincide con la suma de sus líneas. El esquema de la tool no dice cómo se escribe una fecha (a propósito: si lo dijera, no habría errores que reintentar).
-- **Qué modelo:** el rol `enforcement` (Haiku 4.5). Con Haiku 5.5 las fechas salen siempre bien y no hay nada que reintentar; `--rol-modelo agent` lo comprueba.
+- **El sistema:** por cada documento, una extracción, una validación con reglas de código (sin modelo) y, si falla, un reintento. Las reglas: el tipo está en el `enum`, la fecha es ISO, una factura cita su número de pedido (`PO-nnnn`) y el total que declara el documento coincide con la suma de sus líneas. El esquema de la tool no dice cómo se escribe una fecha: esa regla solo la aplica el validador.
+- **Qué modelo:** el rol `enforcement` (Haiku 4.5), un modelo anterior al de los demás módulos. El porqué está en el Paso 3. `--rol-modelo agent` ejecuta el módulo con Haiku 5.5.
 - **Términos propios:**
   - **Reintento:** enviar de nuevo al modelo su propia llamada fallida, con el error devuelto como resultado de la tool (`is_error`), y pedirle otra extracción.
   - **Error concreto:** el mensaje del reintento nombra el campo, el valor que devolvió y la regla que incumple. Un error **genérico** solo dice «Inténtalo de nuevo».
-  - **`detected_pattern`:** la causa de un fallo (`date_format`, `missing_required`, `total_mismatch`…). Se anota en cada fallo para agrupar las causas.
+  - **Patrón de fallo:** la causa de un fallo (`date_format`, `missing_required`, `total_mismatch`…). Se anota en cada fallo, y la salida los agrupa por causa. El `detected_pattern` de la guía, sobre los hallazgos de revisión que se descartan, llega en el módulo 11.
   - **`conflict_detected`:** el total calculado no coincide con el declarado y, tras un reintento, sigue sin coincidir: el documento mismo no cuadra.
   - **Dato ausente en la fuente:** que el documento no contiene lo que la regla exige (una factura sin número de pedido). El código lo comprueba con una búsqueda en el texto, sin modelo.
   - **Efecto de un reintento** (solo para medir; el bucle no ve las etiquetas): *corregido* si el fallo desaparece y el valor coincide con la etiqueta, *persiste* si el fallo sigue, *inventado* si desaparece pero el valor no es el de la etiqueta (o la etiqueta dice que no existe).
@@ -467,7 +467,7 @@ Lo que cambia en el código de cada variante (el esquema, los documentos y el va
 Con tus palabras; no hay un número que acertar:
 
 1. Una factura no cita número de pedido en ninguna parte. ¿Qué debería hacer el bucle correcto con ella? Si se le pide al modelo una y otra vez que corrija ese campo, ¿qué acabará devolviendo, y podría distinguirlo el validador de un número bueno?
-2. Una fecha sale como `12/03/2026` y la regla exige ISO. ¿Qué sabe el modelo en el reintento con el mensaje concreto y qué sabe con «Inténtalo de nuevo»? ¿Cuántos reintentos y cuánto coste esperas en cada variante?
+2. Una fecha sale como `12/03/2026` y la regla exige ISO. ¿Qué sabe el modelo en el reintento con el mensaje concreto y qué sabe con «Inténtalo de nuevo»? ¿Qué variante esperas que gaste más en reintentos, y por qué?
 3. Dos documentos declaran un total que no es la suma de sus líneas, y el error está en el propio documento, no en la extracción. ¿Qué puede hacer el modelo si le pides que lo revise? ¿Qué sería la salida correcta?
 4. Sin mirar etiquetas, ¿cómo decide el código que un dato no está en el documento? ¿Qué parte de esa decisión no puede tomar el modelo por ti?
 
@@ -502,7 +502,7 @@ Notas:
 
 - **Un reintento puede empeorar un total:** en la correcta, de los dos documentos con el total mal, el modelo cambió el total declarado para que cuadrara con las líneas (*inventado*) en al menos uno de ellos en las tres repeticiones, y solo en dos de ellas quedó un conflicto marcado. Un total que no cuadra por culpa del documento no se arregla con un reintento: pedírselo invita a falsear el dato. Por eso el conflicto se marca tras un solo reintento y en producción sería mejor no reintentarlo.
 - **Qué mide cada línea:** el validador de formato no distingue un pedido real de uno inventado con la forma correcta. «Inventaron» sale de comparar con la etiqueta, que el bucle no ve.
-- **Con Haiku 5.5** (`--rol-modelo agent`) no hubo fallos de fecha en 36 intentos: no hay nada que reintentar y la señal no aparece; ver `docs/hallazgos.md`.
+- **Por qué Haiku 4.5:** en la sonda previa al módulo (A2, `docs/hallazgos.md`), Haiku 5.5 no escribió mal ninguna fecha en 36 primeros intentos. Sin fallos no hay nada que reintentar y la señal no aparece. Es una cifra de la sonda, no de una ejecución del módulo con `--rol-modelo agent`.
 - Lo que no depende del modelo se prueba en `tests/test_app3_08_validacion_reintento.py`.
 </details>
 
@@ -544,8 +544,8 @@ Los términos comunes (Messages API, presupuesto) están en el [glosario](../doc
 - **El sistema:** una petición de extracción por documento (los 12 de `documentos_compra.json`), enviadas juntas con la Message Batches API. Es una API aparte de la normal: envías el lote, te devuelve un identificador y los resultados se leen más tarde, cuando el lote termina.
 - **Términos propios:**
   - **Lote (*batch*):** un conjunto de peticiones que la API procesa de forma asíncrona, con la mitad de precio, en hasta 24 h y sin garantía de cuándo terminan.
-  - **`custom_id`:** el identificador que pones a cada petición; es lo único que une cada resultado con su documento, porque llegan en otro orden.
-  - **Fallido:** una petición del lote cuyo resultado no sirve. Hay cuatro tipos de resultado que no son una respuesta (`errored`, `expired`, `canceled` y las respuestas que la API da por buenas pero están truncadas) y uno más que el módulo trata aparte: una respuesta que no cumple el esquema.
+  - **`custom_id`:** el identificador que pones a cada petición; es lo que une cada resultado con la petición de la que sale.
+  - **Fallido:** una petición del lote cuyo resultado no sirve. Puede ser que el resultado no sea una respuesta (tipos `errored`, `expired` y `canceled`) o que la respuesta no se pueda usar. El módulo clasifica cada resultado y dice por qué no sirve.
   - **Troceo (*chunking*):** partir un documento largo en trozos, cada uno con su cabecera, para que cada respuesta quepa.
   - **Ventana y SLA:** el plazo en el que se necesita el resultado (SLA) frente a las 24 h que puede tardar un lote (ventana).
 - **Lo que el módulo no guarda:** nada. El identificador del lote lo copias tú de la salida y lo pasas a `--batch-id`.
@@ -556,12 +556,12 @@ Los términos comunes (Messages API, presupuesto) están en el [glosario](../doc
 Opciones del módulo (cada una es un paso del flujo):
 
 - **`--ventanas`:** sin modelo. Reparte seis trabajos de ejemplo entre tres grupos según su plazo: «cabe en batch», «cabe en batch, sin margen para reenviar fallidos» y «tiene que ir síncrono». Para los que caben, dice además cada cuántas horas hay que enviar un lote.
-  - **El criterio:** un documento que llega justo después de un envío espera un intervalo entero hasta el siguiente. Después puede tardar la ventana completa, y otra más si hay que reenviarlo. Por eso tiene que cumplirse `intervalo + 24 h × (1 + reenvíos) + 2 h de margen ≤ plazo`.
+  - **El criterio:** cuenta todo lo que puede esperar un documento hasta tener su resultado, más un margen de 2 h elegido en este módulo (la guía no habla de margen). La fórmula está en el Paso 3: intenta deducirla antes.
 - **`--enviar`:** estima una cota superior del coste, hace una **muestra síncrona** de tres documentos con los mismos parámetros, y solo si cumplen el esquema crea el lote. Imprime su identificador. `--sin-muestra` salta la muestra.
 - **`--batch-id <id>`:** consulta el estado del lote y, si ha terminado, lee los resultados: orden de llegada, tipo de cada resultado, emparejado por `custom_id` y coste con el descuento. `--esperar <s>` espera hasta ese número de segundos. `--reenviar` crea un lote nuevo solo con los fallidos (los truncados, partidos en trozos).
 - **`--anti por_orden`** (con `--batch-id`): empareja los resultados por posición en vez de por `custom_id`.
 
-Las peticiones llevan `max_tokens` corto (600) a propósito: solo el albarán de 40 líneas (`DC-12`) no cabe, y esa respuesta truncada es el fallido que se recupera troceando.
+Las peticiones llevan un `max_tokens` corto (600) a propósito, para que el lote tenga algo que reenviar. Qué documento no cabe y cómo llega su resultado se ve en el Paso 3.
 
 ### Predice antes de ejecutar
 
@@ -603,6 +603,7 @@ Haiku 5.5, 12 documentos:
 
 Notas:
 
+- **La fórmula de `--ventanas`:** un documento que llega justo después de un envío espera un intervalo entero hasta el siguiente. Después, el lote puede tardar la ventana completa, y otra más por cada reenvío. Por eso tiene que cumplirse `intervalo + 24 h × (1 + reenvíos) + margen ≤ plazo`. **El margen de 2 h es una elección de este módulo:** la guía da el resultado (enviar cada 4 h para un SLA de 30 h), pero no el cálculo. Sin margen saldrían 6 h.
 - **La API no marca la respuesta truncada como error:** devuelve `succeeded` con `stop_reason: max_tokens` y un `tool_use` incompleto (en la sonda, sin `line_items`). Quien solo mire el tipo de resultado da por buena una extracción cortada.
 - **El tope de coste de un lote no se puede imponer a mitad:** la Batches API no tiene un corte como `max_budget_usd`. Por eso el módulo estima una cota superior antes de enviar y se niega si supera el tope.
 - **Un documento sin número en la etiqueta** (`DC-07`) puede salir con uno inventado; eso no es un cruce de documentos y no cuenta en el emparejado (se mide en el módulo 07).
@@ -613,10 +614,10 @@ Notas:
 
 Un equipo usa Claude para dos trabajos. El primero revisa cada *pull request* antes del merge, y el desarrollador espera el resultado para fusionar. El segundo extrae cada noche los datos de unas 20 000 facturas, que se consultan a la mañana siguiente. En el segundo trabajo fallan cada noche unas decenas de facturas largas por superar el límite de contexto. Para recortar el coste, se plantea pasar los dos trabajos a la Message Batches API. ¿Qué diseño es el adecuado?
 
-- A. La revisión con la API síncrona y las facturas en lote: reenviar solo las fallidas, por su `custom_id` y troceadas.
-- B. Los dos trabajos en lote, porque ahorran la mitad, y repetir cada noche el lote completo cuando fallen facturas.
-- C. Los dos trabajos con la API síncrona y las facturas en paralelo, porque así se sabe al instante cuáles fallan.
-- D. La revisión en lote, con una tool de varios turnos que avise al desarrollador, y las facturas con la API síncrona.
+- A. La revisión con la API síncrona y las facturas en lote; las fallidas, troceadas y reenviadas por su `custom_id`.
+- B. Los dos trabajos en lote con un `custom_id` por petición, y relanzar el lote nocturno completo con las facturas troceadas.
+- C. Los dos trabajos con la API síncrona, troceando antes las facturas largas para que ninguna supere el contexto.
+- D. La revisión en lote con una tool de varios turnos que avise al autor, y las facturas troceadas con la API síncrona.
 
 <details>
 <summary>Paso 4 · Respuesta</summary>

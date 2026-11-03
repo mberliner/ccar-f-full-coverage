@@ -53,11 +53,10 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
     que corregir, y con Haiku 4.5 sí (`--rol-modelo enforcement`).
   - Las reglas de normalización van en la descripción de cada campo, que es parte del
     prompt que ve el modelo. La parte `few_shot` las quita para dejar solo los ejemplos.
-  - Aquí la tool forzada no precede a ningún enriquecimiento: el paso posterior es la
-    validación del módulo 08.
+  - Observado en este repositorio (`docs/hallazgos.md`): `any` y la tool forzada
+    devuelven 400 con Sonnet 5.5, así que el módulo usa el rol `agent` (Haiku 5.5).
 - EN PRODUCCIÓN (no evaluable): el modo estricto de las tools garantiza el esquema,
-  pero la guía no lo nombra y queda fuera (`tests/perimetro_excluido.yaml`). `any` y la
-  tool forzada devuelven 400 en Sonnet 5.5, así que el módulo usa el rol `agent`.
+  pero la guía no lo nombra y queda fuera (`tests/perimetro_excluido.yaml`).
 
 Pregunta tipo examen: ver `app3_sistema_multiagente/README.md`, módulo 07.
 

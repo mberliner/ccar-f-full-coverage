@@ -20,9 +20,9 @@ El orden sale de la verificación del roadmap y de las dependencias, no de un ca
 
 | Tanda | Módulos | Viñetas | Contador | Por qué en este orden |
 | :---: | :--- | :---: | :---: | :--- |
-| A | `app3/07` → `08` → `09` | 29 | 160/240 | `08` es de ejecución obligatoria (§13) y una de las señales de §11.3; `07` define el schema que usan `08`, `09` y `10` |
-| B | `app3/04` → `05` → `06` | 32 | 192/240 | `04` es la otra señal de §11.3 y de ejecución obligatoria; los tres amplían el mismo servidor de investigación |
-| C | `app3/10` → `11` → `12` | 33 | 225/240 | `10` trabaja sobre las salidas de `07`; `11` y `12` comparten el `git diff` de prueba y la sonda de `claude -p` |
+| A | `app3/07` → `08` → `09` | 27 | 158/240 | `08` es de ejecución obligatoria (§13) y una de las señales de §11.3; `07` define el schema que usan `08`, `09` y `10` |
+| B | `app3/04` → `05` → `06` | 32 | 190/240 | `04` es la otra señal de §11.3 y de ejecución obligatoria; los tres amplían el mismo servidor de investigación |
+| C | `app3/10` → `11` → `12` | 35 | 225/240 | `10` trabaja sobre las salidas de `07`; `11` y `12` comparten el `git diff` de prueba y la sonda de `claude -p` |
 | D | `app2/04` → `app1/07` | 15 | 240/240 | No dependen de nada nuevo; cierran la cobertura |
 
 Si el plazo aprieta, se aplica la regla de escalado de §10: modo ligero sobre lo entregado, sin código nuevo en la semana final.
@@ -68,12 +68,15 @@ Cada módulo sigue `/nuevo-modulo`: tests sin modelo primero → módulo con cab
 - Schema correcto: campos opcionales *nullable*, `enum` con `unclear` y `other` más un campo de detalle, y reglas de normalización (fechas, importes) en la descripción.
 - `--anti sin_nullable`: los campos opcionales son obligatorios, y el modelo tiene que inventar algo. `--anti enum_cerrado`: sin `unclear`/`other`, el tipo raro se fuerza a una categoría, o el modelo escribe un valor que el `enum` no admite, porque sin modo estricto el esquema de una tool no se impone. El módulo valida la forma de lo que recibe y cuenta los valores fuera del `enum` (corregido tras la sonda A2).
 - `--rol-modelo enforcement` (Haiku 4.5), solo para el *few-shot*: con Haiku 5.5 no hay errores de formato que corregir.
+- `--parte enriquecimiento` (añadida tras la revisión A5, para 4.3-S3): `extract_metadata` y `lookup_purchase_order`. El primer turno va forzado a `extract_metadata` y después pasa a `auto`, así que el enriquecimiento parte del pedido extraído. `--anti auto_desde_inicio`: el modelo puede consultar el pedido antes de extraerlo.
 - Sintaxis frente a semántica: el schema garantiza la forma, no que los valores sean correctos. El módulo lo muestra comparando con las etiquetas.
 - *Few-shot* para estructuras documentales variadas (4.2 K4, S4–5): con ejemplos de las tres formas frente a sin ellos.
 - Señal: campos inventados frente a `null` y tipo forzado frente a `other`, puntuados contra las etiquetas.
 - Tests: schema por variante, puntuación contra etiquetas, construcción de la petición por modo de `tool_choice`.
 
-#### `app3_sistema_multiagente/08_validacion_reintento.py` · 4.4 K1–4, S1–4 (ejecución obligatoria)
+#### `app3_sistema_multiagente/08_validacion_reintento.py` · 4.4 K1, K2, K4, S1, S2, S4 (ejecución obligatoria)
+
+- 4.4-K3 y S3 (`detected_pattern` para analizar los hallazgos descartados) pasan a `app3/11` tras la revisión A5: en una extracción no hay hallazgos que alguien descarte.
 
 - **Rol `enforcement` (Haiku 4.5)** con su presupuesto, no `agent`: con Haiku 5.5 no hubo fallos de fecha en 36 intentos, así que no había nada que reintentar (sonda A2; `--rol-modelo agent` lo comprueba).
 - Sobre la extracción de `07`. Un validador sin modelo calcula `calculated_total` y lo compara con `stated_total`; si no cuadran, marca `conflict_detected`.
@@ -131,11 +134,11 @@ Patrón de `app3/01`–`03`: coordinador Sonnet con `tools=["Agent"]` y `coordin
 - `--anti confianza_global`: una sola confianza por documento esconde el campo malo.
 - Tests: calibración, muestreo estratificado y precisión por tipo y campo.
 
-#### `app3_sistema_multiagente/11_criterios_y_ci.py` · 3.6 K1–3, S1–5 · 4.1 K1–3, S1–3 · 4.2 S2–3
+#### `app3_sistema_multiagente/11_criterios_y_ci.py` · 3.6 K1–3, S1–5 · 4.1 K1–3, S1–3 · 4.2 S2–3 · 4.4 K3, S3
 
 - `claude -p --output-format json --json-schema` sobre un `git diff` de una copia temporal de `repo_mesa`, en una instancia distinta de la que generó el código.
 - El `CLAUDE.md` del `cwd` temporal es el contexto de CI; los tests existentes y los hallazgos previos van en contexto.
-- Criterios categóricos con severidades y ejemplos de código, desactivando las categorías con falsos positivos; *few-shot* de formato y de patrón aceptable; `detected_pattern` en cada hallazgo.
+- Criterios categóricos con severidades y ejemplos de código, desactivando las categorías con falsos positivos; *few-shot* de formato y de patrón aceptable; `detected_pattern` en cada hallazgo y un registro de hallazgos descartados agrupado por patrón, para encontrar los falsos positivos (4.4-K3, S3).
 - `--anti conservador`: el prompt solo dice «sé conservador». `--anti sin_ejemplos`: sin *few-shot*.
 - Señal: JSON válido contra el schema, fallos sembrados encontrados y el cambio correcto no marcado.
 - Tests: schema, generación del diff, puntuación de hallazgos contra lo sembrado, orden de `claude -p` construida.

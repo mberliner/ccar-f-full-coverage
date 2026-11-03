@@ -1,9 +1,8 @@
 """Validación y reintento con error concreto: cuándo un reintento corrige y cuándo es inútil.
 
-CONCEPTO [TS 4.4-K1…K4, S1…S4]: validar la extracción sin modelo (formato, enum, campos
-obligatorios y total calculado frente a total declarado), reintentar con el error
-**concreto** (campo, valor y regla), parar cuando el dato no está en la fuente, y anotar
-`detected_pattern` en cada fallo para agrupar las causas.
+CONCEPTO [TS 4.4-K1, K2, K4 · S1, S2, S4]: validar la extracción sin modelo (formato,
+enum, campos obligatorios y total calculado frente a total declarado), reintentar con el
+error **concreto** (campo, valor y regla) y parar cuando el dato no está en la fuente.
 
 QUÉ DICE LA GUÍA:
 - Reintento con el error como retroalimentación: en el reintento se añaden al prompt
@@ -18,10 +17,6 @@ QUÉ DICE LA GUÍA:
   distintos de los de sintaxis del esquema, que la tool ya elimina (4.4-K4). Para
   detectar los primeros, se extrae un `calculated_total` junto al `stated_total` y se
   añade un booleano `conflict_detected` cuando la fuente es incoherente (4.4-S4).
-- Un campo `detected_pattern` en cada hallazgo registra qué construcción lo provocó y
-  permite analizar en conjunto qué hallazgos descarta la gente y por qué, es decir, los
-  falsos positivos (4.4-K3, S3). La guía lo sitúa en los hallazgos de una revisión de
-  código, que llegan en el módulo 11.
 
 POR QUÉ IMPORTA (inferencia propia): un reintento cuesta una llamada más por documento.
 El que no puede funcionar cuesta lo mismo y además invita al modelo a producir un valor
@@ -41,9 +36,10 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
   - Pedir que se revise un total que no cuadra por culpa del documento invita al modelo
     a cambiar el total declarado para que cuadre. Por eso el conflicto se marca tras un
     único reintento.
-  - Aquí `detected_pattern` se anota en cada fallo de validación (no en hallazgos de
-    revisión) y sirve para lo mismo: agrupar por causa. Así se corrige el prompt o el
-    esquema en lugar de parchear documento a documento.
+  - Cada fallo de validación lleva su causa (`pattern`) y la salida los agrupa, para
+    corregir el prompt o el esquema en lugar de parchear documento a documento. El
+    `detected_pattern` de la guía es otra cosa: analiza qué hallazgos de una revisión
+    descartan los desarrolladores (ver TS 4.4-K3, que introduce `app3/11`).
   - La señal depende del modelo: con Haiku 5.5 no hubo fallos de formato que reintentar,
     así que el módulo usa el rol `enforcement` (Haiku 4.5), y `--rol-modelo agent` lo
     comprueba.
@@ -55,7 +51,7 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
 
 Pregunta tipo examen: ver `app3_sistema_multiagente/README.md`, módulo 08.
 
-INTRODUCE: TS 4.4-K1, TS 4.4-K2, TS 4.4-K3, TS 4.4-K4, TS 4.4-S1, TS 4.4-S2, TS 4.4-S3, TS 4.4-S4
+INTRODUCE: TS 4.4-K1, TS 4.4-K2, TS 4.4-K4, TS 4.4-S1, TS 4.4-S2, TS 4.4-S4
 
 Uso: `uv run python app3_sistema_multiagente/08_validacion_reintento.py [--anti reintento_generico|insistir] [--rol-modelo agent|enforcement] [--repeat N]`
 """
