@@ -202,24 +202,46 @@ def test_a_failed_chunk_leaves_the_document_unmerged():
 def test_a_job_without_sla_or_with_a_long_one_goes_in_the_batch():
     assert mod.route_workload(None) == "batch"
     assert mod.route_workload(72) == "batch"
-    assert mod.route_workload(48) == "batch"
+    assert mod.route_workload(51) == "batch"  # 51 − 48 − 2 = 1 h de intervalo con un reenvío
 
 
 def test_a_job_that_only_fits_one_pass_has_no_room_to_resend_failures():
+    # La espera hasta el siguiente envío también cuenta: 48 h ya no dejan reenviar.
+    assert mod.route_workload(48) == "batch_sin_margen"
     assert mod.route_workload(30) == "batch_sin_margen"
-    assert mod.route_workload(24) == "batch_sin_margen"
 
 
-def test_a_job_with_a_shorter_deadline_than_the_window_is_synchronous():
+def test_a_job_whose_deadline_leaves_no_submission_interval_is_synchronous():
     assert mod.route_workload(8) == "sync"
     assert mod.route_workload(0.1) == "sync"
-    assert mod.route_workload(23.9) == "sync"
+    assert mod.route_workload(24) == "sync"  # la ventana entera y nada de intervalo ni margen
+    assert mod.route_workload(26) == "sync"
 
 
 def test_the_window_is_24_hours_and_resubmission_widens_the_needed_margin():
     assert mod.BATCH_WINDOW_HOURS == 24
-    assert mod.route_workload(48, resubmissions=2) == "batch_sin_margen"
-    assert mod.route_workload(72, resubmissions=2) == "batch"
+    assert mod.route_workload(72, resubmissions=2) == "batch_sin_margen"
+    assert mod.route_workload(75, resubmissions=2) == "batch"
+
+
+def test_submission_interval_is_the_deadline_minus_the_window_and_a_margin():
+    # El ejemplo de la guía: con un SLA de 30 h y una ventana de 24 h, enviar cada 4 h lo garantiza.
+    assert mod.SUBMISSION_MARGIN_HOURS == 2
+    assert mod.submission_interval(30) == 4
+    assert mod.submission_interval(72) == 46
+    assert mod.submission_interval(30, margin_hours=0) == 6
+
+
+def test_submission_interval_counts_a_window_per_resubmission():
+    assert mod.submission_interval(72, resubmissions=1) == 22
+    assert mod.submission_interval(48, resubmissions=1) is None
+    assert mod.submission_interval(30, resubmissions=1) is None
+
+
+def test_no_interval_when_the_deadline_does_not_fit_one_window():
+    assert mod.submission_interval(8) is None
+    assert mod.submission_interval(26) is None  # 26 − 24 − 2 = 0: habría que enviar de forma continua
+    assert mod.submission_interval(26.5) == 0.5
 
 
 def test_split_workloads_groups_the_examples_by_route():

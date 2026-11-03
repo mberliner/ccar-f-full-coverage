@@ -6,34 +6,52 @@ resultados por `custom_id`, reenviar solo los fallidos (partiendo los documentos
 largos), decidir qué cabe en batch y qué tiene que ir síncrono, y probar antes con una
 muestra síncrona.
 
-[BORRADOR de Sonnet 5.5: los textos de QUÉ DICE LA GUÍA y ANTI-PATRÓN los reescribe
-Opus 5.5 (paso A4 del diseño de la entrega 3) contra la Task Statement 4.5.]
-
 QUÉ DICE LA GUÍA:
-- La Message Batches API cuesta la mitad y procesa de forma asíncrona en hasta 24 h, sin
-  garantía de latencia: sirve para trabajo que no tiene a nadie esperando (4.5).
-- Cada petición del lote lleva un `custom_id`; los resultados no llegan en el orden de
-  envío y se emparejan por ese identificador (4.5).
-- Un lote no admite tool calling de varios turnos dentro de una petición: no puede
-  devolver un `tool_result` a mitad de camino (4.5).
-- Lo que falla se reenvía por `custom_id`, y un documento demasiado largo se trocea
-  (*chunking*) antes de reenviarlo (4.5).
-- Con un SLA hay que sumar la ventana de procesado al plazo: lo que no cabe va síncrono (4.5).
-- Antes de lanzar un lote grande se prueba con una muestra pequeña (4.5).
+- La Message Batches API ahorra el 50 % y procesa en una ventana de hasta 24 h, sin
+  garantía de latencia (4.5-K1).
+- Encaja en trabajos que no bloquean a nadie y toleran la espera (informes nocturnos,
+  auditorías semanales, generación nocturna de tests). No encaja en un flujo que bloquea,
+  como una comprobación previa al merge (4.5-K2). Por eso se elige la API según la latencia
+  que exige el flujo: síncrona para lo que bloquea y batch para el análisis nocturno o
+  semanal (4.5-S1).
+- Dentro de una petición del lote no hay tool calling de varios turnos: no se puede
+  ejecutar una tool a mitad y devolverle el resultado (4.5-K3).
+- `custom_id` es lo que relaciona cada petición del lote con su respuesta (4.5-K4).
+- La frecuencia de envío se calcula a partir del SLA. Por ejemplo, con 24 h de procesado,
+  enviar cada 4 h garantiza un SLA de 30 h (4.5-S2).
+- Ante los fallos, se reenvían solo los documentos que fallaron, localizados por su
+  `custom_id` y con el cambio que haga falta, como trocear los que superaron el límite de
+  contexto (4.5-S3).
+- Antes de procesar un volumen grande en lote, se afina el prompt con una muestra: sube
+  el acierto a la primera y baja el coste de los reenvíos (4.5-S4).
 
-POR QUÉ IMPORTA (inferencia propia): el ahorro del 50 % solo es real si el trabajo cabe en
-la ventana y si los fallidos se recuperan sin repetir todo el lote.
+POR QUÉ IMPORTA (inferencia propia): el 50 % solo se ahorra de verdad si el trabajo cabe
+en la ventana contando la espera al siguiente envío, y si los fallidos se recuperan sin
+repetir el lote entero. Un lote mal planteado se paga entero, porque no se puede cortar
+a mitad.
 
 ANTI-PATRÓN / TRAMPA DEL EXAMEN:
-- Hechos de la guía: usar batch para algo con un SLA más corto que la ventana, emparejar
-  por posición en vez de por `custom_id` (`--anti por_orden`) y lanzar el lote entero sin
-  probar una muestra.
-- Lo observado aquí (README y `docs/hallazgos.md`): con Haiku 5.5, un lote de 3 peticiones
-  terminó en ~2 min y los resultados llegaron en otro orden que el de envío; una respuesta
-  truncada (`stop_reason: max_tokens`) llega como `succeeded`, así que detectar fallidos
-  exige mirar el `stop_reason` y no solo el tipo de resultado.
-- EN PRODUCCIÓN (no evaluable): Haiku 5.5 y el descuento del 50 % son lo medido a
-  2026-10-06 (`harness/budget.py`); se actualizan en esa tabla.
+- Hechos de la guía:
+  - Usar batch en un flujo bloqueante o con un plazo que no admite la ventana.
+  - Esperar que el modelo use tools en varios turnos dentro del lote.
+  - Emparejar los resultados por posición en vez de por `custom_id` (`--anti por_orden`).
+  - Repetir el lote completo cuando fallan unos pocos.
+  - Lanzar el volumen entero sin probar el prompt con una muestra (`--sin-muestra`).
+- Inferencias propias, con lo observado aquí (cifras en el README y en
+  `docs/hallazgos.md`):
+  - El plazo tiene que cubrir la espera hasta el siguiente envío, la ventana completa y
+    una ventana más por cada reenvío de fallidos. Con 30 h hay que enviar cada 4 h y no
+    queda tiempo para reenviar nada (`--ventanas`).
+  - Los resultados no llegan en el orden de envío.
+  - Una respuesta cortada por `max_tokens` llega como `succeeded`. Para detectar los
+    fallidos hay que mirar el `stop_reason`, no solo el tipo de resultado.
+  - Un trozo también puede volver a truncarse, y entonces se trocea más fino.
+  - La muestra es síncrona y usa los mismos parámetros que el lote. Comprueba que las
+    extracciones cumplen el esquema, no cuántas acierta, porque eso se mide en el
+    módulo 07.
+- EN PRODUCCIÓN (no evaluable): los precios y el descuento están en la tabla de
+  `harness/budget.py`, que se actualiza a mano. La ventana de 24 h es un máximo: aquí los
+  lotes terminaron en minutos, pero no está garantizado.
 
 Pregunta tipo examen: ver `app3_sistema_multiagente/README.md`, módulo 09.
 
@@ -231,15 +249,15 @@ def merge_chunks(items: list[Item]) -> dict[str, dict]:
 def route_workload(sla_hours: float | None, *, resubmissions: int = 1) -> str:
     """`batch`, `batch_sin_margen` o `sync` según el plazo de entrega.
 
-    Peor caso: el lote tarda toda su ventana y hay que reenviar los fallidos en otro lote, así que
-    caben en batch con margen los plazos de al menos `ventana × (1 + reenvíos)`. Con un plazo que solo
-    admite una pasada no queda tiempo para recuperar fallos; con uno más corto que la ventana, no cabe.
+    Usa el mismo peor caso que `submission_interval`: la espera hasta el siguiente envío, la ventana
+    entera y el margen. Si queda intervalo también con los reenvíos, cabe con margen; si solo con
+    una pasada, no queda tiempo para recuperar fallos; si ni con una, tiene que ir síncrono.
     """
     if sla_hours is None:
         return "batch"  # sin plazo, nadie espera
-    if sla_hours >= BATCH_WINDOW_HOURS * (1 + resubmissions):
+    if submission_interval(sla_hours, resubmissions=resubmissions) is not None:
         return "batch"
-    if sla_hours >= BATCH_WINDOW_HOURS:
+    if submission_interval(sla_hours) is not None:
         return "batch_sin_margen"
     return "sync"
 
@@ -253,6 +271,21 @@ WORKLOADS = [
     ("Facturas que hay que pagar hoy", 8),
     ("Albarán en recepción (el almacén espera la respuesta)", 0.1),
 ]
+
+
+SUBMISSION_MARGIN_HOURS = 2  # holgura para crear el lote, leerlo y entregar el resultado
+
+
+def submission_interval(sla_hours: float, *, resubmissions: int = 0, margin_hours: float = SUBMISSION_MARGIN_HOURS) -> float | None:
+    """Cada cuántas horas hay que enviar un lote para cumplir el plazo, o None si no se puede.
+
+    Un documento que llega justo después de un envío espera un intervalo entero al siguiente y,
+    en el peor caso, otra ventana completa de procesado (y una más por cada reenvío de fallidos).
+    Así que `intervalo + ventana × (1 + reenvíos) + margen ≤ SLA`. Con 30 h salen 4 h, el ejemplo
+    de la guía. Si no queda un intervalo positivo, el trabajo no cabe en batch.
+    """
+    interval = sla_hours - BATCH_WINDOW_HOURS * (1 + resubmissions) - margin_hours
+    return interval if interval > 0 else None
 
 
 def split_workloads(workloads: list[tuple[str, float | None]]) -> dict[str, list[str]]:
@@ -303,8 +336,21 @@ def print_windows() -> None:
         print(f"[{labels[route]}]")
         for name in names:
             sla = dict(WORKLOADS)[name]
-            print(f"  - {name} (plazo: {'sin plazo' if sla is None else f'{sla} h'})")
-    print("\nSin modelo: es solo aritmética. Con --enviar se lanza un lote de verdad (cuesta unos céntimos).")
+            print(f"  - {name} (plazo: {'sin plazo' if sla is None else f'{sla} h'}){frequency_note(sla)}")
+    print(f"\nFrecuencia de envío: intervalo + {BATCH_WINDOW_HOURS} h de ventana (+ {BATCH_WINDOW_HOURS} h por reenvío) + {SUBMISSION_MARGIN_HOURS} h de margen ≤ plazo.")
+    print("Sin modelo: es solo aritmética.")
+    print("Con --enviar se lanza un lote de verdad (cuesta unos céntimos).")
+
+
+def frequency_note(sla: float | None) -> str:
+    """Cada cuánto enviar, con y sin margen para reenviar los fallidos."""
+    if sla is None or sla < BATCH_WINDOW_HOURS:
+        return ""
+    once, with_resend = submission_interval(sla), submission_interval(sla, resubmissions=1)
+    if once is None:
+        return " → no queda intervalo de envío"
+    resend = f"; con un reenvío, cada {with_resend:g} h" if with_resend else "; un reenvío no cabe"
+    return f" → enviar cada {once:g} h{resend}"
 
 
 def run_preview(client: Any, model: str, guard: CostGuard, docs: dict[str, str]) -> bool:

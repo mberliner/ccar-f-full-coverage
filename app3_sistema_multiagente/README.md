@@ -328,8 +328,6 @@ Un agente de síntesis recibe todas las tools del sistema y, aunque su cometido 
 
 ## 07 · Extracción estructurada con schema
 
-<!-- BORRADOR de Sonnet 5.5 (tanda A de la entrega 3): las predicciones y la pregunta tipo examen las reescribe Opus 5.5 (paso A4). Cifras medidas: ya definitivas. -->
-
 > **Qué vas a hacer:** Extraer los metadatos de 12 documentos de compra con una tool de JSON Schema y puntuar lo que sale contra unas etiquetas que el modelo no ve.
 >
 > **Necesitas antes:** Nada.
@@ -368,10 +366,10 @@ Tres partes (`--parte`) y, en la primera, dos variantes `--anti`:
 
 Con tus palabras; no hay un número que acertar:
 
-1. Un documento no menciona número de pedido. ¿Qué puede escribir el modelo en `po_number` si el campo es obligatorio y de tipo `string`? ¿Y si es *nullable* y no obligatorio? ¿Qué parte de cada resultado garantiza el esquema y cuál no?
-2. Con el `enum` cerrado (solo `invoice` y `delivery_note`), ¿qué dos cosas distintas podría hacer el modelo con un certificado de garantía? ¿Cuál de ellas detecta un validador del esquema y cuál solo se ve comparando con la etiqueta?
-3. Si forzaras siempre la tool de factura con tres tools de tipo disponibles, ¿qué pasaría con los albaranes? ¿Qué cambia con `any`?
-4. ¿En qué condiciones esperarías que los ejemplos *few-shot* cambiaran el formato de las fechas, y en cuáles no? ¿Por qué podría no verse con un modelo reciente?
+1. Un documento no menciona número de pedido. Si `po_number` es obligatorio y de tipo `string`, ¿qué opciones le quedan al modelo? ¿Y si es *nullable* y no obligatorio? En cada caso, ¿qué te garantiza el esquema y qué no?
+2. Con el `enum` cerrado (solo `invoice` y `delivery_note`), ¿qué dos salidas distintas podría dar el modelo con un certificado de garantía? ¿Cuál detectaría un validador del esquema y cuál solo se ve comparando con la etiqueta?
+3. Con las tres tools por tipo, ¿qué esperas de `any`, de `auto` y de forzar siempre la tool de factura? ¿Qué le pasa a un albarán en cada caso?
+4. La parte `few_shot` quita de las descripciones la regla de cómo escribir una fecha. ¿Qué tendría que ocurrir sin ejemplos para que los ejemplos se notaran? ¿Esperas lo mismo con dos modelos distintos?
 
 ### Ejecutar
 
@@ -413,17 +411,21 @@ Notas:
 
 ### Pregunta tipo examen
 
-Un proceso extrae el número de pedido, la fecha y el total de miles de facturas con una tool de JSON Schema. Algunas facturas no traen número de pedido, y el modelo escribe en esos casos valores plausibles que no existen. El campo es `string` y obligatorio. ¿Qué cambio resuelve la causa?
+Un proceso extrae con una tool de JSON Schema el número de pedido, la fecha y el total de miles de facturas. Todas las respuestas son JSON válido. Sin embargo, una auditoría encuentra números de pedido plausibles que no existen, siempre en facturas que no citan ninguno. En el esquema, el campo es `string` y figura en `required`. ¿Qué cambio ataca la causa?
 
-- A. Añadir al *system prompt* la frase «no inventes ningún dato» y mantener el campo como obligatorio.
-- B. Declarar el campo como opcional y que admita `null`, e indicar en su descripción que se deje en `null` si no figura.
-- C. Comprobar después con una expresión regular el formato del número y descartar las facturas con valores que no lo cumplan.
-- D. Cambiar a una respuesta en texto libre y extraer el número con una segunda llamada que lo busque en ese texto.
+- A. Añadir al *system prompt* «no inventes datos» y conservar el campo como `string` obligatorio.
+- B. Validar el número con una expresión regular `PO-nnnn` y reenviar al modelo las facturas que fallen.
+- C. Pasar a `tool_choice` `auto`, para que el modelo pueda contestar en texto cuando le falte el dato.
+- D. Hacer el campo opcional y *nullable*, y decir en su descripción que quede en `null` si no figura.
 
 <details>
 <summary>Paso 4 · Respuesta</summary>
 
-**B.** Un campo obligatorio obliga al modelo a producir algo aunque el documento no lo traiga (TS 4.3-K2); la forma de decir «puede no estar» es el campo opcional y *nullable* (TS 4.3-S1, S2). A pide por prosa lo que el esquema contradice; C llega tarde (un valor inventado con el formato correcto pasa) y deja la causa; D renuncia al esquema, que es lo que garantiza la forma (TS 4.3-K1).
+**D.** Un campo obligatorio que el documento puede no traer obliga al modelo a fabricar un valor para cumplir el esquema. La forma de decir «puede no estar» es declararlo opcional y *nullable* (TS 4.3-K4, S4). Que todo el JSON sea válido no prueba nada: el esquema elimina los errores de sintaxis, no los de significado (TS 4.3-K3).
+
+- **A** pide por escrito lo contrario de lo que exige el esquema, y gana el esquema.
+- **B** no detecta el problema: el número inventado tiene el formato correcto y pasa la expresión regular. Además, reintentar no sirve cuando el dato no está en el documento (módulo 08).
+- **C** sacrifica la garantía de salida estructurada (TS 4.3-K2) para resolver algo que el esquema resuelve por sí solo.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
@@ -431,8 +433,6 @@ Un proceso extrae el número de pedido, la fecha y el total de miles de facturas
 ---
 
 ## 08 · Validación y reintento con error concreto
-
-<!-- BORRADOR de Sonnet 5.5 (tanda A de la entrega 3): las predicciones y la pregunta tipo examen las reescribe Opus 5.5 (paso A4). Cifras medidas: ya definitivas. -->
 
 > **Qué vas a hacer:** Validar sin modelo las extracciones de 12 documentos y reintentar las que fallan, con el error concreto, con uno genérico o insistiendo cuando el dato no existe.
 >
@@ -466,10 +466,10 @@ Lo que cambia en el código de cada variante (el esquema, los documentos y el va
 
 Con tus palabras; no hay un número que acertar:
 
-1. Una factura no cita número de pedido en ninguna parte. ¿Qué hace la correcta con ella y qué deberías ver en la salida? ¿Qué podría devolver el modelo si se le pide una y otra vez que corrija ese campo, y cómo lo distinguirías de un valor bueno?
-2. Con el mismo fallo de formato de fecha, ¿qué diferencia esperas entre el mensaje concreto y el genérico? ¿De qué depende, en el modelo, que el genérico a veces funcione?
-3. Dos documentos declaran un total que no es la suma de sus líneas. ¿Qué puede hacer un reintento con ese fallo, y qué sería «corregirlo» si el documento mismo está mal?
-4. ¿Qué dos números de la última línea de la salida crees que cambian entre la variante correcta y `insistir`, y cuál de las dos variantes gasta más en reintentos?
+1. Una factura no cita número de pedido en ninguna parte. ¿Qué debería hacer el bucle correcto con ella? Si se le pide al modelo una y otra vez que corrija ese campo, ¿qué acabará devolviendo, y podría distinguirlo el validador de un número bueno?
+2. Una fecha sale como `12/03/2026` y la regla exige ISO. ¿Qué sabe el modelo en el reintento con el mensaje concreto y qué sabe con «Inténtalo de nuevo»? ¿Cuántos reintentos y cuánto coste esperas en cada variante?
+3. Dos documentos declaran un total que no es la suma de sus líneas, y el error está en el propio documento, no en la extracción. ¿Qué puede hacer el modelo si le pides que lo revise? ¿Qué sería la salida correcta?
+4. Sin mirar etiquetas, ¿cómo decide el código que un dato no está en el documento? ¿Qué parte de esa decisión no puede tomar el modelo por ti?
 
 ### Ejecutar
 
@@ -508,17 +508,21 @@ Notas:
 
 ### Pregunta tipo examen
 
-Un proceso extrae datos de facturas y valida cada una. Las que fallan se reenvían al modelo. Con el tiempo se ve que muchos reintentos no corrigen nada y que algunas facturas «corregidas» traen un número de pedido que no existe. ¿Qué cambio resuelve la causa?
+Un proceso extrae datos de facturas y los valida con reglas de código. Cuando una falla, se reenvía al modelo con el mensaje «La extracción no es válida, inténtalo de nuevo», hasta tres veces. Los registros muestran que la mayoría de los reintentos devuelven el mismo error. Además, varias facturas que acaban pasando la validación traen un número de pedido que no figura en el documento. ¿Qué cambio resuelve las dos cosas?
 
-- A. Subir el número máximo de reintentos de dos a cinco, para que el modelo tenga más oportunidades de acertar.
-- B. Reenviar el fallo con el campo, el valor devuelto y la regla incumplida, y no reintentar cuando el documento no contiene el dato, marcándolo.
-- C. Añadir al reintento la frase «no inventes ningún dato» y mantener el mismo mensaje genérico de error.
-- D. Pasar las facturas fallidas a un modelo más grande, que acertará más veces sin necesidad de decirle qué falló.
+- A. Subir el tope a cinco reintentos y pasar los fallidos a un modelo mayor, que suele corregirse mejor por su cuenta.
+- B. Añadir al mensaje de reintento «no inventes datos» y validar además que el número de pedido tenga el formato correcto.
+- C. Reenviar el documento, la extracción y el error concreto, y marcar sin reintentar los datos que el documento no contiene.
+- D. Quitar el número de pedido del esquema de la tool y pedírselo al modelo en una segunda llamada separada en texto libre.
 
 <details>
 <summary>Paso 4 · Respuesta</summary>
 
-**B.** El reintento funciona con el error específico (TS 4.4-K1, S1) y es inútil cuando la información no está en la fuente (TS 4.4-K2, S2): ahí se marca el campo en vez de insistir. A empeora el problema (más oportunidades de inventar); C pide por prosa lo que el flujo debe decidir en código; D cambia de modelo sin atacar la causa (un dato ausente no lo recupera ningún modelo).
+**C.** El reintento orienta la corrección cuando lleva los errores de validación concretos, junto al documento original y a la extracción que falló (TS 4.4-K1, S1). Eso resuelve los reintentos que repiten el error. Un dato que no está en el documento no se recupera reintentando (TS 4.4-K2, S2): hay que marcarlo como ausente, porque insistir lleva a que el modelo lo invente.
+
+- **A** da más oportunidades de inventar y no le dice a ningún modelo qué falló.
+- **B** pide por escrito lo que el flujo tiene que decidir en código. Además, el pedido inventado ya cumple el formato `PO-nnnn` y pasa esa validación.
+- **D** renuncia a la salida estructurada para ese campo y deja el dato ausente igual de ausente.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
@@ -526,8 +530,6 @@ Un proceso extrae datos de facturas y valida cada una. Las que fallan se reenví
 ---
 
 ## 09 · Batches: lotes, ventana y fallidos
-
-<!-- BORRADOR de Sonnet 5.5 (tanda A de la entrega 3): las predicciones y la pregunta tipo examen las reescribe Opus 5.5 (paso A4). Cifras medidas: ya definitivas. -->
 
 > **Qué vas a hacer:** Enviar las extracciones del [módulo 07](#07--extracción-estructurada-con-schema) como un lote, leer sus resultados, reenviar lo que falló y decidir qué trabajos caben en un lote y cuáles no.
 >
@@ -553,7 +555,8 @@ Los términos comunes (Messages API, presupuesto) están en el [glosario](../doc
 
 Opciones del módulo (cada una es un paso del flujo):
 
-- **`--ventanas`:** sin modelo. Reparte seis trabajos de ejemplo entre «cabe en batch», «cabe en batch, sin margen para reenviar fallidos» y «tiene que ir síncrono», según su plazo. El criterio: un plazo cabe con margen si es de al menos dos ventanas (una pasada y un reenvío de los fallidos).
+- **`--ventanas`:** sin modelo. Reparte seis trabajos de ejemplo entre tres grupos según su plazo: «cabe en batch», «cabe en batch, sin margen para reenviar fallidos» y «tiene que ir síncrono». Para los que caben, dice además cada cuántas horas hay que enviar un lote.
+  - **El criterio:** un documento que llega justo después de un envío espera un intervalo entero hasta el siguiente. Después puede tardar la ventana completa, y otra más si hay que reenviarlo. Por eso tiene que cumplirse `intervalo + 24 h × (1 + reenvíos) + 2 h de margen ≤ plazo`.
 - **`--enviar`:** estima una cota superior del coste, hace una **muestra síncrona** de tres documentos con los mismos parámetros, y solo si cumplen el esquema crea el lote. Imprime su identificador. `--sin-muestra` salta la muestra.
 - **`--batch-id <id>`:** consulta el estado del lote y, si ha terminado, lee los resultados: orden de llegada, tipo de cada resultado, emparejado por `custom_id` y coste con el descuento. `--esperar <s>` espera hasta ese número de segundos. `--reenviar` crea un lote nuevo solo con los fallidos (los truncados, partidos en trozos).
 - **`--anti por_orden`** (con `--batch-id`): empareja los resultados por posición en vez de por `custom_id`.
@@ -564,10 +567,10 @@ Las peticiones llevan `max_tokens` corto (600) a propósito: solo el albarán de
 
 Con tus palabras; no hay un número que acertar:
 
-1. De los seis trabajos de `--ventanas`, ¿cuáles irían en un lote y cuáles síncronos? Para el de 30 horas, ¿qué pasa si un documento falla y hay que reenviarlo?
-2. Con 12 peticiones, ¿en qué orden esperas que lleguen los resultados? ¿Qué le pasa a quien los empareja por posición?
-3. Una respuesta se corta por `max_tokens`. ¿Cómo la clasifica la API dentro del lote, y qué tendría que mirar tu código para saber que no sirve?
-4. Un trozo de un documento largo vuelve a truncarse al reenviarlo. ¿Qué harías con el documento y con el tamaño de los trozos?
+1. Las facturas del turno de noche tienen un plazo de 30 h y llegan a lo largo de todo el día. ¿Cada cuántas horas enviarías un lote para cumplirlo, y por qué no basta con comparar 30 h con las 24 h de la ventana? Si un documento falla, ¿queda tiempo para reenviarlo?
+2. Envías 12 peticiones en un lote. ¿En qué orden esperas los resultados? ¿Qué le pasa a un código que los empareja con los documentos por posición?
+3. Una respuesta se corta por `max_tokens`. ¿Con qué tipo de resultado crees que llega dentro del lote? ¿Qué tiene que mirar tu código para saber que no sirve?
+4. Reenvías un documento largo partido en trozos, y uno de ellos vuelve a truncarse. ¿Qué harías y qué no harías con el resto del lote?
 
 ### Ejecutar
 
@@ -592,7 +595,7 @@ Haiku 5.5, 12 documentos:
 
 | Paso | Señal observada | Qué dice |
 | :--- | :--- | :--- |
-| `--ventanas` | 3 trabajos en batch (72 h y los dos sin plazo), 1 en batch **sin margen** (30 h), 2 síncronos (8 h y 0,1 h) | con una ventana de 24 h, un plazo de 30 h cabe una vez, pero no deja tiempo para reenviar un fallo |
+| `--ventanas` | 3 trabajos en batch (72 h y los dos sin plazo), 1 en batch **sin margen** (30 h), 2 síncronos (8 h y 0,1 h). Frecuencia: el de 72 h, **cada 46 h** (cada 22 h si se reenvía); el de 30 h, **cada 4 h** y sin reenvío | el plazo tiene que cubrir la espera al siguiente envío además de la ventana; con 30 h sale el ejemplo de la guía, pero no queda tiempo para recuperar un fallo |
 | `--enviar` | estimación (cota superior) 0,0023 $; muestra síncrona de 3 documentos con forma válida (0,0008 $); lote creado con 12 peticiones | la muestra es lo único que se ve antes de gastar en el lote |
 | Lectura | el lote estaba terminado al leerlo (unos minutos como mucho, nunca cerca de las 24 h); **llegaron en otro orden** (`DC-12, DC-09, DC-03, DC-06, …`); 11 `ok` y **1 `truncated`** (`DC-12`) aunque la API los daba todos por `succeeded`; coste 0,0017 $ (0,0033 $ síncrono) | el orden no es el de envío y el fallo está en el `stop_reason` |
 | `--anti por_orden` | con el emparejado por posición, **9 de 12** documentos reciben los datos de otro; por `custom_id`, ninguno | el emparejado por posición solo acierta por casualidad |
@@ -608,17 +611,21 @@ Notas:
 
 ### Pregunta tipo examen
 
-Un equipo extrae datos de 20 000 albaranes cada fin de semana y necesita los resultados el lunes por la mañana, con 48 horas de margen. Algunas peticiones fallan por documentos demasiado largos. ¿Qué diseño es el adecuado?
+Un equipo usa Claude para dos trabajos. El primero revisa cada *pull request* antes del merge, y el desarrollador espera el resultado para fusionar. El segundo extrae cada noche los datos de unas 20 000 facturas, que se consultan a la mañana siguiente. En el segundo trabajo fallan cada noche unas decenas de facturas largas por superar el límite de contexto. Para recortar el coste, se plantea pasar los dos trabajos a la Message Batches API. ¿Qué diseño es el adecuado?
 
-- A. Enviar todo como lote, emparejar los resultados por el orden en que llegan y repetir el lote completo si algo falla.
-- B. Enviar todo como lote con un `custom_id` por albarán, reenviar solo los fallidos por su `custom_id` y partir antes los documentos demasiado largos.
-- C. Procesar los albaranes uno a uno con la API normal para tener la respuesta al instante y evitar fallos de ventana.
-- D. Enviar el lote con una tool de varios turnos para que el modelo corrija cada fallo dentro de su propia petición.
+- A. La revisión con la API síncrona y las facturas en lote: reenviar solo las fallidas, por su `custom_id` y troceadas.
+- B. Los dos trabajos en lote, porque ahorran la mitad, y repetir cada noche el lote completo cuando fallen facturas.
+- C. Los dos trabajos con la API síncrona y las facturas en paralelo, porque así se sabe al instante cuáles fallan.
+- D. La revisión en lote, con una tool de varios turnos que avise al desarrollador, y las facturas con la API síncrona.
 
 <details>
 <summary>Paso 4 · Respuesta</summary>
 
-**B.** Con 48 horas de margen y sin nadie esperando, el lote (la mitad de precio) cabe, también con un reenvío (TS 4.5-K1, S1). Los resultados se emparejan por `custom_id` (TS 4.5-K2) y los fallidos se reenvían por ese identificador, partiendo los demasiado largos (TS 4.5-K3, S3). A empareja por posición y repite todo; C renuncia al descuento sin que nadie lo necesite; D no es posible dentro de un lote (TS 4.5-K4).
+**A.** La revisión previa al merge bloquea a una persona, y el lote no garantiza la latencia: va con la API síncrona. La extracción nocturna tolera la espera y se ahorra la mitad (TS 4.5-K1, K2, S1). Las facturas fallidas se reenvían solas, localizadas por su `custom_id` y troceadas (TS 4.5-K4, S3).
+
+- **B** deja a quien quiere fusionar esperando hasta 24 h y paga otra vez las 20 000 facturas por unas decenas.
+- **C** renuncia al 50 % en un trabajo que nadie espera.
+- **D** invierte el reparto. Además, dentro de una petición del lote no hay tool calling de varios turnos (TS 4.5-K3).
 </details>
 
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).

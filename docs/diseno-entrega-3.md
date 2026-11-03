@@ -66,7 +66,8 @@ Cada módulo sigue `/nuevo-modulo`: tests sin modelo primero → módulo con cab
 - Messages API con `harness/budget.CostGuard`, como `app1/05`. Tool `extract_metadata` con JSON Schema.
 - `--parte forzada`: `tool_choice` forzado a `extract_metadata`; `--parte tipo_desconocido`: `any` cuando el documento puede ser de varios tipos y cada tipo tiene su tool.
 - Schema correcto: campos opcionales *nullable*, `enum` con `unclear` y `other` más un campo de detalle, y reglas de normalización (fechas, importes) en la descripción.
-- `--anti sin_nullable`: los campos opcionales son obligatorios, y el modelo tiene que inventar algo. `--anti enum_cerrado`: sin `unclear`/`other`, el tipo raro se fuerza a una categoría.
+- `--anti sin_nullable`: los campos opcionales son obligatorios, y el modelo tiene que inventar algo. `--anti enum_cerrado`: sin `unclear`/`other`, el tipo raro se fuerza a una categoría, o el modelo escribe un valor que el `enum` no admite, porque sin modo estricto el esquema de una tool no se impone. El módulo valida la forma de lo que recibe y cuenta los valores fuera del `enum` (corregido tras la sonda A2).
+- `--rol-modelo enforcement` (Haiku 4.5), solo para el *few-shot*: con Haiku 5.5 no hay errores de formato que corregir.
 - Sintaxis frente a semántica: el schema garantiza la forma, no que los valores sean correctos. El módulo lo muestra comparando con las etiquetas.
 - *Few-shot* para estructuras documentales variadas (4.2 K4, S4–5): con ejemplos de las tres formas frente a sin ellos.
 - Señal: campos inventados frente a `null` y tipo forzado frente a `other`, puntuados contra las etiquetas.
@@ -74,6 +75,7 @@ Cada módulo sigue `/nuevo-modulo`: tests sin modelo primero → módulo con cab
 
 #### `app3_sistema_multiagente/08_validacion_reintento.py` · 4.4 K1–4, S1–4 (ejecución obligatoria)
 
+- **Rol `enforcement` (Haiku 4.5)** con su presupuesto, no `agent`: con Haiku 5.5 no hubo fallos de fecha en 36 intentos, así que no había nada que reintentar (sonda A2; `--rol-modelo agent` lo comprueba).
 - Sobre la extracción de `07`. Un validador sin modelo calcula `calculated_total` y lo compara con `stated_total`; si no cuadran, marca `conflict_detected`.
 - Correcta: ante un fallo de validación, reintento con el **error concreto** (campo, valor y regla). Si el dato no está en la fuente, el reintento es inútil y se detiene, marcando el campo.
 - `--anti reintento_generico`: el reintento solo dice «inténtalo de nuevo». `--anti insistir`: reintenta hasta el tope también cuando el dato no existe.
@@ -85,9 +87,10 @@ Cada módulo sigue `/nuevo-modulo`: tests sin modelo primero → módulo con cab
 
 - Message Batches API con las peticiones de `07`, cada una con su `custom_id`.
 - `--enviar` crea el lote e imprime su id; `--batch-id <id>` lo retoma y lee resultados. El módulo no guarda nada: el id lo copia la persona.
-- Reenvío de los fallidos por `custom_id`, partiendo los documentos demasiado largos (*chunking*).
-- Cálculo sin modelo de ventana frente a SLA: con un procesado de hasta 24 h sin SLA, qué cabe en batch y qué tiene que ir síncrono.
-- Muestra previa síncrona de unos pocos documentos antes de lanzar el lote.
+- Reenvío de los fallidos por `custom_id`, partiendo los documentos demasiado largos (*chunking*), y en trozos más pequeños si un trozo vuelve a truncarse. Una respuesta truncada cuenta como fallida aunque la API la dé por `succeeded`.
+- `--anti por_orden`: empareja los resultados por posición en vez de por `custom_id`.
+- Cálculo sin modelo de ventana frente a SLA: qué cabe en batch, qué tiene que ir síncrono y **cada cuánto hay que enviar** (4.5-S2). La condición es `intervalo + ventana × (1 + reenvíos) + margen ≤ SLA`, de modo que con 30 h sale enviar cada 4 h, el ejemplo de la guía. La frecuencia se añadió en A4, al comprobar la viñeta contra la guía.
+- Estimación (cota superior) del coste antes de enviar, porque la Batches API no admite un corte a mitad del lote. Muestra previa síncrona de unos pocos documentos antes de lanzar el lote.
 - Comentario: sin tools de varios turnos dentro de una petición de batch.
 - Tests: construcción del lote, emparejado por `custom_id`, selección y troceo de los fallidos, cálculo de ventana, coste con descuento.
 
@@ -163,8 +166,8 @@ Patrón de `app3/01`–`03`: coordinador Sonnet con `tools=["Agent"]` y `coordin
 ## Riesgos y sondas (antes de codificar el módulo afectado)
 
 - **A2 · Batches:** disponibilidad con Haiku 5.5, latencia de un lote pequeño, `usage` y coste con el 50 %, y forma del resultado por `custom_id`. Si el lote tarda demasiado para una sesión, el módulo se queda en `--enviar` y `--batch-id`, sin esperar.
-- **A2 · Reintento con Haiku 5.5:** comprobar que el reintento con error concreto corrige y que el genérico no; si no hay diferencia, Haiku 4.5; si tampoco, la diferencia se enseña de forma determinista con una respuesta fija del modelo.
-- **A3 · `07` con Haiku 5.5:** la señal de *nullable* puede no verse (el modelo pone `null` aunque el campo sea obligatorio). Mismo protocolo.
+- **A2 · Reintento con Haiku 5.5:** comprobar que el reintento con error concreto corrige y que el genérico no; si no hay diferencia, Haiku 4.5; si tampoco, la diferencia se enseña de forma determinista con una respuesta fija del modelo. *Resultado:* con Haiku 5.5 no hubo diferencia y con Haiku 4.5 sí, así que `08` pasó al rol `enforcement`.
+- **A3 · `07` con Haiku 5.5:** la señal de *nullable* puede no verse (el modelo pone `null` aunque el campo sea obligatorio). Mismo protocolo. *Resultado:* la señal de *nullable* sí se vio con Haiku 5.5. La del *few-shot* solo se vio con Haiku 4.5, y la de `enum_cerrado` apareció de otra forma: valores fuera del `enum`.
 - **B · coordinador y *timeout*:** que el reintento local del subagente no se vea como un fallo en el recorder; y que `DISABLE_BACKGROUND_TASKS` siga bastando en la CLI fijada.
 - **C1 · `claude -p`:** en la CLI que se use (instalada o la del SDK fijado), forma de la salida JSON con `--json-schema`, flags de aislamiento (fuentes de configuración, MCP estricto, entorno de §3) y si existe un tope de coste por flag. Sin la sonda no se codifica `11` (roadmap §2). Si no hay tope por flag, el módulo lo acota por otra vía y lo comenta.
 - **C · autorrevisión con `resume`:** el coste acumulado de la sesión reanudada (§4.3) entra en el tope de esa rama.

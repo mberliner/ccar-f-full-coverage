@@ -6,38 +6,58 @@ compra con una tool cuyo `input_schema` es un JSON Schema; campos opcionales *nu
 descripción, `tool_choice` (forzado o `any`) y ejemplos *few-shot* para estructuras
 documentales variadas.
 
-[BORRADOR de Sonnet 5.5: los textos de QUÉ DICE LA GUÍA y ANTI-PATRÓN los reescribe
-Opus 5.5 (paso A4 del diseño de la entrega 3) contra la Task Statement 4.2 y 4.3.]
-
 QUÉ DICE LA GUÍA:
-- La extracción estructurada fiable se hace con una tool de JSON Schema: el esquema
-  fija la forma de la salida (4.3).
-- Un campo que puede no estar en el documento va como opcional y *nullable*; si es
-  obligatorio, el modelo tiene que inventar algo para cumplir (4.3).
-- Un `enum` con una categoría abierta (`other` con un campo de detalle, y `unclear`)
-  evita forzar un tipo que no encaja (4.3).
-- El esquema garantiza la sintaxis (la forma), no la semántica (que los valores sean
-  los correctos) (4.3).
-- `tool_choice` forzado a una tool concreta cuando el paso es siempre ese; `any` cuando
-  el tipo de documento es desconocido y cada tipo tiene su tool (4.3).
-- Con estructuras documentales variadas (tabla, prosa, líneas sueltas), ejemplos
-  *few-shot* con las distintas formas mejoran la consistencia (4.2).
+- Para obtener una salida que cumpla un esquema, lo más fiable es una tool cuyo
+  `input_schema` es ese JSON Schema: se acaban los errores de sintaxis del JSON, y la
+  extracción se lee de la entrada del bloque `tool_use` (4.3-K1, S1).
+- `tool_choice` tiene tres grados: `auto` deja al modelo contestar con texto, `any` le
+  obliga a llamar a alguna tool sin decirle cuál, y la forma forzada le obliga a llamar a
+  una concreta (4.3-K2). `any` encaja cuando hay varios esquemas de extracción y no se
+  sabe de qué tipo es el documento (4.3-S2); forzar una tool asegura que esa extracción
+  se haga antes de los pasos que la enriquecen (4.3-S3).
+- El esquema elimina los errores de sintaxis, no los de significado: líneas que no suman
+  el total o un valor en el campo que no le toca pasan igual (4.3-K3).
+- Diseño del esquema: qué es obligatorio y qué opcional, y `enum` con `other` más un
+  campo de detalle para categorías que pueden crecer (4.3-K4). Si el documento puede no
+  traer un dato, el campo va opcional y *nullable*, para que el modelo no lo fabrique
+  por cumplir el `required` (4.3-S4); `unclear` recoge los casos ambiguos (4.3-S5).
+- Las reglas de normalización (cómo escribir una fecha o un importe) van en el prompt,
+  junto al esquema, porque los documentos fuente no las siguen (4.3-S6).
+- Los ejemplos *few-shot* reducen las alucinaciones en la extracción (4.2-K4): ejemplos
+  de documentos con estructuras distintas enseñan dónde está cada dato en cada una
+  (4.2-S4), y ejemplos de extracciones correctas sobre formatos variados corrigen los
+  campos obligatorios que salen vacíos o `null` (4.2-S5).
 
-POR QUÉ IMPORTA (inferencia propia): un pipeline que extrae de cientos de documentos no
-puede depender de que cada respuesta «parezca» bien. La forma se garantiza con el
-esquema; lo que el esquema no garantiza hay que medirlo contra etiquetas.
+POR QUÉ IMPORTA (inferencia propia): en un proceso que extrae miles de documentos, nadie
+mira cada respuesta. El esquema garantiza que la salida se pueda leer; que diga la
+verdad solo se sabe comparándola con algo, aquí con unas etiquetas y en producción con
+la fuente o con una revisión humana (módulos 08 y 10).
 
 ANTI-PATRÓN / TRAMPA DEL EXAMEN:
-- Hechos de la guía: campos opcionales como obligatorios (`--anti sin_nullable`) y un
-  `enum` cerrado (`--anti enum_cerrado`).
-- Lo observado aquí (README y `docs/hallazgos.md`): con campos obligatorios, 21 de 21
-  campos ausentes se rellenaron (con `'null'` como texto, con `''` o con un valor
-  deducido); con *nullable*, 1 o 2 de 21. Un `enum` cerrado casi no forzó el tipo: el
-  modelo devolvió `other` aunque no estaba en el `enum`, porque un esquema de tool
-  no se impone sin modo estricto. Por eso el módulo valida la forma además de enviarla.
-- EN PRODUCCIÓN (no evaluable): el modo estricto y las *structured outputs* garantizan
-  el esquema, pero la guía no los nombra y quedan fuera (`tests/perimetro_excluido.yaml`).
-  `any` y el forzado devuelven 400 en Sonnet 5.5, así que el módulo usa el rol `agent`.
+- Hechos de la guía:
+  - Declarar obligatorio un dato que puede faltar (`--anti sin_nullable`): el modelo
+    rellena el campo con algo plausible.
+  - Un `enum` sin `other` ni `unclear` (`--anti enum_cerrado`): lo que no encaja se
+    mete en la categoría equivocada.
+  - Confundir «el JSON es válido» con «la extracción es correcta».
+  - Elegir el grado de `tool_choice` al revés: `auto` cuando hace falta una tool sí o
+    sí, o una tool forzada cuando el tipo del documento es desconocido.
+- Inferencias propias, con lo observado aquí (cifras en el README y en
+  `docs/hallazgos.md`):
+  - Sin `null`, el modelo no deja el campo vacío. Escribe `'null'` como texto, `''` o un
+    valor deducido, y parte de esas salidas ni siquiera cumple el esquema.
+  - Un `enum` cerrado no siempre fuerza la categoría equivocada. Sin modo estricto, el
+    modelo puede escribir un valor que el `enum` no admite, y la API no lo rechaza. Por
+    eso el módulo valida la forma de lo que recibe en vez de darla por hecha.
+  - El *few-shot* solo se nota si el modelo falla sin él: con Haiku 5.5 no hubo nada
+    que corregir, y con Haiku 4.5 sí (`--rol-modelo enforcement`).
+  - Las reglas de normalización van en la descripción de cada campo, que es parte del
+    prompt que ve el modelo. La parte `few_shot` las quita para dejar solo los ejemplos.
+  - Aquí la tool forzada no precede a ningún enriquecimiento: el paso posterior es la
+    validación del módulo 08.
+- EN PRODUCCIÓN (no evaluable): el modo estricto de las tools garantiza el esquema,
+  pero la guía no lo nombra y queda fuera (`tests/perimetro_excluido.yaml`). `any` y la
+  tool forzada devuelven 400 en Sonnet 5.5, así que el módulo usa el rol `agent`.
 
 Pregunta tipo examen: ver `app3_sistema_multiagente/README.md`, módulo 07.
 

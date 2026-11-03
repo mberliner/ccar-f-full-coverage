@@ -5,33 +5,53 @@ obligatorios y total calculado frente a total declarado), reintentar con el erro
 **concreto** (campo, valor y regla), parar cuando el dato no está en la fuente, y anotar
 `detected_pattern` en cada fallo para agrupar las causas.
 
-[BORRADOR de Sonnet 5.5: los textos de QUÉ DICE LA GUÍA y ANTI-PATRÓN los reescribe
-Opus 5.5 (paso A4 del diseño de la entrega 3) contra la Task Statement 4.4.]
-
 QUÉ DICE LA GUÍA:
-- Un fallo de validación se corrige reenviando al modelo la extracción original con el
-  error **específico** (qué campo, qué valor, qué regla), no con un «inténtalo de nuevo» (4.4).
-- El reintento sirve cuando el error es de formato o de estructura y el dato está en el
-  documento; es inútil cuando la información no está en la fuente: no hay nada que
-  corregir y el modelo la inventará (4.4).
-- Un total calculado (suma de líneas) frente al total declarado detecta una extracción
-  mala o un documento que no cuadra; se marca con `conflict_detected` (4.4).
-- Un `detected_pattern` en cada fallo permite agrupar las causas y mejorar el prompt o
-  el esquema, no solo parchear caso a caso (4.4).
+- Reintento con el error como retroalimentación: en el reintento se añaden al prompt
+  los errores de validación concretos, para orientar al modelo hacia la corrección
+  (4.4-K1). La petición de seguimiento lleva el documento original, la extracción que
+  falló y esos errores (4.4-S1).
+- El reintento tiene un límite: no sirve cuando la información no está en el documento
+  fuente, y sí cuando el fallo es de formato o de estructura de la salida (4.4-K2). Hay
+  que saber distinguir los dos casos antes de reintentar, por ejemplo cuando el dato
+  solo está en otro documento que no se ha proporcionado (4.4-S2).
+- Los errores semánticos (valores que no suman, un dato en el campo equivocado) son
+  distintos de los de sintaxis del esquema, que la tool ya elimina (4.4-K4). Para
+  detectar los primeros, se extrae un `calculated_total` junto al `stated_total` y se
+  añade un booleano `conflict_detected` cuando la fuente es incoherente (4.4-S4).
+- Un campo `detected_pattern` en cada hallazgo registra qué construcción lo provocó y
+  permite analizar en conjunto qué hallazgos descarta la gente y por qué, es decir, los
+  falsos positivos (4.4-K3, S3). La guía lo sitúa en los hallazgos de una revisión de
+  código, que llegan en el módulo 11.
 
-POR QUÉ IMPORTA (inferencia propia): un reintento cuesta una llamada; uno inútil cuesta
-dinero y, como se mide aquí, produce datos falsos que pasan la validación de formato.
+POR QUÉ IMPORTA (inferencia propia): un reintento cuesta una llamada más por documento.
+El que no puede funcionar cuesta lo mismo y además invita al modelo a producir un valor
+que cumple el formato, así que el fallo deja de verse.
 
 ANTI-PATRÓN / TRAMPA DEL EXAMEN:
-- Hechos de la guía: reintentar con un mensaje genérico (`--anti reintento_generico`) y
-  reintentar hasta el tope también cuando el dato no existe (`--anti insistir`).
-- Lo observado aquí (README y `docs/hallazgos.md`): con Haiku 4.5 y un esquema sin regla
-  de fecha, 17 de 36 primeros intentos salen con la fecha mal escrita; el reintento
-  concreto corrige 12 de 12 y el genérico 2 de 12. Con Haiku 5.5 no hay nada que
-  reintentar (0 de 36), por eso este módulo usa el rol `enforcement`. Al insistir por un
-  pedido que no existe, ambos modelos acaban escribiendo uno inventado.
-- Inferencia propia: un valor inventado con el formato correcto pasa el validador de
-  formato; solo lo delata compararlo con la etiqueta (aquí) o con la fuente (en producción).
+- Hechos de la guía:
+  - Reintentar sin decir qué falló (`--anti reintento_generico`).
+  - Reintentar un dato que el documento no contiene, en vez de marcarlo como ausente
+    (`--anti insistir`).
+  - Dar una extracción por buena porque cumple el esquema, sin comprobar si sus valores
+    cuadran entre sí.
+- Inferencias propias, con lo observado aquí (cifras en el README y en
+  `docs/hallazgos.md`):
+  - Un valor inventado con el formato correcto pasa el validador. Solo lo delata la
+    comparación con la etiqueta, aquí, o con la fuente, en producción.
+  - Pedir que se revise un total que no cuadra por culpa del documento invita al modelo
+    a cambiar el total declarado para que cuadre. Por eso el conflicto se marca tras un
+    único reintento.
+  - Aquí `detected_pattern` se anota en cada fallo de validación (no en hallazgos de
+    revisión) y sirve para lo mismo: agrupar por causa. Así se corrige el prompt o el
+    esquema en lugar de parchear documento a documento.
+  - La señal depende del modelo: con Haiku 5.5 no hubo fallos de formato que reintentar,
+    así que el módulo usa el rol `enforcement` (Haiku 4.5), y `--rol-modelo agent` lo
+    comprueba.
+  - El reintento se envía como resultado de error de la tool sobre la llamada fallida,
+    con el documento original en la misma conversación.
+  - El `calculated_total` lo suma el código a partir de las líneas extraídas, en lugar
+    de pedírselo al modelo. Se compara con el `stated_total` igual que en la guía, pero
+    la suma no depende del modelo.
 
 Pregunta tipo examen: ver `app3_sistema_multiagente/README.md`, módulo 08.
 
