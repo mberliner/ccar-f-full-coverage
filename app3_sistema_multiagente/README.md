@@ -14,7 +14,8 @@ Cada módulo se hace en 5 pasos: orientarte con su ficha, predecir, ejecutar o n
 | [`02_paralelo_y_descomposicion.py`](02_paralelo_y_descomposicion.py) | TS 1.2-S3 · TS 1.3-S3 · TS 1.6-K1, K3, S1, S3 | 1 |
 | [`03_tools_entre_roles.py`](03_tools_entre_roles.py) | TS 2.3-K2, K3, S1, S2, S3 | 2 |
 | [`04_errores_entre_agentes.py`](04_errores_entre_agentes.py) | TS 5.3-K1…K4, S1…S4 · TS 2.2-S3 | 3 |
-| `05_procedencia.py` … `06_contexto_largo.py` | D1 y D5 | 3 |
+| [`05_procedencia.py`](05_procedencia.py) | TS 5.6-K1…K4, S1…S5 · TS 5.1-K2, S4, S5, S6 · TS 1.3-S2 | 3 |
+| `06_contexto_largo.py` | D5 | 3 |
 | [`07_extraccion_schema.py`](07_extraccion_schema.py) | TS 4.2-K4, S4, S5 · TS 4.3-K1…K4, S1…S6 | 3 |
 | [`08_validacion_reintento.py`](08_validacion_reintento.py) | TS 4.4-K1…K4, S1…S4 | 3 |
 | [`09_batches.py`](09_batches.py) | TS 4.5-K1…K4, S1…S4 | 3 |
@@ -416,6 +417,106 @@ Un subagente de búsqueda agota sus reintentos con una fuente que da *timeout*, 
 <summary>Paso 4 · Respuesta</summary>
 
 **B.** Tras recuperar en local lo transitorio, el subagente no oculta el fallo: devuelve el contexto estructurado (tipo, intento, resultados parciales y alternativas) y el coordinador, que gestiona los errores, entrega un resultado parcial con la cobertura anotada (TS 5.3, TS 2.2-S3). A confunde un fallo de acceso con un resultado vacío válido; C tira el trabajo de las fuentes que sí respondieron; D no acota el reintento y bloquea la entrega.
+</details>
+
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
+---
+
+## 05 · Procedencia entre agentes
+
+<!-- BORRADOR (Sonnet 5.5): pendiente del pase de textos de Opus 5.5 (cabecera del módulo, predicciones y pregunta). -->
+
+> **Qué vas a hacer:** Ver si la fuente y la fecha de cada cifra llegan hasta el informe final cuando dos fuentes discrepan, y si un hallazgo clave se pierde en mitad de un texto largo.
+>
+> **Necesitas antes:** El [módulo 04](#04--errores-entre-agentes) (mismo servidor de fuentes) y el [módulo 03](#03--tools-entre-roles) (mismo patrón de coordinador y barrera).
+>
+> **Modo:** Ejecución ligera (puedes hacerlo entero sin ejecutar; lo medido está en el Paso 3).
+
+### Antes de empezar
+
+Los términos comunes (coordinador, subagente, procedencia) están en el [glosario](../docs/glosario.md).
+
+- **El sistema:** el coordinador tiene dos subagentes: `researcher` (consulta las fuentes con `query_source`) y `synthesizer` (sin tools, redacta con lo que le pasen en el prompt). Las fuentes son las sintéticas de `fuentes_investigacion.json`.
+- **Parte `conflictos` (por defecto):** cuatro fuentes. Todas coinciden en el total de tickets cerrados, pero dan cifras distintas para el tiempo medio de resolución y para la satisfacción, cada una con su fecha de publicación. La petición no lo dice.
+- **Afirmación estructurada:** el investigador devuelve una lista JSON donde cada afirmación separa el contenido (`claim`, `figure`, `unit`) de los metadatos (`source_id`, `published_at`). El código comprueba esa forma y que la fecha coincide con la de la fuente.
+- **Parte `medio`:** el informe `SRC-LARGO` (unas 1.500 palabras) con una sola frase importante en mitad. `--texto con_resumen` hace que el servidor anteponga al informe una línea con ese hallazgo, sin quitarlo de su sitio.
+
+### Las tools del ejercicio
+
+| Tool | Qué recibe | Qué devuelve |
+| :--- | :--- | :--- |
+| `query_source` | `source_id` | igual que en el [módulo 04](#04--errores-entre-agentes): el informe en `content` y su id, nombre y fecha en `metadata` |
+
+### El ejercicio
+
+Qué cambia en el código de cada variante:
+
+- **`sin_procedencia`:** el prompt del investigador le pide un párrafo en prosa por fuente, en vez de afirmaciones con metadatos.
+- **`promedio`:** el prompt del sintetizador le pide una única cifra consolidada, el promedio, cuando dos fuentes discrepan.
+- **`--parte medio --texto sin_resumen|con_resumen`:** el mismo informe largo, sin o con la línea de resumen al principio.
+
+El código mide sin modelo cuántas cifras del informe llevan su fuente en la misma frase o fila, si algún conflicto aparece fusionado en un promedio y si el resumen del informe largo cita el hallazgo clave.
+
+### Predice antes de ejecutar
+
+Con tus palabras; no hay un número que acertar:
+
+1. En la configuración correcta, ¿qué parte de la procedencia está garantizada por la estructura de lo que devuelve el investigador y qué parte depende de lo que escriba el sintetizador?
+2. Con `--anti sin_procedencia`, ¿qué sabe el sintetizador de cada cifra? ¿Dónde esperas ver el daño: en lo que devuelve el investigador, en el informe final o en ambos? Razónalo antes de ejecutar.
+3. Con `--anti promedio`, ¿qué cifras tendrá el informe que no sale en ninguna fuente? ¿Seguirán apareciendo también las cifras originales?
+4. En la parte `medio`, ¿qué cambia al anteponer una línea de resumen? ¿Esperas la misma diferencia con un informe mucho más largo que con uno de unas 1.500 palabras?
+
+### Ejecutar
+
+```bash
+uv run python app3_sistema_multiagente/05_procedencia.py                                        # correcta
+uv run python app3_sistema_multiagente/05_procedencia.py --anti sin_procedencia                 # el investigador devuelve prosa
+uv run python app3_sistema_multiagente/05_procedencia.py --anti promedio                        # cifras en conflicto fusionadas
+uv run python app3_sistema_multiagente/05_procedencia.py --parte medio                          # hallazgo en mitad, sin resumen
+uv run python app3_sistema_multiagente/05_procedencia.py --parte medio --texto con_resumen      # con la línea de resumen al principio
+```
+
+**Si ejecutas:** las medidas (comprobador de procedencia, detector de cifras fusionadas, forma de las afirmaciones) se prueban sin modelo; ejecutar sirve para ver qué hace el modelo con ellas.
+
+### Qué observar
+
+Las afirmaciones estructuradas sin problemas, las fuentes que llegan al sintetizador, las cifras con su fuente en la frase, los conflictos presentados como disputados, las cifras fusionadas y, en la parte `medio`, si el resumen cita el hallazgo clave.
+
+<details>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+Coordinador Sonnet 5.5, subagentes Haiku 5.5, ~0,04–0,06 $ por ejecución:
+
+| Variante | Señal observada | Qué dice |
+| :--- | :--- | :--- |
+| correcta (1 ejecución) | 10 de 10 afirmaciones sin problemas, las 4 fuentes llegan al sintetizador, 5 de 5 cifras con su fuente en la frase, los 2 conflictos como disputados, ningún promedio y las cifras en tabla | la estructura conserva la procedencia y el informe separa lo establecido de lo disputado |
+| `promedio` (1 ejecución) | **fusionó los dos conflictos**: 22 horas y 3,85 sobre 5, que ninguna fuente dice; ningún conflicto presentado como disputado, aunque las cifras originales siguieron apareciendo con su fuente | señal clara del anti-patrón |
+| `sin_procedencia` (4 ejecuciones) | **0 afirmaciones estructuradas** en las 4; pero el informe final llevó la fuente en la frase en 5 de 5 cifras en 3 ejecuciones y en 4 de 5 en la otra | la señal aparece en lo que devuelve el investigador, **no en el informe final** (ver notas) |
+| `medio` sin resumen (3) y con resumen (3) | el resumen citó el 41 % en **6 de 6** | **sin señal**: el informe de ~9.400 caracteres no basta para que se pierda |
+
+Notas:
+
+- **`sin_procedencia`:** con Haiku 5.5 la prosa del investigador ya traía el nombre de cada fuente y su fecha, y el sintetizador la reprodujo. La estructura se pierde, pero la procedencia no se perdió en el informe final (salvo una cifra en una ejecución). No se fuerza: se documenta.
+- **`promedio`:** el informe también lista las cifras originales con su fuente, así que `figures_with_source` no baja. La señal está en `merged_figures` y en `conflicts_presented`.
+- **Parte `medio`:** la señal de *lost in the middle* no apareció con ~1.500 palabras y Haiku 5.5. Que aparezca con un texto mucho más largo es una hipótesis sin comprobar; no se alargó el informe para forzarla.
+- `conflicts_presented` es una comprobación laxa: pide las dos cifras y una palabra de desacuerdo en cualquier parte del texto.
+- Las medidas, la forma de las afirmaciones y las opciones se prueban sin modelo en `tests/test_app3_05_procedencia.py`.
+</details>
+
+### Pregunta tipo examen
+
+Dos fuentes dan cifras distintas para el mismo dato, cada una con su fecha. El informe final debe ser claro para quien lo lea y poder rastrearse hasta sus fuentes. ¿Qué diseño es el más adecuado?
+
+- A. Cada subagente resume en prosa lo que encuentra, y el sintetizador deduce por el contexto de qué fuente viene cada cifra.
+- B. El sintetizador calcula el promedio de las dos cifras para dar una sola, y cita las dos fuentes al lado de ese número.
+- C. El sintetizador conserva solo la cifra de la fuente más reciente y omite la otra, para que el informe no confunda.
+- D. Cada subagente devuelve afirmaciones con fuente y fecha aparte del contenido, y el sintetizador muestra ambas cifras como disputadas.
+
+<details>
+<summary>Paso 4 · Respuesta</summary>
+
+**D.** La procedencia se conserva si el subagente devuelve datos estructurados con el contenido separado de los metadatos y el sintetizador mantiene el mapeo afirmación–fuente (TS 1.3-S2, TS 5.6); las cifras en conflicto se presentan las dos, con su fuente y su fecha, y lo disputado se separa de lo establecido (TS 5.6). A pierde la fuente en el primer salto; B crea una cifra que ninguna fuente respalda; C descarta una fuente sin decirlo.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
