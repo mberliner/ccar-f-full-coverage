@@ -16,7 +16,8 @@ Cada módulo se hace en 5 pasos: orientarte con su ficha, predecir, ejecutar o n
 | `04_errores_entre_agentes.py` … `06_contexto_largo.py` | D1, D2 y D5 | 3 |
 | [`07_extraccion_schema.py`](07_extraccion_schema.py) | TS 4.2-K4, S4, S5 · TS 4.3-K1…K4, S1…S6 | 3 |
 | [`08_validacion_reintento.py`](08_validacion_reintento.py) | TS 4.4-K1…K4, S1…S4 | 3 |
-| `09_batches.py` … `12_revision_independiente.py` | D3, D4 y D5 | 3 |
+| [`09_batches.py`](09_batches.py) | TS 4.5-K1…K4, S1…S4 | 3 |
+| `10_confianza_y_revision.py` … `12_revision_independiente.py` | D3, D4 y D5 | 3 |
 
 ---
 
@@ -518,6 +519,106 @@ Un proceso extrae datos de facturas y valida cada una. Las que fallan se reenví
 <summary>Paso 4 · Respuesta</summary>
 
 **B.** El reintento funciona con el error específico (TS 4.4-K1, S1) y es inútil cuando la información no está en la fuente (TS 4.4-K2, S2): ahí se marca el campo en vez de insistir. A empeora el problema (más oportunidades de inventar); C pide por prosa lo que el flujo debe decidir en código; D cambia de modelo sin atacar la causa (un dato ausente no lo recupera ningún modelo).
+</details>
+
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
+---
+
+## 09 · Batches: lotes, ventana y fallidos
+
+<!-- BORRADOR de Sonnet 5.5 (tanda A de la entrega 3): las predicciones y la pregunta tipo examen las reescribe Opus 5.5 (paso A4). Cifras medidas: ya definitivas. -->
+
+> **Qué vas a hacer:** Enviar las extracciones del [módulo 07](#07--extracción-estructurada-con-schema) como un lote, leer sus resultados, reenviar lo que falló y decidir qué trabajos caben en un lote y cuáles no.
+>
+> **Necesitas antes:** El [módulo 07](#07--extracción-estructurada-con-schema), cuyas peticiones se envían aquí.
+>
+> **Modo:** Ejecución ligera (puedes hacerlo entero sin ejecutar; `--ventanas` no usa modelo y el resto cuesta unos céntimos).
+
+### Antes de empezar
+
+Los términos comunes (Messages API, presupuesto) están en el [glosario](../docs/glosario.md). Este módulo usa la Messages API (necesita una API key) y el esquema, los documentos y la puntuación del [módulo 07](#07--extracción-estructurada-con-schema).
+
+- **El sistema:** una petición de extracción por documento (los 12 de `documentos_compra.json`), enviadas juntas con la Message Batches API. Es una API aparte de la normal: envías el lote, te devuelve un identificador y los resultados se leen más tarde, cuando el lote termina.
+- **Términos propios:**
+  - **Lote (*batch*):** un conjunto de peticiones que la API procesa de forma asíncrona, con la mitad de precio, en hasta 24 h y sin garantía de cuándo terminan.
+  - **`custom_id`:** el identificador que pones a cada petición; es lo único que une cada resultado con su documento, porque llegan en otro orden.
+  - **Fallido:** una petición del lote cuyo resultado no sirve. Hay cuatro tipos de resultado que no son una respuesta (`errored`, `expired`, `canceled` y las respuestas que la API da por buenas pero están truncadas) y uno más que el módulo trata aparte: una respuesta que no cumple el esquema.
+  - **Troceo (*chunking*):** partir un documento largo en trozos, cada uno con su cabecera, para que cada respuesta quepa.
+  - **Ventana y SLA:** el plazo en el que se necesita el resultado (SLA) frente a las 24 h que puede tardar un lote (ventana).
+- **Lo que el módulo no guarda:** nada. El identificador del lote lo copias tú de la salida y lo pasas a `--batch-id`.
+- **Sin varios turnos:** cada petición del lote es una sola vuelta. Dentro de un lote no se puede devolver el resultado de una tool y continuar la conversación.
+
+### El ejercicio
+
+Opciones del módulo (cada una es un paso del flujo):
+
+- **`--ventanas`:** sin modelo. Reparte seis trabajos de ejemplo entre «cabe en batch», «cabe en batch, sin margen para reenviar fallidos» y «tiene que ir síncrono», según su plazo. El criterio: un plazo cabe con margen si es de al menos dos ventanas (una pasada y un reenvío de los fallidos).
+- **`--enviar`:** estima una cota superior del coste, hace una **muestra síncrona** de tres documentos con los mismos parámetros, y solo si cumplen el esquema crea el lote. Imprime su identificador. `--sin-muestra` salta la muestra.
+- **`--batch-id <id>`:** consulta el estado del lote y, si ha terminado, lee los resultados: orden de llegada, tipo de cada resultado, emparejado por `custom_id` y coste con el descuento. `--esperar <s>` espera hasta ese número de segundos. `--reenviar` crea un lote nuevo solo con los fallidos (los truncados, partidos en trozos).
+- **`--anti por_orden`** (con `--batch-id`): empareja los resultados por posición en vez de por `custom_id`.
+
+Las peticiones llevan `max_tokens` corto (600) a propósito: solo el albarán de 40 líneas (`DC-12`) no cabe, y esa respuesta truncada es el fallido que se recupera troceando.
+
+### Predice antes de ejecutar
+
+Con tus palabras; no hay un número que acertar:
+
+1. De los seis trabajos de `--ventanas`, ¿cuáles irían en un lote y cuáles síncronos? Para el de 30 horas, ¿qué pasa si un documento falla y hay que reenviarlo?
+2. Con 12 peticiones, ¿en qué orden esperas que lleguen los resultados? ¿Qué le pasa a quien los empareja por posición?
+3. Una respuesta se corta por `max_tokens`. ¿Cómo la clasifica la API dentro del lote, y qué tendría que mirar tu código para saber que no sirve?
+4. Un trozo de un documento largo vuelve a truncarse al reenviarlo. ¿Qué harías con el documento y con el tamaño de los trozos?
+
+### Ejecutar
+
+```bash
+uv run python app3_sistema_multiagente/09_batches.py --ventanas                       # sin modelo
+uv run python app3_sistema_multiagente/09_batches.py --enviar                         # muestra síncrona y lote; copia el id
+uv run python app3_sistema_multiagente/09_batches.py --batch-id <id> --esperar 120    # estado y resultados
+uv run python app3_sistema_multiagente/09_batches.py --batch-id <id> --reenviar       # reenvía los fallidos (troceando)
+uv run python app3_sistema_multiagente/09_batches.py --batch-id <id> --anti por_orden # emparejado por posición
+```
+
+**Si ejecutas:** la construcción del lote, el emparejado, la clasificación de resultados, el troceo, la ventana frente a SLA y los costes se prueban sin modelo. Ejecutar sirve para ver el orden real de llegada y las respuestas truncadas, que no se pueden deducir leyendo el código. Todo el flujo (muestra, tres lotes y lecturas) costó menos de 0,01 $.
+
+### Qué observar
+
+El orden de llegada frente al de envío, los tipos de resultado (qué cuenta como `ok` y qué como `truncated`), los documentos con datos de otro según el emparejado, y el coste del lote frente al del mismo trabajo síncrono.
+
+<details>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+Haiku 5.5, 12 documentos:
+
+| Paso | Señal observada | Qué dice |
+| :--- | :--- | :--- |
+| `--ventanas` | 3 trabajos en batch (72 h y los dos sin plazo), 1 en batch **sin margen** (30 h), 2 síncronos (8 h y 0,1 h) | con una ventana de 24 h, un plazo de 30 h cabe una vez, pero no deja tiempo para reenviar un fallo |
+| `--enviar` | estimación (cota superior) 0,0023 $; muestra síncrona de 3 documentos con forma válida (0,0008 $); lote creado con 12 peticiones | la muestra es lo único que se ve antes de gastar en el lote |
+| Lectura | el lote estaba terminado al leerlo (unos minutos como mucho, nunca cerca de las 24 h); **llegaron en otro orden** (`DC-12, DC-09, DC-03, DC-06, …`); 11 `ok` y **1 `truncated`** (`DC-12`) aunque la API los daba todos por `succeeded`; coste 0,0017 $ (0,0033 $ síncrono) | el orden no es el de envío y el fallo está en el `stop_reason` |
+| `--anti por_orden` | con el emparejado por posición, **9 de 12** documentos reciben los datos de otro; por `custom_id`, ninguno | el emparejado por posición solo acierta por casualidad |
+| Reenvío del truncado | 4 trozos de 10 líneas: **3 correctos y 1 truncado otra vez** (`DC-12--c3`); segundo reenvío con trozos de 5 líneas: 8 de 8 correctos y las 40 líneas unidas coinciden con la etiqueta; 0,0008 y 0,0013 $ | un trozo grande también puede truncarse: el documento entero se parte entonces en trozos más pequeños |
+
+Notas:
+
+- **La API no marca la respuesta truncada como error:** devuelve `succeeded` con `stop_reason: max_tokens` y un `tool_use` incompleto (en la sonda, sin `line_items`). Quien solo mire el tipo de resultado da por buena una extracción cortada.
+- **El tope de coste de un lote no se puede imponer a mitad:** la Batches API no tiene un corte como `max_budget_usd`. Por eso el módulo estima una cota superior antes de enviar y se niega si supera el tope.
+- **Un documento sin número en la etiqueta** (`DC-07`) puede salir con uno inventado; eso no es un cruce de documentos y no cuenta en el emparejado (se mide en el módulo 07).
+- Lo que no depende del modelo se prueba en `tests/test_app3_09_batches.py`; el descuento, en `tests/test_budget.py`.
+</details>
+
+### Pregunta tipo examen
+
+Un equipo extrae datos de 20 000 albaranes cada fin de semana y necesita los resultados el lunes por la mañana, con 48 horas de margen. Algunas peticiones fallan por documentos demasiado largos. ¿Qué diseño es el adecuado?
+
+- A. Enviar todo como lote, emparejar los resultados por el orden en que llegan y repetir el lote completo si algo falla.
+- B. Enviar todo como lote con un `custom_id` por albarán, reenviar solo los fallidos por su `custom_id` y partir antes los documentos demasiado largos.
+- C. Procesar los albaranes uno a uno con la API normal para tener la respuesta al instante y evitar fallos de ventana.
+- D. Enviar el lote con una tool de varios turnos para que el modelo corrija cada fallo dentro de su propia petición.
+
+<details>
+<summary>Paso 4 · Respuesta</summary>
+
+**B.** Con 48 horas de margen y sin nadie esperando, el lote (la mitad de precio) cabe, también con un reenvío (TS 4.5-K1, S1). Los resultados se emparejan por `custom_id` (TS 4.5-K2) y los fallidos se reenvían por ese identificador, partiendo los demasiado largos (TS 4.5-K3, S3). A empareja por posición y repite todo; C renuncia al descuento sin que nadie lo necesite; D no es posible dentro de un lote (TS 4.5-K4).
 </details>
 
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
