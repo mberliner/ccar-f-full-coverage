@@ -102,7 +102,7 @@ TOTAL_TOLERANCE = 0.01
 
 @dataclass(frozen=True)
 class Failure:
-    pattern: str  # `detected_pattern`: agrupa las causas (date_format, enum_value, missing_required, po_format, total_mismatch)
+    pattern: str  # patrón de fallo: agrupa las causas (date_format, enum_value, missing_required, po_format, total_mismatch)
     field: str
     value: Any
     rule: str
@@ -144,13 +144,16 @@ def validate(data: dict) -> Validation:
         failures.append(Failure("missing_required", "po_number", po, "las facturas de compra deben citar su número de pedido (PO-nnnn)"))
     elif po not in (None, "") and not PO_FORMAT.match(str(po)):
         failures.append(Failure("po_format", "po_number", po, "el número de pedido tiene la forma PO-nnnn"))
+    # Todo documento de compra lleva número; si no sale, hay que saber si el documento no lo trae o lo remite a otro.
+    if data.get("document_number") in (None, ""):
+        failures.append(Failure("missing_required", "document_number", data.get("document_number"), "todo documento de compra lleva su número (factura, albarán, garantía, presupuesto)"))
     total = calculated_total(data)
     stated = data.get("stated_total")
     conflict = False
     if total is not None and isinstance(stated, (int, float)) and abs(stated - total) > TOTAL_TOLERANCE:
         conflict = True
         failures.append(
-            Failure("total_mismatch", "stated_total", stated, f"la suma de las líneas (cantidad × precio unidad) es {total:.2f} y el total declarado es {stated:.2f}; revisa cantidades, precios y total contra el documento")
+            Failure("total_mismatch", "stated_total", stated, f"la suma de las líneas (cantidad × precio unidad) es {total:.2f} y el total declarado es {stated:.2f}")
         )
     return Validation(failures, total, conflict)
 
@@ -158,16 +161,32 @@ def validate(data: dict) -> Validation:
 # Dónde buscar en el texto, sin modelo, un dato que el validador exige. Sin patrón: se supone que está.
 SOURCE_PATTERNS = {
     "po_number": re.compile(r"PO-\d{4}"),
+    # Un número de documento tiene letras, guion y cifras (F-2026-0412, AL-5521, G-2026-077, P-2026-310).
+    "document_number": re.compile(r"\b[A-Z]{1,2}-\d{2,4}(?:-\d+)?\b"),
     "issue_date": re.compile(
         r"\d{1,2}/\d{1,2}/\d{4}|\d{4}-\d{2}-\d{2}|\d{1,2}-\d{1,2}-\d{4}|\d{1,2} de [a-záéíóú]+ de \d{4}|\d{1,2} [A-Z][a-z]{2} \d{4}"
     ),
 }
 
 
+# El documento no trae el dato pero dice dónde está: otro documento que no se ha proporcionado (4.4-S2).
+EXTERNAL_REFERENCE = re.compile(r"\b(?:ver|véase|vea|según) (?:el )?(?:adjunto|anexo)|\bsee (?:the )?attach", re.IGNORECASE)
+
+
 def source_has(field_name: str, text: str) -> bool:
     """¿Aparece en el documento algo que pueda ser ese dato? Si no, un reintento no tiene qué corregir."""
     pattern = SOURCE_PATTERNS.get(field_name)
     return True if pattern is None else bool(pattern.search(text))
+
+
+def source_status(field_name: str, text: str) -> str:
+    """`present` (el dato está), `external` (no está, pero el texto remite a otro documento) o `missing` (no está en ninguna parte).
+
+    Búsqueda en el texto, sin modelo. Los dos últimos no se reintentan, cada uno con su causa.
+    """
+    if source_has(field_name, text):
+        return "present"
+    return "external" if EXTERNAL_REFERENCE.search(text) else "missing"
 
 
 # --- Mensajes de error (4.4: específico frente a genérico) ----------------------------------------
@@ -183,7 +202,13 @@ def generic_message() -> str:
 
 
 def message_for(mode: str | None, failures: list[Failure]) -> str:
-    return generic_message() if mode == "reintento_generico" else concrete_message(failures)
+    if mode == "reintento_generico":
+        return generic_message()
+    text = concrete_message(failures)
+    # Solo `insistir` reintenta un total que no cuadra, y lo hace pidiendo que se revise: invita a cambiar datos.
+    if mode == "insistir" and any(f.pattern == "total_mismatch" for f in failures):
+        text += " Revisa cantidades, precios y total contra el documento."
+    return text
 
 
 # --- Decisión de reintento ---------------------------------------------------------------------------
@@ -198,18 +223,21 @@ class RetryPlan:
 def plan_retry(failures: list[Failure], doc_text: str, round_index: int, mode: str | None) -> RetryPlan:
     """Qué fallos se reintentan y cuáles se dejan marcados.
 
-    Correcta: un dato que no está en la fuente no se reintenta (se marca); un total que no cuadra se
-    reintenta una vez y después se marca como conflicto; el tope es una red de seguridad.
-    `insistir`: reintenta todo hasta su tope, exista o no el dato.
+    Correcta: un dato que no está en la fuente no se reintenta, se marca (con su causa: no existe o
+    remite a otro documento); un total que no cuadra tampoco, porque el documento es incoherente y se
+    marca `conflict_detected` (4.4-S4); el tope es una red de seguridad.
+    `insistir`: reintenta todo hasta su tope, exista o no el dato y cuadre o no el total.
     """
     plan = RetryPlan()
     cap = MAX_INSISTIR if mode == "insistir" else MAX_RETRIES
     for failure in failures:
         if mode != "insistir":
-            if failure.pattern == "missing_required" and not source_has(failure.field, doc_text):
-                plan.stop.append((failure, "missing_in_source"))
-                continue
-            if failure.pattern == "total_mismatch" and round_index >= 1:
+            if failure.pattern == "missing_required":
+                status = source_status(failure.field, doc_text)
+                if status != "present":
+                    plan.stop.append((failure, "external_reference" if status == "external" else "missing_in_source"))
+                    continue
+            if failure.pattern == "total_mismatch":
                 plan.stop.append((failure, "conflict_detected"))
                 continue
         if round_index >= cap:
@@ -220,7 +248,7 @@ def plan_retry(failures: list[Failure], doc_text: str, round_index: int, mode: s
 
 
 def group_by_pattern(failures: list[Failure]) -> dict[str, int]:
-    """Fallos agrupados por `detected_pattern`: las causas, no los casos."""
+    """Fallos agrupados por patrón de fallo: las causas, no los casos."""
     return dict(Counter(f.pattern for f in failures))
 
 
@@ -242,7 +270,7 @@ def retry_messages(doc_text: str, history: list[tuple[str, dict, str]]) -> list[
 @dataclass
 class Effect:
     failure: Failure
-    verdict: str  # corregido | persiste | inventado
+    verdict: str  # corregido | persiste | falta | inventado
 
 
 @dataclass
@@ -252,7 +280,8 @@ class Outcome:
     effects: list[Effect] = field(default_factory=list)
     usages: list[Any] = field(default_factory=list)
     retries: int = 0
-    marked_missing: list[str] = field(default_factory=list)
+    marked_missing: list[str] = field(default_factory=list)  # el dato no está en el documento
+    marked_external: list[str] = field(default_factory=list)  # el documento remite a otro («Ver adjunto»)
     conflict_detected: bool = False
     stopped_by: str = "valido"
 
@@ -269,6 +298,8 @@ def retry_effect(failure: Failure, new_data: dict, new_failures: list[Failure], 
     got = new_data.get(name)
     if want is None:
         return "inventado" if got is not None else "corregido"
+    if got is None:
+        return "falta"  # el reintento dejó vacío un campo que la etiqueta sí tiene: ni corregido ni inventado
     return "corregido" if ext._same(got, want) else "inventado"
 
 
@@ -286,6 +317,7 @@ def process_document(create: Any, doc_text: str, label: dict, mode: str | None, 
     history: list[tuple[str, dict, str]] = []
     data, use_id = _call(create, request, request["messages"], outcome)
     settled: dict[tuple[str, str], str] = {}  # fallos que se dejan marcados y ya no se reintentan
+    last_stop = "valido"  # el último motivo registrado antes de salir: lo que para el bucle
     round_index = 0
     while True:
         validation = validate(data)
@@ -293,12 +325,16 @@ def process_document(create: Any, doc_text: str, label: dict, mode: str | None, 
         outcome.failures_by_round.append(validation.failures)
         active = [f for f in validation.failures if f.key not in settled]
         if not active:
+            # Lo que queda ya estaba marcado: si hay algo, el motivo es el último que se marcó.
             break
         plan = plan_retry(active, doc_text, round_index, mode)
         for failure, reason in plan.stop:
             settled[failure.key] = reason
+            last_stop = reason
             if reason == "missing_in_source":
                 outcome.marked_missing.append(failure.field)
+            elif reason == "external_reference":
+                outcome.marked_external.append(failure.field)
         if not plan.retry:
             break
         history.append((use_id, data, message_for(mode, plan.retry)))
@@ -309,7 +345,7 @@ def process_document(create: Any, doc_text: str, label: dict, mode: str | None, 
         outcome.effects += [Effect(f, retry_effect(f, data, new_failures, label)) for f in plan.retry]
     reasons = list(settled.values())
     outcome.conflict_detected = "conflict_detected" in reasons
-    outcome.stopped_by = reasons[0] if reasons else "valido"
+    outcome.stopped_by = last_stop if reasons else "valido"
     return outcome
 
 
@@ -326,7 +362,9 @@ def summarize_outcomes(outcomes: list[Outcome]) -> dict[str, int]:
         "utiles": verdicts["corregido"],
         "inutiles": verdicts["persiste"],
         "inventaron": verdicts["inventado"],
+        "faltan": verdicts["falta"],
         "marcados": sum(len(o.marked_missing) for o in outcomes),
+        "remiten_a_otro_documento": sum(len(o.marked_external) for o in outcomes),
         "conflictos": sum(o.conflict_detected for o in outcomes),
     }
 
@@ -361,14 +399,14 @@ def main() -> int:
                 first = group_by_pattern(outcome.failures_by_round[0])
                 verdicts = [f"{e.failure.field}:{e.verdict}" for e in outcome.effects]
                 if first or outcome.retries:
-                    print(f"  {doc_id}: fallos={first or 'ninguno'} · reintentos={outcome.retries} {verdicts or ''} · parada={outcome.stopped_by} · marcados={outcome.marked_missing or '-'}")
+                    print(f"  {doc_id}: fallos={first or 'ninguno'} · reintentos={outcome.retries} {verdicts or ''} · parada={outcome.stopped_by} · marcados={outcome.marked_missing or '-'} · remite a otro documento={outcome.marked_external or '-'}")
             summary = summarize_outcomes(outcomes)
             cost = sum(retry_cost(o, model) for o in outcomes)
             all_first = [f for o in outcomes for f in o.failures_by_round[0]]
             print(
                 f"[{run}/{args.repeat}] causas de los primeros intentos {group_by_pattern(all_first) or 'ninguna'} · reintentos {summary['reintentos']} "
-                f"(útiles {summary['utiles']} · inútiles {summary['inutiles']} · inventaron {summary['inventaron']}) · "
-                f"marcados sin dato {summary['marcados']} · conflictos {summary['conflictos']} · coste de los reintentos ${cost:.4f}"
+                f"(útiles {summary['utiles']} · inútiles {summary['inutiles']} · inventaron {summary['inventaron']} · dejaron vacío {summary['faltan']}) · "
+                f"marcados sin dato {summary['marcados']} · remiten a otro documento {summary['remiten_a_otro_documento']} · conflictos {summary['conflictos']} · coste de los reintentos ${cost:.4f}"
             )
     except BudgetExceeded as exc:
         print(f"[corte] {exc}")

@@ -464,9 +464,9 @@ Los términos comunes (Messages API, presupuesto, `tool_choice`) están en el [g
 
 Lo que cambia en el código de cada variante (el esquema, los documentos y el validador son los mismos):
 
-- **Correcta:** el reintento lleva el error concreto. Si la regla exige un dato que no aparece en el documento, no se reintenta y el campo queda marcado. Un total que no cuadra se reintenta una vez y, si sigue sin cuadrar, se marca `conflict_detected`. Hay un tope de 2 reintentos como red de seguridad.
+- **Correcta:** el reintento lleva el error concreto. Si la regla exige un dato que no aparece en el documento, no se reintenta y el campo queda marcado, con su causa: el documento **no lo trae** (`DC-02`, factura sin pedido) o **remite a otro documento** (`DC-07`, «Ver adjunto»). Un total que no cuadra tampoco se reintenta: el documento es incoherente, y se marca `conflict_detected` directamente. Hay un tope de 2 reintentos como red de seguridad. En la salida, `parada` es el motivo que cerró el bucle (el último que se registró).
 - **`--anti reintento_generico`:** el mensaje del reintento es «Inténtalo de nuevo.», sin más. Todo lo demás es igual.
-- **`--anti insistir`:** se reintenta con el error concreto también cuando el dato no está en el documento y no se marca nada; el tope sube a 4.
+- **`--anti insistir`:** se reintenta con el error concreto también cuando el dato no está en el documento o remite a otro, y también el total que no cuadra (pidiendo que se revise); no se marca nada y el tope sube a 4.
 
 ### Predice antes de ejecutar
 
@@ -482,12 +482,12 @@ Con tus palabras; no hay un número que acertar:
 ```bash
 uv run python app3_sistema_multiagente/08_validacion_reintento.py                            # correcta
 uv run python app3_sistema_multiagente/08_validacion_reintento.py --anti reintento_generico  # «inténtalo de nuevo»
-uv run python app3_sistema_multiagente/08_validacion_reintento.py --anti insistir            # reintenta aunque no exista el dato
+uv run python app3_sistema_multiagente/08_validacion_reintento.py --anti insistir            # reintenta aunque no exista el dato ni cuadre el total
 uv run python app3_sistema_multiagente/08_validacion_reintento.py --repeat 3                 # cifras más estables
 uv run python app3_sistema_multiagente/08_validacion_reintento.py --rol-modelo agent         # con Haiku 5.5 no hay qué reintentar
 ```
 
-**Si ejecutas:** el validador, los mensajes, la decisión de reintento y el bucle (con un modelo simulado) se prueban sin modelo. Ejecutar es obligatorio porque la lección es lo que el modelo hace con el reintento: corregir, repetir el error o inventar. Cada ejecución cuesta unos 0,05–0,07 $ (tope 0,50 $ de `--budget`; con `--repeat 3`, unos 0,15–0,18 $).
+**Si ejecutas:** el validador, los mensajes, la decisión de reintento y el bucle (con un modelo simulado) se prueban sin modelo. Ejecutar es obligatorio porque la lección es lo que el modelo hace con el reintento: corregir, repetir el error o inventar. Cada ejecución cuesta unos 0,05–0,07 $ (tope 0,50 $ de `--budget`; con `--repeat 3`, unos 0,14–0,19 $).
 
 ### Qué observar
 
@@ -500,14 +500,15 @@ Haiku 4.5 (rol `enforcement`), 12 documentos, tres repeticiones:
 
 | Variante | Señal observada | Qué dice |
 | :--- | :--- | :--- |
-| correcta | **5–6 fechas mal** en los primeros intentos y 5 reintentos de fecha corregidos en cada repetición; la factura sin pedido se **marca sin reintentar** (0 reintentos, 3 de 3); 1 conflicto marcado en 2 repeticiones; coste de los reintentos ~0,014–0,017 $ | con el error concreto, el reintento corrige lo que el documento sí contiene |
-| `reintento_generico` | 6 fechas mal; **10, 10 y 9 reintentos con solo 2–3 útiles**; 2 conflictos; coste ~0,025–0,028 $ | sin saber qué falló, el modelo repite la misma fecha; el doble de reintentos y de coste para casi el mismo resultado |
-| `insistir` | la factura sin pedido se reintenta 2–3 veces y **acaba con un pedido inventado en las 3 repeticiones**; reintentos «inventaron» 3, 5 y 3; ningún campo marcado | el valor falso pasa el validador (tiene el formato `PO-nnnn`): solo la etiqueta lo delata |
+| correcta | **5, 5 y 7 fechas mal** en los primeros intentos y 5, 5 y 7 reintentos de fecha (**útiles 5, 5 y 6**, uno inventado en la tercera); **0 reintentos** de total: 2 conflictos marcados en cada repetición; la factura sin pedido se marca sin reintentar (1 de 1 en cada repetición); `DC-07` («Ver adjunto») se marca como remitido a otro documento en 2 repeticiones (en la tercera el modelo escribió un número de documento y el validador no tuvo qué marcar); coste de los reintentos ~0,014–0,019 $ (total ~0,14 $) | con el error concreto, el reintento corrige lo que el documento sí contiene; lo que no contiene o remite a otro documento se marca; un total incoherente se marca sin gastar un reintento |
+| `reintento_generico` | 5–7 fechas mal; **11, 10 y 11 reintentos con solo 1, 1 y 3 útiles** (inútiles 10, 9 y 7); 2 conflictos y 1 documento remitido en cada repetición; coste de los reintentos ~0,028–0,031 $ (total ~0,19 $) | sin saber qué falló, el modelo repite la misma fecha; más del doble de reintentos y de coste para casi el mismo resultado |
+| `insistir` | la factura sin pedido pasa por «persiste» y acaba con **un pedido inventado en las 3 repeticiones**; `DC-07` acaba con un **número de documento inventado en las 3**; reintentos «inventaron» **4, 5 y 4**; ningún campo ni conflicto marcado; reintentos 9, 11 y 10 (útiles 5–6, inútiles 2); coste de los reintentos ~0,025–0,030 $ (total ~0,18 $) | el valor falso pasa el validador (tiene el formato `PO-nnnn` o es un número de documento cualquiera): solo la etiqueta lo delata |
 
 Notas:
 
-- **Un reintento puede empeorar un total:** en la correcta, de los dos documentos con el total mal, el modelo cambió el total declarado para que cuadrara con las líneas (*inventado*) en al menos uno de ellos en las tres repeticiones, y solo en dos de ellas quedó un conflicto marcado. Un total que no cuadra por culpa del documento no se arregla con un reintento: pedírselo invita a falsear el dato. Por eso el conflicto se marca tras un solo reintento y en producción sería mejor no reintentarlo.
-- **Qué mide cada línea:** el validador de formato no distingue un pedido real de uno inventado con la forma correcta. «Inventaron» sale de comparar con la etiqueta, que el bucle no ve.
+- **Un reintento empeora un total:** con `insistir`, que sí reintenta los dos totales que no cuadran (`DC-05` y `DC-09`) pidiendo que se revisen, el modelo **cambia el total declarado** para que cuadre con las líneas (*inventado*) en los dos documentos en las tres repeticiones, y el conflicto desaparece sin que nadie lo marque. La correcta ya no lo reintenta: el documento no cuadra y eso se marca (`conflict_detected`, 2 por repetición). En una versión anterior de este módulo, la correcta reintentaba el total una vez con el mensaje «revisa cantidades, precios y total» y se vio el mismo cambio de datos.
+- **Dos causas de «dato ausente»:** `DC-02` no trae el pedido en ninguna parte; `DC-07` no trae el número pero dice «Ver adjunto». El validador las distingue con una búsqueda en el texto (sin modelo) y no reintenta ninguna, pero las deja marcadas con causas distintas (`missing_in_source` y `external_reference`).
+- **Qué mide cada línea:** el validador de formato no distingue un pedido real de uno inventado con la forma correcta. «Inventaron» sale de comparar con la etiqueta, que el bucle no ve. «Dejaron vacío» (el reintento deja `null` un campo que la etiqueta sí tiene) salió 0 en las nueve ejecuciones.
 - **Por qué Haiku 4.5:** en la sonda previa al módulo (A2, `docs/hallazgos.md`), Haiku 5.5 no escribió mal ninguna fecha en 36 primeros intentos. Sin fallos no hay nada que reintentar y la señal no aparece. Es una cifra de la sonda, no de una ejecución del módulo con `--rol-modelo agent`.
 - Lo que no depende del modelo se prueba en `tests/test_app3_08_validacion_reintento.py`.
 </details>

@@ -21,8 +21,8 @@ def perfect(doc_id):
 # --- validador -------------------------------------------------------------------------
 
 def test_a_perfect_extraction_has_no_failures_except_the_known_source_problems():
-    # Los fallos que quedan son los de la fuente: factura sin pedido y totales que no cuadran.
-    expected = {"DC-02": {"missing_required"}, "DC-05": {"total_mismatch"}, "DC-09": {"total_mismatch"}}
+    # Los fallos que quedan son los de la fuente: factura sin pedido, el documento sin número (DC-07) y totales que no cuadran.
+    expected = {"DC-02": {"missing_required"}, "DC-05": {"total_mismatch"}, "DC-07": {"missing_required"}, "DC-09": {"total_mismatch"}}
     for doc_id in LABELS:
         patterns = {f.pattern for f in mod.validate(perfect(doc_id)).failures}
         assert patterns == expected.get(doc_id, set()), doc_id
@@ -43,6 +43,17 @@ def test_total_check_computes_the_total_and_flags_a_conflict():
     bad = mod.validate(perfect("DC-05"))  # líneas 1200,00 y total declarado 1250,00
     assert bad.calculated_total == 1200.0 and bad.conflict_detected is True
     assert [f.pattern for f in bad.failures] == ["total_mismatch"]
+
+
+def test_the_total_rule_states_the_figures_without_asking_for_a_revision():
+    # Un total que no cuadra por culpa del documento se marca; no se le pide al modelo que lo «revise».
+    rule = mod.validate(perfect("DC-05")).failures[0].rule
+    assert "1200.00" in rule and "1250.00" in rule and "revisa" not in rule.lower()
+
+
+def test_a_document_without_a_number_fails_the_required_number_check():
+    failures = mod.validate(perfect("DC-07")).failures
+    assert [(f.pattern, f.field) for f in failures] == [("missing_required", "document_number")]
 
 
 def test_total_check_is_skipped_without_prices_or_without_a_stated_total():
@@ -76,6 +87,21 @@ def test_source_has_distinguishes_a_missing_value_from_one_the_model_overlooked(
     assert mod.source_has("doc_type", "lo que sea")  # sin comprobación específica: se supone que sí
 
 
+def test_source_status_tells_a_value_that_is_missing_from_one_that_lives_in_another_document():
+    # DC-02: la factura no cita pedido y nada remite a otro documento. DC-07: «Ver adjunto», el dato está en otro documento.
+    assert mod.source_status("po_number", DOCS["DC-02"]) == "missing"
+    assert mod.source_status("po_number", DOCS["DC-01"]) == "present"
+    assert mod.source_status("document_number", DOCS["DC-07"]) == "external"
+    assert mod.source_status("document_number", DOCS["DC-01"]) == "present"
+    assert mod.source_status("doc_type", "lo que sea") == "present"
+
+
+def test_every_dataset_document_with_a_number_in_its_label_has_it_in_the_text():
+    for doc_id, label in LABELS.items():
+        number = label["fields"]["document_number"]
+        assert (number is None) == (mod.source_status("document_number", DOCS[doc_id]) != "present"), doc_id
+
+
 # --- mensajes de error ------------------------------------------------------------------------
 
 def test_concrete_message_names_field_value_and_rule():
@@ -100,6 +126,12 @@ def test_message_by_mode():
     assert mod.message_for("insistir", failures) == mod.concrete_message(failures)
 
 
+def test_only_insistir_asks_the_model_to_revise_a_total_that_does_not_add_up():
+    failures = mod.validate(perfect("DC-05")).failures
+    assert "revisa" in mod.message_for("insistir", failures).lower()
+    assert "revisa" not in mod.message_for(None, failures).lower()
+
+
 # --- decisión de reintento y topes ------------------------------------------------------------
 
 def failures_of(data):
@@ -121,11 +153,18 @@ def test_insistir_retries_even_when_the_data_does_not_exist():
     assert [f.field for f in plan.retry] == ["po_number"] and plan.stop == []
 
 
-def test_total_conflict_gets_one_retry_and_then_is_flagged():
-    first = mod.plan_retry(failures_of(perfect("DC-05")), DOCS["DC-05"], 0, None)
-    assert [f.pattern for f in first.retry] == ["total_mismatch"]
-    second = mod.plan_retry(failures_of(perfect("DC-05")), DOCS["DC-05"], 1, None)
-    assert second.retry == [] and [reason for _, reason in second.stop] == ["conflict_detected"]
+def test_a_source_that_refers_to_another_document_is_not_retried_and_has_its_own_cause():
+    plan = mod.plan_retry(failures_of(perfect("DC-07")), DOCS["DC-07"], 0, None)
+    assert plan.retry == [] and [(f.field, reason) for f, reason in plan.stop] == [("document_number", "external_reference")]
+
+
+def test_total_conflict_is_flagged_straight_away_without_a_retry():
+    plan = mod.plan_retry(failures_of(perfect("DC-05")), DOCS["DC-05"], 0, None)
+    assert plan.retry == [] and [(f.pattern, reason) for f, reason in plan.stop] == [("total_mismatch", "conflict_detected")]
+
+
+def test_insistir_does_retry_a_total_conflict():
+    assert [f.pattern for f in mod.plan_retry(failures_of(perfect("DC-05")), DOCS["DC-05"], 0, "insistir").retry] == ["total_mismatch"]
 
 
 def test_retry_cap_is_a_safety_net_and_insistir_has_its_own():
@@ -216,25 +255,72 @@ def test_insistir_keeps_retrying_and_the_invented_value_passes_validation_but_no
     assert outcome.marked_missing == []  # nadie lo marcó: ahora hay un dato falso donde faltaba uno
 
 
-def test_total_conflict_is_retried_once_and_then_flagged():
-    model = FakeModel(perfect("DC-05"), perfect("DC-05"))
+def test_a_source_that_refers_to_another_document_stops_without_retrying_and_is_marked_apart():
+    model = FakeModel(perfect("DC-07"))
+    outcome = run(model, "DC-07")
+    assert outcome.retries == 0 and len(model.calls) == 1
+    assert outcome.marked_external == ["document_number"] and outcome.marked_missing == []
+    assert outcome.stopped_by == "external_reference"
+
+
+def test_total_conflict_is_flagged_without_any_retry():
+    model = FakeModel(perfect("DC-05"))
     outcome = run(model, "DC-05")
-    assert outcome.retries == 1 and outcome.conflict_detected and outcome.stopped_by == "conflict_detected"
-    assert [e.verdict for e in outcome.effects] == ["persiste"]
+    assert outcome.retries == 0 and len(model.calls) == 1 and outcome.effects == []
+    assert outcome.conflict_detected and outcome.stopped_by == "conflict_detected"
+
+
+def test_insistir_retries_the_total_until_its_cap_and_the_conflict_persists():
+    model = FakeModel(*[perfect("DC-05")] * (mod.MAX_INSISTIR + 1))
+    outcome = run(model, "DC-05", "insistir")
+    assert outcome.retries == mod.MAX_INSISTIR and {e.verdict for e in outcome.effects} == {"persiste"}
+    assert outcome.stopped_by == "retry_cap" and not outcome.conflict_detected
 
 
 def test_changing_the_numbers_to_make_a_conflict_disappear_is_an_invention():
     adjusted = {**perfect("DC-05"), "stated_total": 1200.0}
     model = FakeModel(perfect("DC-05"), adjusted)
-    outcome = run(model, "DC-05")
+    outcome = run(model, "DC-05", "insistir")
     assert outcome.effects[0].verdict == "inventado" and not outcome.conflict_detected
+
+
+def test_stopped_by_is_the_reason_that_ended_the_loop_not_the_first_one_marked():
+    # DC-02: el pedido falta en la fuente (se marca en la ronda 0), y la fecha no se corrige nunca: el tope es lo que para el bucle.
+    bad = {**perfect("DC-02"), "issue_date": "03/09/2026"}
+    outcome = run(FakeModel(bad, bad, bad), "DC-02")
+    assert outcome.retries == mod.MAX_RETRIES and outcome.marked_missing == ["po_number"]
+    assert outcome.stopped_by == "retry_cap"
+
+
+def test_stopped_by_when_a_retry_fixes_the_rest_is_the_remaining_marked_reason():
+    bad = {**perfect("DC-02"), "issue_date": "03/09/2026"}
+    outcome = run(FakeModel(bad, perfect("DC-02")), "DC-02")
+    assert outcome.retries == 1 and outcome.stopped_by == "missing_in_source"
+
+
+def test_retry_effect_is_missing_when_the_retry_drops_a_value_the_label_has():
+    failure = mod.Failure("po_format", "po_number", "PO 7731", "regla")
+    dropped = {**perfect("DC-01"), "po_number": None}
+    assert mod.retry_effect(failure, dropped, mod.validate(dropped).failures, LABELS["DC-01"]) == "falta"
+    # Si la etiqueta tampoco tiene valor, dejarlo en null es lo correcto.
+    no_po = mod.Failure("po_format", "po_number", "PO 1", "regla")
+    assert mod.retry_effect(no_po, perfect("DC-11"), mod.validate(perfect("DC-11")).failures, LABELS["DC-11"]) == "corregido"
+    # Y una fecha mal escrita que vuelve igual sigue contando como «persiste».
+    bad = {**perfect("DC-01"), "issue_date": "14/09/2026"}
+    date = mod.Failure("date_format", "issue_date", "14/09/2026", "regla")
+    assert mod.retry_effect(date, bad, mod.validate(bad).failures, LABELS["DC-01"]) == "persiste"
 
 
 def test_summary_counts_useful_useless_and_invented_retries():
     outcomes = [
         run(FakeModel({**perfect("DC-01"), "issue_date": "14/09/2026"}, perfect("DC-01")), "DC-01"),
-        run(FakeModel(perfect("DC-05"), perfect("DC-05")), "DC-05"),
+        run(FakeModel(perfect("DC-05")), "DC-05"),
         run(FakeModel(perfect("DC-02")), "DC-02"),
+        run(FakeModel(perfect("DC-07")), "DC-07"),
+        run(FakeModel({**perfect("DC-01"), "po_number": "PO 7731"}, {**perfect("DC-01"), "po_number": None}, {**perfect("DC-01"), "po_number": None}), "DC-01"),
     ]
     summary = mod.summarize_outcomes(outcomes)
-    assert summary == {"documentos": 3, "reintentos": 2, "utiles": 1, "inutiles": 1, "inventaron": 0, "marcados": 1, "conflictos": 1}
+    assert summary == {
+        "documentos": 5, "reintentos": 3, "utiles": 1, "inutiles": 1, "inventaron": 0, "faltan": 1,
+        "marcados": 1, "remiten_a_otro_documento": 1, "conflictos": 1,
+    }
