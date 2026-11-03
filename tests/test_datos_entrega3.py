@@ -108,3 +108,67 @@ def test_purchase_orders_cover_every_po_cited_by_a_document_and_are_deterministi
     assert all(set(o) >= {"po_number", "vendor", "status", "expected_total"} for o in orders)
     # Un número por pedido, sin repetidos.
     assert len({o["po_number"] for o in orders}) == len(orders)
+
+
+# --- fuentes de investigación (tanda B: app3/04–06) ------------------------------------------------
+
+
+def sources() -> list[dict]:
+    return json.loads(build_all()["fuentes_investigacion.json"])
+
+
+def source_labels() -> dict:
+    return json.loads(build_all()["fuentes_investigacion_etiquetas.json"])
+
+
+def test_sources_are_deterministic_and_labels_live_apart():
+    files = build_all()
+    assert files["fuentes_investigacion.json"] == build_all()["fuentes_investigacion.json"]
+    for source in sources():
+        # Lo que ve el agente: identidad, estado de acceso y el informe. Nunca las afirmaciones etiquetadas.
+        assert set(source) == {"source_id", "name", "published_at", "availability", "report"}
+        assert "claims" not in source and "conflicts" not in source
+
+
+def test_one_source_times_out_and_one_is_validly_empty():
+    by_id = {s["source_id"]: s for s in sources()}
+    timeouts = [s for s in by_id.values() if s["availability"] == "timeout"]
+    assert len(timeouts) == 1 and timeouts[0]["report"] is None  # falla: no hay informe que devolver
+    empties = [s for s in by_id.values() if s["availability"] == "ok" and not s["report"]]
+    assert len(empties) == 1  # un vacío legítimo: la fuente responde y no tiene nada
+
+
+def test_conflicting_figures_differ_and_each_has_a_source_and_a_date():
+    labels = source_labels()
+    assert len(labels["conflicts"]) >= 2
+    by_id = {s["source_id"]: s for s in sources()}
+    for conflict in labels["conflicts"]:
+        figures = {c["figure"] for c in conflict["claims"]}
+        assert len(figures) >= 2  # cifras distintas para la misma magnitud
+        for claim in conflict["claims"]:
+            assert claim["source_id"] in by_id
+            assert claim["published_at"] == by_id[claim["source_id"]]["published_at"]
+            # La cifra aparece literalmente en el informe de su fuente.
+            assert claim["figure_text"] in by_id[claim["source_id"]]["report"]
+        # Un promedio de las cifras en conflicto no es ninguna de ellas.
+        average = round(sum(c["figure"] for c in conflict["claims"]) / len(conflict["claims"]), 2)
+        assert average not in figures
+
+
+def test_established_claim_agrees_across_sources():
+    labels = source_labels()
+    established = labels["established"]
+    assert len(established["source_ids"]) >= 2 and established["figure_text"]
+    by_id = {s["source_id"]: s for s in sources()}
+    for source_id in established["source_ids"]:
+        assert established["figure_text"] in by_id[source_id]["report"]
+
+
+def test_long_report_hides_the_key_finding_in_the_middle():
+    labels = source_labels()["long_report"]
+    report = next(s["report"] for s in sources() if s["source_id"] == labels["source_id"])
+    position = report.index(labels["key_finding"]) / len(report)
+    assert 0.4 < position < 0.6 and len(report) > 6000
+    assert report.count(labels["key_finding"]) == 1
+    # La línea de resumen (lo que el módulo pone al principio) repite el hallazgo clave con su cifra.
+    assert labels["figure_text"] in labels["key_finding"] and labels["figure_text"] in labels["summary_line"]

@@ -1,0 +1,62 @@
+{
+  "conflicts": [
+    {
+      "claims": [
+        {
+          "figure": 18,
+          "figure_text": "18 horas",
+          "published_at": "2026-10-02",
+          "source_id": "SRC-TICKETS"
+        },
+        {
+          "figure": 26,
+          "figure_text": "26 horas",
+          "published_at": "2026-10-09",
+          "source_id": "SRC-AUDITORIA"
+        }
+      ],
+      "topic": "tiempo medio de resolución",
+      "unit": "horas"
+    },
+    {
+      "claims": [
+        {
+          "figure": 4.1,
+          "figure_text": "4,1 sobre 5",
+          "published_at": "2026-09-30",
+          "source_id": "SRC-ENCUESTA"
+        },
+        {
+          "figure": 3.6,
+          "figure_text": "3,6 sobre 5",
+          "published_at": "2026-10-15",
+          "source_id": "SRC-PROVEEDOR"
+        }
+      ],
+      "topic": "satisfacción media",
+      "unit": "sobre 5"
+    }
+  ],
+  "empty_sources": [
+    "SRC-ARCHIVO"
+  ],
+  "established": {
+    "figure": 1240,
+    "figure_text": "1.240",
+    "source_ids": [
+      "SRC-TICKETS",
+      "SRC-AUDITORIA"
+    ],
+    "topic": "tickets cerrados en el trimestre"
+  },
+  "failed_sources": [
+    "SRC-MONITOR"
+  ],
+  "long_report": {
+    "figure": 41,
+    "figure_text": "41 %",
+    "key_finding": "El 41 % de las incidencias de red del trimestre se debió a un único perfil de VPN obsoleto que seguía desplegado en los portátiles antiguos.",
+    "source_id": "SRC-LARGO",
+    "summary_line": "Hallazgo clave: el 41 % de las incidencias de red del trimestre se debió a un único perfil de VPN obsoleto."
+  }
+}

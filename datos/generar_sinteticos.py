@@ -707,6 +707,91 @@ PURCHASE_ORDERS = [
 ]
 
 
+# Fuentes de investigación para app3/04–06 (TS 5.3, 5.6, 5.1 y 5.4): calidad del servicio de la
+# mesa de ayuda en el tercer trimestre. Seis fuentes: tres que concuerdan en parte, dos que
+# discrepan en cifras y fechas (tiempo de resolución y satisfacción), una que falla por
+# *timeout* (monitorización), una que responde vacía de forma legítima (archivo) y un informe
+# largo con el hallazgo clave en mitad. Texto fijo, sin generador aleatorio. Las afirmaciones
+# etiquetadas van en un archivo aparte que el agente nunca ve.
+SOURCE_REPORTS = [
+    ("SRC-TICKETS", "Informe del sistema de tickets", "2026-10-02", "ok",
+     "Resumen del tercer trimestre de 2026. Se cerraron 1.240 tickets. El tiempo medio de resolución fue de 18 horas, "
+     "medido desde la apertura hasta el cierre registrado en el sistema."),
+    ("SRC-AUDITORIA", "Auditoría interna de calidad", "2026-10-09", "ok",
+     "Sobre una muestra de 300 tickets del tercer trimestre de 2026, el tiempo medio de resolución fue de 26 horas, "
+     "contando las esperas de respuesta de la persona usuaria. El total de tickets cerrados en el trimestre fue de 1.240."),
+    ("SRC-ENCUESTA", "Encuesta interna de satisfacción", "2026-09-30", "ok",
+     "Encuesta enviada a quienes cerraron un ticket en el trimestre: 212 respuestas. La satisfacción media fue de 4,1 sobre 5."),
+    ("SRC-PROVEEDOR", "Informe del proveedor de soporte externo", "2026-10-15", "ok",
+     "Encuesta del proveedor a 95 usuarios con corte a 31 de agosto de 2026. La satisfacción media fue de 3,6 sobre 5."),
+    ("SRC-MONITOR", "Monitorización de red", "2026-10-01", "timeout", None),
+    ("SRC-ARCHIVO", "Archivo de informes de incidentes graves", "2026-10-01", "ok", ""),
+    ("SRC-LARGO", "Informe trimestral de incidencias de red", "2026-10-12", "ok", "LONG"),
+]
+
+# Párrafos de relleno del informe largo: plausibles y sin cifras que compitan con el hallazgo clave.
+LONG_REPORT_FILLER = [
+    "El equipo de red revisó durante el trimestre los registros de los puntos de acceso de las tres sedes y no encontró cambios de configuración fuera de calendario.",
+    "Las ventanas de mantenimiento se comunicaron con antelación y se cumplieron en las fechas previstas, salvo una que se aplazó por una petición de la dirección.",
+    "La documentación de los procedimientos de alta de dispositivos se revisó y se unificó el formato de las fichas de cada tipo de equipo.",
+    "Se mantuvo la rotación semanal de la guardia de red y las incidencias fuera de horario se atendieron por el canal habitual de la mesa.",
+    "El inventario de conmutadores se actualizó con la ubicación de cada armario y la persona responsable de su mantenimiento.",
+    "Las pruebas de conmutación entre líneas de comunicaciones se repitieron y se anotaron los tiempos en la hoja de seguimiento del equipo.",
+    "Se completó la formación de refuerzo sobre el uso del portal de incidencias para el personal de las sedes más pequeñas.",
+    "El proveedor de comunicaciones entregó el informe de disponibilidad de sus enlaces y se archivó junto con el resto de la documentación contractual.",
+]
+LONG_KEY_FINDING = "El 41 % de las incidencias de red del trimestre se debió a un único perfil de VPN obsoleto que seguía desplegado en los portátiles antiguos."
+LONG_SUMMARY_LINE = "Hallazgo clave: el 41 % de las incidencias de red del trimestre se debió a un único perfil de VPN obsoleto."
+
+
+def build_long_report() -> str:
+    """Informe largo: 30 párrafos de relleno, el hallazgo clave en el 15.º y otros 30 de relleno después."""
+    paragraphs = [LONG_REPORT_FILLER[n % len(LONG_REPORT_FILLER)] + f" (apartado {n + 1})" for n in range(60)]
+    paragraphs.insert(30, LONG_KEY_FINDING)
+    return "\n\n".join(paragraphs)
+
+
+def build_research_sources() -> tuple[list[dict], dict]:
+    """Fuentes (lo que ve el agente) y etiquetas (solo para puntuar)."""
+    long_report = build_long_report()
+    sources = [
+        {
+            "source_id": source_id, "name": name, "published_at": published, "availability": availability,
+            "report": long_report if report == "LONG" else report,
+        }
+        for source_id, name, published, availability, report in SOURCE_REPORTS
+    ]
+    labels = {
+        "established": {
+            "topic": "tickets cerrados en el trimestre", "figure": 1240, "figure_text": "1.240",
+            "source_ids": ["SRC-TICKETS", "SRC-AUDITORIA"],
+        },
+        "conflicts": [
+            {
+                "topic": "tiempo medio de resolución", "unit": "horas",
+                "claims": [
+                    {"source_id": "SRC-TICKETS", "figure": 18, "figure_text": "18 horas", "published_at": "2026-10-02"},
+                    {"source_id": "SRC-AUDITORIA", "figure": 26, "figure_text": "26 horas", "published_at": "2026-10-09"},
+                ],
+            },
+            {
+                "topic": "satisfacción media", "unit": "sobre 5",
+                "claims": [
+                    {"source_id": "SRC-ENCUESTA", "figure": 4.1, "figure_text": "4,1 sobre 5", "published_at": "2026-09-30"},
+                    {"source_id": "SRC-PROVEEDOR", "figure": 3.6, "figure_text": "3,6 sobre 5", "published_at": "2026-10-15"},
+                ],
+            },
+        ],
+        "failed_sources": ["SRC-MONITOR"],
+        "empty_sources": ["SRC-ARCHIVO"],
+        "long_report": {
+            "source_id": "SRC-LARGO", "key_finding": LONG_KEY_FINDING, "figure": 41, "figure_text": "41 %",
+            "summary_line": LONG_SUMMARY_LINE,
+        },
+    }
+    return sources, labels
+
+
 def build_purchase_docs() -> tuple[list[dict], dict]:
     """Documentos (lo que ve el agente) y etiquetas (solo para puntuar), con el total calculado de cada uno."""
     entries = [*PURCHASE_DOCS, ("DC-12", *build_long_note())]
@@ -733,6 +818,7 @@ def build_all() -> dict[str, str]:
     tickets, labels = build_tickets(random.Random(f"{SEED}-tickets"), users)
     articles = build_kb_articles(random.Random(f"{SEED}-kb"))
     purchase_documents, purchase_labels = build_purchase_docs()
+    research_sources, research_labels = build_research_sources()
     datasets = {
         "usuarios.json": users,
         "tickets.json": tickets,
@@ -742,6 +828,8 @@ def build_all() -> dict[str, str]:
         "documentos_compra.json": purchase_documents,
         "documentos_compra_etiquetas.json": purchase_labels,
         "pedidos_compra.json": PURCHASE_ORDERS,
+        "fuentes_investigacion.json": research_sources,
+        "fuentes_investigacion_etiquetas.json": research_labels,
     }
     files = {name: json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True) + "\n" for name, data in datasets.items()}
     # Las rutas con subcarpeta usan «/»: mismo nombre en Windows y en Linux.

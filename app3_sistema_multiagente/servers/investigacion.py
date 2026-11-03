@@ -9,8 +9,12 @@ analista por tool). Cada resultado separa el contenido de sus metadatos
 sobreviva al pasar de un agente a otro.
 
 `extended=True` (app3/03) añade `fetch_url` (genérica), `load_document` (solo
-documentos) y `verify_fact` (solo afirmaciones simples); por defecto el servidor
-sigue con las dos tools de búsqueda que usan app3/01 y app3/02.
+documentos) y `verify_fact` (solo afirmaciones simples). `sources=True` (app3/04–06)
+añade `list_sources` y `query_source`, sobre las fuentes de `fuentes_investigacion.json`:
+una falla por *timeout* (error transitorio estructurado), una responde vacía de forma
+legítima y una es un informe largo (con `summary_first=True`, su hallazgo clave se
+repite en la primera línea). Por defecto el servidor sigue con las dos tools de
+búsqueda que usan app3/01 y app3/02.
 
 QUÉ NO HACE: no resume ni ordena por relevancia semántica (busca palabras y
 categoría) y no tiene estado: dos llamadas iguales devuelven lo mismo.
@@ -45,7 +49,7 @@ def words_of(query: str) -> set[str]:
     return {w for w in query.lower().split() if len(w) >= 3}
 
 
-def make_tools(*, extended: bool = False) -> list[SdkMcpTool[Any]]:
+def make_tools(*, extended: bool = False, sources: bool = False, summary_first: bool = False) -> list[SdkMcpTool[Any]]:
     @tool(
         "search_tickets",
         "Busca en los tickets de la mesa de ayuda por palabras clave o por categoría (acceso, hardware, software, "
@@ -98,9 +102,12 @@ def make_tools(*, extended: bool = False) -> list[SdkMcpTool[Any]]:
         ]
         return ok({"query": args["query"], "total": len(hits), "truncated": len(hits) > MAX_RESULTS, "results": results})
 
-    if not extended:
-        return [search_tickets, search_kb]
-    return [search_tickets, search_kb, *make_extended_tools()]
+    tools = [search_tickets, search_kb]
+    if extended:
+        tools += make_extended_tools()
+    if sources:
+        tools += make_source_tools(summary_first=summary_first)
+    return tools
 
 
 def find_url(url: str) -> dict | None:
@@ -161,6 +168,50 @@ def make_extended_tools() -> list[SdkMcpTool[Any]]:
     return [fetch_url, load_document, verify_fact]
 
 
+def make_source_tools(*, summary_first: bool = False) -> list[SdkMcpTool[Any]]:
+    """Tools de app3/04–06: listar fuentes y consultar una. El fallo y el vacío son resultados distintos."""
+
+    @tool(
+        "list_sources",
+        "Lista las fuentes de la investigación con su `source_id` y su nombre. No dice si una fuente está disponible "
+        "ni devuelve su contenido: para eso, query_source. No tiene entrada.",
+        {"type": "object", "properties": {}},
+    )
+    async def list_sources(args: dict[str, Any]) -> dict[str, Any]:
+        return ok({"sources": [{"source_id": s["source_id"], "name": s["name"]} for s in load("fuentes_investigacion.json")]})
+
+    @tool(
+        "query_source",
+        "Consulta UNA fuente de la investigación por `source_id` y devuelve su informe en `content`, con `source_id`, "
+        "nombre y fecha de publicación en `metadata`. Si la fuente responde pero no tiene nada, devuelve `total` 0 "
+        "(un resultado vacío válido, no un fallo). Si la fuente no responde, devuelve un error transitorio con "
+        "`isRetryable`. No busca en tickets ni en la base de conocimiento (search_tickets, search_kb).",
+        {"type": "object", "properties": {"source_id": {"type": "string"}}, "required": ["source_id"]},
+    )
+    async def query_source(args: dict[str, Any]) -> dict[str, Any]:
+        entry = next((s for s in load("fuentes_investigacion.json") if s["source_id"] == args["source_id"]), None)
+        if entry is None:
+            return structured_error("fuente desconocida", source_id=args["source_id"])
+        if entry["availability"] == "timeout":
+            # Sin estado: la fuente falla siempre. El reintento local no la recupera y lo que se mide es qué hace el agente.
+            data = {
+                "errorCategory": "transient", "isRetryable": True, "message": "timeout al consultar la fuente",
+                "source_id": entry["source_id"], "source_name": entry["name"],
+            }
+            return {"content": [{"type": "text", "text": json.dumps(data, ensure_ascii=False)}], "is_error": True}
+        if not entry["report"]:
+            return ok({"source_id": entry["source_id"], "total": 0, "results": []})
+        report = entry["report"]
+        long_report = load("fuentes_investigacion_etiquetas.json")["long_report"]
+        if summary_first and entry["source_id"] == long_report["source_id"]:
+            # Técnica de 5.1: el hallazgo clave al principio, sin quitarlo de donde estaba.
+            report = long_report["summary_line"] + "\n\n" + report
+        metadata = {"source_id": entry["source_id"], "name": entry["name"], "published_at": entry["published_at"]}
+        return ok({"source_id": entry["source_id"], "total": 1, "results": [{"content": report, "metadata": metadata}]})
+
+    return [list_sources, query_source]
+
+
 def structured_error(message: str, **extra: Any) -> dict[str, Any]:
     data = {"errorCategory": "validation", "isRetryable": False, "message": message, **extra}
     return {"content": [{"type": "text", "text": json.dumps(data, ensure_ascii=False)}], "is_error": True}
@@ -172,5 +223,5 @@ def validation_error(query: str) -> dict[str, Any]:
     return {"content": [{"type": "text", "text": json.dumps(data, ensure_ascii=False)}], "is_error": True}
 
 
-def build_server(*, extended: bool = False) -> Any:
-    return create_sdk_mcp_server(SERVER_NAME, tools=make_tools(extended=extended))
+def build_server(*, extended: bool = False, sources: bool = False, summary_first: bool = False) -> Any:
+    return create_sdk_mcp_server(SERVER_NAME, tools=make_tools(extended=extended, sources=sources, summary_first=summary_first))
