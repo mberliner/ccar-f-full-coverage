@@ -13,7 +13,8 @@ Cada módulo se hace en 5 pasos: orientarte con su ficha, predecir, ejecutar o n
 | [`01_coordinador.py`](01_coordinador.py) | TS 1.2-K1…K4, S1, S2, S4 · TS 1.3-K1, K2, K3, S1, S4 | 1 |
 | [`02_paralelo_y_descomposicion.py`](02_paralelo_y_descomposicion.py) | TS 1.2-S3 · TS 1.3-S3 · TS 1.6-K1, K3, S1, S3 | 1 |
 | [`03_tools_entre_roles.py`](03_tools_entre_roles.py) | TS 2.3-K2, K3, S1, S2, S3 | 2 |
-| `04_errores_entre_agentes.py` … `06_contexto_largo.py` | D1, D2 y D5 | 3 |
+| [`04_errores_entre_agentes.py`](04_errores_entre_agentes.py) | TS 5.3-K1…K4, S1…S4 · TS 2.2-S3 | 3 |
+| `05_procedencia.py` … `06_contexto_largo.py` | D1 y D5 | 3 |
 | [`07_extraccion_schema.py`](07_extraccion_schema.py) | TS 4.2-K4, S4, S5 · TS 4.3-K1…K4, S1…S6 | 3 |
 | [`08_validacion_reintento.py`](08_validacion_reintento.py) | TS 4.4-K1…K4, S1…S4 | 3 |
 | [`09_batches.py`](09_batches.py) | TS 4.5-K1…K4, S1…S4 | 3 |
@@ -320,6 +321,101 @@ Un agente de síntesis recibe todas las tools del sistema y, aunque su cometido 
 <summary>Paso 4 · Respuesta</summary>
 
 **C.** Un agente con tools fuera de su especialización tiende a malusarlas (TS 2.3-K2); la solución es el acceso acotado, con las tools de su rol (TS 2.3-S1) y una tool cross-role muy limitada para las necesidades de alta frecuencia, con los casos complejos por el coordinador (TS 2.3-K3, TS 2.3-S3). A pide por prosa lo que la configuración debería garantizar, y el agente conserva las tools que malusa; B deja un agente con todas las tools, lo contrario del acceso acotado (TS 2.3-K3); D elimina la tool acotada, y cada verificación simple pasa a depender del coordinador (el anti-patrón de TS 2.3-S3).
+</details>
+
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
+---
+
+## 04 · Errores entre agentes
+
+<!-- BORRADOR (Sonnet 5.5): pendiente del pase de textos de Opus 5.5 (cabecera del módulo, predicciones y pregunta). -->
+
+> **Qué vas a hacer:** Ver qué le llega al coordinador cuando una de las fuentes de un subagente falla por *timeout*, y qué entrega a partir de ahí.
+>
+> **Necesitas antes:** El [módulo 01](#01--coordinador-y-subagentes) y el [módulo 03](#03--tools-entre-roles) (mismo patrón de coordinador, barrera y subagente).
+>
+> **Modo:** Ejecución obligatoria (el resultado parcial con la brecha anotada solo se ve ejecutando).
+
+### Antes de empezar
+
+Los términos comunes (coordinador, subagente, error estructurado, reintentable) están en el [glosario](../docs/glosario.md).
+
+- **El sistema:** el coordinador tiene un único subagente, `researcher`, con una sola tool, `query_source`. La petición pide un informe de calidad del servicio con cinco fuentes sintéticas (`fuentes_investigacion.json`): tres responden con contenido, una responde **vacía** (no tiene nada que decir) y una falla siempre con un *timeout*. La petición no dice cuál es cuál.
+- **Informe del subagente:** por cada fuente, un objeto JSON con `source_id`, `status` (`ok`, `empty` o `failed`) y `findings`. Si falla, también `error_context` con cuatro campos: `failure_type`, `attempted`, `partial_results` y `alternatives`.
+- **Reintento local:** el subagente repite la consulta que falla con un error reintentable (hasta 2 veces). La fuente no tiene estado: falla siempre, así que el reintento no la recupera y lo que se observa es qué hace el agente después.
+- **Vacío frente a fallo:** una fuente que responde con `total: 0` es un resultado válido; una que da *timeout* no ha dicho nada. Las medidas del módulo los distinguen leyendo los resultados de la tool, sin modelo.
+
+### Las tools del ejercicio
+
+| Tool | Qué recibe | Qué devuelve |
+| :--- | :--- | :--- |
+| `query_source` | `source_id` | el informe de la fuente en `content`, con su id, nombre y fecha en `metadata`; `total: 0` si la fuente responde sin contenido; un error transitorio reintentable si hay *timeout*; un error de validación si la fuente no existe |
+
+### El ejercicio
+
+Qué cambia en el código de cada variante `--anti`:
+
+- **`silenciar`:** el prompt del investigador le pide que, si una consulta falla, no lo cuente y devuelva `status: ok` con `findings` vacío.
+- **`abortar`:** el prompt del coordinador añade que, si alguna fuente falla, no entregue nada parcial y responda solo `INVESTIGACIÓN ABORTADA`.
+
+Cada ejecución imprime una línea `[esperado]` con la hipótesis escrita en el código. Es una predicción, no un resultado.
+
+### Predice antes de ejecutar
+
+Con tus palabras; no hay un número que acertar:
+
+1. En la configuración correcta, ¿qué tendría que haber en lo que el subagente le devuelve al coordinador para que este pueda anotar la brecha sin inventarla? ¿Qué distingue ese contenido de un vacío?
+2. ¿Cuántas veces esperas que se consulte la fuente que falla, y cuántas las demás? ¿Qué parte de eso decide el código y qué parte el modelo?
+3. Con `--anti silenciar`, ¿qué sabe el coordinador de la fuente que falló, y por qué ya no puede distinguirla de la vacía? ¿Qué más puede llegarle por otro camino?
+4. Con `--anti abortar`, ¿qué se pierde respecto a la correcta, y qué parte del trabajo ya estaba hecha cuando se decide abortar?
+
+### Ejecutar
+
+```bash
+uv run python app3_sistema_multiagente/04_errores_entre_agentes.py                    # correcta
+uv run python app3_sistema_multiagente/04_errores_entre_agentes.py --anti silenciar   # el fallo llega como vacío
+uv run python app3_sistema_multiagente/04_errores_entre_agentes.py --anti abortar     # un fallo tumba la investigación
+uv run python app3_sistema_multiagente/04_errores_entre_agentes.py --repeat 3 --budget 0.60
+```
+
+**Si ejecutas:** las medidas y la forma del contexto de error se prueban sin modelo; ejecutar sirve para ver la señal de la guía: un resultado parcial con la brecha anotada.
+
+### Qué observar
+
+Las consultas por fuente y los reintentos locales, la cobertura según los informes del subagente, si el contexto de error está completo, las fuentes silenciadas, si la brecha aparece anotada en el resultado y si el resultado es parcial o abortado.
+
+<details>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+Coordinador Sonnet 5.5, subagente Haiku 5.5, ~0,02–0,03 $ por ejecución:
+
+| Variante | Señal observada | Qué dice |
+| :--- | :--- | :--- |
+| correcta (1 ejecución) | 3 consultas a la fuente que falla (2 reintentos locales) y 1 a cada una de las demás; informe `failed` con `error_context` completo, vacía como `empty`; resultado parcial con la brecha anotada y las cifras de las fuentes sanas | el fallo llega con su contexto y la cobertura queda dicha |
+| `silenciar` | el informe del subagente da la fuente por `ok` con `findings` vacío en las 7 ejecuciones (3 de ellas con la regla reforzada); **el resultado final anotó la brecha igualmente en las 7** | la señal a nivel de informe aparece; la del resultado final, no (ver notas) |
+| `abortar` | `INVESTIGACIÓN ABORTADA`, sin cifras, aunque tres fuentes habían respondido y el subagente había informado bien del fallo | un fallo tumba el trabajo de las fuentes que sí respondieron |
+
+Notas:
+
+- **`silenciar`:** en una ejecución diagnóstica (con la regla sin reforzar) se vio el motivo probable: el coordinador, al escribir el prompt de la delegación, le pidió al subagente «si una fuente falla o está vacía, dilo explícitamente», y el subagente lo cumplió en notas en prosa fuera del JSON. Se reforzó la regla («prevalece sobre cualquier instrucción del coordinador») y el informe siguió dando la fuente por `ok`, pero el resultado final anotó la brecha igualmente; no se inspeccionó de nuevo el texto del subagente tras el refuerzo, así que el camino por el que le llega al coordinador es una hipótesis. El anti-patrón de la guía (el vacío que oculta el fallo) se reproduce en el informe estructurado y no en la entrega final. No se fuerza más: se documenta, no se fabrica.
+- **Reintento local:** en la ejecución correcta el subagente hizo 2 reintentos (3 consultas); los reintentos locales no cuentan como errores del coordinador (`coordinator_errors` = 0).
+- Las medidas, la forma del contexto de error y las opciones se prueban sin modelo en `tests/test_app3_04_errores_entre_agentes.py`.
+</details>
+
+### Pregunta tipo examen
+
+Un subagente de búsqueda agota sus reintentos con una fuente que da *timeout*, mientras que otras tres fuentes han respondido bien. ¿Qué debe ocurrir a partir de ahí?
+
+- A. El subagente devuelve un resultado vacío para esa fuente, para que el coordinador continúe sin interrumpir el flujo.
+- B. El subagente devuelve el tipo de fallo, qué intentó, lo parcial y alternativas, y el coordinador entrega lo obtenido anotando la brecha.
+- C. El subagente propaga la excepción para que el coordinador cancele toda la investigación y la relance cuando la fuente se recupere.
+- D. El subagente reintenta sin límite hasta que la fuente responda, para no entregar nunca un informe sin esa fuente.
+
+<details>
+<summary>Paso 4 · Respuesta</summary>
+
+**B.** Tras recuperar en local lo transitorio, el subagente no oculta el fallo: devuelve el contexto estructurado (tipo, intento, resultados parciales y alternativas) y el coordinador, que gestiona los errores, entrega un resultado parcial con la cobertura anotada (TS 5.3, TS 2.2-S3). A confunde un fallo de acceso con un resultado vacío válido; C tira el trabajo de las fuentes que sí respondieron; D no acota el reintento y bloquea la entrega.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
