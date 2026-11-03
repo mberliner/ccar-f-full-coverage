@@ -97,12 +97,21 @@ ANTI_VARIANTS = ["por_orden"]
 # Salida corta a propósito: solo el albarán largo (40 líneas) no cabe, y esa respuesta truncada es el fallido
 # que se recupera troceando. Con un valor holgado no habría nada que reenviar.
 BATCH_MAX_TOKENS = 600
-CHUNK_LINES = 10  # líneas de artículo por trozo al partir un documento largo
-RECHUNK_LINES = CHUNK_LINES // 2  # si un trozo también se trunca, el documento se vuelve a partir en trozos de la mitad
+CHUNK_LINES = 10  # líneas de artículo por trozo al partir un documento largo por primera vez
+# Si un trozo vuelve a truncarse, el documento se parte en trozos de la mitad, y así hasta una línea por trozo.
 SAMPLE_SIZE = 3  # documentos de la muestra síncrona previa
+# Acierto mínimo de la muestra frente a las etiquetas (campos correctos / campos comprobados). Por debajo, el lote
+# no se lanza (salvo `--sin-muestra`): hay que afinar el prompt o el esquema antes de pagar el volumen.
+SAMPLE_MIN_ACCURACY = 0.85
+ACCURACY_FIELDS = ["doc_type", "vendor", "document_number", "issue_date", "po_number", "currency", "stated_total", "line_items"]
+# Qué cubre el tope `--budget`: es POR INVOCACIÓN. Con `--enviar` suma la muestra síncrona y la estimación del lote
+# (que no se puede cortar a mitad). Con `--batch-id --reenviar`, solo la estimación del reenvío: el lote que se lee
+# ya se pagó en otra invocación y no se vuelve a contar.
+BUDGET_SCOPE = "por invocación"
 BATCH_WINDOW_HOURS = 24  # un lote puede tardar hasta 24 h y no tiene SLA de latencia
 ITEM_LINE = re.compile(r"^\d+ x ")
-CHUNK_SUFFIX = re.compile(r"--c(\d+)$")
+# `<doc>--s<líneas>-c<n>`: el tamaño del trozo viaja en el id, para saber cuánto partir si vuelve a truncarse.
+CHUNK_SUFFIX = re.compile(r"--s(\d+)-c(\d+)$")
 
 # --- Construcción del lote (4.5) -----------------------------------------------------------------------
 
@@ -170,14 +179,27 @@ def mismatched(paired: dict[str, Item], labels: dict) -> list[str]:
     """Documentos cuyo resultado emparejado trae un número de documento distinto del suyo.
 
     Solo cuenta los que tienen número en la etiqueta: si no lo tienen y el modelo escribe uno, es un invento
-    (se mide en 07), no un cruce de documentos.
+    (se mide en 07), no un cruce de documentos. Un resultado sin datos (truncado o fallido) tampoco es «datos
+    de otro documento»: no trae ninguno.
     """
     return [
         doc_id
         for doc_id, item in paired.items()
-        if labels[doc_id]["fields"]["document_number"] is not None
+        if item.status == "ok"
+        and labels[doc_id]["fields"]["document_number"] is not None
         and (item.data or {}).get("document_number") != labels[doc_id]["fields"]["document_number"]
     ]
+
+
+def numbered(paired: dict[str, Item], labels: dict) -> int:
+    """Documentos emparejados con número en la etiqueta: el denominador del cruce."""
+    return sum(labels[doc_id]["fields"]["document_number"] is not None for doc_id in paired)
+
+
+def mismatch_summary(paired: dict[str, Item], labels: dict) -> str:
+    """«ninguno (de 11)» o «['DC-01', …] (2 de 11)»: cuántos con los datos de otro, sobre los que tienen número."""
+    mixed, total = mismatched(paired, labels), numbered(paired, labels)
+    return f"{mixed} ({len(mixed)} de {total})" if mixed else f"ninguno (de {total})"
 
 
 # --- Reenvío de los fallidos y troceo (4.5) ----------------------------------------------------------------
@@ -193,8 +215,14 @@ def chunk_document(text: str, max_lines: int = CHUNK_LINES) -> list[str]:
     return ["\n".join(header + items[start : start + max_lines]) + "\n" for start in range(0, len(items), max_lines)]
 
 
-def chunk_ids(base: str, count: int) -> list[str]:
-    return [f"{base}--c{k}" for k in range(1, count + 1)]
+def chunk_ids(base: str, count: int, size: int) -> list[str]:
+    return [f"{base}--s{size}-c{k}" for k in range(1, count + 1)]
+
+
+def parse_chunk_id(custom_id: str) -> tuple[str, int, int] | None:
+    """(documento, líneas por trozo, número de trozo) de un id de trozo, o None si es un documento entero."""
+    match = CHUNK_SUFFIX.search(custom_id)
+    return (base_id(custom_id), int(match.group(1)), int(match.group(2))) if match else None
 
 
 def base_id(custom_id: str) -> str:
@@ -202,45 +230,98 @@ def base_id(custom_id: str) -> str:
     return CHUNK_SUFFIX.sub("", custom_id)
 
 
-def build_resend(items: list[Item], docs: dict[str, str], *, model: str) -> list[dict]:
-    """Peticiones de reenvío: el truncado, partido en trozos; los fallos pasajeros, el documento entero; el 400, no.
+def item_count(text: str) -> int:
+    return sum(bool(ITEM_LINE.match(line)) for line in text.splitlines())
 
-    Un `invalid_request_error` no mejora reenviándolo igual, así que no se repite.
+
+def next_chunk_size(current: int) -> int | None:
+    """Trozo más fino tras un truncado: la mitad, hasta una línea. None si ya era de una línea (no se puede partir más)."""
+    return current // 2 if current > 1 else None
+
+
+def resend_plan(items: list[Item], docs: dict[str, str]) -> tuple[dict[str, str], list[str]]:
+    """Qué reenviar (`custom_id` → texto) y qué ids no tienen salida (un trozo de una línea que aun así se trunca).
+
+    - Un truncado se parte (o se parte más fino): el documento entero se re-trocea con la mitad de líneas por trozo.
+    - Un trozo que falla sin estar truncado (`invalid`, `errored`, `expired`) se reenvía con SU texto, no con el
+      documento entero: así no se duplican líneas al unir.
+    - Si el mismo documento tiene un trozo truncado y otro que falló de otra forma, el re-troceo cubre los dos y el
+      otro no se reenvía aparte. El orden de salida es el de los documentos y sus trozos, no el de llegada: el
+      resultado no depende de en qué orden devolvió la API los resultados.
+    - Un `invalid_request_error` no mejora reenviándolo igual: no se repite.
     """
-    pending: dict[str, str] = {}
+    by_doc: dict[str, list[Item]] = {}
     for item in failed_items(items):
-        if item.status == "errored" and item.error_type == "invalid_request_error":
+        if not (item.status == "errored" and item.error_type == "invalid_request_error"):
+            by_doc.setdefault(base_id(item.custom_id), []).append(item)
+    pending: dict[str, str] = {}
+    stuck: list[str] = []
+    for base in docs:
+        group = by_doc.get(base)
+        if not group:
             continue
-        base = base_id(item.custom_id)
-        if item.status == "truncated":
-            # Si lo truncado ya era un trozo, el documento entero se re-trocea con trozos más pequeños (se vio
-            # un trozo de 10 líneas truncado otra vez); los identificadores se reutilizan dentro del lote nuevo.
-            size = RECHUNK_LINES if CHUNK_SUFFIX.search(item.custom_id) else CHUNK_LINES
-            chunks = chunk_document(docs[base], size)
-            pending.update(zip(chunk_ids(base, len(chunks)), chunks))
-        else:
-            pending[item.custom_id] = docs[base]
-    return build_batch_requests(pending, model=model)
+        truncated = [item for item in group if item.status == "truncated"]
+        if truncated:
+            lines = item_count(docs[base])
+            candidates = []
+            for item in truncated:
+                parsed = parse_chunk_id(item.custom_id)
+                size = CHUNK_LINES if parsed is None else next_chunk_size(parsed[1])
+                if size is None or lines <= 1:
+                    stuck.append(item.custom_id)
+                else:
+                    candidates.append(min(size, lines - 1))  # un documento corto se parte aunque tenga menos de CHUNK_LINES líneas
+            if candidates:
+                size = min(candidates)
+                chunks = chunk_document(docs[base], size)
+                pending.update(zip(chunk_ids(base, len(chunks), size), chunks))
+            continue
+        for item in sorted(group, key=lambda i: (parse_chunk_id(i.custom_id) or (base, 0, 0))[2]):
+            parsed = parse_chunk_id(item.custom_id)
+            chunks = chunk_document(docs[base], parsed[1]) if parsed else [docs[base]]
+            pending[item.custom_id] = chunks[parsed[2] - 1] if parsed and parsed[2] <= len(chunks) else docs[base]
+    return pending, sorted(stuck)
+
+
+def build_resend(items: list[Item], docs: dict[str, str], *, model: str) -> list[dict]:
+    """Peticiones de reenvío de los fallidos (ver `resend_plan`)."""
+    return build_batch_requests(resend_plan(items, docs)[0], model=model)
+
+
+def stuck_ids(items: list[Item], docs: dict[str, str]) -> list[str]:
+    """Ids que no se pueden reenviar mejor: ya eran de una línea (o el documento no tiene líneas por las que partir)."""
+    return resend_plan(items, docs)[1]
+
+
+def _chunk_groups(items: list[Item]) -> dict[str, list[tuple[int, int, Item]]]:
+    groups: dict[str, list[tuple[int, int, Item]]] = {}
+    for item in items:
+        parsed = parse_chunk_id(item.custom_id)
+        if parsed:
+            groups.setdefault(parsed[0], []).append((parsed[1], parsed[2], item))
+    return groups
 
 
 def merge_chunks(items: list[Item]) -> dict[str, dict]:
     """Une los resultados de los trozos de cada documento (cabecera del primero, líneas de todos).
 
-    Un documento con algún trozo fallido no se une: sigue pendiente.
+    Solo une un documento con todos sus trozos, del mismo tamaño y numerados sin huecos, y todos correctos; el
+    resto sigue pendiente. Ordena por número de trozo, así que no depende del orden de llegada.
     """
-    groups: dict[str, list[tuple[int, Item]]] = {}
-    for item in items:
-        match = CHUNK_SUFFIX.search(item.custom_id)
-        if match:
-            groups.setdefault(base_id(item.custom_id), []).append((int(match.group(1)), item))
     merged = {}
-    for base, parts in groups.items():
-        parts.sort(key=lambda part: part[0])
-        if any(item.status != "ok" for _, item in parts):
+    for base, parts in _chunk_groups(items).items():
+        parts.sort(key=lambda part: part[1])
+        if len({size for size, _, _ in parts}) != 1 or [k for _, k, _ in parts] != list(range(1, len(parts) + 1)):
             continue
-        first = parts[0][1].data
-        merged[base] = {**first, "line_items": [line for _, item in parts for line in item.data.get("line_items", [])]}
+        if any(item.status != "ok" for _, _, item in parts):
+            continue
+        merged[base] = {**parts[0][2].data, "line_items": [line for _, _, item in parts for line in item.data.get("line_items", [])]}
     return merged
+
+
+def unmerged_documents(items: list[Item]) -> list[str]:
+    """Documentos con trozos en estos resultados que no se han podido unir."""
+    return sorted(set(_chunk_groups(items)) - set(merge_chunks(items)))
 
 
 # --- Ventana frente a SLA (4.5) -------------------------------------------------------------------------------
@@ -303,9 +384,46 @@ def sample_ids(docs: dict[str, str], count: int = SAMPLE_SIZE) -> list[str]:
     return [doc_id for doc_id, text in docs.items() if len(chunk_document(text)) == 1][:count]
 
 
-def preview_passes(datas: list[dict], schema: dict) -> bool:
-    """La muestra sirve si no está vacía y toda extracción cumple el esquema."""
-    return bool(datas) and all(not ext.conforms(data, schema) for data in datas)
+def field_accuracy(extractions: dict[str, dict], labels: dict, schema: dict) -> dict[str, tuple[int, int]]:
+    """(correctos, comprobados) por campo, comparando cada extracción con su etiqueta.
+
+    Un campo cuenta como correcto si el valor coincide con la etiqueta; uno que la etiqueta dice que no está
+    y el modelo rellena, o uno que sale vacío teniendo valor, cuenta como fallo.
+    """
+    counts = {name: [0, 0] for name in ACCURACY_FIELDS}
+    for doc_id, data in extractions.items():
+        score = ext.score_extraction(data, labels[doc_id], schema)
+        wrong = {*score.wrong, *score.missing, *score.invented}
+        for name in labels[doc_id]["fields"]:
+            counts[name][1] += 1
+            counts[name][0] += name not in wrong
+        counts["doc_type"][1] += 1
+        counts["doc_type"][0] += score.type_ok
+        counts["line_items"][1] += 1
+        counts["line_items"][0] += score.lines_ok
+    return {name: (right, total) for name, (right, total) in counts.items()}
+
+
+def overall_accuracy(accuracy: dict[str, tuple[int, int]]) -> float:
+    total = sum(t for _, t in accuracy.values())
+    return sum(r for r, _ in accuracy.values()) / total if total else 0.0
+
+
+def preview_passes(extractions: dict[str, dict], labels: dict, schema: dict, min_accuracy: float = SAMPLE_MIN_ACCURACY) -> bool:
+    """La muestra sirve si no está vacía, toda extracción cumple el esquema y el acierto llega al umbral."""
+    if not extractions or any(ext.conforms(data, schema) for data in extractions.values()):
+        return False
+    return overall_accuracy(field_accuracy(extractions, labels, schema)) >= min_accuracy
+
+
+def remaining_budget(budget: float, spent: float) -> float:
+    """Lo que queda del tope de esta invocación."""
+    return max(0.0, budget - spent)
+
+
+def fits_budget(spent: float, estimate: float, budget: float) -> bool:
+    """¿Cabe la estimación de un lote en lo que queda del tope, contando lo ya gastado en esta invocación?"""
+    return spent + estimate <= budget
 
 
 def batch_cost(model: str, usages: list[Any]) -> float:
@@ -354,33 +472,40 @@ def frequency_note(sla: float | None) -> str:
 
 
 def run_preview(client: Any, model: str, guard: CostGuard, docs: dict[str, str]) -> bool:
-    """Muestra síncrona con los mismos parámetros que el lote, antes de gastar en él."""
+    """Muestra síncrona con los mismos parámetros que el lote: forma y acierto frente a las etiquetas, antes de gastar en el lote."""
     schema = ext.build_tool("correcta")["input_schema"]
-    datas = []
+    extractions = {}
     for request in build_batch_requests({i: docs[i] for i in sample_ids(docs)}, model=model):
         response = client.messages.create(**request["params"])
         guard.add(response.usage)
         found = ext.first_tool_use(response)
-        datas.append(found[1] if found else {})
+        extractions[request["custom_id"]] = found[1] if found else {}
         print(f"  muestra {request['custom_id']}: {'forma válida' if found and not ext.conforms(found[1], schema) else 'FORMA INVÁLIDA'}")
-    return preview_passes(datas, schema)
+    accuracy = field_accuracy(extractions, ext.LABELS, schema)
+    print("  acierto por campo: " + " · ".join(f"{name} {right}/{total}" for name, (right, total) in accuracy.items()))
+    overall = overall_accuracy(accuracy)
+    print(f"[muestra] acierto {overall:.0%} (umbral {SAMPLE_MIN_ACCURACY:.0%}): los campos con menos acierto son los que hay que afinar en el prompt antes del lote")
+    return preview_passes(extractions, ext.LABELS, schema)
 
 
 def run_send(client: Any, model: str, budget: float, args: Any) -> int:
     docs = ext.DOCS
     requests = build_batch_requests(docs, model=model)
     estimate = estimate_batch_cost(requests, model)
-    print(f"[estimación] cota superior del lote ${estimate:.4f} (con el 50 %) · tope ${budget}")
+    print(f"[estimación] cota superior del lote ${estimate:.4f} (con el 50 %) · tope ${budget} ({BUDGET_SCOPE}: muestra síncrona + estimación del lote)")
     if estimate > budget:
         print("[corte] la estimación supera el tope: el lote no se envía")
         return 1
+    guard = CostGuard(model, budget)
     if not args.sin_muestra:
-        guard = CostGuard(model, budget)
         print(f"[muestra síncrona] {SAMPLE_SIZE} documentos antes del lote")
         if not run_preview(client, model, guard, docs):
-            print("[corte] la muestra no cumple el esquema: no se lanza el lote")
+            print(f"[corte] la muestra no cumple el esquema o no llega al {SAMPLE_MIN_ACCURACY:.0%} de acierto: no se lanza el lote (--sin-muestra lo salta)")
             return 1
         print(f"[muestra] coste síncrono ${guard.spent:.4f}")
+        if not fits_budget(guard.spent, estimate, budget):
+            print(f"[corte] la muestra (${guard.spent:.4f}) más la estimación del lote (${estimate:.4f}) superan el tope ${budget}: el lote no se envía")
+            return 1
     batch = client.messages.batches.create(requests=requests)
     print(f"[lote] id={batch.id} estado={batch.processing_status} peticiones={len(requests)}")
     print(f"[siguiente] copia el id y léelo más tarde: uv run python app3_sistema_multiagente/09_batches.py --batch-id {batch.id}")
@@ -420,30 +545,35 @@ def run_read(client: Any, model: str, budget: float, args: Any) -> int:
             print("[aviso] --anti por_orden necesita el lote completo de documentos; se usa el emparejado por custom_id")
         else:
             paired = pair_results(list(ext.DOCS), items, by="order")
-            print(f"[anti por orden] documentos con los datos de otro: {mismatched(paired, ext.LABELS)}")
+            print(f"[anti por orden] documentos con los datos de otro: {mismatch_summary(paired, ext.LABELS)}")
     paired = {i: item for i, item in pair_results(list(ext.DOCS), items, by="custom_id").items() if i in ext.LABELS}
-    print(f"[por custom_id] documentos con los datos de otro: {mismatched(paired, ext.LABELS) or 'ninguno'}")
+    print(f"[por custom_id] documentos con los datos de otro: {mismatch_summary(paired, ext.LABELS)}")
 
     schema = ext.build_tool("correcta")["input_schema"]
     for doc_id, data in merge_chunks(items).items():
         score = ext.score_extraction(data, ext.LABELS[doc_id], schema)
         print(f"[trozos unidos] {doc_id}: {len(data['line_items'])} líneas · líneas correctas {score.lines_ok} · forma válida {score.syntax_ok}")
+    for doc_id in unmerged_documents(items):
+        print(f"[trozos sin unir] {doc_id}: faltan trozos o alguno falló; se unen cuando todos estén en un mismo lote")
 
     usages = [item.usage for item in items if item.usage is not None]
     real = batch_cost(model, usages)
     print(f"[coste] lote con el 50 %: ${real:.4f} · el mismo trabajo síncrono: ${real * 2:.4f}")
+    # El lote que se lee ya se pagó en otra invocación: no se suma al tope de esta, que solo cubre lo que esta
+    # invocación vaya a gastar, es decir, la estimación del reenvío.
     guard = CostGuard(model, budget)
-    for usage in usages:
-        guard.add(usage, batch=True)
 
     if args.reenviar:
+        for stuck in stuck_ids(items, ext.DOCS):
+            print(f"[sin salida] {stuck}: no se puede partir más; revisa el documento o sube BATCH_MAX_TOKENS")
         requests = build_resend(items, ext.DOCS, model=model)
         if not requests:
             print("[reenvío] no hay nada que reenviar")
             return 0
         estimate = estimate_batch_cost(requests, model)
-        if estimate > budget:
-            print(f"[corte] la estimación del reenvío ${estimate:.4f} supera el tope")
+        left = remaining_budget(budget, guard.spent)
+        if not fits_budget(guard.spent, estimate, budget):
+            print(f"[corte] la estimación del reenvío ${estimate:.4f} supera lo que queda del tope de esta invocación (${left:.4f} de ${budget}; el lote leído ya se pagó antes)")
             return 1
         new = client.messages.batches.create(requests=requests)
         print(f"[reenvío] {len(requests)} peticiones {[r['custom_id'] for r in requests]}")

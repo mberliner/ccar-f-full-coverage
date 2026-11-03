@@ -564,9 +564,13 @@ Opciones del módulo (cada una es un paso del flujo):
 
 - **`--ventanas`:** sin modelo. Reparte seis trabajos de ejemplo entre tres grupos según su plazo: «cabe en batch», «cabe en batch, sin margen para reenviar fallidos» y «tiene que ir síncrono». Para los que caben, dice además cada cuántas horas hay que enviar un lote.
   - **El criterio:** cuenta todo lo que puede esperar un documento hasta tener su resultado, más un margen de 2 h elegido en este módulo (la guía no habla de margen). La fórmula está en el Paso 3: intenta deducirla antes.
-- **`--enviar`:** estima una cota superior del coste, hace una **muestra síncrona** de tres documentos con los mismos parámetros, y solo si cumplen el esquema crea el lote. Imprime su identificador. `--sin-muestra` salta la muestra.
-- **`--batch-id <id>`:** consulta el estado del lote y, si ha terminado, lee los resultados: orden de llegada, tipo de cada resultado, emparejado por `custom_id` y coste con el descuento. `--esperar <s>` espera hasta ese número de segundos. `--reenviar` crea un lote nuevo solo con los fallidos (los truncados, partidos en trozos).
-- **`--anti por_orden`** (con `--batch-id`): empareja los resultados por posición en vez de por `custom_id`.
+- **`--enviar`:** estima una cota superior del coste, hace una **muestra síncrona** de tres documentos con los mismos parámetros y la compara con las etiquetas (acierto por campo, para afinar el prompt antes del lote). Si la forma no cumple el esquema o el acierto queda por debajo del umbral (`SAMPLE_MIN_ACCURACY`, 85 %, visible en el código), no se crea el lote. Imprime su identificador. `--sin-muestra` salta la muestra.
+- **`--batch-id <id>`:** consulta el estado del lote y, si ha terminado, lee los resultados: orden de llegada, tipo de cada resultado, emparejado por `custom_id` y coste con el descuento. `--esperar <s>` espera hasta ese número de segundos. `--reenviar` crea un lote nuevo solo con los fallidos:
+  - un **truncado** se parte en trozos (de 10 líneas la primera vez) y, si un trozo vuelve a truncarse, el documento se re-trocea a la mitad, hasta una línea por trozo; el id de cada trozo lleva su tamaño (`DC-12--s10-c3`);
+  - un trozo que falla **sin truncarse** (`invalid`, `errored`, `expired`) se reenvía con su propio texto, no con el documento entero;
+  - si el mismo documento tiene un trozo truncado y otro inválido, el re-troceo cubre los dos; el resultado no depende del orden de llegada.
+- **`--anti por_orden`** (con `--batch-id`): empareja los resultados por posición en vez de por `custom_id`. El recuento es «X de N», con N los documentos que tienen número en la etiqueta; un resultado sin datos (truncado o fallido) no cuenta como datos de otro documento.
+- **El tope `--budget` es por invocación.** Con `--enviar` cubre la muestra síncrona **más** la estimación del lote. Con `--batch-id --reenviar` cubre solo la estimación del reenvío: el lote que se lee ya se pagó en otra invocación y no se resta.
 
 Las peticiones llevan un `max_tokens` corto (600) a propósito, para que el lote tenga algo que reenviar. Qué documento no cabe y cómo llega su resultado se ve en el Paso 3.
 
@@ -583,13 +587,14 @@ Con tus palabras; no hay un número que acertar:
 
 ```bash
 uv run python app3_sistema_multiagente/09_batches.py --ventanas                       # sin modelo
-uv run python app3_sistema_multiagente/09_batches.py --enviar                         # muestra síncrona y lote; copia el id
+uv run python app3_sistema_multiagente/09_batches.py --enviar                         # muestra síncrona (con su acierto) y lote; copia el id
+uv run python app3_sistema_multiagente/09_batches.py --enviar --sin-muestra           # salta la muestra
 uv run python app3_sistema_multiagente/09_batches.py --batch-id <id> --esperar 120    # estado y resultados
 uv run python app3_sistema_multiagente/09_batches.py --batch-id <id> --reenviar       # reenvía los fallidos (troceando)
 uv run python app3_sistema_multiagente/09_batches.py --batch-id <id> --anti por_orden # emparejado por posición
 ```
 
-**Si ejecutas:** la construcción del lote, el emparejado, la clasificación de resultados, el troceo, la ventana frente a SLA y los costes se prueban sin modelo. Ejecutar sirve para ver el orden real de llegada y las respuestas truncadas, que no se pueden deducir leyendo el código. Todo el flujo (muestra, tres lotes y lecturas) costó menos de 0,01 $.
+**Si ejecutas:** la construcción del lote, el emparejado, la clasificación de resultados, el troceo, la ventana frente a SLA y los costes se prueban sin modelo. Ejecutar sirve para ver el orden real de llegada y las respuestas truncadas, que no se pueden deducir leyendo el código. Todo el flujo (muestra, un lote, su reenvío y las lecturas) costó unos 0,0035 $. El tope `--budget` (0,25 $ por defecto) es **por invocación**: con `--enviar` suma la muestra síncrona y la estimación del lote, y con `--batch-id --reenviar` solo la estimación del reenvío (el lote leído se pagó antes y no se cuenta).
 
 ### Qué observar
 
@@ -603,16 +608,17 @@ Haiku 5.5, 12 documentos:
 | Paso | Señal observada | Qué dice |
 | :--- | :--- | :--- |
 | `--ventanas` | 3 trabajos en batch (72 h y los dos sin plazo), 1 en batch **sin margen** (30 h), 2 síncronos (8 h y 0,1 h). Frecuencia: el de 72 h, **cada 46 h** (cada 22 h si se reenvía); el de 30 h, **cada 4 h** y sin reenvío | el plazo tiene que cubrir la espera al siguiente envío además de la ventana; con 30 h sale el ejemplo de la guía, pero no queda tiempo para recuperar un fallo |
-| `--enviar` | estimación (cota superior) 0,0023 $; muestra síncrona de 3 documentos con forma válida (0,0008 $); lote creado con 12 peticiones | la muestra es lo único que se ve antes de gastar en el lote |
-| Lectura | el lote estaba terminado al leerlo (unos minutos como mucho, nunca cerca de las 24 h); **llegaron en otro orden** (`DC-12, DC-09, DC-03, DC-06, …`); 11 `ok` y **1 `truncated`** (`DC-12`) aunque la API los daba todos por `succeeded`; coste 0,0017 $ (0,0033 $ síncrono) | el orden no es el de envío y el fallo está en el `stop_reason` |
-| `--anti por_orden` | con el emparejado por posición, **9 de 12** documentos reciben los datos de otro; por `custom_id`, ninguno | el emparejado por posición solo acierta por casualidad |
-| Reenvío del truncado | 4 trozos de 10 líneas: **3 correctos y 1 truncado otra vez** (`DC-12--c3`); segundo reenvío con trozos de 5 líneas: 8 de 8 correctos y las 40 líneas unidas coinciden con la etiqueta; 0,0008 y 0,0013 $ | un trozo grande también puede truncarse: el documento entero se parte entonces en trozos más pequeños |
+| `--enviar` | estimación (cota superior) 0,0023 $; muestra síncrona de 3 documentos (`DC-01`, `DC-02`, `DC-03`) con forma válida y **acierto 100 %** (24 de 24 campos; umbral 85 %), 0,0008 $; lote creado con 12 peticiones | la muestra es lo único que se ve antes de gastar en el lote, y ahora dice también cuántos campos acierta |
+| Lectura | el lote estaba terminado al leerlo (unos minutos como mucho, nunca cerca de las 24 h); **llegaron en otro orden** (`DC-05, DC-01, DC-11, DC-03, …`); 11 `ok` y **1 `truncated`** (`DC-12`) aunque la API los daba todos por `succeeded`; coste 0,0017 $ (0,0033 $ síncrono) | el orden no es el de envío y el fallo está en el `stop_reason` |
+| `--anti por_orden` | con el emparejado por posición, **11 de 11** documentos con número en la etiqueta reciben los datos de otro (el truncado `DC-12` y `DC-07` no cuentan); por `custom_id`, ninguno (de 11) | el emparejado por posición solo acierta por casualidad |
+| Reenvío del truncado | 4 trozos de 10 líneas (`DC-12--s10-c1` … `c4`), **4 de 4 correctos** y las 40 líneas unidas coinciden con la etiqueta; 0,0008 $. En una medición anterior, con el mismo reenvío, **un trozo de 10 líneas volvió a truncarse** (3 de 4) y el documento re-troceado en trozos de 5 líneas dio 8 de 8 | un trozo grande puede truncarse: el documento entero se parte entonces en trozos más pequeños. Esta vez ningún trozo se truncó, así que **el re-troceo en cadena no se vio en vivo** (sí en los tests, hasta una línea por trozo) |
 
 Notas:
 
 - **La fórmula de `--ventanas`:** un documento que llega justo después de un envío espera un intervalo entero hasta el siguiente. Después, el lote puede tardar la ventana completa, y otra más por cada reenvío. Por eso tiene que cumplirse `intervalo + 24 h × (1 + reenvíos) + margen ≤ plazo`. **El margen de 2 h es una elección de este módulo:** la guía da el resultado (enviar cada 4 h para un SLA de 30 h), pero no el cálculo. Sin margen saldrían 6 h.
 - **La API no marca la respuesta truncada como error:** devuelve `succeeded` con `stop_reason: max_tokens` y un `tool_use` incompleto (en la sonda, sin `line_items`). Quien solo mire el tipo de resultado da por buena una extracción cortada.
-- **El tope de coste de un lote no se puede imponer a mitad:** la Batches API no tiene un corte como `max_budget_usd`. Por eso el módulo estima una cota superior antes de enviar y se niega si supera el tope.
+- **El tope de coste de un lote no se puede imponer a mitad:** la Batches API no tiene un corte como `max_budget_usd`. Por eso el módulo estima una cota superior antes de enviar y se niega si la estimación, sumada a lo ya gastado en esa invocación (la muestra), supera el tope. Al reenviar, el lote leído no cuenta: ya se pagó.
+- **La muestra no garantiza el lote:** acertó 24 de 24 con tres documentos cortos, pero el único fallo del lote (`DC-12`, el albarán largo) no estaba en ella. La muestra detecta fallos de prompt y de esquema, no de tamaño.
 - **Un documento sin número en la etiqueta** (`DC-07`) puede salir con uno inventado; eso no es un cruce de documentos y no cuenta en el emparejado (se mide en el módulo 07).
 - Lo que no depende del modelo se prueba en `tests/test_app3_09_batches.py`; el descuento, en `tests/test_budget.py`.
 </details>
