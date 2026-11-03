@@ -120,7 +120,12 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
   - [x] Cierre (2026-11-01): los `→ roadmap` del Hito T, en el roadmap (§4.1, §4.2, §4.3, §5, §10, §11.8, §12, §13 y §14; la sección D3 queda fuera de la fila T) y reducidos a puntero en `docs/hallazgos.md`; traspaso temporal borrado.
 - [ ] **Asistente narrador** (fuera del Hito T, antes de la entrega 3 o con ella): encargo en `docs/encargo-asistente-narrador.md`.
   - [x] Diseño en plan mode e implementación (2026-11-01). `harness/narrador.py` entrega cada módulo en seis fases (`ficha`, `ejercicio`, `ejecutar`, `contraste`, `pregunta`, `respuesta`), además de `menu` y `setup`. `tests/test_narrador.py` (tests primero) comprueba en los 15 módulos que ninguna fase adelanta los bloques plegados ni la cabecera del script. La skill `/practica-guiada` va sin fork, solo con `USA` de TS 3.2 y sin cambios en `CONCEPTOS.md`. Hay una línea en «Empieza aquí».
-  - [ ] Recorrido en una sesión nueva (`claude -n narrador`): menú, puesta en marcha y un módulo ligero de principio a fin.
+  - [x] Recorrido en una sesión nueva (`claude -n narrador`, 2026-11-03): menú, puesta en marcha y dos módulos ligeros (`app1/05` y `app2/03`). Corregido por el camino, con commit cada uno:
+    - El menú resumido omitía el Modo de cada módulo: la skill exige ahora el Modo en la línea de cada uno.
+    - `UnicodeEncodeError` con `✓` al ejecutar un módulo con la salida redirigida en Windows (cp1252): `harness/__init__.py` pone `stdout` y `stderr` en UTF-8, con `tests/test_consola.py`. Ya no hace falta conocer `PYTHONUTF8`.
+    - `appN/NN` y «mesa» no se entendían: leyenda en el menú, entradas «App», «Módulo (`appN/NN`)» y «Servidor `mesa`» en el glosario y regla 7 de la skill (ningún término propio sin explicar). Comprobado en `app1/05` y `app2/03`: la explicación es clara.
+    - El narrador probó `harness.narrador ficha …` (las fases no son subcomandos): la skill da ahora el comando exacto `fase <módulo> <fase>`.
+    - Sin comprobar: `app3`, el módulo de ejecución obligatoria narrado y el paso 5 (anotar en `FALLOS.md`) de punta a punta.
   - [ ] Prueba con una persona, en modo narrado (`docs/prompts-hito-t/paso8-prueba-usuario.md`).
   - [ ] Revisión por una instancia independiente.
 - [ ] Entrega 3 · D4 y D5 (`S-2`)
