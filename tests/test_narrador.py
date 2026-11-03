@@ -101,7 +101,7 @@ def delivered():
 
 def test_route_lists_the_delivered_modules():
     ids = [module.id for module in delivered()]
-    assert len(ids) == 16
+    assert len(ids) == 17
     assert ids[0] == "app1/01" and "app2/07" in ids and "app3/03" in ids and "app3/07" in ids
     assert all(module.script.is_file() for module in delivered())
 

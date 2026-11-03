@@ -15,7 +15,8 @@ Cada módulo se hace en 5 pasos: orientarte con su ficha, predecir, ejecutar o n
 | [`03_tools_entre_roles.py`](03_tools_entre_roles.py) | TS 2.3-K2, K3, S1, S2, S3 | 2 |
 | `04_errores_entre_agentes.py` … `06_contexto_largo.py` | D1, D2 y D5 | 3 |
 | [`07_extraccion_schema.py`](07_extraccion_schema.py) | TS 4.2-K4, S4, S5 · TS 4.3-K1…K4, S1…S6 | 3 |
-| `08_validacion_reintento.py` … `12_revision_independiente.py` | D3, D4 y D5 | 3 |
+| [`08_validacion_reintento.py`](08_validacion_reintento.py) | TS 4.4-K1…K4, S1…S4 | 3 |
+| `09_batches.py` … `12_revision_independiente.py` | D3, D4 y D5 | 3 |
 
 ---
 
@@ -422,6 +423,101 @@ Un proceso extrae el número de pedido, la fecha y el total de miles de facturas
 <summary>Paso 4 · Respuesta</summary>
 
 **B.** Un campo obligatorio obliga al modelo a producir algo aunque el documento no lo traiga (TS 4.3-K2); la forma de decir «puede no estar» es el campo opcional y *nullable* (TS 4.3-S1, S2). A pide por prosa lo que el esquema contradice; C llega tarde (un valor inventado con el formato correcto pasa) y deja la causa; D renuncia al esquema, que es lo que garantiza la forma (TS 4.3-K1).
+</details>
+
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
+---
+
+## 08 · Validación y reintento con error concreto
+
+<!-- BORRADOR de Sonnet 5.5 (tanda A de la entrega 3): las predicciones y la pregunta tipo examen las reescribe Opus 5.5 (paso A4). Cifras medidas: ya definitivas. -->
+
+> **Qué vas a hacer:** Validar sin modelo las extracciones de 12 documentos y reintentar las que fallan, con el error concreto, con uno genérico o insistiendo cuando el dato no existe.
+>
+> **Necesitas antes:** El [módulo 07](#07--extracción-estructurada-con-schema), cuya extracción se valida aquí.
+>
+> **Modo:** Ejecución obligatoria (hay que ejecutarlo: su lección es lo que hace el modelo tras un reintento, y leer el código no lo muestra).
+
+### Antes de empezar
+
+Los términos comunes (Messages API, presupuesto, `tool_choice`) están en el [glosario](../docs/glosario.md). Este módulo reutiliza del [módulo 07](#07--extracción-estructurada-con-schema) la tool `extract_metadata`, los 12 documentos y la puntuación contra etiquetas, y usa la Messages API (necesita una API key).
+
+- **El sistema:** por cada documento, una extracción, una validación con reglas de código (sin modelo) y, si falla, un reintento. Las reglas: el tipo está en el `enum`, la fecha es ISO, una factura cita su número de pedido (`PO-nnnn`) y el total que declara el documento coincide con la suma de sus líneas. El esquema de la tool no dice cómo se escribe una fecha (a propósito: si lo dijera, no habría errores que reintentar).
+- **Qué modelo:** el rol `enforcement` (Haiku 4.5). Con Haiku 5.5 las fechas salen siempre bien y no hay nada que reintentar; `--rol-modelo agent` lo comprueba.
+- **Términos propios:**
+  - **Reintento:** enviar de nuevo al modelo su propia llamada fallida, con el error devuelto como resultado de la tool (`is_error`), y pedirle otra extracción.
+  - **Error concreto:** el mensaje del reintento nombra el campo, el valor que devolvió y la regla que incumple. Un error **genérico** solo dice «Inténtalo de nuevo».
+  - **`detected_pattern`:** la causa de un fallo (`date_format`, `missing_required`, `total_mismatch`…). Se anota en cada fallo para agrupar las causas.
+  - **`conflict_detected`:** el total calculado no coincide con el declarado y, tras un reintento, sigue sin coincidir: el documento mismo no cuadra.
+  - **Dato ausente en la fuente:** que el documento no contiene lo que la regla exige (una factura sin número de pedido). El código lo comprueba con una búsqueda en el texto, sin modelo.
+  - **Efecto de un reintento** (solo para medir; el bucle no ve las etiquetas): *corregido* si el fallo desaparece y el valor coincide con la etiqueta, *persiste* si el fallo sigue, *inventado* si desaparece pero el valor no es el de la etiqueta (o la etiqueta dice que no existe).
+
+### El ejercicio
+
+Lo que cambia en el código de cada variante (el esquema, los documentos y el validador son los mismos):
+
+- **Correcta:** el reintento lleva el error concreto. Si la regla exige un dato que no aparece en el documento, no se reintenta y el campo queda marcado. Un total que no cuadra se reintenta una vez y, si sigue sin cuadrar, se marca `conflict_detected`. Hay un tope de 2 reintentos como red de seguridad.
+- **`--anti reintento_generico`:** el mensaje del reintento es «Inténtalo de nuevo.», sin más. Todo lo demás es igual.
+- **`--anti insistir`:** se reintenta con el error concreto también cuando el dato no está en el documento y no se marca nada; el tope sube a 4.
+
+### Predice antes de ejecutar
+
+Con tus palabras; no hay un número que acertar:
+
+1. Una factura no cita número de pedido en ninguna parte. ¿Qué hace la correcta con ella y qué deberías ver en la salida? ¿Qué podría devolver el modelo si se le pide una y otra vez que corrija ese campo, y cómo lo distinguirías de un valor bueno?
+2. Con el mismo fallo de formato de fecha, ¿qué diferencia esperas entre el mensaje concreto y el genérico? ¿De qué depende, en el modelo, que el genérico a veces funcione?
+3. Dos documentos declaran un total que no es la suma de sus líneas. ¿Qué puede hacer un reintento con ese fallo, y qué sería «corregirlo» si el documento mismo está mal?
+4. ¿Qué dos números de la última línea de la salida crees que cambian entre la variante correcta y `insistir`, y cuál de las dos variantes gasta más en reintentos?
+
+### Ejecutar
+
+```bash
+uv run python app3_sistema_multiagente/08_validacion_reintento.py                            # correcta
+uv run python app3_sistema_multiagente/08_validacion_reintento.py --anti reintento_generico  # «inténtalo de nuevo»
+uv run python app3_sistema_multiagente/08_validacion_reintento.py --anti insistir            # reintenta aunque no exista el dato
+uv run python app3_sistema_multiagente/08_validacion_reintento.py --repeat 3                 # cifras más estables
+uv run python app3_sistema_multiagente/08_validacion_reintento.py --rol-modelo agent         # con Haiku 5.5 no hay qué reintentar
+```
+
+**Si ejecutas:** el validador, los mensajes, la decisión de reintento y el bucle (con un modelo simulado) se prueban sin modelo. Ejecutar es obligatorio porque la lección es lo que el modelo hace con el reintento: corregir, repetir el error o inventar. Cada ejecución cuesta unos 0,05–0,07 $ (tope 0,50 $ de `--budget`; con `--repeat 3`, unos 0,15–0,18 $).
+
+### Qué observar
+
+Por documento, los fallos del primer intento agrupados por patrón, los reintentos y el efecto de cada uno; al final, reintentos útiles, inútiles e inventados, marcados sin dato, conflictos y el coste de los reintentos.
+
+<details>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+Haiku 4.5 (rol `enforcement`), 12 documentos, tres repeticiones:
+
+| Variante | Señal observada | Qué dice |
+| :--- | :--- | :--- |
+| correcta | **5–6 fechas mal** en los primeros intentos y 5 reintentos de fecha corregidos en cada repetición; la factura sin pedido se **marca sin reintentar** (0 reintentos, 3 de 3); 1 conflicto marcado en 2 repeticiones; coste de los reintentos ~0,014–0,017 $ | con el error concreto, el reintento corrige lo que el documento sí contiene |
+| `reintento_generico` | 6 fechas mal; **10, 10 y 9 reintentos con solo 2–3 útiles**; 2 conflictos; coste ~0,025–0,028 $ | sin saber qué falló, el modelo repite la misma fecha; el doble de reintentos y de coste para casi el mismo resultado |
+| `insistir` | la factura sin pedido se reintenta 2–3 veces y **acaba con un pedido inventado en las 3 repeticiones**; reintentos «inventaron» 3, 5 y 3; ningún campo marcado | el valor falso pasa el validador (tiene el formato `PO-nnnn`): solo la etiqueta lo delata |
+
+Notas:
+
+- **Un reintento puede empeorar un total:** en la correcta, de los dos documentos con el total mal, el modelo cambió el total declarado para que cuadrara con las líneas (*inventado*) en al menos uno de ellos en las tres repeticiones, y solo en dos de ellas quedó un conflicto marcado. Un total que no cuadra por culpa del documento no se arregla con un reintento: pedírselo invita a falsear el dato. Por eso el conflicto se marca tras un solo reintento y en producción sería mejor no reintentarlo.
+- **Qué mide cada línea:** el validador de formato no distingue un pedido real de uno inventado con la forma correcta. «Inventaron» sale de comparar con la etiqueta, que el bucle no ve.
+- **Con Haiku 5.5** (`--rol-modelo agent`) no hubo fallos de fecha en 36 intentos: no hay nada que reintentar y la señal no aparece; ver `docs/hallazgos.md`.
+- Lo que no depende del modelo se prueba en `tests/test_app3_08_validacion_reintento.py`.
+</details>
+
+### Pregunta tipo examen
+
+Un proceso extrae datos de facturas y valida cada una. Las que fallan se reenvían al modelo. Con el tiempo se ve que muchos reintentos no corrigen nada y que algunas facturas «corregidas» traen un número de pedido que no existe. ¿Qué cambio resuelve la causa?
+
+- A. Subir el número máximo de reintentos de dos a cinco, para que el modelo tenga más oportunidades de acertar.
+- B. Reenviar el fallo con el campo, el valor devuelto y la regla incumplida, y no reintentar cuando el documento no contiene el dato, marcándolo.
+- C. Añadir al reintento la frase «no inventes ningún dato» y mantener el mismo mensaje genérico de error.
+- D. Pasar las facturas fallidas a un modelo más grande, que acertará más veces sin necesidad de decirle qué falló.
+
+<details>
+<summary>Paso 4 · Respuesta</summary>
+
+**B.** El reintento funciona con el error específico (TS 4.4-K1, S1) y es inútil cuando la información no está en la fuente (TS 4.4-K2, S2): ahí se marca el campo en vez de insistir. A empeora el problema (más oportunidades de inventar); C pide por prosa lo que el flujo debe decidir en código; D cambia de modelo sin atacar la causa (un dato ausente no lo recupera ningún modelo).
 </details>
 
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).

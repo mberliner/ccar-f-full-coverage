@@ -30,7 +30,7 @@ Las apps se ordenan por complejidad creciente, pero se entregan por bloques de d
 
 El avance de cada entrega se registra en `NOTAS.md`.
 
-**Introducidas: 144/240**
+**Introducidas: 152/240**
 
 | Viñeta | Destino | Estado |
 | :--- | :--- | :---: |
@@ -199,14 +199,14 @@ El avance de cada entrega se registra en `NOTAS.md`.
 | TS 4.3-S4 | app3/07_extraccion_schema | ☑ |
 | TS 4.3-S5 | app3/07_extraccion_schema | ☑ |
 | TS 4.3-S6 | app3/07_extraccion_schema | ☑ |
-| TS 4.4-K1 | app3/08_validacion_reintento | ☐ |
-| TS 4.4-K2 | app3/08_validacion_reintento | ☐ |
-| TS 4.4-K3 | app3/08_validacion_reintento | ☐ |
-| TS 4.4-K4 | app3/08_validacion_reintento | ☐ |
-| TS 4.4-S1 | app3/08_validacion_reintento | ☐ |
-| TS 4.4-S2 | app3/08_validacion_reintento | ☐ |
-| TS 4.4-S3 | app3/08_validacion_reintento | ☐ |
-| TS 4.4-S4 | app3/08_validacion_reintento | ☐ |
+| TS 4.4-K1 | app3/08_validacion_reintento | ☑ |
+| TS 4.4-K2 | app3/08_validacion_reintento | ☑ |
+| TS 4.4-K3 | app3/08_validacion_reintento | ☑ |
+| TS 4.4-K4 | app3/08_validacion_reintento | ☑ |
+| TS 4.4-S1 | app3/08_validacion_reintento | ☑ |
+| TS 4.4-S2 | app3/08_validacion_reintento | ☑ |
+| TS 4.4-S3 | app3/08_validacion_reintento | ☑ |
+| TS 4.4-S4 | app3/08_validacion_reintento | ☑ |
 | TS 4.5-K1 | app3/09_batches | ☐ |
 | TS 4.5-K2 | app3/09_batches | ☐ |
 | TS 4.5-K3 | app3/09_batches | ☐ |
