@@ -89,3 +89,21 @@ def test_describe_lines():
         "[modelo] rol=agent valor=claude-haiku-5-5 origen=.env"
     )
     assert describe("presupuesto", valor=0.25, origen="defecto") == "[presupuesto] valor=0.25 origen=defecto"
+
+
+def test_reviewer_role_defaults_to_sonnet_and_is_independent(tmp_path):
+    # app3/11 y app3/12: revisar código pide más que Haiku, y no es el coordinador.
+    assert MODEL_VARS["reviewer"] == "CCARF_MODEL_REVIEWER"
+    assert resolve_model("reviewer", root=tmp_path) == ("claude-sonnet-5-5", "defecto")
+    write_env(tmp_path, "CCARF_MODEL_COORDINATOR=otro\n")
+    assert resolve_model("reviewer", root=tmp_path) == ("claude-sonnet-5-5", "defecto")
+    write_env(tmp_path, "CCARF_MODEL_REVIEWER=revisor-x\n")
+    assert resolve_model("reviewer", root=tmp_path) == ("revisor-x", ".env")
+    assert resolve_model("coordinator", root=tmp_path) == ("claude-sonnet-5-5", "defecto")
+
+
+def test_env_template_lists_the_reviewer_variable():
+    from pathlib import Path
+
+    template = (Path(__file__).resolve().parent.parent / ".env.example").read_text(encoding="utf-8")
+    assert "CCARF_MODEL_REVIEWER=claude-sonnet-5-5" in template

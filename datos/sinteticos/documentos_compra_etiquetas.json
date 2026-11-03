@@ -1,0 +1,482 @@
+{
+  "DC-01": {
+    "calculated_total": 3085.5,
+    "doc_type": "invoice",
+    "doc_type_detail": null,
+    "fields": {
+      "currency": "EUR",
+      "document_number": "F-2026-0412",
+      "issue_date": "2026-09-14",
+      "po_number": "PO-7731",
+      "stated_total": 3085.5,
+      "vendor": "Suministros Ibéricos S.L."
+    },
+    "line_items": [
+      {
+        "description": "Portátil 14\"",
+        "quantity": 3,
+        "unit_price": 899.0
+      },
+      {
+        "description": "Base de conexión USB-C",
+        "quantity": 3,
+        "unit_price": 129.5
+      }
+    ],
+    "total_mismatch": false
+  },
+  "DC-02": {
+    "calculated_total": 665.9,
+    "doc_type": "invoice",
+    "doc_type_detail": null,
+    "fields": {
+      "currency": "EUR",
+      "document_number": "F-2026-0398",
+      "issue_date": "2026-09-03",
+      "po_number": null,
+      "stated_total": 665.9,
+      "vendor": "Tecnoequipos Norte S.A."
+    },
+    "line_items": [
+      {
+        "description": "Monitor 27 pulgadas",
+        "quantity": 2,
+        "unit_price": 310.0
+      },
+      {
+        "description": "Teclado mecánico",
+        "quantity": 1,
+        "unit_price": 45.9
+      }
+    ],
+    "total_mismatch": false
+  },
+  "DC-03": {
+    "calculated_total": null,
+    "doc_type": "delivery_note",
+    "doc_type_detail": null,
+    "fields": {
+      "currency": null,
+      "document_number": "AL-5521",
+      "issue_date": "2026-09-20",
+      "po_number": "PO-7745",
+      "stated_total": null,
+      "vendor": "Distribuciones Levante"
+    },
+    "line_items": [
+      {
+        "description": "Ratón inalámbrico",
+        "quantity": 5,
+        "unit_price": null
+      },
+      {
+        "description": "Alfombrilla ergonómica",
+        "quantity": 5,
+        "unit_price": null
+      },
+      {
+        "description": "Cable HDMI 2 m",
+        "quantity": 2,
+        "unit_price": null
+      }
+    ],
+    "total_mismatch": false
+  },
+  "DC-04": {
+    "calculated_total": null,
+    "doc_type": "delivery_note",
+    "doc_type_detail": null,
+    "fields": {
+      "currency": null,
+      "document_number": "AL-5530",
+      "issue_date": null,
+      "po_number": "PO-7752",
+      "stated_total": null,
+      "vendor": "Papelería y Oficina Costa"
+    },
+    "line_items": [
+      {
+        "description": "Auriculares con micrófono",
+        "quantity": 8,
+        "unit_price": null
+      },
+      {
+        "description": "Webcam HD",
+        "quantity": 4,
+        "unit_price": null
+      }
+    ],
+    "total_mismatch": false
+  },
+  "DC-05": {
+    "calculated_total": 1200.0,
+    "doc_type": "invoice",
+    "doc_type_detail": null,
+    "fields": {
+      "currency": "EUR",
+      "document_number": "F-2026-0431",
+      "issue_date": "2026-09-21",
+      "po_number": "PO-7760",
+      "stated_total": 1250.0,
+      "vendor": "Suministros Ibéricos S.L."
+    },
+    "line_items": [
+      {
+        "description": "Monitor 24\"",
+        "quantity": 4,
+        "unit_price": 210.0
+      },
+      {
+        "description": "Soporte de pared",
+        "quantity": 4,
+        "unit_price": 90.0
+      }
+    ],
+    "total_mismatch": true
+  },
+  "DC-06": {
+    "calculated_total": null,
+    "doc_type": "other",
+    "doc_type_detail": "garantía",
+    "fields": {
+      "currency": null,
+      "document_number": "G-2026-077",
+      "issue_date": "2026-09-12",
+      "po_number": "PO-7731",
+      "stated_total": null,
+      "vendor": "Tecnoequipos Norte S.A."
+    },
+    "line_items": [],
+    "total_mismatch": false
+  },
+  "DC-07": {
+    "calculated_total": null,
+    "doc_type": "unclear",
+    "doc_type_detail": null,
+    "fields": {
+      "currency": null,
+      "document_number": null,
+      "issue_date": null,
+      "po_number": null,
+      "stated_total": null,
+      "vendor": null
+    },
+    "line_items": [],
+    "total_mismatch": false
+  },
+  "DC-08": {
+    "calculated_total": 1250.0,
+    "doc_type": "invoice",
+    "doc_type_detail": null,
+    "fields": {
+      "currency": "USD",
+      "document_number": "F-2026-0440",
+      "issue_date": "2026-09-22",
+      "po_number": "PO-7768",
+      "stated_total": 1250.0,
+      "vendor": "Global Peripherals Ltd."
+    },
+    "line_items": [
+      {
+        "description": "Docking station",
+        "quantity": 2,
+        "unit_price": 425.0
+      },
+      {
+        "description": "Cable bundle",
+        "quantity": 1,
+        "unit_price": 400.0
+      }
+    ],
+    "total_mismatch": false
+  },
+  "DC-09": {
+    "calculated_total": 2810.0,
+    "doc_type": "invoice",
+    "doc_type_detail": null,
+    "fields": {
+      "currency": "EUR",
+      "document_number": "F-2026-0455",
+      "issue_date": "2026-09-28",
+      "po_number": "PO-7790",
+      "stated_total": 2830.0,
+      "vendor": "Servidores del Sur S.L."
+    },
+    "line_items": [
+      {
+        "description": "Servidor torre",
+        "quantity": 1,
+        "unit_price": 2450.0
+      },
+      {
+        "description": "SAI 1500 VA",
+        "quantity": 2,
+        "unit_price": 180.0
+      }
+    ],
+    "total_mismatch": true
+  },
+  "DC-10": {
+    "calculated_total": null,
+    "doc_type": "delivery_note",
+    "doc_type_detail": null,
+    "fields": {
+      "currency": null,
+      "document_number": "AL-5544",
+      "issue_date": "2026-09-15",
+      "po_number": "PO-7790",
+      "stated_total": null,
+      "vendor": "Distribuciones Levante"
+    },
+    "line_items": [
+      {
+        "description": "Dock de portátil",
+        "quantity": 6,
+        "unit_price": null
+      },
+      {
+        "description": "Funda de 14 pulgadas",
+        "quantity": 10,
+        "unit_price": null
+      }
+    ],
+    "total_mismatch": false
+  },
+  "DC-11": {
+    "calculated_total": 1380.0,
+    "doc_type": "other",
+    "doc_type_detail": "presupuesto",
+    "fields": {
+      "currency": "EUR",
+      "document_number": "P-2026-310",
+      "issue_date": null,
+      "po_number": null,
+      "stated_total": null,
+      "vendor": "Servidores del Sur S.L."
+    },
+    "line_items": [
+      {
+        "description": "Armario rack 42U",
+        "quantity": 1,
+        "unit_price": 1380.0
+      }
+    ],
+    "total_mismatch": false
+  },
+  "DC-12": {
+    "calculated_total": null,
+    "doc_type": "delivery_note",
+    "doc_type_detail": null,
+    "fields": {
+      "currency": null,
+      "document_number": "AL-5560",
+      "issue_date": "2026-09-27",
+      "po_number": "PO-7800",
+      "stated_total": null,
+      "vendor": "Almacén Central Peninsular"
+    },
+    "line_items": [
+      {
+        "description": "Cable HDMI 2 m (ref 001)",
+        "quantity": 1,
+        "unit_price": null
+      },
+      {
+        "description": "Adaptador USB-C a HDMI (ref 002)",
+        "quantity": 2,
+        "unit_price": null
+      },
+      {
+        "description": "Ratón inalámbrico (ref 003)",
+        "quantity": 3,
+        "unit_price": null
+      },
+      {
+        "description": "Teclado compacto (ref 004)",
+        "quantity": 4,
+        "unit_price": null
+      },
+      {
+        "description": "Alfombrilla ergonómica (ref 005)",
+        "quantity": 1,
+        "unit_price": null
+      },
+      {
+        "description": "Soporte de portátil (ref 006)",
+        "quantity": 2,
+        "unit_price": null
+      },
+      {
+        "description": "Auriculares con micrófono (ref 007)",
+        "quantity": 3,
+        "unit_price": null
+      },
+      {
+        "description": "Webcam HD (ref 008)",
+        "quantity": 4,
+        "unit_price": null
+      },
+      {
+        "description": "Hub USB 4 puertos (ref 009)",
+        "quantity": 1,
+        "unit_price": null
+      },
+      {
+        "description": "Cargador 65 W (ref 010)",
+        "quantity": 2,
+        "unit_price": null
+      },
+      {
+        "description": "Cable HDMI 2 m (ref 011)",
+        "quantity": 3,
+        "unit_price": null
+      },
+      {
+        "description": "Adaptador USB-C a HDMI (ref 012)",
+        "quantity": 4,
+        "unit_price": null
+      },
+      {
+        "description": "Ratón inalámbrico (ref 013)",
+        "quantity": 1,
+        "unit_price": null
+      },
+      {
+        "description": "Teclado compacto (ref 014)",
+        "quantity": 2,
+        "unit_price": null
+      },
+      {
+        "description": "Alfombrilla ergonómica (ref 015)",
+        "quantity": 3,
+        "unit_price": null
+      },
+      {
+        "description": "Soporte de portátil (ref 016)",
+        "quantity": 4,
+        "unit_price": null
+      },
+      {
+        "description": "Auriculares con micrófono (ref 017)",
+        "quantity": 1,
+        "unit_price": null
+      },
+      {
+        "description": "Webcam HD (ref 018)",
+        "quantity": 2,
+        "unit_price": null
+      },
+      {
+        "description": "Hub USB 4 puertos (ref 019)",
+        "quantity": 3,
+        "unit_price": null
+      },
+      {
+        "description": "Cargador 65 W (ref 020)",
+        "quantity": 4,
+        "unit_price": null
+      },
+      {
+        "description": "Cable HDMI 2 m (ref 021)",
+        "quantity": 1,
+        "unit_price": null
+      },
+      {
+        "description": "Adaptador USB-C a HDMI (ref 022)",
+        "quantity": 2,
+        "unit_price": null
+      },
+      {
+        "description": "Ratón inalámbrico (ref 023)",
+        "quantity": 3,
+        "unit_price": null
+      },
+      {
+        "description": "Teclado compacto (ref 024)",
+        "quantity": 4,
+        "unit_price": null
+      },
+      {
+        "description": "Alfombrilla ergonómica (ref 025)",
+        "quantity": 1,
+        "unit_price": null
+      },
+      {
+        "description": "Soporte de portátil (ref 026)",
+        "quantity": 2,
+        "unit_price": null
+      },
+      {
+        "description": "Auriculares con micrófono (ref 027)",
+        "quantity": 3,
+        "unit_price": null
+      },
+      {
+        "description": "Webcam HD (ref 028)",
+        "quantity": 4,
+        "unit_price": null
+      },
+      {
+        "description": "Hub USB 4 puertos (ref 029)",
+        "quantity": 1,
+        "unit_price": null
+      },
+      {
+        "description": "Cargador 65 W (ref 030)",
+        "quantity": 2,
+        "unit_price": null
+      },
+      {
+        "description": "Cable HDMI 2 m (ref 031)",
+        "quantity": 3,
+        "unit_price": null
+      },
+      {
+        "description": "Adaptador USB-C a HDMI (ref 032)",
+        "quantity": 4,
+        "unit_price": null
+      },
+      {
+        "description": "Ratón inalámbrico (ref 033)",
+        "quantity": 1,
+        "unit_price": null
+      },
+      {
+        "description": "Teclado compacto (ref 034)",
+        "quantity": 2,
+        "unit_price": null
+      },
+      {
+        "description": "Alfombrilla ergonómica (ref 035)",
+        "quantity": 3,
+        "unit_price": null
+      },
+      {
+        "description": "Soporte de portátil (ref 036)",
+        "quantity": 4,
+        "unit_price": null
+      },
+      {
+        "description": "Auriculares con micrófono (ref 037)",
+        "quantity": 1,
+        "unit_price": null
+      },
+      {
+        "description": "Webcam HD (ref 038)",
+        "quantity": 2,
+        "unit_price": null
+      },
+      {
+        "description": "Hub USB 4 puertos (ref 039)",
+        "quantity": 3,
+        "unit_price": null
+      },
+      {
+        "description": "Cargador 65 W (ref 040)",
+        "quantity": 4,
+        "unit_price": null
+      }
+    ],
+    "total_mismatch": false
+  }
+}

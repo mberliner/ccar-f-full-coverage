@@ -50,3 +50,22 @@ def test_guard_accumulates_and_cuts():
 def test_guard_requires_positive_budget():
     with pytest.raises(ValueError):
         CostGuard("claude-haiku-5-5", max_usd=0)
+
+
+def test_batch_halves_the_cost_of_a_request():
+    # Message Batches API: 50 % sobre entrada y salida (también con caché).
+    from harness.budget import BATCH_DISCOUNT
+
+    full = cost_of("claude-haiku-5-5", usage(100_000, 10_000, cache_read=50_000))
+    assert BATCH_DISCOUNT == 0.5
+    assert cost_of("claude-haiku-5-5", usage(100_000, 10_000, cache_read=50_000), batch=True) == pytest.approx(full * 0.5)
+    assert cost_of("claude-sonnet-5-5", usage(1_000_000, 0), batch=True) == pytest.approx(1.00)
+
+
+def test_guard_in_batch_mode_accumulates_the_discounted_cost():
+    guard = CostGuard("claude-haiku-5-5", max_usd=1.0)
+    # 100K de entrada no supera el tramo corto de Haiku 5.5: 0,01 $ a precio normal, 0,005 $ en batch.
+    guard.add(usage(100_000, 0), batch=True)
+    assert guard.spent == pytest.approx(0.005)
+    guard.add(usage(100_000, 0))
+    assert guard.spent == pytest.approx(0.015)

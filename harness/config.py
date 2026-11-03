@@ -31,12 +31,16 @@ MODEL_VARS = {
     # prompt, y Haiku 5.5 no falló en 40 ejecuciones; Haiku 4.5 sí (8 de 10).
     # Cuesta unas diez veces más, pero solo en este módulo.
     "enforcement": "CCARF_MODEL_ENFORCEMENT",
+    # app3/11 y app3/12 (revisión de código): pide más que Haiku, y llamarlo
+    # «coordinator» confundiría. Usa el presupuesto `multiagent`.
+    "reviewer": "CCARF_MODEL_REVIEWER",
 }
 MODEL_DEFAULTS = {
     "agent": "claude-haiku-5-5",
     "coordinator": "claude-sonnet-5-5",
     "subagent": "claude-haiku-5-5",
     "enforcement": "claude-haiku-4-5",
+    "reviewer": "claude-sonnet-5-5",
 }
 
 BUDGET_VARS = {

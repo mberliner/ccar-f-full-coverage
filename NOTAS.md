@@ -131,7 +131,71 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
 - [x] **Alineación con el roadmap origen** (2026-11-03): revisión de coherencia del proyecto con el roadmap. Reparto de viñetas por módulo, perímetro, aislamiento, capa meta y modos coinciden; `pytest` 495 en verde. Llevadas al roadmap las notas `→ roadmap` pendientes de `docs/hallazgos.md` (§3, §4.3, §5–§10 y §14) y reducidas a puntero; queda solo la de *tool search*, a la espera de confirmar el efecto. `app2/07` pasa a figurar en el roadmap como **módulo opcional** (§7): sin viñeta propia, fuera de los 25 y de las entregas. Copia del roadmap previa al cambio fuera del repositorio (el roadmap no está en git).
 - [ ] Entrega 3 · D4 y D5 (`S-2`)
   - [x] Diseño aprobado en `docs/diseno-entrega-3.md` (2026-11-03, Opus 5.5): 109 viñetas en cuatro tandas fusionadas a `main` una a una (A `app3/07`–`09`, B `app3/04`–`06`, C `app3/10`–`12`, D `app2/04` y `app1/07`), modelo mixto (Sonnet 5.5 para código y sondas, Opus 5.5 para textos, revisión y roadmap) y rol nuevo `reviewer`. Roadmap origen actualizado con el rol (§5, §14).
-  - [ ] Tanda A · `app3/07` → `08` → `09` (rama `entrega-3a`)
+  - [ ] Tanda A · `app3/07` → `08` → `09` (rama `entrega-3a`): **A1–A3 hechos con Sonnet 5.5, A4 y A5 con Opus 5.5 (2026-11-03), 158/240. A6a (correcciones de código, Sonnet 5.5) y A6b (pasada final de texto, Opus 5.5) hechos. Pendiente A6c (merge y roadmap). Sin fusionar a `main` ni publicar.** `pytest` 642 en verde, 1 test que se salta y 1 `xfail` esperado; `generar_sinteticos.py --check` limpio.
+    - **A5, revisión independiente** (`claude -p --model opus`, prompt `docs/prompts-entrega-3/a5-revision.md`): 5 hallazgos graves, 7 medios y 9 menores.
+      - **Decisiones de la persona:** 4.4-K3 y S3 (`detected_pattern`) pasan a `app3/11`, porque en una extracción nadie descarta hallazgos (A 27 viñetas y 158/240, C 35). Para 4.3-S3, `07` gana `--parte enriquecimiento`, con la extracción forzada antes de consultar el pedido.
+      - **Arreglado en texto (Opus 5.5):**
+        - El movimiento de viñetas en `CONCEPTOS.md`, la cabecera de `08` y el diseño.
+        - El contexto del README de `08` y `09`, que adelantaba resultados.
+        - La sonda separada de las medidas de los módulos en el README, en `docs/hallazgos.md` y en `app3/CLAUDE.md`.
+        - El margen de 2 h, declarado como elección propia.
+        - Una predicción por valor.
+        - Términos nuevos en el glosario (JSON Schema, `input_schema`, `required`, `max_tokens`, etiqueta y el rol `reviewer`).
+        - El 400 de Sonnet ya no aparece como nota EN PRODUCCIÓN.
+        - En la pregunta de `09`, el vocabulario de la guía ya no delata la opción correcta.
+        - La nota del total cambiado deja de llevar `→ roadmap`, porque la inducía el mensaje de error.
+      - **Para Sonnet (A6a, hecho, ver abajo):** la parte de enriquecimiento, el *few-shot* midiendo campos vacíos (4.2-S5), `08` sin reintentar los totales que no cuadran, el dato que solo está en otro documento (4.4-S2) y la muestra de `09` contra las etiquetas (4.5-S4). Además, cinco errores de lógica (`build_resend`, presupuesto acumulado, `retry_effect`, `mismatched`, re-troceo de un solo nivel) y `stopped_by`.
+    - **A6a, correcciones de código** (Sonnet 5.5, un commit por módulo, tests primero; coste de las ejecuciones con modelo ~1,3 $ en total):
+      - **`07`:**
+        - Nueva `--parte enriquecimiento` (4.3-S3): `extract_metadata` y `lookup_purchase_order` (handler determinista sobre `pedidos_compra.json`, nuevo en el generador). Primer turno forzado y siguientes en `auto`, con el resultado devuelto como `tool_result`; `--anti auto_desde_inicio`. El bucle devuelve los bloques `thinking` de Haiku 5.5 con su firma.
+        - **Sin señal del anti con Haiku 5.5 ni con Haiku 4.5** (3 repeticiones × 12 documentos cada uno): 0/12 consultas antes de extraer y 0 números ajenos al documento, igual que con el primer turno forzado. Se documenta, no se fabrica.
+        - `few_shot` imprime faltantes e inventados. Faltantes: **0** con los dos modelos, con y sin ejemplos. Haiku 5.5: 0 fechas mal; Haiku 4.5: **5, 6 y 6** sin ejemplos y **0** con ellos; inventados 0–1 de 21 y 2 de 21 (`DC-11`).
+      - **`08`:**
+        - Un total que no cuadra se marca `conflict_detected` sin reintento; solo `--anti insistir` lo reintenta, pidiendo que se revise, y entonces el modelo cambia el total (**inventado** en `DC-05` y `DC-09` en las 3 repeticiones).
+        - `DC-07` («Ver adjunto») se marca con otra causa que `DC-02`: `external_reference` frente a `missing_in_source`, por una búsqueda en el texto sin modelo. Para que el validador lo vea, ahora exige número de documento a todo documento.
+        - `retry_effect` gana «falta»; `stopped_by` guarda el motivo que cerró el bucle. Cifras (Haiku 4.5, 3 repeticiones): correcta, 5/5/6 reintentos útiles de 5/5/7 y 0 reintentos de total; genérico, 10–11 reintentos con 1–3 útiles; insistir, **4, 5 y 4 inventaron**.
+      - **`09`:**
+        - `build_resend` reenvía solo el texto del trozo fallido; la unión no depende del orden de llegada. Re-troceo a la mitad hasta una línea; el id de cada trozo lleva su tamaño (`DC-12--s10-c3`).
+        - `mismatched`: los resultados sin datos no cuentan y el recuento es «X de 11» (`por_orden`: **11 de 11**).
+        - Tope por invocación: con `--enviar`, muestra más estimación del lote; con `--reenviar`, solo la estimación del reenvío, sin restar el lote leído.
+        - La muestra compara con las etiquetas (acierto por campo, umbral `SAMPLE_MIN_ACCURACY` = 85 %); aquí 24 de 24. El reenvío salió completo (4 de 4): **el re-troceo en cadena no se vio en vivo**, solo en tests.
+      - **Textos desfasados para A6b (resueltos en A6b, ver abajo):**
+        - Cabeceras `QUÉ DICE LA GUÍA` y `ANTI-PATRÓN` de `07`: sin el enriquecimiento ni la ausencia de señal del anti `auto_desde_inicio`.
+        - Cabeceras de `08`: «el conflicto se marca tras un único reintento» y la inferencia de pedir que se revise (ya solo ocurre con `insistir`); 4.4-S2 sin el caso «remite a otro documento».
+        - Cabeceras de `09`: «la muestra comprueba el esquema, no cuántas acierta» (ya compara con las etiquetas) y el re-troceo de un solo nivel.
+        - README `07`: «Qué vas a hacer», tabla «Las tools del ejercicio» (falta `lookup_purchase_order`), «Predice» (sin enriquecimiento ni campos faltantes), «Qué observar» y la pregunta tipo examen (no cubre 4.3-S3).
+        - README `08`: «Antes de empezar» (reglas del validador: número de documento; `conflict_detected` «tras un reintento»; dato ausente con dos causas; efecto «falta»), la predicción 3 (revisar un total), «Qué observar» y la nota «Por qué Haiku 4.5».
+        - README `09`: definición de troceo, predicción 4 (trozo que vuelve a truncarse), «Qué observar» (acierto por campo, «X de N»).
+        - `docs/diseno-entrega-3.md` (tanda A): viñetas de `08` y `09` (totales, muestra, tope) y `app3/CLAUDE.md` si menciona el tope.
+        - Esta casilla, línea de `few_shot` en «Cambios frente al diseño»: «5–7 de 12» es ahora 5–6.
+    - **A6b, pasada final de texto** (Opus 5.5):
+      - **Cabeceras:** `07` añade el anti `auto_desde_inicio` como hecho de la guía y, como inferencia, que con los dos modelos no hubo consulta antes de extraer (el forzado convierte el orden en regla) y que el *few-shot* corrigió fechas, no vacíos. `08` sustituye «el conflicto se marca tras un único reintento» por la marca directa y añade las dos causas del dato ausente (4.4-S2). `09`: re-troceo a la mitad hasta una línea, reenvío por trozo, muestra contra las etiquetas con umbral y recuento del emparejado sin resultados vacíos.
+      - **README:** `07` con el enriquecimiento en «Qué vas a hacer», `lookup_purchase_order` en la tabla de tools, una predicción nueva (5) y «Qué observar» de `few_shot` y `enriquecimiento`; la fila del anti ya no atribuye el orden al prompt. `08`: regla del número de documento, `conflict_detected` sin «tras un reintento», las dos causas del dato ausente, el efecto «falta» y `parada` en «Qué observar». `09`: troceo con `custom_id` por trozo y «Qué observar» con la muestra, «X de N» y la unión de trozos. Las preguntas tipo examen no cambian: siguen siendo correctas y la de `07` no necesita cubrir 4.3-S3.
+      - **Diseño:** viñetas de `08` (totales sin reintento, causas, `stopped_by`) y `09` (re-troceo, recuento, tope por invocación, muestra con umbral). `app3/CLAUDE.md` no menciona el tope: sin cambios.
+    - **A1, piezas compartidas** (commit `c07281e`, tests primero): `documentos_compra.json` (12 documentos: tabla, prosa y líneas sueltas; 2 tipos fuera del `enum`, 1 ilegible, 2 totales que no cuadran, 1 factura sin pedido y 1 albarán de 40 líneas) y `documentos_compra_etiquetas.json` aparte; `BATCH_DISCOUNT` y `batch=` en `cost_of`/`CostGuard.add`; rol `reviewer` (`CCARF_MODEL_REVIEWER`, Sonnet 5.5) y su línea en la plantilla de variables de entorno.
+    - **A2, sondas** (~0,35 $; detalle y `→ roadmap` en `docs/hallazgos.md`): batches con Haiku 5.5 disponibles (lote de 3 en ~2 min, resultados desordenados, **el truncado llega como `succeeded`**); reintento: con **Haiku 5.5 no hay fallos de formato (0 de 36)** y con **Haiku 4.5**, 17 de 36, 12 de 12 corregidos con error concreto frente a 2 de 12 con el genérico; insistir por un dato que no existe lo hace inventar (ambos modelos); *nullable*: 21 de 21 campos ausentes rellenados con campos obligatorios frente a 1–2 de 21, con la señal en las dos versiones del modelo.
+    - **Cambios frente al diseño:**
+      - `08` usa el rol `enforcement` (Haiku 4.5) y su presupuesto, no `agent`: la señal del reintento no existe con Haiku 5.5 (protocolo del diseño). El módulo admite `--rol-modelo agent` para comprobarlo.
+      - `07` admite `--rol-modelo enforcement` solo para la parte `few_shot`: con Haiku 5.5 no hay señal (0 fechas mal con y sin ejemplos); con Haiku 4.5, 5–6 de 12 sin ejemplos y 0 con ellos (5–7 antes de A6a).
+      - **`enum_cerrado` casi no fuerza el tipo**: el modelo escribe `other` aunque no esté en el `enum` (2 de 12 fuera del `enum`; 1 de 12 forzado a `invoice`). El esquema de una tool no se impone sin modo estricto, que queda fuera del perímetro. La señal se documenta tal cual y el módulo mide «forma válida» y «fuera del enum».
+      - `09` añade `--anti por_orden` (emparejar por posición), una estimación de coste antes de enviar (la Batches API no tiene corte a mitad) y re-troceo con trozos de 5 líneas, porque un trozo de 10 se truncó otra vez en la ejecución.
+      - `08` reintentaba un total que no cuadra una sola vez y luego marcaba `conflict_detected`; aun así el modelo cambió el total declarado. Desde A6a no lo reintenta (solo `--anti insistir`).
+    - **Cifras medidas por módulo** (Haiku 5.5, salvo `08`, y 4.5 donde se dice): `07` correcta 1–2 de 21 ausentes rellenados, `sin_nullable` 21 de 21 y forma válida 6 de 12, `tipo_desconocido` con `any` 12/12 y forzada a factura 5/12; `08` (Haiku 4.5, 3 repeticiones) correcta 5 fechas corregidas y la factura sin pedido marcada sin reintentar, `reintento_generico` 9–10 reintentos con 2–3 útiles, `insistir` con el pedido inventado en las 3; `09` lote de 12 con 11 `ok` y 1 `truncated`, por posición 9 de 12 cruzados, fusión de 8 trozos con las 40 líneas correctas.
+    - **Coste con modelo:** sondas ~0,35 $; ejecuciones de `07` ~0,30 $ (incluido el `few_shot` con Haiku 4.5, ~0,22 $), de `08` ~0,6 $ (seis ejecuciones, `--repeat 1` y `3`) y de `09` <0,01 $. Cada `[fin]` dentro del tope.
+    - **A4, textos (Opus 5.5):**
+      - **Contra la guía:** comprobé el reparto de viñetas de `CONCEPTOS.md` contra las Task Statements 4.2–4.5 y es correcto. Las cabeceras de `07`–`09` citan ahora cada K/S por su número. Las respuestas de las preguntas citaban mal varias viñetas (por ejemplo, *nullable* como 4.3-K2 cuando es 4.3-K4 y S4, y `custom_id` como 4.5-K2 cuando es 4.5-K4), y ya están corregidas. Quité las marcas de borrador.
+      - **Hueco de cobertura de TS 4.5-S2 (frecuencia de envío según el SLA):** `09 --ventanas` no lo calculaba y llamaba «sin margen» al SLA de 30 h del ejemplo de la guía.
+        - Añadí `submission_interval`, que cumple `intervalo + ventana × (1 + reenvíos) + margen ≤ SLA` (con 30 h salen 4 h), con sus tests, y `route_workload` pasa a usarla.
+        - El código lo hizo Opus fuera de reparto, por decisión de la persona. Con el criterio nuevo, 48 h ya no deja margen para un reenvío.
+        - Los grupos de los seis trabajos de ejemplo no cambian.
+      - **Viñetas que el módulo adapta**, explicado en las cabeceras:
+        - `detected_pattern` (4.4-K3, S3): la guía lo sitúa en los hallazgos de una revisión de código; aquí se anota en los fallos de validación, y `app3/11` lo usará en su contexto.
+        - `calculated_total`: lo suma el código, no el modelo.
+        - La tool forzada (4.3-S3): no precede a ningún enriquecimiento.
+      - **Preguntas tipo examen:** reescritas. La respuesta correcta ya no es siempre la B: en `07` es la D, en `08` la C y en `09` la A.
+      - **`docs/diseno-entrega-3.md`:** corregido en lo que cambió al construir (el rol de `08`, `enum_cerrado` y las cuatro novedades de `09`, más el resultado de las sondas).
+      - **Cifras de Paso 3:** sin cambios, salvo la fila de `--ventanas`, que añade la frecuencia.
+    - Pendiente además: `/verificar-concepto` sobre una viñeta de la tanda (verificación 4 del diseño) y la actualización del roadmap origen al fusionar (Opus 5.5).
   - [ ] Tanda B · `app3/04` → `05` → `06` (rama `entrega-3b`)
   - [ ] Tanda C · `app3/10` → `11` → `12` (rama `entrega-3c`)
   - [ ] Tanda D · `app2/04` → `app1/07` y cierre 240/240 (rama `entrega-3d`)

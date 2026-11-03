@@ -1,0 +1,58 @@
+[
+  {
+    "expected_total": 3085.5,
+    "lines": 2,
+    "po_number": "PO-7731",
+    "status": "recibido",
+    "vendor": "Suministros Ibéricos S.L."
+  },
+  {
+    "expected_total": 142.0,
+    "lines": 3,
+    "po_number": "PO-7745",
+    "status": "recibido",
+    "vendor": "Distribuciones Levante"
+  },
+  {
+    "expected_total": 388.0,
+    "lines": 2,
+    "po_number": "PO-7752",
+    "status": "recibido",
+    "vendor": "Papelería y Oficina Costa"
+  },
+  {
+    "expected_total": 1200.0,
+    "lines": 2,
+    "po_number": "PO-7760",
+    "status": "facturado",
+    "vendor": "Suministros Ibéricos S.L."
+  },
+  {
+    "expected_total": 1250.0,
+    "lines": 2,
+    "po_number": "PO-7768",
+    "status": "facturado",
+    "vendor": "Global Peripherals Ltd."
+  },
+  {
+    "expected_total": 2830.0,
+    "lines": 2,
+    "po_number": "PO-7790",
+    "status": "parcial",
+    "vendor": "Servidores del Sur S.L."
+  },
+  {
+    "expected_total": 460.0,
+    "lines": 40,
+    "po_number": "PO-7800",
+    "status": "recibido",
+    "vendor": "Almacén Central Peninsular"
+  },
+  {
+    "expected_total": 799.0,
+    "lines": 1,
+    "po_number": "PO-7999",
+    "status": "abierto",
+    "vendor": "Tecnoequipos Norte S.A."
+  }
+]
