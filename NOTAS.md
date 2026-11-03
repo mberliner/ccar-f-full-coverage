@@ -44,7 +44,7 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
     - `total_cost_usd` de una sesión reanudada o bifurcada = coste de la historia de la sesión + coste propio. Con una base de 0,00285 $ y una reanudación trivial: 0,00358 $ = 0,00285 + 0,00073, y 0,00073 $ es justo el valor de los 5830 tokens de caché escritos en esa ejecución. Con base barata, igual.
     - `resume` sin `fork_session` conserva el `session_id` y añade su turno a la sesión base: un fork posterior ve ese turno (preguntado: recuerda ALFA y BRAVO) y su coste acumulado incluye el de la reanudación.
     - Efecto en `app2/06 --rama todas`: antes, `reanudar` iba antes que los forks, que no partían de la base «limpia» y arrastraban ese coste. Corregido el 2026-10-24: `reanudar` va la última. Ejecutado `app2/06` completo tras el cambio (2026-10-24): base 0,0016 $; sesión nueva 0,0014 $; forks 0,0025 y 0,0026 $ (el segundo no arrastra al primero); reanudar 0,0024 $ con el mismo `session_id` que la base. README de app2 ampliado con predicción, observaciones y estos dos hechos.
-- [x] Entrega 2 · D2 y D3 (`S-3`): **cerrada y fusionada a `main` el 2026-10-27** (merge en línea recta de `entrega-2`, 37 commits; 131/240; 413 pruebas en verde). `main` lleva 39 commits sin publicar en el remoto.
+- [x] Entrega 2 · D2 y D3 (`S-3`): **cerrada y fusionada a `main` el 2026-10-27** (merge en línea recta de `entrega-2`, 37 commits; 131/240; 413 pruebas en verde).
   - [x] Diseño aprobado en `docs/diseno-entrega-2.md` (2026-10-25): 55 viñetas, 76 → 131/240. Siguiente paso: rama `entrega-2`, piezas compartidas (datos, `copy_to_temp`, servidores) y después `app1/02`. Antes de los módulos afectados, las sondas de la sección «Riesgos» (aprobación de `.mcp.json`, `tool_choice` con Haiku 5.5, variable de *tool search*).
   - [x] Piezas compartidas en la rama `entrega-2` (2026-10-26), con modelo de la sesión Sonnet 5.5 según el diseño: `repo_mesa/` y `documentos.json` en el generador, `copy_to_temp`, `servers/mesa.py` (familias `routing`, `errores`, `amplio`/`acotado`), `catalogo_stdio.py` e `inventario_stdio.py` (stdio, probados lanzando el script desde otro `cwd`) y `investigacion.py` ampliado con `extended=True` (por defecto sigue igual para `app3/01` y `app3/02`). `pytest`: 303 en verde.
   - **Cambios respecto al diseño:** `FastMCP` es `MCPServer` en mcp 2.x (corregido en el diseño); un tool de `MCPServer` no admite `CallToolResult` en una unión de tipos, así que se anota `-> Any`. Los `USA` de TS 2.2-K1/S1 en `mesa.py`, `helpdesk.py` e `investigacion.py` y en `mcp-servers.md` se añaden con `app1/04`, que introduce 2.2 (`test_una_vez` no admite un `USA` sin su `INTRODUCE`); mientras, `mesa.py` lo cita en prosa.
@@ -105,7 +105,7 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
     - [x] Barrera del coordinador en `app3/01` y `app3/02` (2026-10-27, plan mode): el hook de `app3/03` pasa a `app3_sistema_multiagente/coordinator_gate.py` y lo usan los tres módulos; tests primero (418 en verde). Sonda: sin hook el coordinador usa `search_tickets` si se le pide, con hook lo rechaza y delega. Medida repetida: 0 intentos y señales iguales; el detector de subtemas de `01` dio un falso positivo de wifi en `estrecha` (`docs/hallazgos.md`).
     - Detector de subtemas de `app3/01` (`subtopics_covered`): cuenta la palabra aunque la respuesta diga que no se buscó; candidato a medirse sobre las consultas delegadas.
     - Sin comprobar de la práctica de D3: el control con `d3_claude_code/README.md`, la variante de PowerShell del hook, la línea `User instructions` de `/memory` tras excluir y la minúscula en la viñeta.
-    - Publicar `main` en el remoto (decisión de la persona).
+    - [x] Publicar `main` en el remoto (decisión de la persona): hecho, `main` sigue a `origin/main`.
 - [x] **Hito T · Incorporación transversal** (cerrado el 2026-11-01; plan aprobado 2026-10-31; sin viñetas, antes de la entrega 3). Regla: roadmap §13, «Incorporación de quien llega de cero». Diseño en `docs/diseno-hito-t.md`, con el reparto de modelos, y prompts de los pasos con Opus en `docs/prompts-hito-t/` (que se ejecutan fuera de esta sesión: los subagentes con Opus dan 429 con la configuración actual).
   - [x] Plantilla `plantillas/modulo/README.md` y `/nuevo-modulo` que la usa (Sonnet 5.5, 2026-10-31).
   - [x] `tests/test_readme_modulos.py`: exige «Antes de empezar» y «Pregunta tipo examen» por módulo; 14 módulos entregados en la lista `PENDING_ONBOARDING`, que se vacía con la retroadaptación (453 tests en verde).
@@ -128,6 +128,7 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
     - Sin comprobar: `app3`, el módulo de ejecución obligatoria narrado y el paso 5 (anotar en `FALLOS.md`) de punta a punta.
   - [ ] Prueba con una persona, en modo narrado (`docs/prompts-hito-t/paso8-prueba-usuario.md`).
   - [ ] Revisión por una instancia independiente.
+- [x] **Alineación con el roadmap origen** (2026-11-03): revisión de coherencia del proyecto con el roadmap. Reparto de viñetas por módulo, perímetro, aislamiento, capa meta y modos coinciden; `pytest` 495 en verde. Llevadas al roadmap las notas `→ roadmap` pendientes de `docs/hallazgos.md` (§3, §4.3, §5–§10 y §14) y reducidas a puntero; queda solo la de *tool search*, a la espera de confirmar el efecto. `app2/07` pasa a figurar en el roadmap como **módulo opcional** (§7): sin viñeta propia, fuera de los 25 y de las entregas. Copia del roadmap previa al cambio fuera del repositorio (el roadmap no está en git).
 - [ ] Entrega 3 · D4 y D5 (`S-2`)
 - [ ] `S-1` · repaso sin código nuevo
 - [ ] Entrega 4 · opcional, después del examen
@@ -135,7 +136,7 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
 ## Notas de construcción
 
 - **Cobertura 240/240:** `test_full_coverage` está en `xfail(strict=True)`; cuando pase, pytest lo marcará como XPASS fallido y hay que quitar la marca.
-- **Viñetas de D3 pendientes para `d3_claude_code/README.md`** (entrega 2): 3.1-S1, 3.1-S4, 3.2-K4, 3.2-S5 y las 9 de 3.5. Las otras 27 ya tienen su marcador en `CLAUDE.md`, `docs/` y `.claude/`.
+- **Viñetas de D3:** las 40 introducidas. 13 en `d3_claude_code/README.md` (3.1-S1, 3.1-S4, 3.2-K4, 3.2-S5 y las 9 de 3.5) y 27 en `CLAUDE.md`, `docs/` y `.claude/`.
 
 Los hallazgos de producto y de implementación están en [docs/hallazgos.md](docs/hallazgos.md). Tu estado de estudio (fallos, sesiones, práctica) vive fuera de git, en `estado/<perfil>/`.
 
