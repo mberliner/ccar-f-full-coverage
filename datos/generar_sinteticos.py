@@ -510,18 +510,222 @@ def build_documents() -> dict:
     return {"urls": urls, "afirmaciones": claims}
 
 
+# Documentos de compra de equipos de la mesa para app3/07–09 (TS 4.2, 4.3, 4.4, 4.5).
+# Formatos variados (tabla, prosa, líneas sueltas), campos ausentes en la fuente,
+# dos tipos que no encajan en el `enum` (garantía y presupuesto), un fragmento
+# ilegible, dos totales que no cuadran (`stated_total` ≠ suma de líneas), una
+# factura sin pedido (el dato no está en ninguna parte) y un albarán largo que
+# desborda un `max_tokens` corto (para el troceo de app3/09). Las etiquetas van
+# en un archivo aparte que el agente nunca ve. Texto fijo: no usa el generador aleatorio.
+PURCHASE_DOCS = [
+    (
+        "DC-01",
+        '''FACTURA F-2026-0412
+Proveedor: Suministros Ibéricos S.L.
+Fecha: 14/09/2026
+Pedido: PO-7731
+
+| Descripción | Uds | Precio unidad |
+| Portátil 14" | 3 | 899,00 € |
+| Base de conexión USB-C | 3 | 129,50 € |
+
+Total factura: 3.085,50 €
+''',
+        {
+            "doc_type": "invoice", "doc_type_detail": None,
+            "fields": {"vendor": "Suministros Ibéricos S.L.", "document_number": "F-2026-0412", "issue_date": "2026-09-14", "po_number": "PO-7731", "currency": "EUR", "stated_total": 3085.5},
+            "line_items": [("Portátil 14\"", 3, 899.0), ("Base de conexión USB-C", 3, 129.5)],
+        },
+    ),
+    (
+        "DC-02",
+        "Por la presente Tecnoequipos Norte S.A. le factura, con fecha 3 de septiembre de 2026 y número de factura F-2026-0398, dos monitores de 27 pulgadas a 310 euros cada uno y un teclado mecánico a 45,90 euros. El importe total a pagar es de 665,90 euros.",
+        {
+            "doc_type": "invoice", "doc_type_detail": None,
+            "fields": {"vendor": "Tecnoequipos Norte S.A.", "document_number": "F-2026-0398", "issue_date": "2026-09-03", "po_number": None, "currency": "EUR", "stated_total": 665.9},
+            "line_items": [("Monitor 27 pulgadas", 2, 310.0), ("Teclado mecánico", 1, 45.9)],
+        },
+    ),
+    (
+        "DC-03",
+        '''ALBARÁN AL-5521
+Distribuciones Levante
+Fecha de entrega: 2026-09-20
+Pedido: PO-7745
+5 x Ratón inalámbrico
+5 x Alfombrilla ergonómica
+2 x Cable HDMI 2 m
+''',
+        {
+            "doc_type": "delivery_note", "doc_type_detail": None,
+            "fields": {"vendor": "Distribuciones Levante", "document_number": "AL-5521", "issue_date": "2026-09-20", "po_number": "PO-7745", "currency": None, "stated_total": None},
+            "line_items": [("Ratón inalámbrico", 5, None), ("Alfombrilla ergonómica", 5, None), ("Cable HDMI 2 m", 2, None)],
+        },
+    ),
+    (
+        "DC-04",
+        '''ALBARÁN AL-5530 — Papelería y Oficina Costa
+
+| Artículo | Cantidad |
+| Auriculares con micrófono | 8 |
+| Webcam HD | 4 |
+
+Pedido de referencia: PO-7752
+''',
+        {
+            "doc_type": "delivery_note", "doc_type_detail": None,
+            "fields": {"vendor": "Papelería y Oficina Costa", "document_number": "AL-5530", "issue_date": None, "po_number": "PO-7752", "currency": None, "stated_total": None},
+            "line_items": [("Auriculares con micrófono", 8, None), ("Webcam HD", 4, None)],
+        },
+    ),
+    (
+        "DC-05",
+        '''FACTURA F-2026-0431
+Proveedor: Suministros Ibéricos S.L.
+Fecha: 21/09/2026
+Pedido: PO-7760
+
+| Descripción | Uds | Precio unidad |
+| Monitor 24" | 4 | 210,00 € |
+| Soporte de pared | 4 | 90,00 € |
+
+Total factura: 1.250,00 €
+''',
+        {
+            "doc_type": "invoice", "doc_type_detail": None,
+            "fields": {"vendor": "Suministros Ibéricos S.L.", "document_number": "F-2026-0431", "issue_date": "2026-09-21", "po_number": "PO-7760", "currency": "EUR", "stated_total": 1250.0},
+            "line_items": [("Monitor 24\"", 4, 210.0), ("Soporte de pared", 4, 90.0)],
+        },
+    ),
+    (
+        "DC-06",
+        '''CERTIFICADO DE GARANTÍA EXTENDIDA G-2026-077
+Emitido por Tecnoequipos Norte S.A. el 12/09/2026.
+Cubre 3 portátiles del pedido PO-7731 durante 24 meses adicionales.
+''',
+        {
+            "doc_type": "other", "doc_type_detail": "garantía",
+            "fields": {"vendor": "Tecnoequipos Norte S.A.", "document_number": "G-2026-077", "issue_date": "2026-09-12", "po_number": "PO-7731", "currency": None, "stated_total": None},
+            "line_items": [],
+        },
+    ),
+    (
+        "DC-07",
+        '''Pendiente de pago. Ver adjunto.
+Ref. interna 7731.
+Gracias.
+''',
+        {
+            "doc_type": "unclear", "doc_type_detail": None,
+            "fields": {"vendor": None, "document_number": None, "issue_date": None, "po_number": None, "currency": None, "stated_total": None},
+            "line_items": [],
+        },
+    ),
+    (
+        "DC-08",
+        '''INVOICE F-2026-0440 · Global Peripherals Ltd.
+Issued: 22 Sep 2026 · Your order: PO-7768
+2 x Docking station @ $425.00
+1 x Cable bundle @ $400.00
+Total due: US$ 1,250.00
+''',
+        {
+            "doc_type": "invoice", "doc_type_detail": None,
+            "fields": {"vendor": "Global Peripherals Ltd.", "document_number": "F-2026-0440", "issue_date": "2026-09-22", "po_number": "PO-7768", "currency": "USD", "stated_total": 1250.0},
+            "line_items": [("Docking station", 2, 425.0), ("Cable bundle", 1, 400.0)],
+        },
+    ),
+    (
+        "DC-09",
+        '''Factura F-2026-0455 · Servidores del Sur S.L. · 28-09-2026 · Pedido PO-7790
+1 Servidor torre ........ 2.450,00
+2 SAI 1500 VA ........ 180,00 c/u
+TOTAL 2.830,00
+''',
+        {
+            "doc_type": "invoice", "doc_type_detail": None,
+            "fields": {"vendor": "Servidores del Sur S.L.", "document_number": "F-2026-0455", "issue_date": "2026-09-28", "po_number": "PO-7790", "currency": "EUR", "stated_total": 2830.0},
+            "line_items": [("Servidor torre", 1, 2450.0), ("SAI 1500 VA", 2, 180.0)],
+        },
+    ),
+    (
+        "DC-10",
+        "Albarán AL-5544: el 15 de septiembre de 2026 Distribuciones Levante entregó en la oficina de Valencia seis docks de portátil y diez fundas de 14 pulgadas, correspondientes al pedido PO-7790. Recibido sin incidencias.",
+        {
+            "doc_type": "delivery_note", "doc_type_detail": None,
+            "fields": {"vendor": "Distribuciones Levante", "document_number": "AL-5544", "issue_date": "2026-09-15", "po_number": "PO-7790", "currency": None, "stated_total": None},
+            "line_items": [("Dock de portátil", 6, None), ("Funda de 14 pulgadas", 10, None)],
+        },
+    ),
+    (
+        "DC-11",
+        '''PRESUPUESTO P-2026-310
+Servidores del Sur S.L.
+Validez: hasta el 31/10/2026
+1 x Armario rack 42U — 1.380,00 €
+''',
+        {
+            "doc_type": "other", "doc_type_detail": "presupuesto",
+            "fields": {"vendor": "Servidores del Sur S.L.", "document_number": "P-2026-310", "issue_date": None, "po_number": None, "currency": "EUR", "stated_total": None},
+            "line_items": [("Armario rack 42U", 1, 1380.0)],
+        },
+    ),
+]
+
+# Albarán largo (DC-12): 40 líneas que dan una extracción de unos mil tokens y
+# desbordan un `max_tokens` corto. Se construye con un bucle sobre una lista fija.
+LONG_NOTE_ITEMS = [
+    "Cable HDMI 2 m", "Adaptador USB-C a HDMI", "Ratón inalámbrico", "Teclado compacto", "Alfombrilla ergonómica",
+    "Soporte de portátil", "Auriculares con micrófono", "Webcam HD", "Hub USB 4 puertos", "Cargador 65 W",
+]
+
+
+def build_long_note() -> tuple[str, dict]:
+    header = "ALBARÁN AL-5560\nAlmacén Central Peninsular\nFecha de entrega: 2026-09-27\nPedido: PO-7800\n"
+    items = [(f"{LONG_NOTE_ITEMS[n % len(LONG_NOTE_ITEMS)]} (ref {n + 1:03d})", 1 + n % 4) for n in range(40)]
+    text = header + "".join(f"{quantity} x {name}\n" for name, quantity in items)
+    label = {
+        "doc_type": "delivery_note", "doc_type_detail": None,
+        "fields": {"vendor": "Almacén Central Peninsular", "document_number": "AL-5560", "issue_date": "2026-09-27", "po_number": "PO-7800", "currency": None, "stated_total": None},
+        "line_items": [(name, quantity, None) for name, quantity in items],
+    }
+    return text, label
+
+
+def build_purchase_docs() -> tuple[list[dict], dict]:
+    """Documentos (lo que ve el agente) y etiquetas (solo para puntuar), con el total calculado de cada uno."""
+    entries = [*PURCHASE_DOCS, ("DC-12", *build_long_note())]
+    documents, labels = [], {}
+    for doc_id, text, label in entries:
+        documents.append({"doc_id": doc_id, "text": text})
+        items = [{"description": d, "quantity": q, "unit_price": p} for d, q, p in label["line_items"]]
+        priced = [i for i in items if i["unit_price"] is not None]
+        calculated = round(sum(i["quantity"] * i["unit_price"] for i in priced), 2) if priced else None
+        stated = label["fields"]["stated_total"]
+        labels[doc_id] = {
+            **label,
+            "line_items": items,
+            "calculated_total": calculated,
+            "total_mismatch": stated is not None and calculated is not None and abs(stated - calculated) > 0.01,
+        }
+    return documents, labels
+
+
 def build_all() -> dict[str, str]:
     """Genera todos los archivos en memoria: nombre → contenido serializado."""
     # Un generador por conjunto: añadir un conjunto nuevo no altera los existentes.
     users = build_users(random.Random(f"{SEED}-users"))
     tickets, labels = build_tickets(random.Random(f"{SEED}-tickets"), users)
     articles = build_kb_articles(random.Random(f"{SEED}-kb"))
+    purchase_documents, purchase_labels = build_purchase_docs()
     datasets = {
         "usuarios.json": users,
         "tickets.json": tickets,
         "tickets_etiquetas.json": labels,
         "articulos_kb.json": articles,
         "documentos.json": build_documents(),
+        "documentos_compra.json": purchase_documents,
+        "documentos_compra_etiquetas.json": purchase_labels,
     }
     files = {name: json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True) + "\n" for name, data in datasets.items()}
     # Las rutas con subcarpeta usan «/»: mismo nombre en Windows y en Linux.

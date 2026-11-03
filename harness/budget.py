@@ -28,14 +28,16 @@ PRICES = {
 LONG_PROMPT = {"claude-haiku-5-5": (100_000, (0.50, 2.50))}
 CACHE_WRITE_FACTOR = 1.25
 CACHE_READ_FACTOR = 0.10
+# Message Batches API (app3/09): 50 % de descuento sobre entrada y salida.
+BATCH_DISCOUNT = 0.5
 
 
 class BudgetExceeded(RuntimeError):
     """El coste acumulado superó el tope de la ejecución."""
 
 
-def cost_of(model: str, usage: Any) -> float:
-    """Coste en USD de una respuesta, a partir de su `usage`."""
+def cost_of(model: str, usage: Any, *, batch: bool = False) -> float:
+    """Coste en USD de una respuesta, a partir de su `usage`. Con `batch=True`, con el descuento del lote."""
     price_in, price_out = PRICES[model]
     fresh = usage.input_tokens or 0
     cache_write = getattr(usage, "cache_creation_input_tokens", None) or 0
@@ -46,7 +48,8 @@ def cost_of(model: str, usage: Any) -> float:
         if fresh + cache_write + cache_read > limit:
             price_in, price_out = long_prices
     input_cost = (fresh + cache_write * CACHE_WRITE_FACTOR + cache_read * CACHE_READ_FACTOR) * price_in
-    return (input_cost + (usage.output_tokens or 0) * price_out) / 1_000_000
+    total = (input_cost + (usage.output_tokens or 0) * price_out) / 1_000_000
+    return total * BATCH_DISCOUNT if batch else total
 
 
 @dataclass
@@ -60,9 +63,9 @@ class CostGuard:
             raise ValueError("max_usd debe ser un importe positivo (roadmap §3, regla 7)")
         PRICES[self.model]  # un modelo sin precio corta aquí, antes de la primera llamada
 
-    def add(self, usage: Any) -> float:
-        """Suma una respuesta y corta si el acumulado supera el tope."""
-        self.spent += cost_of(self.model, usage)
+    def add(self, usage: Any, *, batch: bool = False) -> float:
+        """Suma una respuesta (con descuento si viene de un lote) y corta si el acumulado supera el tope."""
+        self.spent += cost_of(self.model, usage, batch=batch)
         if self.spent > self.max_usd:
             raise BudgetExceeded(f"coste acumulado ${self.spent:.4f} supera el tope ${self.max_usd}")
         return self.spent
