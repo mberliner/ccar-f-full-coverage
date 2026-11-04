@@ -62,11 +62,11 @@ Uso: `uv run python app3_sistema_multiagente/06_contexto_largo.py [--anti todo_e
 """
 
 import asyncio
+import hashlib
 import json
 import re
 import shutil
 import sys
-import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -81,6 +81,7 @@ from harness import credentials  # noqa: E402
 from harness.cli import build_parser, report_budget  # noqa: E402
 from harness.config import report_model  # noqa: E402
 from harness.data import load  # noqa: E402
+from harness.estado import state_dir  # noqa: E402
 from harness.options import isolated_options  # noqa: E402
 from harness.recorder import MAIN, RunRecord, record  # noqa: E402
 
@@ -89,8 +90,10 @@ SCRATCHPAD_SERVER = "scratchpad"
 QUERY_SOURCE = tool_name("query_source")
 SAVE_FINDING = f"mcp__{SCRATCHPAD_SERVER}__save_finding"
 READ_SCRATCHPAD = f"mcp__{SCRATCHPAD_SERVER}__read_scratchpad"
-# Sitio conocido del estado: lo que escribe un proceso lo retoma otro. Es un directorio temporal, no del repositorio.
-STATE_DIR = Path(tempfile.gettempdir()) / "ccarf-app3-06"
+# Sitio conocido del estado: lo que escribe un proceso lo retoma otro. Va bajo `estado/<perfil>/`, como el resto del
+# estado personal (fuera de git y propio de cada persona), no en un directorio temporal compartido del sistema.
+STATE_SUBDIR = "app3-06"
+MANIFEST_VERSION = 1
 SCRATCHPAD_FILE = "scratchpad.jsonl"
 MANIFEST_FILE = "manifest.json"
 MAX_SUMMARY_CHARS = 1200  # el resumen de una fase es corto a propósito: es lo que se inyecta en la siguiente
@@ -132,11 +135,72 @@ GENERIC_WORDS = re.compile(r"normalmente|por lo general|en general|suele(?:n)?|t
 # --- Scratchpad: hallazgos clave en un archivo conocido (TS 5.4-K2, S2) ------------------------------
 
 
+def state_directory(profile: str | None = None, **kwargs: Any) -> Path:
+    """Directorio de estado de este módulo: `estado/<perfil>/app3-06` (el perfil sale de `CCARF_PERFIL`). No crea nada."""
+    return state_dir(profile, **kwargs)[0] / STATE_SUBDIR
+
+
+def warn(message: str) -> None:
+    print(f"[aviso] {message}")
+
+
+class ScratchpadError(ValueError):
+    """El scratchpad está corrupto en medio (no es solo una última línea cortada por una caída)."""
+
+
 def read_scratchpad(directory: Path) -> list[dict[str, Any]]:
+    """Hallazgos del scratchpad. Una última línea incompleta (caída a mitad de escritura) se ignora con un aviso;
+    una línea ilegible en medio es corrupción de verdad y falla con la línea."""
     path = directory / SCRATCHPAD_FILE
     if not path.exists():
         return []
-    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    lines = [(number, line) for number, line in enumerate(path.read_text(encoding="utf-8", errors="replace").splitlines(), 1) if line.strip()]
+    entries: list[dict[str, Any]] = []
+    for position, (number, line) in enumerate(lines):
+        try:
+            entries.append(json.loads(line))
+        except json.JSONDecodeError as error:
+            if position == len(lines) - 1:
+                warn(f"el scratchpad termina con una línea incompleta (línea {number}): se ignora")
+                break
+            raise ScratchpadError(f"scratchpad corrupto en la línea {number} de {path}: {error.msg}") from error
+    return entries
+
+
+def repair_tail(directory: Path) -> None:
+    """Antes de añadir una línea: deja el archivo terminado en salto de línea. Una última línea cortada se descarta."""
+    path = directory / SCRATCHPAD_FILE
+    if not path.exists() or path.stat().st_size == 0:
+        return
+    text = path.read_text(encoding="utf-8", errors="replace")
+    if text.endswith("\n"):
+        return
+    head, _, tail = text.rpartition("\n")
+    try:
+        json.loads(tail)
+        path.write_text(text + "\n", encoding="utf-8")  # estaba completa y solo le faltaba el salto de línea
+    except json.JSONDecodeError:
+        warn("el scratchpad terminaba con una línea incompleta: se descarta antes de guardar")
+        path.write_text(head + "\n" if head else "", encoding="utf-8")
+
+
+def scratchpad_digest(directory: Path, count: int) -> str:
+    """Huella de los primeros `count` hallazgos: distingue un scratchpad ajeno aunque tenga el mismo número."""
+    return hashlib.sha256(json.dumps(read_scratchpad(directory)[:count], sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()[:16]
+
+
+def scratchpad_problem(directory: Path, manifest: dict[str, Any]) -> str | None:
+    """Por qué el scratchpad no cuadra con el manifest (None si cuadra). Un scratchpad con hallazgos de más no es incoherente."""
+    try:
+        entries = read_scratchpad(directory)
+    except ScratchpadError as error:
+        return str(error)
+    if len(entries) < manifest["findings"]:
+        return f"el manifest dice {manifest['findings']} hallazgos y el scratchpad tiene {len(entries)}"
+    digest = manifest.get("scratchpad_digest")
+    if digest and scratchpad_digest(directory, manifest["findings"]) != digest:
+        return "los hallazgos del scratchpad no son los que dice el manifest"
+    return None
 
 
 def make_scratchpad_tools(directory: Path) -> list[Any]:
@@ -156,9 +220,13 @@ def make_scratchpad_tools(directory: Path) -> list[Any]:
         if "figure" in args:
             entry["figure"] = args["figure"]
         directory.mkdir(parents=True, exist_ok=True)
+        repair_tail(directory)  # una caída anterior pudo dejar la última línea cortada: no se pega la nueva a ella
         with (directory / SCRATCHPAD_FILE).open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
-        return ok({"saved": len(read_scratchpad(directory))})
+        try:
+            return ok({"saved": len(read_scratchpad(directory))})
+        except ScratchpadError as error:
+            return structured_error(f"scratchpad corrupto: {error}")
 
     @tool(
         "read_scratchpad",
@@ -167,7 +235,10 @@ def make_scratchpad_tools(directory: Path) -> list[Any]:
         {"type": "object", "properties": {}},
     )
     async def read_scratchpad_tool(args: dict[str, Any]) -> dict[str, Any]:
-        return ok({"findings": read_scratchpad(directory)})
+        try:
+            return ok({"findings": read_scratchpad(directory)})
+        except ScratchpadError as error:
+            return structured_error(f"scratchpad corrupto: {error}")
 
     return [save_finding, read_scratchpad_tool]
 
@@ -180,18 +251,26 @@ def build_scratchpad_server(directory: Path) -> Any:
 
 
 def new_manifest() -> dict[str, Any]:
-    return {"version": 1, "total_phases": len(PHASES), "phases_done": [], "summaries": {}, "sources_covered": [], "findings": 0}
+    return {"version": MANIFEST_VERSION, "total_phases": len(PHASES), "phases_done": [], "summaries": {}, "sources_covered": [], "findings": 0}
 
 
-def complete_phase(manifest: dict[str, Any], phase_id: int, summary: str, covered: list[str], *, findings: int) -> dict[str, Any]:
-    """Manifest con la fase terminada: su resumen, las fuentes cubiertas y los hallazgos guardados. No muta el original."""
-    return {
+def complete_phase(
+    manifest: dict[str, Any], phase_id: int, summary: str, covered: list[str], *, findings: int, digest: str | None = None,
+) -> dict[str, Any]:
+    """Manifest con la fase terminada: su resumen, las fuentes cubiertas y los hallazgos guardados (con su huella, si se da).
+
+    No muta el original.
+    """
+    done = {
         **manifest,
         "phases_done": [*manifest["phases_done"], phase_id],
         "summaries": {**manifest["summaries"], str(phase_id): summary},
         "sources_covered": sorted(set(manifest["sources_covered"]) | set(covered)),
         "findings": findings,
     }
+    if digest is not None:
+        done["scratchpad_digest"] = digest
+    return done
 
 
 def next_phase(manifest: dict[str, Any] | None) -> int | None:
@@ -209,16 +288,55 @@ def write_manifest(directory: Path, manifest: dict[str, Any]) -> None:
     (directory / MANIFEST_FILE).write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def is_int(value: Any) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def manifest_problem(manifest: Any) -> str | None:
+    """Por qué un manifest no se puede retomar (None si es válido): claves, versión, tipos y coherencia con las fases."""
+    if not isinstance(manifest, dict):
+        return "no es un objeto JSON"
+    missing = [key for key in ("version", "total_phases", "phases_done", "summaries", "sources_covered", "findings") if key not in manifest]
+    if missing:
+        return f"faltan claves: {', '.join(missing)}"
+    if manifest["version"] != MANIFEST_VERSION:
+        return f"versión {manifest['version']!r} (este módulo lee la versión {MANIFEST_VERSION})"
+    if manifest["total_phases"] != len(PHASES):
+        return f"total_phases es {manifest['total_phases']!r} y el módulo tiene {len(PHASES)} fases"
+    done = manifest["phases_done"]
+    if not isinstance(done, list) or not all(is_int(p) for p in done) or len(set(done)) != len(done) or not set(done) <= {p["id"] for p in PHASES}:
+        return "phases_done no es una lista de fases válidas sin repetir"
+    summaries = manifest["summaries"]
+    if not isinstance(summaries, dict) or not all(isinstance(k, str) and isinstance(v, str) for k, v in summaries.items()):
+        return "summaries no es un diccionario de textos"
+    if any(str(phase) not in summaries for phase in done):
+        return "falta el resumen de una fase hecha"
+    covered = manifest["sources_covered"]
+    if not isinstance(covered, list) or not all(isinstance(c, str) for c in covered):
+        return "sources_covered no es una lista de textos"
+    if not is_int(manifest["findings"]) or manifest["findings"] < 0:
+        return "findings no es un entero no negativo"
+    return None
+
+
 def read_manifest(directory: Path) -> dict[str, Any] | None:
-    """Manifest del directorio, o None si no hay o está roto: un estado ilegible no se retoma a ciegas."""
+    """Manifest del directorio, o None si no hay o no es de fiar (ilegible, de otra versión o con claves o tipos mal).
+
+    Un estado dudoso no se retoma a ciegas: se avisa y se devuelve None.
+    """
     path = directory / MANIFEST_FILE
     if not path.exists():
         return None
     try:
         manifest = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError:
+    except (ValueError, OSError) as error:  # JSONDecodeError y UnicodeDecodeError son ValueError
+        warn(f"manifest ilegible en {path}: {type(error).__name__}")
         return None
-    return manifest if isinstance(manifest, dict) and "phases_done" in manifest else None
+    problem = manifest_problem(manifest)
+    if problem:
+        warn(f"manifest descartado en {path}: {problem}")
+        return None
+    return manifest
 
 
 # --- Resumen entre fases y prompt de cada fase (TS 5.4-S3) -----------------------------------------------
@@ -352,8 +470,11 @@ def start_state(directory: Path, *, resume: bool) -> dict[str, Any]:
     """Retoma el manifest si hay una investigación a medias y se permite; si no, empieza con un directorio limpio."""
     existing = read_manifest(directory)
     if resume and existing and not is_complete(existing):
-        print(f"[manifest] retomando: fases hechas {existing['phases_done']}, fuentes cubiertas {existing['sources_covered']}")
-        return existing
+        problem = scratchpad_problem(directory, existing)
+        if problem is None:
+            print(f"[manifest] retomando: fases hechas {existing['phases_done']}, fuentes cubiertas {existing['sources_covered']}")
+            return existing
+        warn(f"el manifest no cuadra con el scratchpad ({problem}): se empieza desde cero")
     shutil.rmtree(directory, ignore_errors=True)
     manifest = new_manifest()
     write_manifest(directory, manifest)
@@ -369,12 +490,13 @@ def print_result_measures(rec: RunRecord) -> None:
 
 async def run_phased(args: Any, model: str, subagent_model: str, budget: float) -> None:
     resume = args.repeat == 1 and not args.simular_caida and not args.desde_cero
-    manifest = start_state(STATE_DIR, resume=resume)
+    state = state_directory()
+    manifest = start_state(state, resume=resume)
     last: RunRecord | None = None
     total_chars = 0
     while (phase_id := next_phase(manifest)) is not None:
         phase = PHASES[phase_id - 1]
-        options = build_options(None, scratch_dir=STATE_DIR, budget=budget, model=model, subagent_model=subagent_model)
+        options = build_options(None, scratch_dir=state, budget=budget, model=model, subagent_model=subagent_model)
         prompt = phase_prompt(phase, manifest)
         print(f"\n--- fase {phase_id} ({phase['name']}) · prompt inicial de {len(prompt)} caracteres ---")
         rec = await record(query(prompt=prompt, options=options))
@@ -384,11 +506,16 @@ async def run_phased(args: Any, model: str, subagent_model: str, budget: float) 
         print(f"[medida] fase {phase_id}: contexto del coordinador {chars} caracteres de resultados de tools · "
               f"consultas repetidas a fuentes ya cubiertas {requeried_sources(rec, manifest['sources_covered']) or 'ninguna'} · "
               f"lecturas del scratchpad {scratchpad_reads(rec)} · intentos denegados al coordinador {coordinator_attempts(rec)}")
+        try:
+            findings = len(read_scratchpad(state))
+        except ScratchpadError as error:
+            print(f"[error] {error}\n[error] no se guarda el manifest de la fase {phase_id}: arregla o borra el scratchpad y vuelve a ejecutar")
+            return
         manifest = complete_phase(
             manifest, phase_id, summarize(rec.final_text), sorted(set(manifest["sources_covered"]) | set(queried_sources(rec))),
-            findings=len(read_scratchpad(STATE_DIR)),
+            findings=findings, digest=scratchpad_digest(state, findings),
         )
-        write_manifest(STATE_DIR, manifest)
+        write_manifest(state, manifest)
         print(f"[manifest] escrito: fases hechas {manifest['phases_done']}, {manifest['findings']} hallazgos en el scratchpad")
         last = rec
         if args.simular_caida and phase_id == 1:
@@ -400,7 +527,7 @@ async def run_phased(args: Any, model: str, subagent_model: str, budget: float) 
 
 
 async def run_single_thread(args: Any, model: str, subagent_model: str, budget: float) -> None:
-    options = build_options("todo_en_contexto", scratch_dir=STATE_DIR, budget=budget, model=model, subagent_model=subagent_model)
+    options = build_options("todo_en_contexto", scratch_dir=state_directory(), budget=budget, model=model, subagent_model=subagent_model)
     prompt = all_phases_prompt()
     print(f"\n--- una sola conversación con las tres fases · prompt de {len(prompt)} caracteres ---")
     rec = await record(query(prompt=prompt, options=options))

@@ -228,3 +228,170 @@ def test_facts_found_accepts_a_score_written_as_a_fraction_but_not_a_date():
 def test_generic_phrases_flag_typical_patterns_in_place_of_what_was_found():
     assert mod.generic_phrases("Normalmente la red suele fallar; es un patrón típico.") == ["normalmente", "suele", "típico"]
     assert mod.generic_phrases(FULL) == [] and mod.generic_phrases(None) == []
+
+
+# --- B4: read_manifest robusto -------------------------------------------------------------------
+
+import pytest  # noqa: E402
+
+
+def good_manifest(**changes):
+    manifest = mod.complete_phase(mod.new_manifest(), 1, "Resumen 1", ["SRC-TICKETS"], findings=2)
+    return {**manifest, **changes}
+
+
+def write_raw(directory, content):
+    directory.mkdir(parents=True, exist_ok=True)
+    data = content if isinstance(content, bytes) else json.dumps(content).encode("utf-8")
+    (directory / mod.MANIFEST_FILE).write_bytes(data)
+
+
+def test_a_manifest_with_bytes_that_are_not_utf8_gives_none_as_the_docstring_says(tmp_path, capsys):
+    # Caso que fallaba: UnicodeDecodeError, porque solo se capturaba JSONDecodeError.
+    write_raw(tmp_path, b"\xff\xfe\x00{\x80 no es utf-8")
+    assert mod.read_manifest(tmp_path) is None
+    assert "manifest" in capsys.readouterr().out.lower()
+
+
+@pytest.mark.parametrize("field,value", [
+    ("phases_done", 1), ("phases_done", "1"), ("phases_done", ["1"]), ("phases_done", [1, 1]), ("phases_done", [9]),
+    ("summaries", ["x"]), ("summaries", {"1": 3}), ("sources_covered", "SRC-TICKETS"), ("sources_covered", [1]),
+    ("findings", "2"), ("findings", -1), ("findings", True), ("total_phases", "3"), ("total_phases", 2),
+])
+def test_a_manifest_with_wrong_types_or_values_is_rejected_instead_of_failing_later(tmp_path, field, value):
+    # Caso que fallaba: `phases_done` como entero hacía fallar a `next_phase` con TypeError.
+    write_raw(tmp_path, good_manifest(**{field: value}))
+    assert mod.read_manifest(tmp_path) is None
+
+
+@pytest.mark.parametrize("key", ["version", "total_phases", "phases_done", "summaries", "sources_covered", "findings"])
+def test_a_manifest_missing_a_key_is_rejected_instead_of_raising_keyerror_in_the_prompt(tmp_path, key):
+    manifest = good_manifest()
+    del manifest[key]
+    write_raw(tmp_path, manifest)
+    assert mod.read_manifest(tmp_path) is None
+
+
+def test_a_done_phase_without_its_summary_is_rejected(tmp_path):
+    write_raw(tmp_path, good_manifest(summaries={}))  # phases_done=[1] pero sin resumen de la fase 1
+    assert mod.read_manifest(tmp_path) is None
+
+
+def test_a_manifest_of_another_version_is_rejected_with_a_warning(tmp_path, capsys):
+    write_raw(tmp_path, good_manifest(version=2))
+    assert mod.read_manifest(tmp_path) is None
+    assert "versión" in capsys.readouterr().out
+
+
+def test_a_valid_manifest_is_still_read_and_next_phase_and_prompt_work_with_it(tmp_path):
+    write_raw(tmp_path, good_manifest())
+    manifest = mod.read_manifest(tmp_path)
+    assert manifest == good_manifest() and mod.next_phase(manifest) == 2
+    assert "Resumen 1" in mod.phase_prompt(mod.PHASES[1], manifest)
+
+
+# --- B4: manifest frente a scratchpad al retomar --------------------------------------------------
+
+
+def save(directory, *claims):
+    tools = tools_for(directory)
+    for source_id, claim in claims:
+        call_tool(tools["save_finding"], {"source_id": source_id, "claim": claim})
+
+
+def test_scratchpad_problem_checks_that_the_scratchpad_has_the_findings_the_manifest_says(tmp_path):
+    manifest = mod.complete_phase(mod.new_manifest(), 1, "R", ["SRC-TICKETS"], findings=2)
+    assert "0" in mod.scratchpad_problem(tmp_path, manifest)  # scratchpad vacío: el manifest dice 2
+    save(tmp_path, ("SRC-TICKETS", "a"))
+    assert mod.scratchpad_problem(tmp_path, manifest)  # uno solo
+    save(tmp_path, ("SRC-AUDITORIA", "b"))
+    assert mod.scratchpad_problem(tmp_path, manifest) is None  # los dos que dice
+    save(tmp_path, ("SRC-ENCUESTA", "c"))  # de más (una fase a medias): no es incoherente
+    assert mod.scratchpad_problem(tmp_path, manifest) is None
+
+
+def test_scratchpad_problem_detects_a_foreign_scratchpad_with_the_same_count_via_the_digest(tmp_path):
+    save(tmp_path, ("SRC-TICKETS", "a"), ("SRC-AUDITORIA", "b"))
+    digest = mod.scratchpad_digest(tmp_path, 2)
+    own = mod.complete_phase(mod.new_manifest(), 1, "R", [], findings=2, digest=digest)
+    assert mod.scratchpad_problem(tmp_path, own) is None
+    foreign = mod.complete_phase(mod.new_manifest(), 1, "R", [], findings=2, digest="0123456789abcdef")
+    assert "no son los" in mod.scratchpad_problem(tmp_path, foreign)
+    assert "scratchpad_digest" not in mod.complete_phase(mod.new_manifest(), 1, "R", [], findings=0)  # sin digest: no se comprueba
+
+
+def test_resuming_with_a_manifest_of_another_run_and_an_empty_scratchpad_starts_from_scratch_with_a_warning(tmp_path, capsys):
+    # Caso que fallaba: phases_done=[1] y findings=5 con el scratchpad vacío se retomaba sin avisar.
+    mod.write_manifest(tmp_path, mod.complete_phase(mod.new_manifest(), 1, "R", ["SRC-TICKETS"], findings=5))
+    manifest = mod.start_state(tmp_path, resume=True)
+    out = capsys.readouterr().out
+    assert manifest == mod.new_manifest() and "aviso" in out.lower() and "desde cero" in out
+    assert mod.read_manifest(tmp_path) == mod.new_manifest()
+
+
+def test_resuming_with_a_scratchpad_that_matches_keeps_the_manifest(tmp_path, capsys):
+    save(tmp_path, ("SRC-TICKETS", "a"), ("SRC-AUDITORIA", "b"))
+    saved = mod.complete_phase(mod.new_manifest(), 1, "R", ["SRC-TICKETS"], findings=2, digest=mod.scratchpad_digest(tmp_path, 2))
+    mod.write_manifest(tmp_path, saved)
+    assert mod.start_state(tmp_path, resume=True) == saved
+    assert "aviso" not in capsys.readouterr().out.lower()
+    assert len(mod.read_scratchpad(tmp_path)) == 2  # no se borra
+
+
+# --- B4: scratchpad con una línea truncada --------------------------------------------------------
+
+TRUNCATED = '{"source_id": "SRC-AUDITORIA", "cla'
+
+
+def scratch_file(directory):
+    return directory / mod.SCRATCHPAD_FILE
+
+
+def test_read_scratchpad_ignores_an_incomplete_last_line_with_a_warning(tmp_path, capsys):
+    # Caso que fallaba: JSONDecodeError por una caída a mitad de escritura.
+    save(tmp_path, ("SRC-TICKETS", "a"))
+    with scratch_file(tmp_path).open("a", encoding="utf-8") as handle:
+        handle.write(TRUNCATED)
+    entries = mod.read_scratchpad(tmp_path)
+    assert [e["source_id"] for e in entries] == ["SRC-TICKETS"]
+    assert "aviso" in capsys.readouterr().out.lower()
+
+
+def test_read_scratchpad_fails_clearly_when_the_corruption_is_in_the_middle(tmp_path):
+    scratch_file(tmp_path).write_text('{"source_id": "A", "claim": "x"}\n{roto\n{"source_id": "B", "claim": "y"}\n', encoding="utf-8")
+    with pytest.raises(mod.ScratchpadError, match="línea 2"):
+        mod.read_scratchpad(tmp_path)
+
+
+def test_the_read_tool_returns_a_structured_error_instead_of_raising_when_the_scratchpad_is_corrupt(tmp_path):
+    scratch_file(tmp_path).write_text('{roto\n{"source_id": "B", "claim": "y"}\n', encoding="utf-8")
+    outcome = call_tool(tools_for(tmp_path)["read_scratchpad"], {})
+    assert outcome.is_error and "corrupto" in json.loads(outcome.text)["message"]
+
+
+def test_saving_after_a_truncated_tail_drops_the_fragment_so_the_new_line_is_not_glued_to_it(tmp_path):
+    save(tmp_path, ("SRC-TICKETS", "a"))
+    with scratch_file(tmp_path).open("a", encoding="utf-8") as handle:
+        handle.write(TRUNCATED)
+    save(tmp_path, ("SRC-ENCUESTA", "c"))
+    assert [e["source_id"] for e in mod.read_scratchpad(tmp_path)] == ["SRC-TICKETS", "SRC-ENCUESTA"]
+
+
+def test_saving_after_a_complete_line_without_newline_keeps_it(tmp_path):
+    scratch_file(tmp_path).write_text('{"source_id": "SRC-TICKETS", "claim": "a"}', encoding="utf-8")  # cayó antes del salto de línea
+    save(tmp_path, ("SRC-ENCUESTA", "c"))
+    assert [e["source_id"] for e in mod.read_scratchpad(tmp_path)] == ["SRC-TICKETS", "SRC-ENCUESTA"]
+
+
+# --- B4: el estado vive bajo estado/<perfil>/ ---------------------------------------------------
+
+
+def test_state_lives_under_the_profile_state_dir_not_the_shared_system_temp(tmp_path):
+    import tempfile
+    from pathlib import Path
+
+    assert mod.state_directory(profile="ana", root=tmp_path) == tmp_path / "estado" / "ana" / "app3-06"
+    assert mod.state_directory(profile="luis", root=tmp_path) != mod.state_directory(profile="ana", root=tmp_path)
+    default = mod.state_directory()
+    assert Path(tempfile.gettempdir()) not in default.parents and "estado" in default.parts
+    assert not hasattr(mod, "STATE_DIR")
