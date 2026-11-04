@@ -115,3 +115,25 @@ Las sondas se hicieron con la Messages API y `CostGuard`, con scripts desechable
   - **La acumulación aparece, la degradación no (TS 5.4-K1):** en un solo hilo el coordinador acumuló 11.134 caracteres de resultados de tools frente a un máximo de 4.106 por fase en la correcta, pero el informe final recogió 5 de 5 hechos y 0 expresiones de «patrón típico» en las 2 ejecuciones. Con este tamaño no se vio el fallo y no se alargó la investigación para forzarlo. La correcta costó ~2,5 veces el hilo único (0,068 $ frente a 0,025–0,029 $): lo que compra es contexto acotado y poder retomar, no ahorro.
   - **Retomar desde el manifest funciona sin repetir consultas:** tras una caída simulada tras la fase 1, la ejecución siguiente anunció las fases hechas y las fuentes cubiertas, leyó el scratchpad una vez por fase y no consultó ninguna fuente cubierta (0 consultas repetidas); el informe final recogió los 5 hechos. El coordinador lanzó un subagente por fuente en paralelo y la barrera no tuvo que denegar nada.
   - **Una medida con `/5` dio un falso negativo:** la expresión que busca «4,1» rechazaba la cifra seguida de `/5`, y marcó 3 de 5 hechos en una reanudación cuyo informe sí traía «4,1/5». Se corrigió con un test; conviene que toda medida de cifras acepte la forma `x/5`.
+
+## Entrega 3 · tanda B, después de las correcciones B4 (2026-11-04)
+
+Mediciones nuevas con Sonnet 5.5 de coordinador y Haiku 5.5 de subagente, separadas de las anteriores (que se conservan). Coste total de la tarea: ~2,28 $ (04 ~0,26 $, 05 ~1,18 $ con 0,13 $ de una prueba que no valió, `medio` 0,78 $ y 06 ~0,07 $).
+
+- **`app3/04`**
+  - **El mensaje genérico no cambia lo que hace el coordinador (corrige la medición anterior de `generico`).** Con el reintento local igual que la correcta, el coordinador delegó una sola vez en 3 de 3; antes, con «no reintentes», volvió a delegar en 3 de 3. La re-delegación a ciegas venía de que nadie había reintentado, no del mensaje (5.3-K3 sin señal propia con este modelo). La brecha se anotó en 3 de 3 igualmente.
+  - **Recuperación local de lo transitorio (5.3-S3):** la fuente transitoria falló una vez y se recuperó en el reintento en 3 de 3, sin que el coordinador la viera como fallo (informe `ok`, ninguna brecha anotada).
+  - `silenciar`: fallo tragado en 3 de 3; la brecha salió anotada en 1 de 3 (antes 0 de 3), con una frase que dice «falta información» y «respondió vacía, no es un fallo». La correcta y `abortar` repiten lo anterior.
+  - Medidas corregidas: `gap_noted` con negación, `silenced_sources` renombrada `unreported_failures` (lo que mide `silenciar` es `swallowed_sources`), vacíos legítimos separados de los tragados, `partial_delivered` sin fechas ni fuentes no pedidas y con el aborto detectado sin la marca exacta.
+- **`app3/05`**
+  - **Ubicación y fragmento (5.1-S5, 5.6-S1):** válidos en las 40 afirmaciones de la correcta; **no llegan al informe final** (0 de 6 fuentes en las 3 ejecuciones): el sintetizador los parafrasea.
+  - **Decisión del coordinador (5.6-S3):** presente y acertada en el prompt del sintetizador en 9 de 9 pares de la correcta (8 de 9 en `sin_procedencia`).
+  - **Formato por tipo (5.6-S5):** con `formato_uniforme`, tabla en 0 de 3; en la correcta, tabla en 3 de 3 y los tres pares con sus cifras dentro en 2 de 3.
+  - **Estructurado frente a verboso (5.1-S6): al revés de lo esperado.** La salida estructurada pesó más (8.781–10.045 caracteres del investigador y 3.320–5.703 hasta el sintetizador) que la verbosa (6.597–9.134 y 2.594–3.059). No hay señal de volumen con estos tamaños.
+  - **Control positivo `inventar_explicacion`: no salió.** Par sin explicación atribuido 0 de 3. El intento con Haiku 4.5 no cuenta: `.env` manda sobre `CCARF_MODEL_SUBAGENT` y se usó Haiku 5.5. La medida del par sin explicación sigue sin demostrar que detecte el fallo. → comprobar con Haiku 4.5 tras cambiar `.env`.
+  - `promedio` fusionó en 1 de 3 (igual que antes). `sin_procedencia` verbosa, sin señal en el informe final.
+  - ***Lost in the middle***, con relleno distinto y porcentajes de distracción: el resumen citó el 41 % en 12 de 12, con y sin resumen o encabezados. Sin señal.
+  - Medidas corregidas: negación en `conflicts_presented`, verbo frente a sustantivo y «mismo» en `explanation_found`, promedios redondeados con unidad en `merged_figures` y `sources_passed` exige la afirmación junto a la fuente.
+- **`app3/06`**
+  - `read_manifest` valida bytes, tipos, claves y versión, y el retomar comprueba el *scratchpad* (recuento y huella); `read_scratchpad` ignora una última línea cortada con aviso y falla con la línea si la corrupción está en medio; el estado va a `estado/<perfil>/app3-06/`. Todo con tests, sin modelo.
+  - Una pasada de caída simulada y reanudación: sin consultas repetidas, 5 de 5 hechos, estado en `estado/default/app3-06/`.

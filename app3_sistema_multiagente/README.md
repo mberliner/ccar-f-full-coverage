@@ -355,9 +355,11 @@ Los términos comunes (coordinador, subagente, error estructurado, reintentable)
 
 Qué cambia en el código de cada variante `--anti`:
 
-- **`generico`:** el prompt del investigador le pide que, si una fuente falla, devuelva `status: failed` con el mensaje «búsqueda no disponible» y nada más: sin `error_context` y sin reintentar. El coordinador es el mismo que en la correcta.
+- **`generico`:** el investigador reintenta igual que en la correcta (hasta 2 veces); lo único que cambia es lo que devuelve si la fuente sigue fallando: `status: failed` con el mensaje «búsqueda no disponible» y nada más, sin `error_context`. El coordinador es el mismo que en la correcta.
 - **`silenciar`:** lo hace el **código**, no el prompt. El servidor se construye con `silence_failures=True` y el *handler* de `query_source` devuelve `total: 0` y `results: []` como éxito cuando la fuente da *timeout*. El investigador y el coordinador usan los mismos prompts que en la correcta.
 - **`abortar`:** el prompt del coordinador añade que, si alguna fuente falla, no entregue nada parcial y responda solo `INVESTIGACIÓN ABORTADA`.
+
+Además, la petición incluye una sexta fuente, `SRC-REDES`, **transitoria**: falla con *timeout* la primera vez que se consulta en una ejecución y responde bien a la siguiente (el estado va por ejecución y solo la ve este módulo). Sirve para ver si el subagente la recupera en local sin que el coordinador la vea como fallo (TS 5.3-S3).
 
 Cada ejecución imprime una línea `[esperado]` con la hipótesis escrita en el código. Es una predicción, no un resultado.
 
@@ -381,7 +383,7 @@ uv run python app3_sistema_multiagente/04_errores_entre_agentes.py --anti aborta
 uv run python app3_sistema_multiagente/04_errores_entre_agentes.py --repeat 3 --budget 0.60
 ```
 
-**Si ejecutas:** las medidas y la forma del contexto de error se prueban sin modelo; ejecutar sirve para ver la señal de la guía: un resultado parcial con la brecha anotada.
+**Si ejecutas:** las medidas y la forma del contexto de error se prueban sin modelo; ejecutar sirve para ver la señal de la guía: un resultado parcial con la brecha anotada y la fuente transitoria recuperada en local. Con `--repeat 3` cada variante cuesta unos 0,06–0,08 $.
 
 ### Qué observar
 
@@ -405,6 +407,18 @@ Notas:
 - **Decisión del coordinador en `generico`:** `coordinator_delegations` cuenta las delegaciones del coordinador; con la correcta es 1 en las 3 ejecuciones y con `generico`, 2 en las 3. La medida «alternativa o reintento mencionados» es laxa (palabras sueltas) y dio verdadera también en `silenciar`, donde el coordinador sugiere reconsultar las fuentes vacías por prudencia; la comprobación fiable de la brecha es «brecha anotada» (la fuente y una palabra de falta en la misma frase).
 - **Reintento local:** en la ejecución correcta el subagente hizo 2 reintentos (3 consultas); los reintentos locales no cuentan como errores del coordinador (`coordinator_errors` = 0).
 - Las medidas, la forma del contexto de error y las opciones se prueban sin modelo en `tests/test_app3_04_errores_entre_agentes.py`.
+
+**Después de las correcciones B4** (mismos modelos, `--repeat 3`, ~0,26 $ las cuatro variantes; las cifras de arriba se conservan como medición anterior). Cambian los datos (sexta fuente transitoria) y las medidas (`gap_noted` con negación, `partial_delivered` sin fechas ni fuentes no pedidas, vacíos legítimos separados de los tragados):
+
+| Variante | Señal observada (3 ejecuciones) | Qué dice |
+| :--- | :--- | :--- |
+| correcta | **1 delegación del coordinador en 3 de 3**; `error_context` completo, brecha de `SRC-MONITOR` anotada y cifras de las fuentes que respondieron, en 3 de 3; **`SRC-REDES` falló una vez y se recuperó en el reintento local en 3 de 3, sin que el coordinador la viera como fallo** (informe `ok` y ninguna brecha anotada) | 5.3-S3: lo transitorio lo resuelve el subagente y no llega al coordinador |
+| `generico` (ahora con reintento local) | sin `error_context` en 3 de 3; **1 delegación en 3 de 3** (antes, sin reintento, 3 de 3 volvían a delegar); 2–3 consultas a la fuente que falla, todas del subagente; brecha anotada y cifras en 3 de 3 | **la re-delegación a ciegas de la medición anterior no se debía al mensaje genérico, sino a que nadie había reintentado.** Con el reintento hecho, el mensaje genérico no provocó una segunda delegación |
+| `silenciar` | fallo tragado en 3 de 3, 1 sola consulta a la fuente, sin reintentos; brecha anotada **1 de 3** por la medida (antes 0 de 3) | en esa ejecución el informe dice «falta información sobre la monitorización de red» y a la vez «respondió vacía, no es un fallo»: anota un hueco, pero lo diagnostica mal. En las otras dos no hay ni hueco |
+| `abortar` | `INVESTIGACIÓN ABORTADA` en 3 de 3, sin cifras, sin brecha anotada | igual que antes |
+
+- **Lo que no salió como se esperaba:** en `generico` no se ve ningún efecto sobre el coordinador (misma delegación única, misma brecha anotada). La señal de K3 que se creía haber medido era un artefacto de `no reintentes`.
+- **`silenciar` 1 de 3:** una medida de brecha más estricta (negación) no lo habría cambiado: la frase es una nota de falta real. No se fuerza.
 </details>
 
 ### Pregunta tipo examen
@@ -457,8 +471,12 @@ Los términos comunes (coordinador, subagente, procedencia, *lost in the middle*
 
 Qué cambia en el código de cada variante:
 
-- **`sin_procedencia`:** el prompt del investigador le pide un párrafo en prosa por fuente, en vez de afirmaciones con metadatos.
+- **`sin_procedencia`:** el prompt del investigador le pide prosa verbosa (uno o dos párrafos largos por fuente, con su razonamiento paso a paso), sin listas, sin identificadores de fuente ni fechas, en vez de afirmaciones con metadatos.
 - **`promedio`:** el prompt del sintetizador le pide una única cifra consolidada, el promedio, cuando dos fuentes discrepan.
+- **`formato_uniforme`:** el prompt del sintetizador pide todo en prosa continua, sin la instrucción de tabla para las cifras comparables.
+- **`inventar_explicacion`:** el sintetizador explica siempre por qué difieren las cifras (periodo, método, muestra o población), aunque el contexto no lo explique; es el control positivo de la medida del par sin explicación.
+
+En todas las variantes de `conflictos`: la afirmación estructurada lleva además, en los metadatos, `location` (sección de la fuente, que ahora trae encabezados `##`), `excerpt` (frase literal) y `relevance` (0 a 1), y el coordinador decide para cada magnitud en conflicto si el contexto la explica o queda disputada y pasa esa decisión en el prompt del sintetizador.
 - **`--parte medio --texto sin_resumen|con_resumen|con_encabezados|encabezados_y_resumen`:** el mismo informe largo, sin tratamiento, con la línea de resumen al principio, con encabezados de sección o con las dos cosas.
 
 El código mide sin modelo cuántas cifras del informe llevan su fuente en la misma frase o fila, si algún conflicto aparece fusionado en un promedio, si el informe explica cada diferencia con el periodo o el método (según los metadatos de cada par), si deja como disputado el par sin explicación o lo atribuye a la fecha o al método, y si el resumen del informe largo cita el hallazgo clave.
@@ -479,13 +497,15 @@ Con tus palabras; no hay un número que acertar:
 uv run python app3_sistema_multiagente/05_procedencia.py                                        # correcta
 uv run python app3_sistema_multiagente/05_procedencia.py --anti sin_procedencia                 # el investigador devuelve prosa
 uv run python app3_sistema_multiagente/05_procedencia.py --anti promedio                        # cifras en conflicto fusionadas
+uv run python app3_sistema_multiagente/05_procedencia.py --anti formato_uniforme                # todo en prosa, sin tabla
+uv run python app3_sistema_multiagente/05_procedencia.py --anti inventar_explicacion            # explica siempre (control positivo)
 uv run python app3_sistema_multiagente/05_procedencia.py --parte medio                          # hallazgo en mitad, sin resumen
 uv run python app3_sistema_multiagente/05_procedencia.py --parte medio --texto con_resumen      # con la línea de resumen al principio
 uv run python app3_sistema_multiagente/05_procedencia.py --parte medio --texto con_encabezados  # con encabezados de sección
 uv run python app3_sistema_multiagente/05_procedencia.py --parte medio --texto encabezados_y_resumen
 ```
 
-**Si ejecutas:** las medidas (comprobador de procedencia, detector de cifras fusionadas, forma de las afirmaciones) se prueban sin modelo; ejecutar sirve para ver qué hace el modelo con ellas.
+**Si ejecutas:** las medidas (comprobador de procedencia, detector de cifras fusionadas, forma de las afirmaciones) se prueban sin modelo; ejecutar sirve para ver qué hace el modelo con ellas. Con `--repeat 3`, una variante de `conflictos` cuesta unos 0,20 $ y una variante de `medio`, unos 0,19 $ (la parte `medio` ya no es barata: ~0,065 $ por ejecución).
 
 ### Qué observar
 
@@ -511,6 +531,24 @@ Notas:
 - **Parte `medio`:** la señal de *lost in the middle* no apareció con ~1.500 palabras y Haiku 5.5, con ninguno de los cuatro tratamientos. Que aparezca con un texto mucho más largo es una hipótesis sin comprobar; no se alargó el informe para forzarla.
 - `conflicts_presented` es una comprobación laxa: pide las dos cifras y una palabra de desacuerdo en cualquier parte del texto, y da falsos negativos. En una ejecución de la correcta marcó los 3 pares como no disputados, aunque el informe los llama «no comparables» y «desacuerdo sin resolver», que no están en la lista de palabras. Lo mismo vale para `explanation_found`, que lee palabras sueltas y no distingue «el mismo método» de «otro método»; léelo junto al texto.
 - Las medidas, la forma de las afirmaciones y las opciones se prueban sin modelo en `tests/test_app3_05_procedencia.py`.
+
+**Después de las correcciones B4** (mismos modelos, 3 ejecuciones por variante, ~1,18 $ en `conflictos` y `medio`; las cifras de arriba se conservan como medición anterior). Cambian los datos (informes con secciones, relleno distinto en el informe largo), los prompts y las medidas:
+
+| Variante | Señal observada (3 ejecuciones) | Qué dice |
+| :--- | :--- | :--- |
+| correcta | afirmaciones sin problemas 15/15, 13/13 y 12/12; **ubicación y fragmento literal válidos en todas (40/40)**; las 6 fuentes llegan al sintetizador con su afirmación; **decisión del coordinador en el prompt del sintetizador, acertada en los 3 pares de las 3 ejecuciones (9/9)**; ninguna cifra fusionada; par sin explicación atribuido 0 de 3 y disputado 3 de 3 | la estructura conserva la procedencia y el coordinador decide bien antes de la síntesis |
+| ubicación y fragmento en el informe final | **0 de 6 fuentes en las 3 ejecuciones** (ni el título de la sección con la cifra ni un tramo del fragmento) | llegan al sintetizador y no al informe: el sintetizador los parafrasea en una columna de método o población |
+| tabla con las cifras de los pares (correcta) | tabla en 3 de 3; los tres pares con sus dos cifras dentro de la tabla en **2 de 3** (en la otra, la satisfacción queda fuera) | la medida distingue «hay tabla» de «la tabla lleva las cifras» |
+| `formato_uniforme` | **tabla en 0 de 3** y ningún par en una tabla | señal clara del contraste de 5.6-S5: sin instrucción por tipo, no hay tabla |
+| `sin_procedencia` (verbosa) | 0 afirmaciones estructuradas; fuente en la frase 7/7, 4/7 y 7/7; decisiones acertadas 8 de 9; sin señal en el informe final | igual que antes: la pérdida está en lo que devuelve el investigador |
+| tamaño estructurado frente a verboso | investigador: 8.781, 10.045 y 9.007 caracteres (estructurado) frente a 6.597, 8.601 y 9.134 (verboso); lo que llega al sintetizador: 3.626, 5.703 y 3.320 frente a 2.594, 2.818 y 3.059 | **al revés de lo esperado:** la salida estructurada pesa más que la verbosa; con estos tamaños 5.1-S6 no se ve en el volumen |
+| `promedio` | fusionó en **1 de 3** (22 horas y 3,85 sobre 5, con las cifras originales también presentes) | igual que antes: no estable |
+| `inventar_explicacion` (control positivo) | par sin explicación atribuido **0 de 3**, disputado 3 de 3 | **el control no salió:** el sintetizador no inventó la explicación; la medida no se ha demostrado capaz de detectar el fallo |
+| `medio` (sin resumen, con resumen, con encabezados, ambas; 3 de cada) | el resumen citó el 41 % en **12 de 12** con el relleno nuevo (párrafos distintos, con porcentajes de distracción de 4 a 18 %) | sin señal de *lost in the middle* tampoco así |
+
+- **`inventar_explicacion` con Haiku 4.5:** se intentó con `CCARF_MODEL_SUBAGENT=claude-haiku-4-5` (2 ejecuciones, ~0,13 $), pero `.env` manda sobre el entorno y las ejecuciones usaron Haiku 5.5: no cuentan. No se repitió; sin esa prueba, el control positivo queda **sin demostrar**.
+- **Medidas corregidas:** `conflicts_presented` trata la negación, `explanation_found` ya no toma «la tabla muestra» ni «se espera confirmar» por contexto ni «el mismo método» por atribución (ningún «atribuido» en las 17 ejecuciones de esta pasada, antes 3 falsos positivos en 9), `merged_figures` ve «≈4 sobre 5» y «10 %» con su unidad y `sources_passed` pide que el id vaya con su afirmación.
+- Antes de estas correcciones, `sources_passed` daba por pasada una fuente con su id en cualquier parte del prompt; ahora 6 de 6 pasan con su afirmación.
 </details>
 
 ### Pregunta tipo examen
@@ -570,6 +608,8 @@ Qué cambia en el código de cada variante:
 - **`--anti todo_en_contexto`:** las tres fases en una sola conversación, sin scratchpad, sin resumen y sin subagentes: el coordinador consulta las fuentes él mismo y los informes en bruto se acumulan en su contexto.
 - **`--simular-caida`:** la correcta corta tras la fase 1. La siguiente ejecución, sin ese argumento, encuentra el manifest a medias y retoma desde la fase 2. `--desde-cero` ignora un manifest a medias.
 
+Al retomar, el código valida el manifest (versión, claves, tipos) y comprueba que el scratchpad tiene los hallazgos que dice; si no cuadra, avisa y empieza de cero. Un scratchpad con la última línea cortada por una caída la ignora con un aviso.
+
 El código mide sin modelo cuántos caracteres de resultados de tools llegan al contexto del coordinador, cuántas consultas repite sobre fuentes ya cubiertas, cuántas veces lee el scratchpad, cuántos de los cinco hechos descubiertos recoge el informe final y cuántas expresiones de «patrón típico» contiene.
 
 ### Predice antes de ejecutar
@@ -590,7 +630,7 @@ uv run python app3_sistema_multiagente/06_contexto_largo.py --simular-caida     
 uv run python app3_sistema_multiagente/06_contexto_largo.py                          # y retoma desde el manifest
 ```
 
-**Si ejecutas:** el manifest, el scratchpad, el resumen entre fases y las medidas se prueban sin modelo; ejecutar sirve para ver el contexto acumulado y la recuperación del estado. El estado queda en un directorio temporal (`ccarf-app3-06` dentro del directorio temporal del sistema), fuera del repositorio.
+**Si ejecutas:** el manifest, el scratchpad, el resumen entre fases y las medidas se prueban sin modelo; ejecutar sirve para ver el contexto acumulado y la recuperación del estado. El estado queda en `estado/<perfil>/app3-06/` (el perfil sale de `CCARF_PERFIL`), fuera de git y propio de cada persona.
 
 ### Qué observar
 
@@ -615,6 +655,8 @@ Notas:
 - **Medida de hechos:** la primera versión rechazaba una cifra seguida de `/5` y marcó 3 de 5 en la reanudación, aunque el informe traía «4,1/5» y «3,6/5». Se corrigió con un test: la reanudación recoge los 5 hechos, como la correcta.
 - `Explore` y `/compact` no se pueden observar aquí: son de Claude Code.
 - Las medidas, el scratchpad, el manifest y las opciones se prueban sin modelo en `tests/test_app3_06_contexto_largo.py`.
+
+**Después de las correcciones B4** (una pasada de `--simular-caida` y su reanudación, 0,07 $; el prompt no cambió, así que no se repitió el resto): el estado se escribió en `estado/default/app3-06/`; tras la fase 1, 6 hallazgos y el manifest con la fase 1; la reanudación anunció «retomando: fases hechas [1]» (el scratchpad cuadraba con el manifest, sin avisos), sin consultas repetidas, con 7 hallazgos al final y **5 de 5 hechos** en el informe. Contexto del coordinador por fase: 4.315, 2.256 y 1.472 caracteres (8.043 en total). Los casos del manifest y del scratchpad (bytes no UTF-8, tipos, claves, versión, manifest ajeno, línea truncada) se prueban solo sin modelo: 14 tests con tipos o valores erróneos, 6 con claves que faltan y el resto para versión, coherencia con el scratchpad y línea cortada.
 </details>
 
 ### Pregunta tipo examen
