@@ -232,3 +232,16 @@ def test_headed_long_report_adds_headings_without_changing_the_text():
     position = headed.index(labels["key_finding"]) / len(headed)
     assert 0.4 < position < 0.6
     assert not headed.split(labels["key_finding"])[0].rstrip().split("\n\n")[-1].startswith("## ")
+
+
+# --- fuente transitoria (B4, app3/04: TS 5.3-S3) ---------------------------------------------------
+
+
+def test_one_source_fails_once_with_timeout_and_then_answers_and_is_labelled():
+    labels = source_labels()
+    (transient,) = labels["transient_sources"]
+    entry = next(s for s in sources() if s["source_id"] == transient["source_id"])
+    assert entry["availability"] == "timeout_once" and entry["report"]  # falla la primera vez; luego hay informe
+    assert transient["figure_text"] in entry["report"]
+    # No es la fuente que falla siempre ni la vacía: son tres comportamientos distintos.
+    assert transient["source_id"] not in labels["failed_sources"] + labels["empty_sources"]

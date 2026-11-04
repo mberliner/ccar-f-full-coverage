@@ -49,6 +49,13 @@
     "source_id": "SRC-MONITOR"
   },
   {
+    "availability": "timeout_once",
+    "name": "Informe de disponibilidad de la red de sedes",
+    "published_at": "2026-10-03",
+    "report": "Durante el tercer trimestre de 2026 la disponibilidad de la red de las tres sedes fue del 99,2 %.",
+    "source_id": "SRC-REDES"
+  },
+  {
     "availability": "ok",
     "name": "Archivo de informes de incidentes graves",
     "published_at": "2026-10-01",

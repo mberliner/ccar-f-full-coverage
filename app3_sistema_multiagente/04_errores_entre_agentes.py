@@ -83,11 +83,17 @@ GENERIC_MESSAGE = "búsqueda no disponible"  # el estado de error genérico de l
 CONTEXT_KEYS = ("failure_type", "attempted", "partial_results", "alternatives")
 ALTERNATIVE_WORDS = re.compile(r"alternativ|más tarde|reintent|volver a intentar|pedir|solicitar|contactar|otra fuente", re.I)
 GAP_WORDS = re.compile(r"no se pudo|no pudo|no respond|timeout|fall[óo]|fallo|sin cubrir|sin cobertura|falta|no disponible|brecha|no se obtuvo", re.I)
+# Una palabra de fallo negada («no falló», «sin brecha», «no hubo timeout») no es una brecha.
+NEGATED_GAP = re.compile(r"\b(?:no|ni|sin|ningun[ao]?)\s+(?:\w+\s+){0,2}?(?:fall[óo]s?|fallo|timeouts?|falta|brecha)", re.I)
+# Una cifra suelta: no vale dentro de una fecha (2026-10-18, 18/10/2026) ni dentro de otra cifra (3,18; 18.5).
+FIGURE_BOUNDARY = r"(?<![\d.,/\-])%s(?![\d/\-]|[.,]\d)"
 
 LABELS = load("fuentes_investigacion_etiquetas.json")
 SOURCES = {s["source_id"]: s for s in load("fuentes_investigacion.json")}
-# Cinco fuentes de la lista: tres sanas, una vacía de forma legítima y una que falla por timeout.
-REQUESTED = ["SRC-TICKETS", "SRC-AUDITORIA", "SRC-ENCUESTA", "SRC-MONITOR", "SRC-ARCHIVO"]
+# Seis fuentes: tres sanas, una vacía de forma legítima, una que falla siempre por timeout y una
+# transitoria (falla la primera vez que se consulta y responde a la siguiente).
+REQUESTED = ["SRC-TICKETS", "SRC-AUDITORIA", "SRC-ENCUESTA", "SRC-MONITOR", "SRC-ARCHIVO", "SRC-REDES"]
+SERVER_FLAGS = {"sources": True, "transient": True}  # la fuente transitoria solo la ve este módulo
 
 REQUEST = (
     "Prepara un informe sobre la calidad del servicio de la mesa de ayuda en el tercer trimestre con lo que digan "
@@ -110,11 +116,13 @@ def silences_failures(anti: str | None) -> bool:
 def researcher_prompt(anti: str | None) -> str:
     """Prompt del investigador. `generico` le hace devolver un fallo sin contexto; `silenciar` no cambia el prompt."""
     if anti == "generico":
+        # Reintenta igual que la correcta: lo único que cambia es lo que devuelve cuando sigue fallando.
         return (
             "Eres el investigador. Consulta con query_source las fuentes que te indique el coordinador. "
             f"{REPORT_FORMAT}" + ', "message": …}. status es "ok" si hay contenido, "empty" si la fuente responde pero no '
-            'tiene nada y "failed" si no responde. Si una consulta falla, no reintentes y no des detalles: devuelve para '
-            f'esa fuente status "failed" y message "{GENERIC_MESSAGE}", sin ningún otro campo.'
+            f'tiene nada y "failed" si no responde. Si una consulta falla con un error reintentable, reintenta hasta '
+            f'{MAX_LOCAL_RETRIES} veces. Si sigue fallando, no des detalles: devuelve para esa fuente status "failed" y '
+            f'message "{GENERIC_MESSAGE}", sin ningún otro campo.'
         )
     return (
         "Eres el investigador. Consulta con query_source las fuentes que te indique el coordinador. "
@@ -159,7 +167,7 @@ def build_options(anti: str | None, *, budget: float, model: str, subagent_model
         max_budget_usd=budget,
         model=model,
         system_prompt=coordinator_prompt(anti),
-        mcp_servers={SERVER_NAME: build_server(sources=True, silence_failures=silences_failures(anti))},
+        mcp_servers={SERVER_NAME: build_server(**SERVER_FLAGS, silence_failures=silences_failures(anti))},
         tools=["Agent"],  # solo la tool integrada que lanza subagentes (la guía la llama "Task")
         allowed_tools=["Agent", QUERY_SOURCE],  # query_source la usa el subagente; al coordinador se la deniega la barrera
         permission_mode="dontAsk",
@@ -211,7 +219,32 @@ def failed_sources(rec: RunRecord) -> list[str]:
 
 
 def empty_sources(rec: RunRecord) -> list[str]:
+    """Fuentes cuya última consulta fue un vacío (`total` 0), sea legítimo o un fallo tragado por el handler."""
     return sources_ending_as(rec, "empty")
+
+
+def legit_empty_sources(rec: RunRecord) -> list[str]:
+    """Vacíos legítimos: las fuentes etiquetadas como vacías. La fuente tragada (`silenciar`) no entra aquí."""
+    return [sid for sid in empty_sources(rec) if sid in LABELS["empty_sources"]]
+
+
+def recovered_sources(rec: RunRecord) -> list[str]:
+    """Fuentes que fallaron en alguna consulta y acabaron con datos: las recuperó el reintento local (5.3-S3)."""
+    return [
+        sid for sid, calls in attempts_by_source(rec).items()
+        if any(classify_result(c) == "failure" for c in calls) and classify_result(calls[-1]) == "data"
+    ]
+
+
+def recovery_hidden_from_coordinator(rec: RunRecord) -> list[str]:
+    """Recuperadas en local cuyo informe al coordinador no es `failed` y cuya brecha no se anota en el resultado."""
+    hidden = []
+    for sid in recovered_sources(rec):
+        report = final_report_of(rec, sid)
+        name = SOURCES[sid]["name"] if sid in SOURCES else sid
+        if (report or {}).get("status") != "failed" and not gap_noted(rec.final_text, sid, name):
+            hidden.append(sid)
+    return hidden
 
 
 def coordinator_errors(rec: RunRecord) -> int:
@@ -278,8 +311,11 @@ def alternatives_mentioned(text: str | None) -> bool:
     return bool(ALTERNATIVE_WORDS.search(text or ""))
 
 
-def silenced_sources(rec: RunRecord) -> list[str]:
-    """Fuentes que fallaron y de las que el investigador no informó como fallidas (las dio por vacías o por cubiertas)."""
+def unreported_failures(rec: RunRecord) -> list[str]:
+    """Fuentes que terminaron en fallo y de las que el investigador no informó como fallidas (las dio por vacías o cubiertas).
+
+    No mide `silenciar`: ahí el handler traga el fallo y la fuente no termina en fallo. Eso lo mide `swallowed_sources`.
+    """
     silenced = []
     for sid in failed_sources(rec):
         report = final_report_of(rec, sid)
@@ -290,7 +326,7 @@ def silenced_sources(rec: RunRecord) -> list[str]:
 
 def empty_reported_as_failed(rec: RunRecord) -> list[str]:
     """Fuentes que respondieron vacías de forma legítima y que el investigador marcó como fallo."""
-    return [sid for sid in empty_sources(rec) if (final_report_of(rec, sid) or {}).get("status") == "failed"]
+    return [sid for sid in legit_empty_sources(rec) if (final_report_of(rec, sid) or {}).get("status") == "failed"]
 
 
 def coverage_of(reports: list[dict[str, Any]]) -> dict[str, list[str]]:
@@ -306,27 +342,34 @@ def coverage_of(reports: list[dict[str, Any]]) -> dict[str, list[str]]:
 def gap_noted(text: str | None, source_id: str, name: str) -> bool:
     """¿Dice el texto, en una misma frase, qué fuente falta (por id o nombre) y que falta?"""
     for sentence in re.split(r"[.;\n]", (text or "").lower()):
+        sentence = NEGATED_GAP.sub("", sentence)  # «no falló» no cuenta como fallo
         if (source_id.lower() in sentence or name.lower() in sentence) and GAP_WORDS.search(sentence):
             return True
     return False
 
 
 def healthy_figures() -> list[str]:
-    """Cifras de las fuentes que sí responden, sin unidad (`18 horas` → `18`)."""
-    figures = [LABELS["established"]["figure_text"]]
-    figures += [claim["figure_text"].split()[0] for conflict in LABELS["conflicts"] for claim in conflict["claims"]]
+    """Cifras, sin unidad (`18 horas` → `18`), de las fuentes pedidas que responden (también la transitoria, ya recuperada)."""
+    requested = set(REQUESTED)
+    figures = []
+    if requested & set(LABELS["established"]["source_ids"]):
+        figures.append(LABELS["established"]["figure_text"])
+    for conflict in LABELS["conflicts"]:
+        figures += [c["figure_text"].split()[0] for c in conflict["claims"] if c["source_id"] in requested]
+    figures += [t["figure_text"].split()[0] for t in LABELS["transient_sources"] if t["source_id"] in requested]
     return figures
 
 
 def aborted(text: str | None) -> bool:
-    return ABORT_MARKER in (text or "")
+    """Aborto: la marca exacta (sin distinguir mayúsculas) o decir que la investigación está abortada."""
+    return ABORT_MARKER.lower() in (text or "").lower() or bool(re.search(r"abortad", text or "", re.I))
 
 
 def partial_delivered(text: str | None) -> bool:
-    """¿Entrega cifras de las fuentes sanas y no es un aborto?"""
+    """¿Entrega cifras de las fuentes pedidas que respondieron, sin contar fechas, y no es un aborto?"""
     if not text or aborted(text):
         return False
-    return any(re.search(rf"(?<![\d.,]){re.escape(f)}(?![\d.,]\d)", text) for f in healthy_figures())
+    return any(re.search(FIGURE_BOUNDARY % re.escape(f), text) for f in healthy_figures())
 
 
 # --- Ejecución -----------------------------------------------------------------------------------
@@ -334,25 +377,26 @@ def partial_delivered(text: str | None) -> bool:
 
 def expectation(anti: str | None) -> str:
     return {
-        None: "reintento local en la fuente que falla, informe `failed` con su contexto, vacío legítimo como `empty` y resultado parcial con la brecha anotada",
-        "generico": "el subagente devuelve `failed` sin contexto: el coordinador no sabe qué se intentó ni qué alternativas hay, y decide a ciegas (reintentar, buscar otra vía o solo anotar)",
+        None: "reintento local (recupera la fuente transitoria sin que el coordinador la vea como fallo), informe `failed` con su contexto, vacío legítimo como `empty` y resultado parcial con la brecha anotada",
+        "generico": "el subagente reintenta igual que la correcta, pero devuelve `failed` sin contexto: el coordinador no sabe qué se intentó ni qué alternativas hay, y decide a ciegas (reintentar, buscar otra vía o solo anotar)",
         "silenciar": "el handler traga el fallo y devuelve `[]` como éxito: ni el subagente ni el coordinador pueden saber que la fuente falló, y la brecha no se anota",
         "abortar": "un fallo tumba la investigación: sin resultado parcial, aunque otras fuentes respondieron",
     }[anti]
 
 
 def print_measures(rec: RunRecord) -> None:
-    failed = [s for s in failed_sources(rec)]
+    failed = failed_sources(rec)
     print(f"[medida] consultas por fuente: { {s: len(c) for s, c in attempts_by_source(rec).items()} } · reintentos locales: {local_retries(rec)}")
-    print(f"[medida] fuentes que terminaron en fallo: {failed} · vacías legítimas: {empty_sources(rec)} · errores del coordinador: {coordinator_errors(rec)}")
+    print(f"[medida] fuentes que terminaron en fallo: {failed} · vacías legítimas: {legit_empty_sources(rec)} · errores del coordinador: {coordinator_errors(rec)}")
     reports = subagent_reports(rec)
     print(f"[medida] cobertura según los informes del subagente: {coverage_of(reports)}")
     for sid in failed:
         report = final_report_of(rec, sid)
         problems = error_context_problems(report) if report else ["sin informe de esa fuente"]
         print(f"[medida] contexto de error de {sid}: {'completo' if not problems else problems}")
-    print(f"[medida] fuentes silenciadas: {silenced_sources(rec)} · vacío marcado como fallo: {empty_reported_as_failed(rec)}")
-    print(f"[medida] fallos tragados por el handler (llegaron como vacío): {swallowed_sources(rec)}")
+    print(f"[medida] fallos que el investigador no informó como fallo: {unreported_failures(rec)} · vacío legítimo marcado como fallo: {empty_reported_as_failed(rec)}")
+    print(f"[medida] fallos tragados por el handler (llegaron como vacío, no son vacíos legítimos): {swallowed_sources(rec)}")
+    print(f"[medida] recuperadas en local (fallaron y acabaron con datos): {recovered_sources(rec)} · sin que el coordinador lo vea como fallo: {recovery_hidden_from_coordinator(rec)}")
     # La brecha se mide sobre las fuentes etiquetadas como fallidas, incluso si el handler las tragó.
     for sid in LABELS["failed_sources"]:
         print(f"[medida] brecha de {sid} anotada en el resultado: {gap_noted(rec.final_text, sid, SOURCES[sid]['name'])}")
@@ -361,7 +405,7 @@ def print_measures(rec: RunRecord) -> None:
         f"[medida] decisiones del coordinador: delegaciones {coordinator_delegations(rec)} · consultas a la fuente que falla "
         f"{queries_to_failing} · alternativa o reintento mencionados en el resultado: {alternatives_mentioned(rec.final_text)}"
     )
-    print(f"[medida] resultado parcial con cifras de las fuentes sanas: {partial_delivered(rec.final_text)} · abortado: {aborted(rec.final_text)}")
+    print(f"[medida] resultado parcial con cifras de las fuentes pedidas que respondieron: {partial_delivered(rec.final_text)} · abortado: {aborted(rec.final_text)}")
 
 
 async def main_async() -> int:

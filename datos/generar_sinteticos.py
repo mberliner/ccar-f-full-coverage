@@ -708,12 +708,13 @@ PURCHASE_ORDERS = [
 
 
 # Fuentes de investigación para app3/04–06 (TS 5.3, 5.6, 5.1 y 5.4): calidad del servicio de la
-# mesa de ayuda en el tercer trimestre. Nueve fuentes: tres que concuerdan en parte, seis que
-# discrepan en tres pares de cifras (tiempo de resolución, satisfacción y tickets reabiertos;
-# los dos primeros se explican por el método, la muestra, el periodo o la población, el tercero
-# no), una que falla por *timeout* (monitorización), una que responde vacía de forma legítima
-# (archivo) y un informe largo con el hallazgo clave en mitad. Texto fijo, sin generador
-# aleatorio. Las afirmaciones etiquetadas van en un archivo aparte que el agente nunca ve.
+# mesa de ayuda en el tercer trimestre. Diez fuentes: seis que discrepan en tres pares de cifras
+# (tiempo de resolución, satisfacción y tickets reabiertos; los dos primeros se explican por el
+# método, la muestra, el periodo o la población, el tercero no) y, de ellas, tickets y auditoría
+# también concuerdan en el total de tickets cerrados; una que falla siempre por *timeout*
+# (monitorización); una que falla solo la primera vez (red de sedes, que solo ve app3/04); una que
+# responde vacía de forma legítima (archivo); y un informe largo con el hallazgo clave en mitad.
+# Texto fijo, sin generador aleatorio. Las afirmaciones etiquetadas van en un archivo aparte que el agente nunca ve.
 CONFLICT_SHARED_CONTEXT = "Tercer trimestre de 2026, sobre los 1.240 tickets cerrados, medido de apertura a cierre en el sistema."
 SOURCE_REPORTS = [
     ("SRC-TICKETS", "Informe del sistema de tickets", "2026-10-02", "ok",
@@ -733,6 +734,10 @@ SOURCE_REPORTS = [
     ("SRC-OFICINA", "Informe de la oficina de calidad", "2026-10-06", "ok",
      CONFLICT_SHARED_CONTEXT + " El porcentaje de tickets reabiertos fue del 12,4 %."),
     ("SRC-MONITOR", "Monitorización de red", "2026-10-01", "timeout", None),
+    # Transitoria (app3/04, TS 5.3-S3): falla con timeout la primera vez que se consulta en una ejecución
+    # y responde bien a la siguiente. Solo la ve el servidor con `transient=True`.
+    ("SRC-REDES", "Informe de disponibilidad de la red de sedes", "2026-10-03", "timeout_once",
+     "Durante el tercer trimestre de 2026 la disponibilidad de la red de las tres sedes fue del 99,2 %."),
     ("SRC-ARCHIVO", "Archivo de informes de incidentes graves", "2026-10-01", "ok", ""),
     ("SRC-LARGO", "Informe trimestral de incidencias de red", "2026-10-12", "ok", "LONG"),
 ]
@@ -832,6 +837,7 @@ def build_research_sources() -> tuple[list[dict], dict]:
             },
         ],
         "failed_sources": ["SRC-MONITOR"],
+        "transient_sources": [{"source_id": "SRC-REDES", "figure_text": "99,2 %"}],
         "empty_sources": ["SRC-ARCHIVO"],
         "long_report": {
             "source_id": "SRC-LARGO", "key_finding": LONG_KEY_FINDING, "figure": 41, "figure_text": "41 %",

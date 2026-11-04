@@ -106,5 +106,11 @@
     ],
     "source_id": "SRC-LARGO",
     "summary_line": "Hallazgo clave: el 41 % de las incidencias de red del trimestre se debió a un único perfil de VPN obsoleto."
-  }
+  },
+  "transient_sources": [
+    {
+      "figure_text": "99,2 %",
+      "source_id": "SRC-REDES"
+    }
+  ]
 }

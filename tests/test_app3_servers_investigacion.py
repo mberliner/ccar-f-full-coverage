@@ -128,6 +128,9 @@ RESEARCH = {s["source_id"]: s for s in load("fuentes_investigacion.json")}
 LABELS = load("fuentes_investigacion_etiquetas.json")
 
 
+TRANSIENT_IDS = {t["source_id"] for t in LABELS["transient_sources"]}
+
+
 def query_source(source_id, tools=None):
     outcome = call_tool((tools or SOURCES_TOOLS)["query_source"], {"source_id": source_id})
     return outcome, json.loads(outcome.text)
@@ -142,7 +145,7 @@ def test_sources_are_opt_in_and_do_not_change_other_modules():
 def test_list_sources_gives_id_and_name_but_not_availability():
     outcome = call_tool(SOURCES_TOOLS["list_sources"], {})
     data = json.loads(outcome.text)
-    assert not outcome.is_error and {s["source_id"] for s in data["sources"]} == set(RESEARCH)
+    assert not outcome.is_error and {s["source_id"] for s in data["sources"]} == set(RESEARCH) - TRANSIENT_IDS
     assert all(set(s) == {"source_id", "name"} for s in data["sources"])  # no delata cuál falla
 
 
@@ -207,3 +210,37 @@ def test_headings_put_section_headers_in_the_long_report_and_combine_with_the_su
     # Las otras fuentes no cambian, y por defecto el informe largo es el de siempre.
     assert query_source("SRC-TICKETS", headed_tools)[1] == query_source("SRC-TICKETS")[1]
     assert query_source(sid)[1]["results"][0]["content"] == RESEARCH[sid]["report"]
+
+
+# --- fuente transitoria (B4, app3/04): falla la primera vez que se consulta en una ejecución ----------
+
+(TRANSIENT,) = sorted(TRANSIENT_IDS)
+
+
+def transient_tools():
+    return {t.name: t for t in make_tools(sources=True, transient=True)}
+
+
+def test_transient_source_fails_with_timeout_once_and_then_answers():
+    tools = transient_tools()
+    first, data = query_source(TRANSIENT, tools)
+    assert first.is_error and data["errorCategory"] == "transient" and data["isRetryable"] and "timeout" in data["message"]
+    second, data = query_source(TRANSIENT, tools)
+    assert not second.is_error and data["total"] == 1 and data["results"][0]["metadata"]["source_id"] == TRANSIENT
+    assert not query_source(TRANSIENT, tools)[0].is_error  # y sigue respondiendo
+
+
+def test_transient_failure_state_is_per_run_not_global():
+    # Cada servidor construido (cada ejecución) empieza con la fuente sin consultar.
+    a, b = transient_tools(), transient_tools()
+    assert query_source(TRANSIENT, a)[0].is_error and not query_source(TRANSIENT, a)[0].is_error
+    assert query_source(TRANSIENT, b)[0].is_error  # b no hereda lo que consultó a
+
+
+def test_transient_source_is_invisible_unless_the_module_asks_for_it():
+    # app3/05 y app3/06 construyen el servidor sin `transient`: ni la ven en la lista ni la pueden consultar.
+    assert TRANSIENT not in {s["source_id"] for s in json.loads(call_tool(SOURCES_TOOLS["list_sources"], {}).text)["sources"]}
+    outcome, data = query_source(TRANSIENT)
+    assert outcome.is_error and data["errorCategory"] == "validation"
+    listed = json.loads(call_tool(transient_tools()["list_sources"], {}).text)["sources"]
+    assert TRANSIENT in {s["source_id"] for s in listed}

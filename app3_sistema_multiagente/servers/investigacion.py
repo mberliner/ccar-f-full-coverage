@@ -13,11 +13,14 @@ documentos) y `verify_fact` (solo afirmaciones simples). `sources=True` (app3/04
 añade `list_sources` y `query_source`, sobre las fuentes de `fuentes_investigacion.json`:
 una falla por *timeout* (error transitorio estructurado), una responde vacía de forma
 legítima y una es un informe largo (con `summary_first=True`, su hallazgo clave se
-repite en la primera línea; con `headings=True`, el texto lleva encabezados de sección). Por defecto el servidor sigue con las dos tools de
-búsqueda que usan app3/01 y app3/02.
+repite en la primera línea; con `headings=True`, el texto lleva encabezados de
+sección). Con `transient=True` (solo app3/04) aparece además una fuente que falla con
+*timeout* la primera vez que se consulta en una ejecución y responde a la siguiente.
+Por defecto el servidor sigue con las dos tools de búsqueda que usan app3/01 y app3/02.
 
 QUÉ NO HACE: no resume ni ordena por relevancia semántica (busca palabras y
-categoría) y no tiene estado: dos llamadas iguales devuelven lo mismo.
+categoría) y no tiene estado, salvo la fuente transitoria de `transient=True` (por servidor):
+dos llamadas iguales devuelven lo mismo.
 
 USA: TS 1.3-K2, TS 2.2-K1, TS 2.2-S1
 """
@@ -51,6 +54,7 @@ def words_of(query: str) -> set[str]:
 
 def make_tools(
     *, extended: bool = False, sources: bool = False, summary_first: bool = False, headings: bool = False, silence_failures: bool = False,
+    transient: bool = False,
 ) -> list[SdkMcpTool[Any]]:
     @tool(
         "search_tickets",
@@ -108,7 +112,7 @@ def make_tools(
     if extended:
         tools += make_extended_tools()
     if sources:
-        tools += make_source_tools(summary_first=summary_first, headings=headings, silence_failures=silence_failures)
+        tools += make_source_tools(summary_first=summary_first, headings=headings, silence_failures=silence_failures, transient=transient)
     return tools
 
 
@@ -170,12 +174,20 @@ def make_extended_tools() -> list[SdkMcpTool[Any]]:
     return [fetch_url, load_document, verify_fact]
 
 
-def make_source_tools(*, summary_first: bool = False, headings: bool = False, silence_failures: bool = False) -> list[SdkMcpTool[Any]]:
+def make_source_tools(
+    *, summary_first: bool = False, headings: bool = False, silence_failures: bool = False, transient: bool = False,
+) -> list[SdkMcpTool[Any]]:
     """Tools de app3/04–06: listar fuentes y consultar una. El fallo y el vacío son resultados distintos.
 
     `silence_failures=True` es el anti-patrón de app3/04 hecho por el código: el handler traga el
     fallo y devuelve `[]` como éxito, de modo que nada del resultado de la tool delata que la fuente falló.
+    `transient=True` (solo app3/04) muestra la fuente que falla con *timeout* la primera vez que se
+    consulta y responde a la siguiente; el estado va en este cierre, o sea por servidor (por ejecución).
     """
+    already_failed: set[str] = set()
+
+    def visible_sources() -> list[dict[str, Any]]:
+        return [s for s in load("fuentes_investigacion.json") if transient or s["availability"] != "timeout_once"]
 
     @tool(
         "list_sources",
@@ -184,7 +196,7 @@ def make_source_tools(*, summary_first: bool = False, headings: bool = False, si
         {"type": "object", "properties": {}},
     )
     async def list_sources(args: dict[str, Any]) -> dict[str, Any]:
-        return ok({"sources": [{"source_id": s["source_id"], "name": s["name"]} for s in load("fuentes_investigacion.json")]})
+        return ok({"sources": [{"source_id": s["source_id"], "name": s["name"]} for s in visible_sources()]})
 
     @tool(
         "query_source",
@@ -195,18 +207,17 @@ def make_source_tools(*, summary_first: bool = False, headings: bool = False, si
         {"type": "object", "properties": {"source_id": {"type": "string"}}, "required": ["source_id"]},
     )
     async def query_source(args: dict[str, Any]) -> dict[str, Any]:
-        entry = next((s for s in load("fuentes_investigacion.json") if s["source_id"] == args["source_id"]), None)
+        entry = next((s for s in visible_sources() if s["source_id"] == args["source_id"]), None)
         if entry is None:
             return structured_error("fuente desconocida", source_id=args["source_id"])
+        if entry["availability"] == "timeout_once" and entry["source_id"] not in already_failed:
+            already_failed.add(entry["source_id"])  # solo la primera consulta de esta ejecución falla
+            return transient_error(entry)
         if entry["availability"] == "timeout" and silence_failures:
             return ok({"source_id": entry["source_id"], "total": 0, "results": []})
         if entry["availability"] == "timeout":
             # Sin estado: la fuente falla siempre. El reintento local no la recupera y lo que se mide es qué hace el agente.
-            data = {
-                "errorCategory": "transient", "isRetryable": True, "message": "timeout al consultar la fuente",
-                "source_id": entry["source_id"], "source_name": entry["name"],
-            }
-            return {"content": [{"type": "text", "text": json.dumps(data, ensure_ascii=False)}], "is_error": True}
+            return transient_error(entry)
         if not entry["report"]:
             return ok({"source_id": entry["source_id"], "total": 0, "results": []})
         report = entry["report"]
@@ -223,6 +234,14 @@ def make_source_tools(*, summary_first: bool = False, headings: bool = False, si
     return [list_sources, query_source]
 
 
+def transient_error(entry: dict[str, Any]) -> dict[str, Any]:
+    data = {
+        "errorCategory": "transient", "isRetryable": True, "message": "timeout al consultar la fuente",
+        "source_id": entry["source_id"], "source_name": entry["name"],
+    }
+    return {"content": [{"type": "text", "text": json.dumps(data, ensure_ascii=False)}], "is_error": True}
+
+
 def structured_error(message: str, **extra: Any) -> dict[str, Any]:
     data = {"errorCategory": "validation", "isRetryable": False, "message": message, **extra}
     return {"content": [{"type": "text", "text": json.dumps(data, ensure_ascii=False)}], "is_error": True}
@@ -236,6 +255,9 @@ def validation_error(query: str) -> dict[str, Any]:
 
 def build_server(
     *, extended: bool = False, sources: bool = False, summary_first: bool = False, headings: bool = False, silence_failures: bool = False,
+    transient: bool = False,
 ) -> Any:
-    tools = make_tools(extended=extended, sources=sources, summary_first=summary_first, headings=headings, silence_failures=silence_failures)
+    tools = make_tools(
+        extended=extended, sources=sources, summary_first=summary_first, headings=headings, silence_failures=silence_failures, transient=transient,
+    )
     return create_sdk_mcp_server(SERVER_NAME, tools=tools)
