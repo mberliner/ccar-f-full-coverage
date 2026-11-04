@@ -245,3 +245,33 @@ def test_one_source_fails_once_with_timeout_and_then_answers_and_is_labelled():
     assert transient["figure_text"] in entry["report"]
     # No es la fuente que falla siempre ni la vacía: son tres comportamientos distintos.
     assert transient["source_id"] not in labels["failed_sources"] + labels["empty_sources"]
+
+
+# --- ubicación y fragmento de cada afirmación; relleno distinto del informe largo (B4, app3/05) --------
+
+
+def test_each_claim_carries_the_section_and_the_literal_sentence_it_comes_from():
+    by_id = {s["source_id"]: s for s in sources()}
+    for conflict in source_labels()["conflicts"]:
+        for claim in conflict["claims"]:
+            report = by_id[claim["source_id"]]["report"]
+            assert f"## {claim['location']}\n" in report  # la ubicación es el título de una sección de la fuente
+            assert claim["excerpt"] in report and claim["figure_text"] in claim["excerpt"]
+            section = report.split(f"## {claim['location']}\n")[1].split("\n\n")[0]
+            assert claim["excerpt"] in section  # y el fragmento está en esa sección
+
+
+def test_long_report_filler_is_distinct_with_distraction_figures_of_the_same_kind_as_the_finding():
+    import re
+
+    labels = source_labels()["long_report"]
+    report = next(s["report"] for s in sources() if s["source_id"] == labels["source_id"])
+    paragraphs = report.split("\n\n")
+    assert len(paragraphs) == 61 and len(set(paragraphs)) == 61  # ninguno repetido
+    assert "apartado" not in report  # sin marcas de relleno
+    filler = [p for p in paragraphs if p != labels["key_finding"]]
+    distraction = [p for p in filler if re.search(r"\d+(,\d)? % de las incidencias de red", p)]
+    assert len(distraction) >= 30  # la mayoría lleva una cifra del mismo tipo que el hallazgo
+    figures = [float(m.replace(",", ".")) for p in distraction for m in re.findall(r"(\d+(?:,\d)?) %", p)]
+    assert max(figures) < 41 and len(set(figures)) >= 10  # el hallazgo es la cifra mayor, no la única
+    assert all(len(p) > 80 for p in paragraphs)
