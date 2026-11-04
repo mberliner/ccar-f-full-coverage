@@ -28,6 +28,20 @@
     "source_id": "SRC-PROVEEDOR"
   },
   {
+    "availability": "ok",
+    "name": "Cuadro de mandos de operaciones",
+    "published_at": "2026-10-05",
+    "report": "Tercer trimestre de 2026, sobre los 1.240 tickets cerrados, medido de apertura a cierre en el sistema. El porcentaje de tickets reabiertos fue del 7,3 %.",
+    "source_id": "SRC-CUADRO"
+  },
+  {
+    "availability": "ok",
+    "name": "Informe de la oficina de calidad",
+    "published_at": "2026-10-06",
+    "report": "Tercer trimestre de 2026, sobre los 1.240 tickets cerrados, medido de apertura a cierre en el sistema. El porcentaje de tickets reabiertos fue del 12,4 %.",
+    "source_id": "SRC-OFICINA"
+  },
+  {
     "availability": "timeout",
     "name": "Monitorización de red",
     "published_at": "2026-10-01",

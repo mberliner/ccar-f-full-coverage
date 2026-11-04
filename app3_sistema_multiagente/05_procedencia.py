@@ -38,7 +38,7 @@ Pregunta tipo examen: ver `app3_sistema_multiagente/README.md`, módulo 05.
 
 INTRODUCE: TS 5.6-K1, TS 5.6-K2, TS 5.6-K3, TS 5.6-K4, TS 5.6-S1, TS 5.6-S2, TS 5.6-S3, TS 5.6-S4, TS 5.6-S5, TS 5.1-K2, TS 5.1-S4, TS 5.1-S5, TS 5.1-S6, TS 1.3-S2
 
-Uso: `uv run python app3_sistema_multiagente/05_procedencia.py [--parte conflictos|medio] [--texto sin_resumen|con_resumen] [--anti sin_procedencia|promedio] [--repeat N]`
+Uso: `uv run python app3_sistema_multiagente/05_procedencia.py [--parte conflictos|medio] [--texto sin_resumen|con_resumen|con_encabezados|encabezados_y_resumen] [--anti sin_procedencia|promedio] [--repeat N]`
 """
 
 import asyncio
@@ -65,15 +65,26 @@ from harness.recorder import SUBAGENT_TOOLS, RunRecord, record  # noqa: E402
 
 ANTI_VARIANTS = ["sin_procedencia", "promedio"]
 PARTES = ["conflictos", "medio"]
-TEXTOS = ["sin_resumen", "con_resumen"]
+TEXTOS = ["sin_resumen", "con_resumen", "con_encabezados", "encabezados_y_resumen"]
 QUERY_SOURCE = tool_name("query_source")
 METADATA_KEYS = ("source_id", "published_at", "date", "fecha", "url")
 DISPUTE_WORDS = re.compile(r"difier|discrep|disput|conflict|contradic|no coincid|no concuerd", re.I)
 
 LABELS = load("fuentes_investigacion_etiquetas.json")
 SOURCES = {s["source_id"]: s for s in load("fuentes_investigacion.json")}
-CONFLICT_SOURCES = ["SRC-TICKETS", "SRC-AUDITORIA", "SRC-ENCUESTA", "SRC-PROVEEDOR"]
+CONFLICT_SOURCES = ["SRC-TICKETS", "SRC-AUDITORIA", "SRC-ENCUESTA", "SRC-PROVEEDOR", "SRC-CUADRO", "SRC-OFICINA"]
 LONG_SOURCE = LABELS["long_report"]["source_id"]
+# Pares de cifras en conflicto según los metadatos: los que se explican por periodo, método, muestra o población
+# y el que no se explica por nada (el contraste que permite saber si el informe distingue o lo atribuye todo a la fecha).
+EXPLAINED_TOPICS = [c["topic"] for c in LABELS["conflicts"] if c["explained_by"] != ["sin_explicacion"]]
+UNEXPLAINED_TOPICS = [c["topic"] for c in LABELS["conflicts"] if c["explained_by"] == ["sin_explicacion"]]
+# Palabras con las que un informe explica una diferencia por cada tipo de contexto (comprobación laxa).
+KIND_WORDS = {
+    "periodo": re.compile(r"31 de agosto|agosto|corte|per[ií]odo", re.I),
+    "metodo": re.compile(r"espera|m[eé]todo|metodolog|criterio de medici[oó]n|c[oó]mo se mide|definici[oó]n de la medida", re.I),
+    "muestra": re.compile(r"muestra", re.I),
+    "poblacion": re.compile(r"95 usuarios|212|poblaci[oó]n|encuestad|usuarios del proveedor", re.I),
+}
 
 
 def request_for(parte: str) -> str:
@@ -99,8 +110,10 @@ def researcher_prompt(anti: str | None) -> str:
     return (
         "Eres el investigador. Consulta con query_source las fuentes que te indique el coordinador. Devuelve una lista JSON de "
         "afirmaciones; cada una con el contenido separado de los metadatos: "
-        '{"content": {"claim": …, "figure": …, "unit": …}, "metadata": {"source_id": …, "published_at": …}}. '
-        "figure es la cifra como número (null si la afirmación es cualitativa) y unit su unidad. Una afirmación por dato. "
+        '{"content": {"claim": …, "figure": …, "unit": …, "context": …}, "metadata": {"source_id": …, "published_at": …}}. '
+        "figure es la cifra como número (null si la afirmación es cualitativa) y unit su unidad. context es el contexto "
+        "metodológico que dé la fuente para esa cifra (periodo, método de medición, muestra o población), o null si no dice nada. "
+        "Una afirmación por dato. "
         "Copia source_id y published_at de lo que devuelva la tool, sin cambiarlos."
     )
 
@@ -110,6 +123,11 @@ def synthesizer_prompt(anti: str | None) -> str:
     base = (
         "Eres el sintetizador. Solo cuentas con lo que viene en tu prompt: no tienes tools. Redacta el informe conservando, "
         "para cada afirmación, su fuente (source_id) y su fecha. Separa lo establecido (varias fuentes coinciden) de lo disputado "
+    )
+    # Contexto metodológico (TS 5.6-S2): la diferencia se explica solo si el periodo, el método, la muestra o la población la explican.
+    context = (
+        "Cuando dos cifras difieran, usa el context de cada una (periodo, método, muestra, población) para explicar la diferencia "
+        "si el contexto la explica; si ningún contexto la explica, no la explique tú: déjala como disputada. "
     )
     if anti == "promedio":
         dispute = (
@@ -121,7 +139,7 @@ def synthesizer_prompt(anti: str | None) -> str:
             "(cifras distintas para lo mismo). En lo disputado muestra cada cifra con su fuente y su fecha; no las combines "
             "en una sola ni elijas una sin decirlo. "
         )
-    return base + dispute + "Usa el formato según el tipo de contenido: tabla para las cifras comparables y prosa para lo cualitativo."
+    return base + dispute + context + "Usa el formato según el tipo de contenido: tabla para las cifras comparables y prosa para lo cualitativo."
 
 
 def coordinator_prompt(anti: str | None) -> str:
@@ -150,13 +168,18 @@ def build_agents(anti: str | None, subagent_model: str) -> dict[str, AgentDefini
     }
 
 
+def text_flags(texto: str) -> dict[str, bool]:
+    """Qué técnica de 5.1 aplica el servidor al informe largo: resumen al principio y/o encabezados de sección."""
+    return {"summary_first": texto in ("con_resumen", "encabezados_y_resumen"), "headings": texto in ("con_encabezados", "encabezados_y_resumen")}
+
+
 def build_options(anti: str | None, *, texto: str, budget: float, model: str, subagent_model: str) -> ClaudeAgentOptions:
     return isolated_options(
         max_budget_usd=budget,
         model=model,
         system_prompt=coordinator_prompt(anti),
-        # `con_resumen`: el servidor antepone al informe largo su línea de resumen (técnica de 5.1).
-        mcp_servers={SERVER_NAME: build_server(sources=True, summary_first=texto == "con_resumen")},
+        # El servidor aplica al informe largo la técnica de 5.1 que pida `texto`: línea de resumen al principio, encabezados o ambas.
+        mcp_servers={SERVER_NAME: build_server(sources=True, **text_flags(texto))},
         tools=["Agent"],  # solo la tool integrada que lanza subagentes (la guía la llama "Task")
         allowed_tools=["Agent", QUERY_SOURCE],  # query_source la usa el subagente; al coordinador se la deniega la barrera
         permission_mode="dontAsk",
@@ -305,6 +328,33 @@ def conflicts_presented(text: str | None) -> dict[str, bool]:
     }
 
 
+def explanation_found(text: str | None) -> dict[str, list[str]]:
+    """Por par: qué tipos de contexto (periodo, método, muestra, población) usa el texto, leyendo las líneas que nombran el par.
+
+    Una línea cuenta si lleva una de las cifras del par o su tema; es laxo (una línea con cifras de varios pares vale para todos).
+    """
+    lines = (text or "").splitlines()
+    found: dict[str, list[str]] = {}
+    for conflict in LABELS["conflicts"]:
+        figures = [c["figure_text"].split()[0] for c in conflict["claims"]]
+        relevant = [line for line in lines if conflict["topic"] in line.lower() or any(has_number(line, f) for f in figures)]
+        found[conflict["topic"]] = [kind for kind, words in KIND_WORDS.items() if any(words.search(line) for line in relevant)]
+    return found
+
+
+def explained_by_metadata(text: str | None) -> dict[str, bool]:
+    """Por par con explicación: ¿el informe explica la diferencia con alguno de los contextos que la explican de verdad?"""
+    found = explanation_found(text)
+    explained = {c["topic"]: c["explained_by"] for c in LABELS["conflicts"]}
+    return {topic: any(kind in found[topic] for kind in explained[topic]) for topic in EXPLAINED_TOPICS}
+
+
+def unexplained_status(text: str | None) -> dict[str, dict[str, bool]]:
+    """Por par sin explicación: ¿lo atribuye a la fecha o al método (que son iguales) y lo deja como disputado?"""
+    found, presented = explanation_found(text), conflicts_presented(text)
+    return {topic: {"attributed": bool(found[topic]), "disputed": presented[topic]} for topic in UNEXPLAINED_TOPICS}
+
+
 def uses_table(text: str | None) -> bool:
     """Al menos dos filas de tabla Markdown: el formato que pide el tipo de contenido «cifras comparables»."""
     return sum(line.lstrip().startswith("|") for line in (text or "").splitlines()) >= 2
@@ -323,9 +373,11 @@ def expectation(anti: str | None, parte: str, texto: str) -> str:
         return {
             "sin_resumen": "el hallazgo clave está en mitad de un texto largo: puede que el resumen no lo recoja",
             "con_resumen": "la línea de resumen al principio pone el hallazgo clave a la vista",
+            "con_encabezados": "los encabezados de sección ayudan a ubicar el hallazgo clave dentro del texto largo",
+            "encabezados_y_resumen": "resumen al principio y encabezados de sección: las dos técnicas de 5.1 juntas",
         }[texto]
     return {
-        None: "afirmaciones estructuradas con fuente y fecha, cada cifra con su fuente y las cifras en conflicto presentadas como disputadas, sin promedio",
+        None: "afirmaciones estructuradas con fuente y fecha, cada cifra con su fuente, las diferencias explicadas por el periodo o el método cuando los metadatos lo permiten, el par sin explicación como disputado y ningún promedio",
         "sin_procedencia": "prosa del investigador: al informe llegan cifras sin su fuente en la frase",
         "promedio": "el sintetizador fusiona las cifras en conflicto en un promedio que ninguna fuente respalda",
     }[anti]
@@ -341,12 +393,15 @@ def print_measures(rec: RunRecord, parte: str) -> None:
     print(f"[medida] cifras del informe con su fuente en la frase: {with_source}/{figures} · {figures_with_source(rec.final_text)}")
     print(f"[medida] conflictos presentados como disputados (sin fusionar): {conflicts_presented(rec.final_text)}")
     print(f"[medida] cifras fusionadas (promedio de un conflicto): {merged_figures(rec.final_text) or 'ninguna'} · tabla para las cifras: {uses_table(rec.final_text)}")
+    print(f"[medida] contexto que usa el informe por par: {explanation_found(rec.final_text)}")
+    print(f"[medida] diferencia explicada con el periodo o el método (pares que los metadatos explican): {explained_by_metadata(rec.final_text)}")
+    print(f"[medida] par sin explicación (atribuido a fecha o método · dejado como disputado): {unexplained_status(rec.final_text)}")
 
 
 async def main_async() -> int:
     parser = build_parser(__doc__.splitlines()[0], anti_variants=ANTI_VARIANTS)
     parser.add_argument("--parte", choices=PARTES, default="conflictos")
-    parser.add_argument("--texto", choices=TEXTOS, default="sin_resumen", help="solo con --parte medio")
+    parser.add_argument("--texto", choices=TEXTOS, default="sin_resumen", help="técnica de 5.1 sobre el informe largo; solo con --parte medio")
     args = parser.parse_args()
     print(credentials.describe())
     model = report_model("coordinator")

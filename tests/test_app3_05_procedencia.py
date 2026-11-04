@@ -13,7 +13,7 @@ P = "mcp__investigacion__"
 QUERY = P + "query_source"
 LABELS = load("fuentes_investigacion_etiquetas.json")
 CATALOG = {s["source_id"]: s for s in load("fuentes_investigacion.json")}
-RESOLUTION, SATISFACTION = LABELS["conflicts"]
+RESOLUTION, SATISFACTION, REOPENED = LABELS["conflicts"]
 
 
 def claim(source_id="SRC-TICKETS", text="Tiempo medio de resolución", figure=18, unit="horas", published_at=None):
@@ -35,12 +35,20 @@ def delegation(cid, subagent, prompt="x", result="{}"):
 
 def test_variants_parts_and_texts():
     assert mod.ANTI_VARIANTS == ["sin_procedencia", "promedio"]
-    assert mod.PARTES == ["conflictos", "medio"] and mod.TEXTOS == ["sin_resumen", "con_resumen"]
+    assert mod.PARTES == ["conflictos", "medio"]
+    assert mod.TEXTOS == ["sin_resumen", "con_resumen", "con_encabezados", "encabezados_y_resumen"]
+
+
+def test_each_text_variant_switches_the_summary_and_the_headings_of_the_long_report():
+    assert mod.text_flags("sin_resumen") == {"summary_first": False, "headings": False}
+    assert mod.text_flags("con_resumen") == {"summary_first": True, "headings": False}
+    assert mod.text_flags("con_encabezados") == {"summary_first": False, "headings": True}
+    assert mod.text_flags("encabezados_y_resumen") == {"summary_first": True, "headings": True}
 
 
 def test_each_part_asks_for_the_sources_it_needs_without_revealing_the_conflicts():
     request = mod.request_for("conflictos")
-    for source_id in ("SRC-TICKETS", "SRC-AUDITORIA", "SRC-ENCUESTA", "SRC-PROVEEDOR"):
+    for source_id in ("SRC-TICKETS", "SRC-AUDITORIA", "SRC-ENCUESTA", "SRC-PROVEEDOR", "SRC-CUADRO", "SRC-OFICINA"):
         assert source_id in request
     assert "SRC-MONITOR" not in request and "SRC-LARGO" not in request
     for word in ("conflicto", "discrep", "contradic"):
@@ -53,6 +61,8 @@ def test_researcher_returns_structured_claims_with_content_apart_from_metadata()
     prompt = mod.researcher_prompt(None)
     for key in ("claim", "figure", "unit", "source_id", "published_at", "content", "metadata"):
         assert key in prompt
+    # Contexto metodológico (periodo, método, muestra, población) junto a la cifra, para que llegue a la síntesis.
+    assert "context" in prompt and "método" in prompt and "periodo" in prompt
 
 
 def test_sin_procedencia_asks_the_researcher_for_prose():
@@ -65,6 +75,8 @@ def test_correct_synthesizer_keeps_the_mapping_separates_disputed_and_never_merg
     prompt = mod.synthesizer_prompt(None).lower()
     for word in ("fuente", "fecha", "establecid", "disputad", "tabla", "prosa"):
         assert word in prompt
+    # Contexto metodológico: explica la diferencia si el periodo o el método la explican; si no, la deja como disputada.
+    assert "periodo" in prompt and "método" in prompt and "no la explique" in prompt
     assert "promedi" not in prompt and "consolid" not in prompt
 
 
@@ -208,12 +220,14 @@ def test_merged_figures_does_not_flag_the_original_figures_or_embedded_numbers()
 # --- conflictos presentados y hallazgo clave ---------------------------------------------------
 
 def test_conflicts_presented_needs_both_figures_and_a_word_that_says_they_differ():
+    topics = ["tiempo medio de resolución", "satisfacción media", "tickets reabiertos"]
+    only = lambda *on: {t: t in on for t in topics}  # noqa: E731
     text = "El tiempo difiere: SRC-TICKETS da 18 horas y SRC-AUDITORIA 26 horas."
-    assert mod.conflicts_presented(text) == {"tiempo medio de resolución": True, "satisfacción media": False}
-    assert mod.conflicts_presented(GOOD) == {"tiempo medio de resolución": False, "satisfacción media": False}  # cifras sí, pero no dice que discrepan
+    assert mod.conflicts_presented(text) == only("tiempo medio de resolución")
+    assert mod.conflicts_presented(GOOD) == only()  # cifras sí, pero no dice que discrepan
     both = GOOD + "Las dos fuentes de cada magnitud discrepan y no se concilian."
-    assert mod.conflicts_presented(both) == {"tiempo medio de resolución": True, "satisfacción media": True}
-    assert mod.conflicts_presented(None) == {"tiempo medio de resolución": False, "satisfacción media": False}
+    assert mod.conflicts_presented(both) == only("tiempo medio de resolución", "satisfacción media")
+    assert mod.conflicts_presented(None) == only()
 
 
 def test_uses_table_detects_a_markdown_table():
@@ -224,3 +238,55 @@ def test_key_finding_reported_looks_for_the_figure_in_the_text():
     assert mod.key_finding_reported("El 41 % de las incidencias se debió a un perfil de VPN.")
     assert mod.key_finding_reported("Un 41% de las incidencias.") and mod.key_finding_reported("el 41 por ciento")
     assert not mod.key_finding_reported("Se completó la formación y el 141 % no existe.") and not mod.key_finding_reported(None)
+
+
+# --- explicación de los conflictos: periodo y método frente a desacuerdo sin explicación (TS 5.6) ----
+
+REPORT = (
+    "El tiempo medio de resolución difiere: 18 horas (SRC-TICKETS) frente a 26 horas (SRC-AUDITORIA), porque la auditoría cuenta las esperas y es una muestra de 300 tickets.\n"
+    "La satisfacción media: 4,1 sobre 5 (encuesta interna) frente a 3,6 sobre 5 del proveedor, que tiene corte a 31 de agosto.\n"
+    "Los tickets reabiertos: 7,3 % (SRC-CUADRO) y 12,4 % (SRC-OFICINA) discrepan y nada en las fuentes lo explica."
+)
+
+
+def test_the_third_pair_has_no_explanation_in_the_labels_and_the_other_two_do():
+    explained = {c["topic"]: c["explained_by"] for c in LABELS["conflicts"]}
+    assert explained["tickets reabiertos"] == ["sin_explicacion"]
+    assert mod.EXPLAINED_TOPICS == ["tiempo medio de resolución", "satisfacción media"]
+    assert mod.UNEXPLAINED_TOPICS == ["tickets reabiertos"]
+
+
+def test_explanation_found_lists_which_kinds_of_context_the_report_gives_for_each_pair():
+    found = mod.explanation_found(REPORT)
+    assert found["tiempo medio de resolución"] == ["metodo", "muestra"]
+    assert found["satisfacción media"] == ["periodo"]
+    assert found["tickets reabiertos"] == []  # no se atribuye a ninguna fecha ni método
+
+
+def test_explanation_found_reads_a_note_that_names_the_topic_but_gives_no_figures():
+    note = "Tiempo medio de resolución: 18 y 26 horas.\nNota sobre el tiempo medio de resolución: la auditoría usa otro método y cuenta las esperas."
+    assert mod.explanation_found(note)["tiempo medio de resolución"] == ["metodo"]
+    # Una explicación de otro par no se cuela: va por líneas.
+    assert mod.explanation_found("Satisfacción 4,1 y 3,6.\nResolución 18 y 26: la muestra y las esperas.")["satisfacción media"] == []
+
+
+def test_explained_by_metadata_is_true_when_the_report_uses_a_label_explanation():
+    assert mod.explained_by_metadata(REPORT) == {"tiempo medio de resolución": True, "satisfacción media": True}
+    # Cifras y desacuerdo, sin decir por qué: no explica.
+    bare = "Resolución: 18 horas y 26 horas difieren. Satisfacción: 4,1 y 3,6 discrepan."
+    assert mod.explained_by_metadata(bare) == {"tiempo medio de resolución": False, "satisfacción media": False}
+    assert mod.explained_by_metadata(None) == {"tiempo medio de resolución": False, "satisfacción media": False}
+
+
+def test_unexplained_status_tells_disputed_from_wrongly_attributed_to_date_or_method():
+    assert mod.unexplained_status(REPORT) == {"tickets reabiertos": {"attributed": False, "disputed": True}}
+    wrong = "Los tickets reabiertos: 7,3 % y 12,4 %; la diferencia se debe al periodo de medición y al método."
+    assert mod.unexplained_status(wrong) == {"tickets reabiertos": {"attributed": True, "disputed": False}}
+    silent = "Los tickets reabiertos fueron 7,3 % y 12,4 %."
+    assert mod.unexplained_status(silent) == {"tickets reabiertos": {"attributed": False, "disputed": False}}
+    assert mod.unexplained_status(None) == {"tickets reabiertos": {"attributed": False, "disputed": False}}
+
+
+def test_merged_figures_covers_the_third_pair_without_flagging_its_originals():
+    assert mod.merged_figures("Reabiertos: 9,85 %.") == [("tickets reabiertos", "9,85")]
+    assert mod.merged_figures(REPORT) == []

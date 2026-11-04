@@ -194,3 +194,16 @@ def test_silence_failures_makes_the_handler_return_an_empty_success_for_the_fail
     # Las demás fuentes no cambian, y sin la opción la fuente sigue fallando.
     assert query_source("SRC-TICKETS", silenced)[1] == query_source("SRC-TICKETS")[1]
     assert query_source(failed)[0].is_error
+
+
+def test_headings_put_section_headers_in_the_long_report_and_combine_with_the_summary():
+    long = LABELS["long_report"]
+    sid = long["source_id"]
+    headed_tools = {t.name: t for t in make_tools(sources=True, headings=True)}
+    assert query_source(sid, headed_tools)[1]["results"][0]["content"] == long["headed_report"]
+    both = {t.name: t for t in make_tools(sources=True, headings=True, summary_first=True)}
+    content = query_source(sid, both)[1]["results"][0]["content"]
+    assert content.startswith(long["summary_line"]) and content.endswith(long["headed_report"])
+    # Las otras fuentes no cambian, y por defecto el informe largo es el de siempre.
+    assert query_source("SRC-TICKETS", headed_tools)[1] == query_source("SRC-TICKETS")[1]
+    assert query_source(sid)[1]["results"][0]["content"] == RESEARCH[sid]["report"]

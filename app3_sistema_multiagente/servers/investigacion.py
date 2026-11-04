@@ -13,7 +13,7 @@ documentos) y `verify_fact` (solo afirmaciones simples). `sources=True` (app3/04
 añade `list_sources` y `query_source`, sobre las fuentes de `fuentes_investigacion.json`:
 una falla por *timeout* (error transitorio estructurado), una responde vacía de forma
 legítima y una es un informe largo (con `summary_first=True`, su hallazgo clave se
-repite en la primera línea). Por defecto el servidor sigue con las dos tools de
+repite en la primera línea; con `headings=True`, el texto lleva encabezados de sección). Por defecto el servidor sigue con las dos tools de
 búsqueda que usan app3/01 y app3/02.
 
 QUÉ NO HACE: no resume ni ordena por relevancia semántica (busca palabras y
@@ -49,7 +49,9 @@ def words_of(query: str) -> set[str]:
     return {w for w in query.lower().split() if len(w) >= 3}
 
 
-def make_tools(*, extended: bool = False, sources: bool = False, summary_first: bool = False, silence_failures: bool = False) -> list[SdkMcpTool[Any]]:
+def make_tools(
+    *, extended: bool = False, sources: bool = False, summary_first: bool = False, headings: bool = False, silence_failures: bool = False,
+) -> list[SdkMcpTool[Any]]:
     @tool(
         "search_tickets",
         "Busca en los tickets de la mesa de ayuda por palabras clave o por categoría (acceso, hardware, software, "
@@ -106,7 +108,7 @@ def make_tools(*, extended: bool = False, sources: bool = False, summary_first: 
     if extended:
         tools += make_extended_tools()
     if sources:
-        tools += make_source_tools(summary_first=summary_first, silence_failures=silence_failures)
+        tools += make_source_tools(summary_first=summary_first, headings=headings, silence_failures=silence_failures)
     return tools
 
 
@@ -168,7 +170,7 @@ def make_extended_tools() -> list[SdkMcpTool[Any]]:
     return [fetch_url, load_document, verify_fact]
 
 
-def make_source_tools(*, summary_first: bool = False, silence_failures: bool = False) -> list[SdkMcpTool[Any]]:
+def make_source_tools(*, summary_first: bool = False, headings: bool = False, silence_failures: bool = False) -> list[SdkMcpTool[Any]]:
     """Tools de app3/04–06: listar fuentes y consultar una. El fallo y el vacío son resultados distintos.
 
     `silence_failures=True` es el anti-patrón de app3/04 hecho por el código: el handler traga el
@@ -209,6 +211,9 @@ def make_source_tools(*, summary_first: bool = False, silence_failures: bool = F
             return ok({"source_id": entry["source_id"], "total": 0, "results": []})
         report = entry["report"]
         long_report = load("fuentes_investigacion_etiquetas.json")["long_report"]
+        if headings and entry["source_id"] == long_report["source_id"]:
+            # Técnica de 5.1: encabezados de sección explícitos en el resultado detallado (mismo texto, con títulos).
+            report = long_report["headed_report"]
         if summary_first and entry["source_id"] == long_report["source_id"]:
             # Técnica de 5.1: el hallazgo clave al principio, sin quitarlo de donde estaba.
             report = long_report["summary_line"] + "\n\n" + report
@@ -229,8 +234,8 @@ def validation_error(query: str) -> dict[str, Any]:
     return {"content": [{"type": "text", "text": json.dumps(data, ensure_ascii=False)}], "is_error": True}
 
 
-def build_server(*, extended: bool = False, sources: bool = False, summary_first: bool = False, silence_failures: bool = False) -> Any:
-    return create_sdk_mcp_server(
-        SERVER_NAME,
-        tools=make_tools(extended=extended, sources=sources, summary_first=summary_first, silence_failures=silence_failures),
-    )
+def build_server(
+    *, extended: bool = False, sources: bool = False, summary_first: bool = False, headings: bool = False, silence_failures: bool = False,
+) -> Any:
+    tools = make_tools(extended=extended, sources=sources, summary_first=summary_first, headings=headings, silence_failures=silence_failures)
+    return create_sdk_mcp_server(SERVER_NAME, tools=tools)

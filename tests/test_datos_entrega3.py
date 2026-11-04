@@ -172,3 +172,63 @@ def test_long_report_hides_the_key_finding_in_the_middle():
     assert report.count(labels["key_finding"]) == 1
     # La línea de resumen (lo que el módulo pone al principio) repite el hallazgo clave con su cifra.
     assert labels["figure_text"] in labels["key_finding"] and labels["figure_text"] in labels["summary_line"]
+
+
+# --- explicación de los conflictos y encabezados del informe largo (tanda B, completar) -------------
+
+EXPLANATIONS = {"periodo", "metodo", "muestra", "poblacion", "sin_explicacion"}
+
+
+def test_there_are_three_conflicts_and_each_one_says_how_the_metadata_explain_it():
+    conflicts = source_labels()["conflicts"]
+    assert len(conflicts) == 3
+    for conflict in conflicts:
+        assert conflict["explained_by"] and set(conflict["explained_by"]) <= EXPLANATIONS
+    by_topic = {c["topic"]: c["explained_by"] for c in conflicts}
+    assert set(by_topic["tiempo medio de resolución"]) == {"metodo", "muestra"}
+    assert set(by_topic["satisfacción media"]) == {"periodo", "poblacion"}
+    # El contraste: un único par sin explicación, y no mezcla otras.
+    assert by_topic["tickets reabiertos"] == ["sin_explicacion"]
+
+
+def test_each_explanation_is_backed_by_a_phrase_in_the_reports_of_its_pair():
+    by_id = {s["source_id"]: s for s in sources()}
+    for conflict in source_labels()["conflicts"]:
+        reports = " ".join(by_id[c["source_id"]]["report"] for c in conflict["claims"])
+        for kind, phrase in conflict.get("evidence", {}).items():
+            assert kind in conflict["explained_by"] and phrase in reports
+        if conflict["explained_by"] != ["sin_explicacion"]:
+            assert set(conflict["evidence"]) == set(conflict["explained_by"])  # cada explicación tiene su frase
+
+
+def test_the_unexplained_pair_shares_period_method_and_population():
+    by_id = {s["source_id"]: s for s in sources()}
+    (conflict,) = [c for c in source_labels()["conflicts"] if c["explained_by"] == ["sin_explicacion"]]
+    assert "evidence" not in conflict or not conflict["evidence"]
+    for claim in conflict["claims"]:
+        # Mismo periodo, mismo método y misma población, dicho igual en las dos fuentes.
+        assert conflict["shared_context"] in by_id[claim["source_id"]]["report"]
+    assert len({c["source_id"] for c in conflict["claims"]}) == 2 and len({c["figure"] for c in conflict["claims"]}) == 2
+
+
+def test_the_explained_pairs_differ_in_what_the_metadata_say():
+    by_id = {s["source_id"]: s for s in sources()}
+    resolution = " ".join(by_id[s]["report"] for s in ("SRC-TICKETS", "SRC-AUDITORIA"))
+    assert "muestra de 300" in resolution and "esperas" in resolution
+    satisfaction = " ".join(by_id[s]["report"] for s in ("SRC-ENCUESTA", "SRC-PROVEEDOR"))
+    assert "corte a 31 de agosto" in satisfaction and "95 usuarios" in satisfaction
+
+
+def test_headed_long_report_adds_headings_without_changing_the_text():
+    labels = source_labels()["long_report"]
+    plain = next(s["report"] for s in sources() if s["source_id"] == labels["source_id"])
+    headed = labels["headed_report"]
+    headings = [p for p in headed.split("\n\n") if p.startswith("## ")]
+    assert headings == [f"## {h}" for h in labels["section_headings"]] and len(headings) >= 5
+    # Quitando los encabezados queda exactamente el informe de siempre.
+    assert "\n\n".join(p for p in headed.split("\n\n") if not p.startswith("## ")) == plain
+    assert headed.count(labels["key_finding"]) == 1
+    # El hallazgo clave sigue en mitad del texto y no abre sección: el encabezado ayuda a ubicarlo, no lo señala.
+    position = headed.index(labels["key_finding"]) / len(headed)
+    assert 0.4 < position < 0.6
+    assert not headed.split(labels["key_finding"])[0].rstrip().split("\n\n")[-1].startswith("## ")

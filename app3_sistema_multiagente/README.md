@@ -442,9 +442,9 @@ Un subagente de búsqueda agota sus reintentos con una fuente que da *timeout*, 
 Los términos comunes (coordinador, subagente, procedencia) están en el [glosario](../docs/glosario.md).
 
 - **El sistema:** el coordinador tiene dos subagentes: `researcher` (consulta las fuentes con `query_source`) y `synthesizer` (sin tools, redacta con lo que le pasen en el prompt). Las fuentes son las sintéticas de `fuentes_investigacion.json`.
-- **Parte `conflictos` (por defecto):** cuatro fuentes. Todas coinciden en el total de tickets cerrados, pero dan cifras distintas para el tiempo medio de resolución y para la satisfacción, cada una con su fecha de publicación. La petición no lo dice.
-- **Afirmación estructurada:** el investigador devuelve una lista JSON donde cada afirmación separa el contenido (`claim`, `figure`, `unit`) de los metadatos (`source_id`, `published_at`). El código comprueba esa forma y que la fecha coincide con la de la fuente.
-- **Parte `medio`:** el informe `SRC-LARGO` (unas 1.500 palabras) con una sola frase importante en mitad. `--texto con_resumen` hace que el servidor anteponga al informe una línea con ese hallazgo, sin quitarlo de su sitio.
+- **Parte `conflictos` (por defecto):** seis fuentes en tres pares de cifras distintas, cada una con su fecha de publicación; todas coinciden en el total de tickets cerrados. Dos pares se explican con los metadatos: el **tiempo de resolución** (la auditoría cuenta las esperas de la persona usuaria y es una muestra de 300 tickets) y la **satisfacción** (la encuesta del proveedor es a 95 usuarios con corte a 31 de agosto). El tercero, los **tickets reabiertos**, es el contraste: mismo periodo, mismo método y misma población en las dos fuentes, y cifras distintas sin explicación. La petición no dice nada de esto.
+- **Afirmación estructurada:** el investigador devuelve una lista JSON donde cada afirmación separa el contenido (`claim`, `figure`, `unit`, `context`) de los metadatos (`source_id`, `published_at`). `context` lleva el periodo, el método, la muestra o la población que dé la fuente. El código comprueba esa forma y que la fecha coincide con la de la fuente.
+- **Parte `medio`:** el informe `SRC-LARGO` (unas 1.500 palabras) con una sola frase importante en mitad. `--texto` elige la técnica de 5.1 que aplica el servidor al informe: `con_resumen` antepone una línea con el hallazgo clave (sin quitarlo de su sitio), `con_encabezados` pone un encabezado `##` antes de cada una de seis secciones (el hallazgo queda dentro de «Incidencias y causas», sin abrir sección) y `encabezados_y_resumen` aplica las dos.
 
 ### Las tools del ejercicio
 
@@ -458,9 +458,9 @@ Qué cambia en el código de cada variante:
 
 - **`sin_procedencia`:** el prompt del investigador le pide un párrafo en prosa por fuente, en vez de afirmaciones con metadatos.
 - **`promedio`:** el prompt del sintetizador le pide una única cifra consolidada, el promedio, cuando dos fuentes discrepan.
-- **`--parte medio --texto sin_resumen|con_resumen`:** el mismo informe largo, sin o con la línea de resumen al principio.
+- **`--parte medio --texto sin_resumen|con_resumen|con_encabezados|encabezados_y_resumen`:** el mismo informe largo, sin tratamiento, con la línea de resumen al principio, con encabezados de sección o con las dos cosas.
 
-El código mide sin modelo cuántas cifras del informe llevan su fuente en la misma frase o fila, si algún conflicto aparece fusionado en un promedio y si el resumen del informe largo cita el hallazgo clave.
+El código mide sin modelo cuántas cifras del informe llevan su fuente en la misma frase o fila, si algún conflicto aparece fusionado en un promedio, si el informe explica cada diferencia con el periodo o el método (según los metadatos de cada par), si deja como disputado el par sin explicación o lo atribuye a la fecha o al método, y si el resumen del informe largo cita el hallazgo clave.
 
 ### Predice antes de ejecutar
 
@@ -479,32 +479,35 @@ uv run python app3_sistema_multiagente/05_procedencia.py --anti sin_procedencia 
 uv run python app3_sistema_multiagente/05_procedencia.py --anti promedio                        # cifras en conflicto fusionadas
 uv run python app3_sistema_multiagente/05_procedencia.py --parte medio                          # hallazgo en mitad, sin resumen
 uv run python app3_sistema_multiagente/05_procedencia.py --parte medio --texto con_resumen      # con la línea de resumen al principio
+uv run python app3_sistema_multiagente/05_procedencia.py --parte medio --texto con_encabezados  # con encabezados de sección
+uv run python app3_sistema_multiagente/05_procedencia.py --parte medio --texto encabezados_y_resumen
 ```
 
 **Si ejecutas:** las medidas (comprobador de procedencia, detector de cifras fusionadas, forma de las afirmaciones) se prueban sin modelo; ejecutar sirve para ver qué hace el modelo con ellas.
 
 ### Qué observar
 
-Las afirmaciones estructuradas sin problemas, las fuentes que llegan al sintetizador, las cifras con su fuente en la frase, los conflictos presentados como disputados, las cifras fusionadas y, en la parte `medio`, si el resumen cita el hallazgo clave.
+Las afirmaciones estructuradas sin problemas, las fuentes que llegan al sintetizador, las cifras con su fuente en la frase, los conflictos presentados como disputados, las cifras fusionadas, qué contexto (periodo, método, muestra, población) usa el informe para cada par y, en la parte `medio`, si el resumen cita el hallazgo clave.
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
-Coordinador Sonnet 5.5, subagentes Haiku 5.5, ~0,04–0,06 $ por ejecución:
+Coordinador Sonnet 5.5, subagentes Haiku 5.5, 3 ejecuciones por variante; 0,05–0,08 $ por ejecución en `conflictos` y ~0,02 $ en `medio` (~0,77 $ en total):
 
-| Variante | Señal observada | Qué dice |
+| Variante | Señal observada (3 ejecuciones) | Qué dice |
 | :--- | :--- | :--- |
-| correcta (1 ejecución) | 10 de 10 afirmaciones sin problemas, las 4 fuentes llegan al sintetizador, 5 de 5 cifras con su fuente en la frase, los 2 conflictos como disputados, ningún promedio y las cifras en tabla | la estructura conserva la procedencia y el informe separa lo establecido de lo disputado |
-| `promedio` (1 ejecución) | **fusionó los dos conflictos**: 22 horas y 3,85 sobre 5, que ninguna fuente dice; ningún conflicto presentado como disputado, aunque las cifras originales siguieron apareciendo con su fuente | señal clara del anti-patrón |
-| `sin_procedencia` (4 ejecuciones) | **0 afirmaciones estructuradas** en las 4; pero el informe final llevó la fuente en la frase en 5 de 5 cifras en 3 ejecuciones y en 4 de 5 en la otra | la señal aparece en lo que devuelve el investigador, **no en el informe final** (ver notas) |
-| `medio` sin resumen (3) y con resumen (3) | el resumen citó el 41 % en **6 de 6** | **sin señal**: el informe de ~9.400 caracteres no basta para que se pierda |
+| correcta | afirmaciones estructuradas sin problemas en todas (17/17, 10/10 y 17/17) y las 6 fuentes llegan al sintetizador; cifras con su fuente en la frase 7/7, 7/7 y 6/7 (la que falta es el total de tickets); ningún promedio; **las dos diferencias explicables, explicadas con el método, la muestra, el periodo o la población en 3 de 3; el par sin explicación, atribuido a la fecha o al método en 0 de 3** | la estructura conserva la procedencia y el informe distingue lo que los metadatos explican de lo que no |
+| `promedio` | **fusionó en 1 de 3** (22 horas y 9,85 % de reabiertos, que ninguna fuente dice); en las otras dos no fusionó, pese a la instrucción | señal del anti-patrón, pero no estable: una de tres |
+| `sin_procedencia` | **0 afirmaciones estructuradas** en las 3; el informe final llevó la fuente en la frase en 5/5, 7/7 y 7/7 cifras | la señal aparece en lo que devuelve el investigador, **no en el informe final** (ver notas) |
+| `medio` sin resumen, con resumen, con encabezados y con encabezados y resumen (3 de cada una) | el resumen citó el 41 % en **12 de 12** | **sin señal**: ni el informe de ~9.400 caracteres se pierde sin tratamiento, ni los tratamientos mejoran algo que ya salía bien |
 
 Notas:
 
-- **`sin_procedencia`:** con Haiku 5.5 la prosa del investigador ya traía el nombre de cada fuente y su fecha, y el sintetizador la reprodujo. La estructura se pierde, pero la procedencia no se perdió en el informe final (salvo una cifra en una ejecución). No se fuerza: se documenta.
-- **`promedio`:** el informe también lista las cifras originales con su fuente, así que `figures_with_source` no baja. La señal está en `merged_figures` y en `conflicts_presented`.
-- **Parte `medio`:** la señal de *lost in the middle* no apareció con ~1.500 palabras y Haiku 5.5. Que aparezca con un texto mucho más largo es una hipótesis sin comprobar; no se alargó el informe para forzarla.
-- `conflicts_presented` es una comprobación laxa: pide las dos cifras y una palabra de desacuerdo en cualquier parte del texto.
+- **Fecha y método (TS 5.6):** `explanation_found` mira qué contexto (periodo, método, muestra, población) usa el informe en las líneas que nombran cada par. En las 9 ejecuciones de `conflictos` los dos pares explicables se explican con su contexto (lo ve incluso `sin_procedencia`, que pasa por prosa, salvo la satisfacción en una ejecución). El par sin explicación (**tickets reabiertos**) salió marcado como «atribuido a fecha o método» en 3 de las 9, pero leyendo esas líneas son falsos positivos de la medida: dicen «los mismos 1.240 tickets y el mismo método», «misma población y ninguna diferencia de definición» y «sin método adicional». Es decir, lo contrario de atribuir. **Atribuciones reales a la fecha o al método: 0 de 9.** Con Haiku 5.5 como investigador y Sonnet 5.5 de coordinador no se vio el fallo de explicarlo todo con la fecha; el contraste existe y el informe lo respeta.
+- **`sin_procedencia`:** la prosa del investigador ya traía el nombre de cada fuente y su fecha, y el sintetizador la reprodujo. La estructura se pierde, pero la procedencia no se perdió en el informe final. No se fuerza: se documenta.
+- **`promedio`:** el informe también lista las cifras originales con su fuente, así que `figures_with_source` no baja. La señal está en `merged_figures`. Con el prompt actual, el sintetizador obedeció la orden de consolidar en 1 de 3 ejecuciones; la medición anterior (1 ejecución) había dado 2 conflictos fusionados.
+- **Parte `medio`:** la señal de *lost in the middle* no apareció con ~1.500 palabras y Haiku 5.5, con ninguno de los cuatro tratamientos. Que aparezca con un texto mucho más largo es una hipótesis sin comprobar; no se alargó el informe para forzarla.
+- `conflicts_presented` es una comprobación laxa: pide las dos cifras y una palabra de desacuerdo en cualquier parte del texto, y da falsos negativos. En una ejecución de la correcta marcó los 3 pares como no disputados, aunque el informe los llama «no comparables» y «desacuerdo sin resolver», que no están en la lista de palabras. Lo mismo vale para `explanation_found`, que lee palabras sueltas y no distingue «el mismo método» de «otro método»; léelo junto al texto.
 - Las medidas, la forma de las afirmaciones y las opciones se prueban sin modelo en `tests/test_app3_05_procedencia.py`.
 </details>
 

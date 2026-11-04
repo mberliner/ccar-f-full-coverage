@@ -708,11 +708,13 @@ PURCHASE_ORDERS = [
 
 
 # Fuentes de investigación para app3/04–06 (TS 5.3, 5.6, 5.1 y 5.4): calidad del servicio de la
-# mesa de ayuda en el tercer trimestre. Seis fuentes: tres que concuerdan en parte, dos que
-# discrepan en cifras y fechas (tiempo de resolución y satisfacción), una que falla por
-# *timeout* (monitorización), una que responde vacía de forma legítima (archivo) y un informe
-# largo con el hallazgo clave en mitad. Texto fijo, sin generador aleatorio. Las afirmaciones
-# etiquetadas van en un archivo aparte que el agente nunca ve.
+# mesa de ayuda en el tercer trimestre. Nueve fuentes: tres que concuerdan en parte, seis que
+# discrepan en tres pares de cifras (tiempo de resolución, satisfacción y tickets reabiertos;
+# los dos primeros se explican por el método, la muestra, el periodo o la población, el tercero
+# no), una que falla por *timeout* (monitorización), una que responde vacía de forma legítima
+# (archivo) y un informe largo con el hallazgo clave en mitad. Texto fijo, sin generador
+# aleatorio. Las afirmaciones etiquetadas van en un archivo aparte que el agente nunca ve.
+CONFLICT_SHARED_CONTEXT = "Tercer trimestre de 2026, sobre los 1.240 tickets cerrados, medido de apertura a cierre en el sistema."
 SOURCE_REPORTS = [
     ("SRC-TICKETS", "Informe del sistema de tickets", "2026-10-02", "ok",
      "Resumen del tercer trimestre de 2026. Se cerraron 1.240 tickets. El tiempo medio de resolución fue de 18 horas, "
@@ -724,6 +726,12 @@ SOURCE_REPORTS = [
      "Encuesta enviada a quienes cerraron un ticket en el trimestre: 212 respuestas. La satisfacción media fue de 4,1 sobre 5."),
     ("SRC-PROVEEDOR", "Informe del proveedor de soporte externo", "2026-10-15", "ok",
      "Encuesta del proveedor a 95 usuarios con corte a 31 de agosto de 2026. La satisfacción media fue de 3,6 sobre 5."),
+    # Tercer par, el contraste: mismo periodo, mismo método y misma población (`CONFLICT_SHARED_CONTEXT`
+    # está en las dos fuentes, dicho igual) y cifras que discrepan sin que nada de los metadatos lo explique.
+    ("SRC-CUADRO", "Cuadro de mandos de operaciones", "2026-10-05", "ok",
+     CONFLICT_SHARED_CONTEXT + " El porcentaje de tickets reabiertos fue del 7,3 %."),
+    ("SRC-OFICINA", "Informe de la oficina de calidad", "2026-10-06", "ok",
+     CONFLICT_SHARED_CONTEXT + " El porcentaje de tickets reabiertos fue del 12,4 %."),
     ("SRC-MONITOR", "Monitorización de red", "2026-10-01", "timeout", None),
     ("SRC-ARCHIVO", "Archivo de informes de incidentes graves", "2026-10-01", "ok", ""),
     ("SRC-LARGO", "Informe trimestral de incidencias de red", "2026-10-12", "ok", "LONG"),
@@ -744,11 +752,36 @@ LONG_KEY_FINDING = "El 41 % de las incidencias de red del trimestre se debió a 
 LONG_SUMMARY_LINE = "Hallazgo clave: el 41 % de las incidencias de red del trimestre se debió a un único perfil de VPN obsoleto."
 
 
-def build_long_report() -> str:
-    """Informe largo: 30 párrafos de relleno, el hallazgo clave en el 15.º y otros 30 de relleno después."""
+# Secciones del informe largo con encabezados (variante de TS 5.1-S4): (índice del primer párrafo, título).
+# El hallazgo clave está en el índice 30, dentro de «Incidencias y causas» (25 a 39) y sin abrir sección:
+# el encabezado ayuda a ubicarlo, no lo señala.
+LONG_SECTIONS = [
+    (0, "Revisión de la red"), (10, "Mantenimiento y guardia"), (20, "Documentación e inventario"),
+    (25, "Incidencias y causas"), (40, "Formación y proveedores"), (50, "Seguimiento y cierre"),
+]
+
+
+def long_report_paragraphs() -> list[str]:
+    """Los 61 párrafos del informe largo: 60 de relleno y el hallazgo clave en el índice 30."""
     paragraphs = [LONG_REPORT_FILLER[n % len(LONG_REPORT_FILLER)] + f" (apartado {n + 1})" for n in range(60)]
     paragraphs.insert(30, LONG_KEY_FINDING)
-    return "\n\n".join(paragraphs)
+    return paragraphs
+
+
+def build_long_report() -> str:
+    """Informe largo: 30 párrafos de relleno, el hallazgo clave en el 31.º (índice 30) y otros 30 de relleno después."""
+    return "\n\n".join(long_report_paragraphs())
+
+
+def build_headed_long_report() -> str:
+    """El mismo informe largo con un encabezado `## título` antes de cada sección; sin ellos queda igual que el original."""
+    starts = dict(LONG_SECTIONS)
+    parts: list[str] = []
+    for index, paragraph in enumerate(long_report_paragraphs()):
+        if index in starts:
+            parts.append(f"## {starts[index]}")
+        parts.append(paragraph)
+    return "\n\n".join(parts)
 
 
 def build_research_sources() -> tuple[list[dict], dict]:
@@ -768,7 +801,11 @@ def build_research_sources() -> tuple[list[dict], dict]:
         },
         "conflicts": [
             {
+                # Cada par dice cómo lo explican (o no) los metadatos: `periodo`, `metodo`, `muestra`,
+                # `poblacion` o `sin_explicacion`, y la frase de las fuentes que lo respalda.
                 "topic": "tiempo medio de resolución", "unit": "horas",
+                "explained_by": ["metodo", "muestra"],
+                "evidence": {"metodo": "contando las esperas de respuesta", "muestra": "muestra de 300 tickets"},
                 "claims": [
                     {"source_id": "SRC-TICKETS", "figure": 18, "figure_text": "18 horas", "published_at": "2026-10-02"},
                     {"source_id": "SRC-AUDITORIA", "figure": 26, "figure_text": "26 horas", "published_at": "2026-10-09"},
@@ -776,9 +813,21 @@ def build_research_sources() -> tuple[list[dict], dict]:
             },
             {
                 "topic": "satisfacción media", "unit": "sobre 5",
+                "explained_by": ["periodo", "poblacion"],
+                "evidence": {"periodo": "corte a 31 de agosto de 2026", "poblacion": "95 usuarios"},
                 "claims": [
                     {"source_id": "SRC-ENCUESTA", "figure": 4.1, "figure_text": "4,1 sobre 5", "published_at": "2026-09-30"},
                     {"source_id": "SRC-PROVEEDOR", "figure": 3.6, "figure_text": "3,6 sobre 5", "published_at": "2026-10-15"},
+                ],
+            },
+            {
+                # El contraste: mismo periodo, método y población (`shared_context`, igual en las dos fuentes)
+                # y cifras distintas. Nada en los metadatos explica la diferencia.
+                "topic": "tickets reabiertos", "unit": "%",
+                "explained_by": ["sin_explicacion"], "evidence": {}, "shared_context": CONFLICT_SHARED_CONTEXT,
+                "claims": [
+                    {"source_id": "SRC-CUADRO", "figure": 7.3, "figure_text": "7,3 %", "published_at": "2026-10-05"},
+                    {"source_id": "SRC-OFICINA", "figure": 12.4, "figure_text": "12,4 %", "published_at": "2026-10-06"},
                 ],
             },
         ],
@@ -787,6 +836,8 @@ def build_research_sources() -> tuple[list[dict], dict]:
         "long_report": {
             "source_id": "SRC-LARGO", "key_finding": LONG_KEY_FINDING, "figure": 41, "figure_text": "41 %",
             "summary_line": LONG_SUMMARY_LINE,
+            # Variante con encabezados de sección (TS 5.1-S4): el mismo texto con `## título` antes de cada sección.
+            "headed_report": build_headed_long_report(), "section_headings": [title for _, title in LONG_SECTIONS],
         },
     }
     return sources, labels
