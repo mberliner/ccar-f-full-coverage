@@ -6,31 +6,32 @@ las cifras que no coinciden y qué le pasa al hallazgo clave cuando el texto es 
 
 QUÉ DICE LA GUÍA:
 - Procedencia:
-  - La atribución se pierde cuando un resumen comprime los hallazgos sin conservar
-    qué afirmación sale de qué fuente (5.6-K1). El mapeo afirmación–fuente es una
-    estructura que el sintetizador conserva y combina (5.6-K2).
-  - Los subagentes devuelven ese mapeo estructurado, con la fuente y el fragmento
-    que la respalda (5.6-S1), y el contenido va separado de los metadatos al pasar
-    contexto entre agentes (1.3-S2).
-  - Si el agente de abajo tiene poco contexto, el de arriba le pasa datos
-    estructurados (hechos clave, citas) en vez de contenido verboso (5.1-S6).
+  - Si un resumen comprime los hallazgos y no guarda qué afirmación viene de qué
+    fuente, la atribución desaparece (5.6-K1). Ese emparejamiento es una estructura
+    que el sintetizador tiene que conservar y combinar (5.6-K2).
+  - Los subagentes lo devuelven estructurado, con la fuente y el fragmento que
+    respalda cada afirmación (5.6-S1), y al pasar contexto de un agente a otro el
+    contenido va separado de los metadatos (1.3-S2).
+  - Cuando el agente siguiente tiene poco margen de contexto, se cambia el anterior
+    para que le pase lo esencial estructurado (hechos, citas, una puntuación de
+    relevancia) y no texto largo con todo su razonamiento (5.1-S6).
 - Cifras que no coinciden:
-  - Dos estadísticas creíbles que no coinciden se anotan con su fuente; no se elige
-    una arbitrariamente (5.6-K3). El análisis termina con los valores en conflicto
-    incluidos y anotados, y la reconciliación se decide antes de la síntesis (5.6-S3).
-  - Las fechas de publicación o de recogida van en la salida estructurada, para que
-    una diferencia temporal no se lea como una contradicción (5.6-K4, S4). Los
-    subagentes incluyen metadatos (fechas, ubicación en la fuente, contexto
-    metodológico) para que la síntesis sea correcta (5.1-S5).
-  - El informe separa en secciones lo bien establecido de lo disputado y conserva
-    cómo lo caracteriza cada fuente y su contexto metodológico (5.6-S2).
-  - Cada tipo de contenido tiene su formato: los datos financieros, en tabla; las
-    noticias, en prosa, y los hallazgos técnicos, en listas estructuradas (5.6-S5).
+  - Si dos fuentes creíbles dan cifras distintas, se anotan las dos con su fuente en
+    vez de quedarse con una al azar (5.6-K3). El análisis termina con los valores en
+    conflicto dentro y anotados, y es el coordinador quien decide cómo reconciliarlos
+    antes de pasarlos a la síntesis (5.6-S3).
+  - La fecha de publicación o de recogida de los datos viaja en la salida
+    estructurada, para que una diferencia de periodo no parezca una contradicción
+    (5.6-K4, S4). Junto a ella van la ubicación en la fuente y el contexto
+    metodológico, que la síntesis necesita para no equivocarse (5.1-S5).
+  - El informe pone en secciones distintas lo bien establecido y lo disputado, y
+    respeta cómo lo describe cada fuente y con qué método (5.6-S2).
+  - Cada clase de contenido se presenta a su manera (las cifras, por ejemplo, en una
+    tabla), en vez de pasarlo todo a un formato único (5.6-S5).
 - Texto largo:
-  - *Lost in the middle*: el modelo procesa bien el principio y el final de una
-    entrada larga, y puede omitir lo que está en mitad (5.1-K2). Se mitiga con un
-    resumen de los hallazgos clave al principio y con encabezados de sección
-    explícitos en los resultados detallados (5.1-S4).
+  - *Lost in the middle*: en una entrada larga, el modelo atiende bien el principio
+    y el final y puede saltarse lo que queda en medio (5.1-K2). Ayuda abrir con un
+    resumen de lo importante y ordenar el detalle con encabezados claros (5.1-S4).
 
 POR QUÉ IMPORTA (inferencia propia): la procedencia no se reconstruye después. Si el
 subagente devuelve prosa, la fuente de cada cifra se pierde en el primer salto; si el
@@ -39,29 +40,35 @@ diferencia de periodo se lee como contradicción, se descarta un dato que era co
 
 ANTI-PATRÓN / TRAMPA DEL EXAMEN:
 - Hechos de la guía:
-  - Subagentes que devuelven prosa en vez del mapeo afirmación–fuente
+  - Subagentes que devuelven prosa larga en vez del mapeo afirmación–fuente
     (`--anti sin_procedencia`).
   - Fusionar dos cifras en conflicto en una sola, o quedarse con una sin decirlo
     (`--anti promedio`).
-  - Tomar por contradicción lo que es una diferencia de fecha o de método.
-  - Poner el hallazgo clave en mitad de un texto largo sin resumen ni encabezados
+  - Pasarlo todo a un formato único (`--anti formato_uniforme`).
+  - Tomar por contradicción lo que es una diferencia de fecha o de método. No tiene
+    variante: lo trabaja la pregunta tipo examen.
+  - Dejar el hallazgo clave en mitad de un texto largo sin resumen ni encabezados
     (`--parte medio --texto sin_resumen`, frente a `con_resumen`, `con_encabezados` y
     `encabezados_y_resumen`).
 - Inferencias propias, con lo observado aquí (cifras en el README y en
   `docs/hallazgos.md`):
   - Explicar una diferencia solo vale si los metadatos la explican. Por eso hay un
-    tercer par sin explicación, de contraste: si el informe atribuyera también ese
-    par a la fecha o al método, estaría inventando la explicación. No lo hizo.
-  - `sin_procedencia` y *lost in the middle* no dieron señal en el informe final con
-    estos tamaños: lo que se pierde con la prosa es la estructura (la cifra ya no va
-    unida a su fuente en un campo), y un informe de unos 9.000 caracteres no basta
-    para que el modelo omita el hallazgo. Se documenta, no se fuerza.
-  - En este módulo el coordinador pasa las afirmaciones tal como llegan y el
-    sintetizador deja como disputado lo que no se explica. La guía pone la decisión
-    de reconciliar antes de la síntesis (5.6-S3); aquí esa decisión se reduce a «no
-    reconciliar sin contexto que lo justifique».
-  - El formato por tipo se mide solo con la tabla de las cifras comparables; aquí no
-    hay noticias ni hallazgos técnicos.
+    tercer par sin explicación, de contraste, y `--anti inventar_explicacion` como
+    control: el sintetizador recibe la orden de explicarlo todo. No lo hizo, así que
+    no está demostrado que la medida detecte una explicación inventada.
+  - El coordinador decidió bien qué pares explica el contexto y cuál queda disputado,
+    y pasó esa decisión al sintetizador. La ubicación y el fragmento llegaron al
+    sintetizador, pero no al informe final: los parafraseó.
+  - Sin la instrucción por tipo no hubo tabla; con ella, sí, aunque no siempre con
+    todas las cifras dentro. Aquí no hay noticias ni hallazgos técnicos: el formato
+    solo se mide con la tabla.
+  - Con estos tamaños, la salida estructurada pesó más que la prosa (5.1-S6 no se ve
+    en el volumen), y `sin_procedencia` no dañó el informe final: lo que se pierde es
+    la estructura, porque la prosa ya nombraba fuente y fecha.
+  - 5.1-S4 habla de entradas que juntan varios resultados. Aquí se aplica a un único
+    informe largo (unos 9.400 caracteres) con el hallazgo en medio, y no hubo señal
+    de *lost in the middle*, ni siquiera con un relleno variado y cifras de
+    distracción. Queda como «sin señal con estos datos y este modelo».
 
 Pregunta tipo examen: ver `app3_sistema_multiagente/README.md`, módulo 05.
 

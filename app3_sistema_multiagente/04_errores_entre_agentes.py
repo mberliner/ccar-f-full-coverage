@@ -5,13 +5,12 @@ una fuente falla, y qué puede hacer el coordinador con lo que recibe: recuperar
 entregar un resultado parcial con la brecha anotada o, si no sabe nada, equivocarse.
 
 QUÉ DICE LA GUÍA:
-- El coordinador decide bien la recuperación si el error le llega con contexto: tipo
-  de fallo, la consulta que se intentó, los resultados parciales y las alternativas
-  posibles (5.3-K1). El subagente devuelve ese contexto estructurado (5.3-S1).
-- Un fallo de acceso (un *timeout* que pide decidir si reintentar) no es un resultado
-  vacío válido (una consulta que funcionó y no encontró nada) (5.3-K2). El informe
-  del subagente los distingue para que el coordinador decida lo adecuado en cada
-  caso (5.3-S2).
+- Para decidir cómo recuperarse, al coordinador le sirve saber qué clase de fallo
+  hubo, qué se consultó, qué se llegó a obtener y qué otras vías quedan (5.3-K1).
+  Es el contexto que el subagente devuelve, estructurado, junto al fallo (5.3-S1).
+- Una fuente que no responde a tiempo pide decidir si se reintenta; una consulta que
+  funcionó y no encontró nada ya es una respuesta (5.3-K2). El informe del subagente
+  marca cuál de las dos es, para que el coordinador actúe en consecuencia (5.3-S2).
 - Un estado de error genérico («búsqueda no disponible») le esconde al coordinador
   justo el contexto que necesitaba (5.3-K3).
 - Hay dos anti-patrones opuestos: suprimir el error en silencio, devolviendo un vacío
@@ -35,15 +34,18 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
     sentidos.
 - Inferencias propias, con lo observado aquí (cifras en el README y en
   `docs/hallazgos.md`):
-  - Sin contexto, el coordinador repitió a ciegas la delegación que el subagente ya
-    había reintentado (`generico`). El error genérico no impide anotar la brecha;
-    impide decidir bien qué hacer con ella.
-  - El vacío falso solo engaña si lo produce el código. Cuando se lo pedía el prompt
-    del subagente, el coordinador le pidió en la delegación «si una fuente falla, dilo»
-    y la brecha llegó igual al resultado. Con el *handler* tragándose el fallo, el
-    subagente no lo ve y el informe final afirma algo falso («no dio error»).
-  - Reforzar el prompt del coordinador («comprueba que no falte nada») no arregla un
-    fallo que se ha perdido en el origen.
+  - La recuperación local se ve con una fuente transitoria (`SRC-REDES`): falla una
+    vez, el subagente la reintenta y el coordinador no llega a verla como fallo.
+  - `generico` no cambió lo que hizo el coordinador: con el reintento local hecho,
+    delegó una vez y anotó la brecha, igual que en la correcta. Con una sola fuente
+    caída y ninguna alternativa real, probablemente no había decisión que el
+    contexto pudiera mejorar. Una versión anterior de la variante, que además no
+    reintentaba, sí hacía que el coordinador volviera a delegar: lo que faltaba era
+    la recuperación local (5.3-S3), no el contexto del error.
+  - El vacío falso engaña cuando lo produce el código: el *handler* se traga el
+    fallo, el subagente no lo ve y el informe final da por buena una fuente que no
+    respondió. Cuando el vacío lo pedía el prompt del subagente (versión anterior,
+    sin variante propia), la brecha llegaba igual al resultado.
 - Los errores de la tool siguen el formato de `app1/04` (`errorCategory`,
   `isRetryable`); aquí lo nuevo es qué hace el subagente con ellos.
 

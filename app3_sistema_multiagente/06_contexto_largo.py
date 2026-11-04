@@ -5,21 +5,21 @@ sin que el contexto de un solo hilo se llene y se degrade, y cómo se retoma si 
 proceso se corta.
 
 QUÉ DICE LA GUÍA:
-- En sesiones largas el contexto se degrada: el modelo da respuestas inconsistentes
-  y habla de «patrones típicos» en vez de lo concreto que descubrió antes (5.4-K1).
-- Un *scratchpad* conserva los hallazgos clave más allá de los límites del contexto
-  (5.4-K2). El agente anota en él lo que descubre y lo consulta en las preguntas
-  siguientes (5.4-S2).
-- Delegar en subagentes aísla la salida verbosa de la exploración, mientras el
-  agente principal mantiene la visión de conjunto (5.4-K3). Los subagentes reciben
-  preguntas concretas (5.4-S1).
-- Antes de lanzar los subagentes de una fase, se resumen los hallazgos de la
-  anterior y el resumen va en su contexto inicial (5.4-S3).
-- Para recuperarse de una caída, cada agente exporta su estado a un sitio conocido y
-  el coordinador carga un *manifest* al retomar (5.4-K4) y lo inyecta en los prompts
-  de los agentes (5.4-S4).
-- `/compact` reduce el contexto en una exploración larga, cuando se llena de salida
-  de descubrimiento (5.4-S5).
+- Una sesión muy larga se degrada: las respuestas dejan de ser coherentes y el modelo
+  recurre a «patrones típicos» en lugar de lo concreto que había descubierto (5.4-K1).
+- Un *scratchpad* guarda los hallazgos clave fuera del contexto, así que sobreviven a
+  sus límites (5.4-K2). El agente va anotando en él y lo vuelve a leer cuando le
+  llega la pregunta siguiente (5.4-S2).
+- La exploración verbosa se delega en subagentes, que la mantienen fuera del hilo
+  principal mientras este conserva la visión de conjunto (5.4-K3). A cada subagente
+  se le da una pregunta concreta (5.4-S1).
+- Al cerrar una fase se resume lo encontrado, y la fase siguiente arranca con ese
+  resumen en su contexto (5.4-S3).
+- Para poder retomar tras una caída, cada agente deja su estado en un lugar
+  acordado; al reanudar, el coordinador lee el *manifest* (5.4-K4) y pasa su
+  contenido a los prompts de los agentes (5.4-S4).
+- En una exploración larga, `/compact` libera contexto cuando se ha llenado de
+  salida de descubrimiento (5.4-S5).
 
 POR QUÉ IMPORTA (inferencia propia): lo que no está en el contexto no se puede usar,
 y lo que está pero enterrado entre informes en bruto se usa peor. Sacar el detalle a
@@ -37,10 +37,15 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
   `docs/hallazgos.md`):
   - La guía habla de explorar un código grande. Aquí se explora un conjunto de
     fuentes en tres fases, con los mismos mecanismos.
-  - Con este tamaño la degradación no apareció: el hilo único juntó 11.134
-    caracteres (4.106 la fase más larga de la versión correcta) y aun así mantuvo
-    los hechos. Lo que se mide es cuánto contexto se acumula y si al retomar se
-    repite trabajo, no un fallo que se fuerce.
+  - La degradación (5.4-K1) no se reprodujo: el hilo único juntó 11.134 caracteres
+    (4.106 la fase más larga de la versión correcta) y aun así mantuvo los hechos.
+    Lo que se mide es cuánto contexto se acumula y si al retomar se repite trabajo,
+    no un fallo que se fuerce.
+  - `/compact` (5.4-S5) es de Claude Code y aquí no se ejecuta: el módulo lo explica,
+    y su equivalente en código es el resumen de cada fase.
+  - Un *manifest* solo sirve si se comprueba al cargarlo. Uno roto, de otra versión
+    o que no cuadra con el *scratchpad* llevaría a la fase siguiente a leer hallazgos
+    que no existen; el módulo lo rechaza y empieza de cero.
   - Las fases cuestan más que el hilo único (unas 2,5 veces aquí): el ahorro de
     contexto se paga en llamadas. Compensa cuando el hilo se acercaría a su límite o
     cuando hay que poder retomar.
@@ -49,14 +54,14 @@ Pregunta tipo examen: ver `app3_sistema_multiagente/README.md`, módulo 06.
 
 INTRODUCE: TS 5.4-K1, TS 5.4-K2, TS 5.4-K3, TS 5.4-K4, TS 5.4-S1, TS 5.4-S2, TS 5.4-S3, TS 5.4-S4, TS 5.4-S5
 
-# USA: TS 3.4-K4, TS 3.4-S3
-# `Explore` (el subagente de solo lectura de Claude Code para las fases de descubrimiento
-# verbosas) y `/compact` son de Claude Code, no del Agent SDK: no se ejecutan aquí. Se
-# explican en la sección D3 (`d3_claude_code/`); aquí solo se señala su papel. `Explore`
-# hace con una sesión interactiva lo que `researcher` hace en este módulo: el detalle
-# verboso queda fuera del hilo principal. `/compact` (TS 5.4-S5) resume la conversación
-# de una sesión interactiva cuando se llena, y también se le pueden dar instrucciones sobre
-# qué conservar; en este módulo el equivalente programático es el resumen de cada fase.
+USA: TS 3.4-K4, TS 3.4-S3
+`Explore` (el subagente de solo lectura de Claude Code para las fases de descubrimiento
+verbosas) y `/compact` son de Claude Code, no del Agent SDK: no se ejecutan aquí. Se
+explican en la sección D3 (`d3_claude_code/`); aquí solo se señala su papel. `Explore`
+hace en una sesión interactiva lo que `researcher` hace en este módulo: el detalle
+verboso queda fuera del hilo principal. `/compact` (TS 5.4-S5) resume la conversación
+de una sesión interactiva cuando se llena; en este módulo el equivalente en código es
+el resumen de cada fase.
 
 Uso: `uv run python app3_sistema_multiagente/06_contexto_largo.py [--anti todo_en_contexto] [--simular-caida] [--desde-cero] [--repeat N]`
 """
