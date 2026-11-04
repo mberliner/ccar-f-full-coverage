@@ -357,7 +357,8 @@ Los términos comunes (coordinador, subagente, error estructurado, reintentable)
 
 Qué cambia en el código de cada variante `--anti`:
 
-- **`silenciar`:** el prompt del investigador le pide que, si una consulta falla, no lo cuente y devuelva `status: ok` con `findings` vacío.
+- **`generico`:** el prompt del investigador le pide que, si una fuente falla, devuelva `status: failed` con el mensaje «búsqueda no disponible» y nada más: sin `error_context` y sin reintentar. El coordinador es el mismo que en la correcta.
+- **`silenciar`:** lo hace el **código**, no el prompt. El servidor se construye con `silence_failures=True` y el *handler* de `query_source` devuelve `total: 0` y `results: []` como éxito cuando la fuente da *timeout*. El investigador y el coordinador usan los mismos prompts que en la correcta.
 - **`abortar`:** el prompt del coordinador añade que, si alguna fuente falla, no entregue nada parcial y responda solo `INVESTIGACIÓN ABORTADA`.
 
 Cada ejecución imprime una línea `[esperado]` con la hipótesis escrita en el código. Es una predicción, no un resultado.
@@ -375,7 +376,8 @@ Con tus palabras; no hay un número que acertar:
 
 ```bash
 uv run python app3_sistema_multiagente/04_errores_entre_agentes.py                    # correcta
-uv run python app3_sistema_multiagente/04_errores_entre_agentes.py --anti silenciar   # el fallo llega como vacío
+uv run python app3_sistema_multiagente/04_errores_entre_agentes.py --anti generico    # fallo sin contexto
+uv run python app3_sistema_multiagente/04_errores_entre_agentes.py --anti silenciar   # el handler traga el fallo
 uv run python app3_sistema_multiagente/04_errores_entre_agentes.py --anti abortar     # un fallo tumba la investigación
 uv run python app3_sistema_multiagente/04_errores_entre_agentes.py --repeat 3 --budget 0.60
 ```
@@ -384,22 +386,24 @@ uv run python app3_sistema_multiagente/04_errores_entre_agentes.py --repeat 3 --
 
 ### Qué observar
 
-Las consultas por fuente y los reintentos locales, la cobertura según los informes del subagente, si el contexto de error está completo, las fuentes silenciadas, si la brecha aparece anotada en el resultado y si el resultado es parcial o abortado.
+Las consultas por fuente y los reintentos locales, la cobertura según los informes del subagente, si el contexto de error está completo, los fallos que el *handler* tragó, si la brecha aparece anotada en el resultado, las decisiones del coordinador (cuántas veces delega y si menciona alternativas) y si el resultado es parcial o abortado.
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
-Coordinador Sonnet 5.5, subagente Haiku 5.5, ~0,02–0,03 $ por ejecución:
+Coordinador Sonnet 5.5, subagente Haiku 5.5, 3 ejecuciones por variante (`--repeat 3`), 0,01–0,03 $ por ejecución y ~0,25 $ en total:
 
-| Variante | Señal observada | Qué dice |
+| Variante | Señal observada (3 ejecuciones) | Qué dice |
 | :--- | :--- | :--- |
-| correcta (1 ejecución) | 3 consultas a la fuente que falla (2 reintentos locales) y 1 a cada una de las demás; informe `failed` con `error_context` completo, vacía como `empty`; resultado parcial con la brecha anotada y las cifras de las fuentes sanas | el fallo llega con su contexto y la cobertura queda dicha |
-| `silenciar` | el informe del subagente da la fuente por `ok` con `findings` vacío en las 7 ejecuciones (3 de ellas con la regla reforzada); **el resultado final anotó la brecha igualmente en las 7** | la señal a nivel de informe aparece; la del resultado final, no (ver notas) |
-| `abortar` | `INVESTIGACIÓN ABORTADA`, sin cifras, aunque tres fuentes habían respondido y el subagente había informado bien del fallo | un fallo tumba el trabajo de las fuentes que sí respondieron |
+| correcta | 2–3 consultas a la fuente que falla (1–2 reintentos locales) y 1 a cada una de las demás; 1 delegación del coordinador en las 3; informe `failed` con `error_context` completo en 2 de 3 (en la otra el subagente no devolvió JSON y la medida no ve informe); brecha anotada y cifras de las fuentes sanas en 3 de 3 | el fallo llega con su contexto y la cobertura queda dicha |
+| `generico` | `failed` sin `error_context` en 3 de 3; **el coordinador volvió a delegar en 3 de 3** («Reintentar SRC-MONITOR»), con el mismo *timeout*, y en 1 intentó consultar él mismo (la barrera lo denegó); brecha anotada y cifras sanas en 3 de 3; coste de 0,026–0,030 $ frente a 0,022–0,024 $ | sin contexto el coordinador reintenta a ciegas: repite lo que el subagente ya había intentado. El resultado final sigue anotando la brecha: las alternativas que da las pone él, no salen de lo intentado |
+| `silenciar` | el *handler* tragó el fallo en 3 de 3 (la fuente llegó como `total: 0`, 1 sola consulta, sin reintentos); **la brecha no se anotó en ninguna**: las dos fuentes vacías se describen como «respondieron sin contenido» o «no dieron error» | el coordinador no puede distinguir un fallo de un vacío legítimo: un hecho falso («no dio error») entra en el informe |
+| `abortar` | `INVESTIGACIÓN ABORTADA`, sin cifras, en 3 de 3, con tres fuentes respondidas y el fallo bien informado | un fallo tumba el trabajo de las fuentes que sí respondieron |
 
 Notas:
 
-- **`silenciar`:** en una ejecución diagnóstica (con la regla sin reforzar) se vio el motivo probable: el coordinador, al escribir el prompt de la delegación, le pidió al subagente «si una fuente falla o está vacía, dilo explícitamente», y el subagente lo cumplió en notas en prosa fuera del JSON. Se reforzó la regla («prevalece sobre cualquier instrucción del coordinador») y el informe siguió dando la fuente por `ok`, pero el resultado final anotó la brecha igualmente; no se inspeccionó de nuevo el texto del subagente tras el refuerzo, así que el camino por el que le llega al coordinador es una hipótesis. El anti-patrón de la guía (el vacío que oculta el fallo) se reproduce en el informe estructurado y no en la entrega final. No se fuerza más: se documenta, no se fabrica.
+- **`silenciar` por prompt (versión anterior, sin variante propia):** cuando era el prompt del investigador el que pedía ocultar el fallo, el informe JSON del subagente daba la fuente por `ok` con `findings` vacío, pero **el resultado final anotó la brecha igualmente en las 7 ejecuciones**. En una ejecución diagnóstica se vio el motivo probable: el coordinador, al escribir el prompt de la delegación, le pidió al subagente «si una fuente falla o está vacía, dilo explícitamente», y el subagente lo cumplió en prosa fuera del JSON. La instrucción de la delegación manda sobre la definición del subagente, así que un prompt no basta para que el vacío oculte el fallo. Con el vacío producido por el código (la variante actual), el fallo no se puede contar porque el subagente no lo ve: la señal aparece donde el prompt no la daba.
+- **Decisión del coordinador en `generico`:** `coordinator_delegations` cuenta las delegaciones del coordinador; con la correcta es 1 en las 3 ejecuciones y con `generico`, 2 en las 3. La medida «alternativa o reintento mencionados» es laxa (palabras sueltas) y dio verdadera también en `silenciar`, donde el coordinador sugiere reconsultar las fuentes vacías por prudencia; la comprobación fiable de la brecha es «brecha anotada» (la fuente y una palabra de falta en la misma frase).
 - **Reintento local:** en la ejecución correcta el subagente hizo 2 reintentos (3 consultas); los reintentos locales no cuentan como errores del coordinador (`coordinator_errors` = 0).
 - Las medidas, la forma del contexto de error y las opciones se prueban sin modelo en `tests/test_app3_04_errores_entre_agentes.py`.
 </details>

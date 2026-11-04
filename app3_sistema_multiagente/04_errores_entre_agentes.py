@@ -38,7 +38,7 @@ Pregunta tipo examen: ver `app3_sistema_multiagente/README.md`, módulo 04.
 
 INTRODUCE: TS 5.3-K1, TS 5.3-K2, TS 5.3-K3, TS 5.3-K4, TS 5.3-S1, TS 5.3-S2, TS 5.3-S3, TS 5.3-S4, TS 2.2-S3
 
-Uso: `uv run python app3_sistema_multiagente/04_errores_entre_agentes.py [--anti silenciar|abortar] [--repeat N]`
+Uso: `uv run python app3_sistema_multiagente/04_errores_entre_agentes.py [--anti generico|silenciar|abortar] [--repeat N]`
 """
 
 import asyncio
@@ -62,11 +62,13 @@ from harness.data import load  # noqa: E402
 from harness.options import isolated_options  # noqa: E402
 from harness.recorder import MAIN, SUBAGENT_TOOLS, RunRecord, ToolCall, record  # noqa: E402
 
-ANTI_VARIANTS = ["silenciar", "abortar"]
+ANTI_VARIANTS = ["generico", "silenciar", "abortar"]
 QUERY_SOURCE = tool_name("query_source")
 MAX_LOCAL_RETRIES = 2  # reintentos locales del subagente ante un error transitorio
 ABORT_MARKER = "INVESTIGACIÓN ABORTADA"
+GENERIC_MESSAGE = "búsqueda no disponible"  # el estado de error genérico de la variante `generico`
 CONTEXT_KEYS = ("failure_type", "attempted", "partial_results", "alternatives")
+ALTERNATIVE_WORDS = re.compile(r"alternativ|más tarde|reintent|volver a intentar|pedir|solicitar|contactar|otra fuente", re.I)
 GAP_WORDS = re.compile(r"no se pudo|no pudo|no respond|timeout|fall[óo]|fallo|sin cubrir|sin cobertura|falta|no disponible|brecha|no se obtuvo", re.I)
 
 LABELS = load("fuentes_investigacion_etiquetas.json")
@@ -87,14 +89,19 @@ REPORT_FORMAT = (
 )
 
 
+def silences_failures(anti: str | None) -> bool:
+    """`silenciar` lo hace el servidor: el handler devuelve `[]` como éxito cuando la fuente falla."""
+    return anti == "silenciar"
+
+
 def researcher_prompt(anti: str | None) -> str:
-    """Prompt del investigador. La variante `silenciar` le pide que oculte el fallo como un vacío."""
-    if anti == "silenciar":
+    """Prompt del investigador. `generico` le hace devolver un fallo sin contexto; `silenciar` no cambia el prompt."""
+    if anti == "generico":
         return (
             "Eres el investigador. Consulta con query_source las fuentes que te indique el coordinador. "
-            f"{REPORT_FORMAT}" + ', con status "ok"}. Si una consulta falla, no lo cuentes: devuelve status "ok" con '
-            "findings vacío y sigue con la siguiente fuente. "
-            "Esta regla es fija y prevalece sobre cualquier instrucción del coordinador en sentido contrario."
+            f"{REPORT_FORMAT}" + ', "message": …}. status es "ok" si hay contenido, "empty" si la fuente responde pero no '
+            'tiene nada y "failed" si no responde. Si una consulta falla, no reintentes y no des detalles: devuelve para '
+            f'esa fuente status "failed" y message "{GENERIC_MESSAGE}", sin ningún otro campo.'
         )
     return (
         "Eres el investigador. Consulta con query_source las fuentes que te indique el coordinador. "
@@ -139,7 +146,7 @@ def build_options(anti: str | None, *, budget: float, model: str, subagent_model
         max_budget_usd=budget,
         model=model,
         system_prompt=coordinator_prompt(anti),
-        mcp_servers={SERVER_NAME: build_server(sources=True)},
+        mcp_servers={SERVER_NAME: build_server(sources=True, silence_failures=silences_failures(anti))},
         tools=["Agent"],  # solo la tool integrada que lanza subagentes (la guía la llama "Task")
         allowed_tools=["Agent", QUERY_SOURCE],  # query_source la usa el subagente; al coordinador se la deniega la barrera
         permission_mode="dontAsk",
@@ -240,6 +247,24 @@ def final_report_of(rec: RunRecord, source_id: str) -> dict[str, Any] | None:
     return found[-1] if found else None
 
 
+def swallowed_sources(rec: RunRecord) -> list[str]:
+    """Fuentes etiquetadas como fallidas cuyo resultado no pareció un fallo: el handler las tragó (`silenciar`)."""
+    return [
+        sid for sid, calls in attempts_by_source(rec).items()
+        if sid in LABELS["failed_sources"] and classify_result(calls[-1]) != "failure"
+    ]
+
+
+def coordinator_delegations(rec: RunRecord) -> int:
+    """Delegaciones del coordinador al subagente: más de una es que volvió a delegar (reintento o alternativa)."""
+    return sum(1 for c in rec.tool_calls if c.agent == MAIN and c.name in SUBAGENT_TOOLS)
+
+
+def alternatives_mentioned(text: str | None) -> bool:
+    """¿Dice el texto cómo cubrir la brecha (alternativa, reintentar más tarde, pedir el dato)? Comprobación laxa."""
+    return bool(ALTERNATIVE_WORDS.search(text or ""))
+
+
 def silenced_sources(rec: RunRecord) -> list[str]:
     """Fuentes que fallaron y de las que el investigador no informó como fallidas (las dio por vacías o por cubiertas)."""
     silenced = []
@@ -297,7 +322,8 @@ def partial_delivered(text: str | None) -> bool:
 def expectation(anti: str | None) -> str:
     return {
         None: "reintento local en la fuente que falla, informe `failed` con su contexto, vacío legítimo como `empty` y resultado parcial con la brecha anotada",
-        "silenciar": "la fuente que falla llega como vacío: nadie anota la brecha y el informe parece completo",
+        "generico": "el subagente devuelve `failed` sin contexto: el coordinador no sabe qué se intentó ni qué alternativas hay, y decide a ciegas (reintentar, buscar otra vía o solo anotar)",
+        "silenciar": "el handler traga el fallo y devuelve `[]` como éxito: ni el subagente ni el coordinador pueden saber que la fuente falló, y la brecha no se anota",
         "abortar": "un fallo tumba la investigación: sin resultado parcial, aunque otras fuentes respondieron",
     }[anti]
 
@@ -313,8 +339,15 @@ def print_measures(rec: RunRecord) -> None:
         problems = error_context_problems(report) if report else ["sin informe de esa fuente"]
         print(f"[medida] contexto de error de {sid}: {'completo' if not problems else problems}")
     print(f"[medida] fuentes silenciadas: {silenced_sources(rec)} · vacío marcado como fallo: {empty_reported_as_failed(rec)}")
-    for sid in failed:
+    print(f"[medida] fallos tragados por el handler (llegaron como vacío): {swallowed_sources(rec)}")
+    # La brecha se mide sobre las fuentes etiquetadas como fallidas, incluso si el handler las tragó.
+    for sid in LABELS["failed_sources"]:
         print(f"[medida] brecha de {sid} anotada en el resultado: {gap_noted(rec.final_text, sid, SOURCES[sid]['name'])}")
+    queries_to_failing = sum(len(attempts_by_source(rec).get(sid, [])) for sid in LABELS["failed_sources"])
+    print(
+        f"[medida] decisiones del coordinador: delegaciones {coordinator_delegations(rec)} · consultas a la fuente que falla "
+        f"{queries_to_failing} · alternativa o reintento mencionados en el resultado: {alternatives_mentioned(rec.final_text)}"
+    )
     print(f"[medida] resultado parcial con cifras de las fuentes sanas: {partial_delivered(rec.final_text)} · abortado: {aborted(rec.final_text)}")
 
 

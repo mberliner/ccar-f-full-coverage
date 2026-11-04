@@ -183,3 +183,14 @@ def test_summary_first_moves_the_key_finding_to_the_top_without_removing_it():
     # Las otras fuentes no cambian.
     other = {t.name: t for t in make_tools(sources=True, summary_first=True)}
     assert query_source("SRC-TICKETS", other)[1] == query_source("SRC-TICKETS")[1]
+
+
+def test_silence_failures_makes_the_handler_return_an_empty_success_for_the_failing_source():
+    # Anti-patrón de TS 5.3-K4 hecho por el código: el fallo se traga y llega como `[]` con éxito.
+    silenced = {t.name: t for t in make_tools(sources=True, silence_failures=True)}
+    (failed,) = LABELS["failed_sources"]
+    outcome, data = query_source(failed, silenced)
+    assert not outcome.is_error and data == {"source_id": failed, "total": 0, "results": []}
+    # Las demás fuentes no cambian, y sin la opción la fuente sigue fallando.
+    assert query_source("SRC-TICKETS", silenced)[1] == query_source("SRC-TICKETS")[1]
+    assert query_source(failed)[0].is_error

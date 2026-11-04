@@ -49,7 +49,7 @@ def words_of(query: str) -> set[str]:
     return {w for w in query.lower().split() if len(w) >= 3}
 
 
-def make_tools(*, extended: bool = False, sources: bool = False, summary_first: bool = False) -> list[SdkMcpTool[Any]]:
+def make_tools(*, extended: bool = False, sources: bool = False, summary_first: bool = False, silence_failures: bool = False) -> list[SdkMcpTool[Any]]:
     @tool(
         "search_tickets",
         "Busca en los tickets de la mesa de ayuda por palabras clave o por categoría (acceso, hardware, software, "
@@ -106,7 +106,7 @@ def make_tools(*, extended: bool = False, sources: bool = False, summary_first: 
     if extended:
         tools += make_extended_tools()
     if sources:
-        tools += make_source_tools(summary_first=summary_first)
+        tools += make_source_tools(summary_first=summary_first, silence_failures=silence_failures)
     return tools
 
 
@@ -168,8 +168,12 @@ def make_extended_tools() -> list[SdkMcpTool[Any]]:
     return [fetch_url, load_document, verify_fact]
 
 
-def make_source_tools(*, summary_first: bool = False) -> list[SdkMcpTool[Any]]:
-    """Tools de app3/04–06: listar fuentes y consultar una. El fallo y el vacío son resultados distintos."""
+def make_source_tools(*, summary_first: bool = False, silence_failures: bool = False) -> list[SdkMcpTool[Any]]:
+    """Tools de app3/04–06: listar fuentes y consultar una. El fallo y el vacío son resultados distintos.
+
+    `silence_failures=True` es el anti-patrón de app3/04 hecho por el código: el handler traga el
+    fallo y devuelve `[]` como éxito, de modo que nada del resultado de la tool delata que la fuente falló.
+    """
 
     @tool(
         "list_sources",
@@ -192,6 +196,8 @@ def make_source_tools(*, summary_first: bool = False) -> list[SdkMcpTool[Any]]:
         entry = next((s for s in load("fuentes_investigacion.json") if s["source_id"] == args["source_id"]), None)
         if entry is None:
             return structured_error("fuente desconocida", source_id=args["source_id"])
+        if entry["availability"] == "timeout" and silence_failures:
+            return ok({"source_id": entry["source_id"], "total": 0, "results": []})
         if entry["availability"] == "timeout":
             # Sin estado: la fuente falla siempre. El reintento local no la recupera y lo que se mide es qué hace el agente.
             data = {
@@ -223,5 +229,8 @@ def validation_error(query: str) -> dict[str, Any]:
     return {"content": [{"type": "text", "text": json.dumps(data, ensure_ascii=False)}], "is_error": True}
 
 
-def build_server(*, extended: bool = False, sources: bool = False, summary_first: bool = False) -> Any:
-    return create_sdk_mcp_server(SERVER_NAME, tools=make_tools(extended=extended, sources=sources, summary_first=summary_first))
+def build_server(*, extended: bool = False, sources: bool = False, summary_first: bool = False, silence_failures: bool = False) -> Any:
+    return create_sdk_mcp_server(
+        SERVER_NAME,
+        tools=make_tools(extended=extended, sources=sources, summary_first=summary_first, silence_failures=silence_failures),
+    )

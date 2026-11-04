@@ -42,7 +42,7 @@ def delegation(cid, text):
 # --- tools por rol y variantes --------------------------------------------------------------
 
 def test_variants():
-    assert mod.ANTI_VARIANTS == ["silenciar", "abortar"]
+    assert mod.ANTI_VARIANTS == ["generico", "silenciar", "abortar"]
 
 
 def test_researcher_only_queries_sources():
@@ -67,10 +67,22 @@ def test_correct_researcher_prompt_asks_for_local_retry_and_structured_error_con
     assert "vacío" in prompt  # distingue vacío legítimo de fallo
 
 
-def test_silenciar_tells_the_researcher_to_hide_the_failure_as_an_empty_result():
-    prompt = mod.researcher_prompt("silenciar")
-    assert "error_context" not in prompt and "failed" not in prompt
-    assert mod.researcher_prompt(None) != prompt
+def test_silenciar_is_done_by_the_code_not_by_the_prompt():
+    # La variante ya no le pide al subagente que oculte nada: el handler devuelve [] como éxito.
+    assert mod.researcher_prompt("silenciar") == mod.researcher_prompt(None)
+    assert mod.coordinator_prompt("silenciar") == mod.coordinator_prompt(None)
+    assert mod.silences_failures("silenciar") is True
+    assert mod.silences_failures(None) is False and mod.silences_failures("generico") is False and mod.silences_failures("abortar") is False
+
+
+def test_generico_makes_the_researcher_return_a_bare_failed_status_without_context():
+    prompt = mod.researcher_prompt("generico")
+    assert mod.GENERIC_MESSAGE in prompt and "failed" in prompt
+    for key in ("error_context", "failure_type", "attempted", "partial_results", "alternatives"):
+        assert key not in prompt
+    assert prompt != mod.researcher_prompt(None)
+    # El coordinador es el mismo: lo que cambia es la información que le llega.
+    assert mod.coordinator_prompt("generico") == mod.coordinator_prompt(None)
 
 
 def test_abortar_changes_the_coordinator_not_the_researcher():
@@ -183,6 +195,33 @@ def test_empty_source_reported_as_failed_is_a_confusion():
     assert mod.empty_reported_as_failed(rec) == [EMPTY]
     right = RunRecord(tool_calls=[query("c1", EMPTY, EMPTY_TEXT), delegation("d1", json.dumps({"source_id": EMPTY, "status": "empty", "findings": []}))])
     assert mod.empty_reported_as_failed(right) == []
+
+
+def test_generic_failed_report_lacks_the_error_context():
+    generic = {"source_id": FAILED, "status": "failed", "message": mod.GENERIC_MESSAGE, "findings": []}
+    assert mod.error_context_problems(generic) == ["falta error_context"]
+
+
+def test_swallowed_sources_are_labelled_failures_whose_result_did_not_look_like_a_failure():
+    # Con el handler que devuelve [] como éxito, la fuente que falla llega como un vacío legítimo.
+    swallowed = RunRecord(tool_calls=[query("c1", FAILED, json.dumps({"source_id": FAILED, "total": 0, "results": []}))])
+    assert mod.swallowed_sources(swallowed) == [FAILED]
+    honest = RunRecord(tool_calls=[query("c1", FAILED, TIMEOUT_TEXT, error=True)])
+    assert mod.swallowed_sources(honest) == []
+    assert mod.swallowed_sources(RunRecord()) == []  # no consultada: no hay nada que tragar
+    assert mod.swallowed_sources(RunRecord(tool_calls=[query("c1", EMPTY, EMPTY_TEXT)])) == []  # el vacío legítimo no es un fallo
+
+
+def test_coordinator_delegations_count_only_the_main_agent_calls_to_the_subagent():
+    rec = RunRecord(tool_calls=[delegation("d1", "x"), delegation("d2", "y"), query("c1", FAILED, TIMEOUT_TEXT, error=True)])
+    assert mod.coordinator_delegations(rec) == 2
+    assert mod.coordinator_delegations(RunRecord()) == 0
+
+
+def test_alternatives_mentioned_looks_for_a_way_to_cover_the_gap():
+    assert mod.alternatives_mentioned("Alternativa: pedir el dato al equipo de red.")
+    assert mod.alternatives_mentioned("Se puede reintentar más tarde.")
+    assert not mod.alternatives_mentioned("La fuente falló.") and not mod.alternatives_mentioned(None)
 
 
 # --- el resultado final: cobertura anotada ---------------------------------------------------
