@@ -330,8 +330,6 @@ Un agente de síntesis recibe todas las tools del sistema y, aunque su cometido 
 
 ## 04 · Errores entre agentes
 
-<!-- BORRADOR (Sonnet 5.5): pendiente del pase de textos de Opus 5.5 (cabecera del módulo, predicciones y pregunta). -->
-
 > **Qué vas a hacer:** Ver qué le llega al coordinador cuando una de las fuentes de un subagente falla por *timeout*, y qué entrega a partir de ahí.
 >
 > **Necesitas antes:** El [módulo 01](#01--coordinador-y-subagentes) y el [módulo 03](#03--tools-entre-roles) (mismo patrón de coordinador, barrera y subagente).
@@ -369,8 +367,9 @@ Con tus palabras; no hay un número que acertar:
 
 1. En la configuración correcta, ¿qué tendría que haber en lo que el subagente le devuelve al coordinador para que este pueda anotar la brecha sin inventarla? ¿Qué distingue ese contenido de un vacío?
 2. ¿Cuántas veces esperas que se consulte la fuente que falla, y cuántas las demás? ¿Qué parte de eso decide el código y qué parte el modelo?
-3. Con `--anti silenciar`, ¿qué sabe el coordinador de la fuente que falló, y por qué ya no puede distinguirla de la vacía? ¿Qué más puede llegarle por otro camino?
-4. Con `--anti abortar`, ¿qué se pierde respecto a la correcta, y qué parte del trabajo ya estaba hecha cuando se decide abortar?
+3. Con `--anti generico`, el coordinador sabe que una fuente falló, pero no qué se intentó ni qué alternativas hay. ¿Qué crees que hará con ese fallo? ¿Podrá anotar la brecha igualmente?
+4. Con `--anti silenciar`, el *handler* convierte el *timeout* en un vacío antes de que lo vea el subagente. ¿Qué sabe entonces el coordinador de esa fuente, y en qué se diferencia de lo que sabría si fuera el subagente quien decidiera ocultar el fallo?
+5. Con `--anti abortar`, ¿qué se pierde respecto a la correcta, y qué parte del trabajo ya estaba hecha cuando se decide abortar?
 
 ### Ejecutar
 
@@ -410,17 +409,21 @@ Notas:
 
 ### Pregunta tipo examen
 
-Un subagente de búsqueda agota sus reintentos con una fuente que da *timeout*, mientras que otras tres fuentes han respondido bien. ¿Qué debe ocurrir a partir de ahí?
+Un sistema de investigación tiene un coordinador y un subagente de búsqueda. Cuando una fuente da *timeout*, el subagente reintenta dos veces y, si sigue fallando, devuelve `{"status": "failed", "message": "búsqueda no disponible"}`. Los registros muestran que el coordinador vuelve a delegar la misma consulta a la misma fuente, y que los informes llegan tarde aunque otras tres fuentes respondieron a la primera. ¿Qué cambio ataca la causa?
 
-- A. El subagente devuelve un resultado vacío para esa fuente, para que el coordinador continúe sin interrumpir el flujo.
-- B. El subagente devuelve el tipo de fallo, qué intentó, lo parcial y alternativas, y el coordinador entrega lo obtenido anotando la brecha.
-- C. El subagente propaga la excepción para que el coordinador cancele toda la investigación y la relance cuando la fuente se recupere.
-- D. El subagente reintenta sin límite hasta que la fuente responda, para no entregar nunca un informe sin esa fuente.
+- A. Que el subagente devuelva el tipo de fallo, lo que intentó, lo que obtuvo y las alternativas, y que el informe anote la fuente que falta.
+- B. Que el subagente devuelva una lista vacía para esa fuente, para que el coordinador no la vea como un fallo y siga con las demás.
+- C. Que el coordinador cancele la investigación en cuanto una fuente falle y la relance completa cuando todas las fuentes estén disponibles.
+- D. Que el subagente reintente hasta que la fuente responda, para que el coordinador reciba siempre un resultado completo de cada fuente.
 
 <details>
 <summary>Paso 4 · Respuesta</summary>
 
-**B.** Tras recuperar en local lo transitorio, el subagente no oculta el fallo: devuelve el contexto estructurado (tipo, intento, resultados parciales y alternativas) y el coordinador, que gestiona los errores, entrega un resultado parcial con la cobertura anotada (TS 5.3, TS 2.2-S3). A confunde un fallo de acceso con un resultado vacío válido; C tira el trabajo de las fuentes que sí respondieron; D no acota el reintento y bloquea la entrega.
+**A.** El mensaje genérico le esconde al coordinador lo que necesita para decidir (TS 5.3-K3): no sabe que el subagente ya reintentó, así que repite la consulta. Con el tipo de fallo, lo intentado, los resultados parciales y las alternativas, el coordinador puede recuperar o seguir (TS 5.3-K1, S1). El subagente ya recupera en local lo transitorio y solo propaga lo que no resuelve (TS 5.3-S3, TS 2.2-S3), y el informe anota la cobertura (TS 5.3-S4).
+
+- **B** convierte un fallo de acceso en un vacío válido (TS 5.3-K2): el informe dirá que esa fuente no tenía nada.
+- **C** tira el trabajo de las tres fuentes que respondieron por un solo fallo (TS 5.3-K4).
+- **D** quita el límite al reintento local y bloquea la entrega mientras la fuente siga caída.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
@@ -428,8 +431,6 @@ Un subagente de búsqueda agota sus reintentos con una fuente que da *timeout*, 
 ---
 
 ## 05 · Procedencia entre agentes
-
-<!-- BORRADOR (Sonnet 5.5): pendiente del pase de textos de Opus 5.5 (cabecera del módulo, predicciones y pregunta). -->
 
 > **Qué vas a hacer:** Ver si la fuente y la fecha de cada cifra llegan hasta el informe final cuando dos fuentes discrepan, y si un hallazgo clave se pierde en mitad de un texto largo.
 >
@@ -439,7 +440,7 @@ Un subagente de búsqueda agota sus reintentos con una fuente que da *timeout*, 
 
 ### Antes de empezar
 
-Los términos comunes (coordinador, subagente, procedencia) están en el [glosario](../docs/glosario.md).
+Los términos comunes (coordinador, subagente, procedencia, *lost in the middle*) están en el [glosario](../docs/glosario.md).
 
 - **El sistema:** el coordinador tiene dos subagentes: `researcher` (consulta las fuentes con `query_source`) y `synthesizer` (sin tools, redacta con lo que le pasen en el prompt). Las fuentes son las sintéticas de `fuentes_investigacion.json`.
 - **Parte `conflictos` (por defecto):** seis fuentes en tres pares de cifras distintas, cada una con su fecha de publicación; todas coinciden en el total de tickets cerrados. Dos pares se explican con los metadatos: el **tiempo de resolución** (la auditoría cuenta las esperas de la persona usuaria y es una muestra de 300 tickets) y la **satisfacción** (la encuesta del proveedor es a 95 usuarios con corte a 31 de agosto). El tercero, los **tickets reabiertos**, es el contraste: mismo periodo, mismo método y misma población en las dos fuentes, y cifras distintas sin explicación. La petición no dice nada de esto.
@@ -469,7 +470,8 @@ Con tus palabras; no hay un número que acertar:
 1. En la configuración correcta, ¿qué parte de la procedencia está garantizada por la estructura de lo que devuelve el investigador y qué parte depende de lo que escriba el sintetizador?
 2. Con `--anti sin_procedencia`, ¿qué sabe el sintetizador de cada cifra? ¿Dónde esperas ver el daño: en lo que devuelve el investigador, en el informe final o en ambos? Razónalo antes de ejecutar.
 3. Con `--anti promedio`, ¿qué cifras tendrá el informe que no sale en ninguna fuente? ¿Seguirán apareciendo también las cifras originales?
-4. En la parte `medio`, ¿qué cambia al anteponer una línea de resumen? ¿Esperas la misma diferencia con un informe mucho más largo que con uno de unas 1.500 palabras?
+4. Dos pares de cifras se explican por sus metadatos (periodo, método, muestra o población) y el tercero no se explica por nada. ¿Qué tendría que hacer un buen informe con cada uno? ¿Qué error delataría el tercero que los otros dos no pueden delatar?
+5. En la parte `medio`, ¿qué cambia al anteponer una línea de resumen, y qué al poner encabezados de sección? ¿Esperas la misma diferencia con un informe mucho más largo que con uno de unas 1.500 palabras?
 
 ### Ejecutar
 
@@ -513,17 +515,21 @@ Notas:
 
 ### Pregunta tipo examen
 
-Dos fuentes dan cifras distintas para el mismo dato, cada una con su fecha. El informe final debe ser claro para quien lo lea y poder rastrearse hasta sus fuentes. ¿Qué diseño es el más adecuado?
+Un sistema multiagente prepara informes de mercado. Dos subagentes leen fuentes distintas y devuelven resúmenes en prosa; un sintetizador redacta el informe. En el último, la cuota de un producto aparece como 18 %, que no figura en ninguna fuente: una daba 14 % con datos de enero y otra, 22 % con datos de junio. Además, quien lee no puede saber de dónde sale cada cifra. ¿Qué cambio resuelve las dos cosas?
 
-- A. Cada subagente resume en prosa lo que encuentra, y el sintetizador deduce por el contexto de qué fuente viene cada cifra.
-- B. El sintetizador calcula el promedio de las dos cifras para dar una sola, y cita las dos fuentes al lado de ese número.
-- C. El sintetizador conserva solo la cifra de la fuente más reciente y omite la otra, para que el informe no confunda.
-- D. Cada subagente devuelve afirmaciones con fuente y fecha aparte del contenido, y el sintetizador muestra ambas cifras como disputadas.
+- A. Pedir al sintetizador que, ante dos cifras distintas, elija la de la fuente más reciente y explique en una nota por qué la ha preferido.
+- B. Que los subagentes devuelvan cada afirmación con su fuente y la fecha de los datos, y que el informe muestre las dos cifras con ellas.
+- C. Que los subagentes resuman con más detalle y citen la fuente al final de cada párrafo, para que el sintetizador la deduzca de ahí.
+- D. Pedir al sintetizador que marque como contradicción toda cifra que no coincida entre fuentes y que la deje fuera del informe final.
 
 <details>
 <summary>Paso 4 · Respuesta</summary>
 
-**D.** La procedencia se conserva si el subagente devuelve datos estructurados con el contenido separado de los metadatos y el sintetizador mantiene el mapeo afirmación–fuente (TS 1.3-S2, TS 5.6); las cifras en conflicto se presentan las dos, con su fuente y su fecha, y lo disputado se separa de lo establecido (TS 5.6). A pierde la fuente en el primer salto; B crea una cifra que ninguna fuente respalda; C descarta una fuente sin decirlo.
+**B.** El 18 % es una fusión de dos cifras que no se contradicen: miden meses distintos. Con la fecha de los datos en la salida estructurada, la diferencia se lee como temporal (TS 5.6-K4, S4), y las dos cifras se presentan con su fuente en vez de fundirse (TS 5.6-K3). El mapeo afirmación–fuente, con el contenido separado de los metadatos, es lo que permite rastrear cada cifra (TS 5.6-S1, K2, TS 1.3-S2).
+
+- **A** elige una cifra arbitrariamente y pierde la otra, cuando las dos son correctas para su periodo (TS 5.6-K3).
+- **C** sigue confiando la atribución a la prosa: es justo donde se pierde al resumir (TS 5.6-K1).
+- **D** trata una diferencia temporal como una contradicción y quita del informe dos datos válidos (TS 5.6-K4).
 </details>
 
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
@@ -531,8 +537,6 @@ Dos fuentes dan cifras distintas para el mismo dato, cada una con su fecha. El i
 ---
 
 ## 06 · Contexto largo
-
-<!-- BORRADOR (Sonnet 5.5): pendiente del pase de textos de Opus 5.5 (cabecera del módulo, predicciones y pregunta). -->
 
 > **Qué vas a hacer:** Ver cómo se sostiene una investigación en tres fases sacando el detalle del contexto (scratchpad, subagentes, resumen entre fases) y cómo se retoma tras una caída simulada con un manifest de estado.
 >
@@ -542,7 +546,7 @@ Dos fuentes dan cifras distintas para el mismo dato, cada una con su fecha. El i
 
 ### Antes de empezar
 
-Los términos comunes (coordinador, subagente, contexto) están en el [glosario](../docs/glosario.md).
+Los términos comunes (coordinador, subagente, *scratchpad*, *manifest*) están en el [glosario](../docs/glosario.md).
 
 - **El sistema:** una investigación en tres fases sobre las fuentes sintéticas: 1) los tiempos de resolución y la satisfacción de cuatro fuentes, 2) el informe largo `SRC-LARGO` (~9.400 caracteres), 3) un informe breve con lo descubierto. La petición de cada fase no dice las cifras que se esperan.
 - **Scratchpad:** un archivo en un directorio temporal con dos tools, `save_finding` (la usa el subagente) y `read_scratchpad` (la usa el coordinador). El detalle de lo que dice cada fuente vive ahí y no en el contexto del coordinador.
@@ -625,7 +629,11 @@ Una investigación en varias fases se corta tras la segunda por un fallo del pro
 <details>
 <summary>Paso 4 · Respuesta</summary>
 
-**C.** Retomar desde un estado exportado a un sitio conocido, con un manifest que el coordinador carga y reinyecta en los prompts, evita repetir el trabajo y mantiene el contexto corto (TS 5.4). A tira el trabajo ya hecho; B arrastra un contexto largo, que es lo que se quería evitar; D depende de lo que el contexto retenga, y tras una caída ya no hay contexto.
+**C.** Para recuperarse de una caída, cada agente exporta su estado a un sitio conocido y el coordinador carga el manifest al retomar y lo inyecta en los prompts (TS 5.4-K4, S4). El resumen de la fase anterior va en el contexto inicial de la siguiente (TS 5.4-S3).
+
+- **A** tira el trabajo ya hecho, que estaba guardado precisamente para no repetirlo.
+- **B** arrastra un contexto largo, que es lo que favorece la degradación (TS 5.4-K1).
+- **D** confía en un contexto que, tras la caída, ya no existe.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).

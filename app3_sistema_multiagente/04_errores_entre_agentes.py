@@ -1,38 +1,51 @@
 """Errores entre agentes: contexto estructurado del fallo, resultado parcial y vacío frente a fallo.
 
-CONCEPTO [TS 5.3-K1, K2, K3, K4, S1, S2, S3, S4 · TS 2.2-S3]: qué debe hacer un
-subagente cuando una fuente falla y qué debe hacer el coordinador con ese fallo.
+CONCEPTO [TS 5.3-K1…K4, S1…S4 · TS 2.2-S3]: qué debe devolver un subagente cuando
+una fuente falla, y qué puede hacer el coordinador con lo que recibe: recuperar,
+entregar un resultado parcial con la brecha anotada o, si no sabe nada, equivocarse.
 
-BORRADOR (texto pendiente del pase de Opus 5.5, ver NOTAS.md): este módulo se
-escribió contra el diseño de la entrega 3 y no contra el texto de la guía. Las
-viñetas se citan por Task Statement; el reparto exacto de cada K y S, y la
-parte de `QUÉ DICE LA GUÍA`, se contrastan con la guía en ese pase.
+QUÉ DICE LA GUÍA:
+- El coordinador decide bien la recuperación si el error le llega con contexto: tipo
+  de fallo, la consulta que se intentó, los resultados parciales y las alternativas
+  posibles (5.3-K1). El subagente devuelve ese contexto estructurado (5.3-S1).
+- Un fallo de acceso (un *timeout* que pide decidir si reintentar) no es un resultado
+  vacío válido (una consulta que funcionó y no encontró nada) (5.3-K2). El informe
+  del subagente los distingue para que el coordinador decida lo adecuado en cada
+  caso (5.3-S2).
+- Un estado de error genérico («búsqueda no disponible») le esconde al coordinador
+  justo el contexto que necesitaba (5.3-K3).
+- Hay dos anti-patrones opuestos: suprimir el error en silencio, devolviendo un vacío
+  como si fuera un éxito, y terminar todo el flujo por un solo fallo (5.3-K4).
+- El subagente recupera en local los fallos transitorios y solo propaga los que no
+  puede resolver, junto con lo que intentó y lo que sí obtuvo (5.3-S3, 2.2-S3).
+- La síntesis anota la cobertura: qué hallazgos están bien respaldados y qué temas
+  quedan con huecos porque una fuente no estuvo disponible (5.3-S4).
 
-QUÉ DICE LA GUÍA (según el diseño de la entrega; contrastar):
-- El subagente recupera en local lo transitorio y, si no se recupera, no devuelve
-  un error pelado ni un vacío: devuelve al coordinador el contexto del fallo, es
-  decir, qué falló, qué se intentó, qué resultados parciales hay y qué
-  alternativas existen.
-- Un fallo de acceso no es lo mismo que un resultado vacío válido: la fuente que
-  responde sin contenido dice «no hay nada»; la que no responde no dice nada.
-- El coordinador entrega lo que tiene y anota la cobertura (qué fuente falta y
-  por qué), en lugar de abortar toda la investigación o de ocultar la brecha.
-- Los errores de las tools son estructurados (`errorCategory`, `isRetryable`):
-  es lo que permite decidir si reintentar (2.2-S3, ver `servers/investigacion.py`).
-
-POR QUÉ IMPORTA (inferencia propia): lo que el coordinador sabe de una fuente es
-lo que el subagente le cuenta. Un vacío mentiroso convierte un fallo en una
-conclusión falsa («no hay datos»); un aborto tira el trabajo de las fuentes que
-sí respondieron; y un resultado parcial sin la brecha anotada se lee como completo.
+POR QUÉ IMPORTA (inferencia propia): lo que el coordinador sabe de una fuente es lo
+que el subagente le cuenta. Un vacío falso convierte un fallo en una conclusión
+falsa («no hay datos»), un aborto tira el trabajo de las fuentes que sí respondieron
+y un resultado parcial sin la brecha anotada se lee como completo.
 
 ANTI-PATRÓN / TRAMPA DEL EXAMEN:
-- `--anti silenciar`: el subagente devuelve un resultado vacío como si la fuente
-  no tuviera nada. El coordinador no puede distinguirlo de un vacío legítimo.
-- `--anti abortar`: un fallo tumba toda la investigación y se pierde lo que sí
-  se había conseguido.
-- Inferencia propia: reforzar el prompt del coordinador («comprueba que no falte
-  nada») no arregla un subagente que ya ocultó el fallo; la información se
-  pierde en el origen.
+- Hechos de la guía:
+  - Devolver un error genérico sin contexto (`--anti generico`).
+  - Devolver un vacío como éxito cuando la fuente ha fallado (`--anti silenciar`).
+  - Abortar toda la investigación por una fuente que falla (`--anti abortar`).
+  - Confundir un fallo de acceso con un resultado vacío, en cualquiera de los dos
+    sentidos.
+- Inferencias propias, con lo observado aquí (cifras en el README y en
+  `docs/hallazgos.md`):
+  - Sin contexto, el coordinador repitió a ciegas la delegación que el subagente ya
+    había reintentado (`generico`). El error genérico no impide anotar la brecha;
+    impide decidir bien qué hacer con ella.
+  - El vacío falso solo engaña si lo produce el código. Cuando se lo pedía el prompt
+    del subagente, el coordinador le pidió en la delegación «si una fuente falla, dilo»
+    y la brecha llegó igual al resultado. Con el *handler* tragándose el fallo, el
+    subagente no lo ve y el informe final afirma algo falso («no dio error»).
+  - Reforzar el prompt del coordinador («comprueba que no falte nada») no arregla un
+    fallo que se ha perdido en el origen.
+- Los errores de la tool siguen el formato de `app1/04` (`errorCategory`,
+  `isRetryable`); aquí lo nuevo es qué hace el subagente con ellos.
 
 Pregunta tipo examen: ver `app3_sistema_multiagente/README.md`, módulo 04.
 

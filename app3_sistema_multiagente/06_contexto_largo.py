@@ -1,41 +1,49 @@
 """Contexto largo: scratchpad, resumen entre fases y manifest para retomar tras una caída.
 
-CONCEPTO [TS 5.4-K1, K2, K3, K4, S1, S2, S3, S4, S5]: cómo se sostiene una
-investigación en varias fases sin que el contexto de un solo hilo se llene y se
-degrade, y cómo se retoma si el proceso se corta.
+CONCEPTO [TS 5.4-K1…K4, S1…S5]: cómo se sostiene una investigación en varias fases
+sin que el contexto de un solo hilo se llene y se degrade, y cómo se retoma si el
+proceso se corta.
 
-BORRADOR (texto pendiente del pase de Opus 5.5, ver NOTAS.md): este módulo se
-escribió contra el diseño de la entrega 3 y contra un resumen de las viñetas, no
-contra el texto de la guía. Las viñetas se citan por Task Statement; el reparto
-exacto de cada K y S y la parte de `QUÉ DICE LA GUÍA` se contrastan con la guía
-en ese pase.
+QUÉ DICE LA GUÍA:
+- En sesiones largas el contexto se degrada: el modelo da respuestas inconsistentes
+  y habla de «patrones típicos» en vez de lo concreto que descubrió antes (5.4-K1).
+- Un *scratchpad* conserva los hallazgos clave más allá de los límites del contexto
+  (5.4-K2). El agente anota en él lo que descubre y lo consulta en las preguntas
+  siguientes (5.4-S2).
+- Delegar en subagentes aísla la salida verbosa de la exploración, mientras el
+  agente principal mantiene la visión de conjunto (5.4-K3). Los subagentes reciben
+  preguntas concretas (5.4-S1).
+- Antes de lanzar los subagentes de una fase, se resumen los hallazgos de la
+  anterior y el resumen va en su contexto inicial (5.4-S3).
+- Para recuperarse de una caída, cada agente exporta su estado a un sitio conocido y
+  el coordinador carga un *manifest* al retomar (5.4-K4) y lo inyecta en los prompts
+  de los agentes (5.4-S4).
+- `/compact` reduce el contexto en una exploración larga, cuando se llena de salida
+  de descubrimiento (5.4-S5).
 
-QUÉ DICE LA GUÍA (según el resumen de las viñetas; contrastar):
-- En sesiones largas el contexto se degrada: las respuestas se vuelven
-  inconsistentes y el modelo recurre a «patrones típicos» en vez de a lo que
-  descubrió (K1).
-- Se mitiga con un *scratchpad* donde se guardan los hallazgos clave y que se
-  consulta en las preguntas siguientes (K2, S2), y delegando las preguntas
-  concretas a subagentes mientras el agente principal coordina (K3, S1).
-- Al pasar de una fase a la siguiente, el resumen de la fase se inyecta en el
-  contexto inicial de la siguiente (S3).
-- Para retomar tras un fallo, cada agente exporta su estado a un sitio conocido
-  y el coordinador carga un *manifest* al reanudar y lo inyecta en los prompts
-  (K4, S4).
-- `/compact` reduce el contexto de una sesión interactiva de Claude Code (S5).
-
-POR QUÉ IMPORTA (inferencia propia): lo que no está en el contexto no se puede
-usar, y lo que está pero muy lejos, tampoco se usa bien. Sacar el detalle a un
-archivo y dejar en el contexto solo un resumen y un puntero mantiene el hilo
-corto, y además es lo único que sobrevive a que el proceso se corte.
+POR QUÉ IMPORTA (inferencia propia): lo que no está en el contexto no se puede usar,
+y lo que está pero enterrado entre informes en bruto se usa peor. Sacar el detalle a
+un archivo y dejar en el contexto solo un resumen mantiene el hilo corto, y además
+es lo único que sobrevive a que el proceso se corte.
 
 ANTI-PATRÓN / TRAMPA DEL EXAMEN:
-- `--anti todo_en_contexto`: las tres fases en un solo hilo, sin *scratchpad*,
-  sin resumen y con el coordinador consultando las fuentes él mismo: los informes
-  en bruto se acumulan en su contexto.
-- Inferencia propia: con una investigación de este tamaño la degradación puede
-  no aparecer; lo que se mide es cuánto contexto se acumula, no un fallo que se
-  fuerce.
+- Hechos de la guía:
+  - Hacer todas las fases en un solo hilo, sin *scratchpad* ni resumen, con el
+    coordinador consultando las fuentes él mismo, así que los informes en bruto se
+    acumulan en su contexto (`--anti todo_en_contexto`).
+  - Retomar tras una caída sin estado exportado: se repite el trabajo hecho o se
+    pierde (`--simular-caida` muestra la versión correcta).
+- Inferencias propias, con lo observado aquí (cifras en el README y en
+  `docs/hallazgos.md`):
+  - La guía habla de explorar un código grande. Aquí se explora un conjunto de
+    fuentes en tres fases, con los mismos mecanismos.
+  - Con este tamaño la degradación no apareció: el hilo único juntó 11.134
+    caracteres (4.106 la fase más larga de la versión correcta) y aun así mantuvo
+    los hechos. Lo que se mide es cuánto contexto se acumula y si al retomar se
+    repite trabajo, no un fallo que se fuerce.
+  - Las fases cuestan más que el hilo único (unas 2,5 veces aquí): el ahorro de
+    contexto se paga en llamadas. Compensa cuando el hilo se acercaría a su límite o
+    cuando hay que poder retomar.
 
 Pregunta tipo examen: ver `app3_sistema_multiagente/README.md`, módulo 06.
 

@@ -106,7 +106,8 @@ Patrón de `app3/01`–`03`: coordinador Sonnet con `tools=["Agent"]` y `coordin
 
 - Una de las fuentes del investigador falla por *timeout* (error estructurado de `app1/04`).
 - Correcta: el subagente reintenta en local lo transitorio y, si no se recupera, devuelve al coordinador un contexto estructurado del error (qué falló, qué se intentó, qué falta). El coordinador entrega un resultado parcial con la cobertura anotada.
-- `--anti silenciar`: el subagente devuelve vacío como si no hubiera nada. `--anti abortar`: un fallo tumba toda la investigación.
+- `--anti generico` (5.3-K3, añadida tras verificar contra la guía): el subagente devuelve `failed` con «búsqueda no disponible» y sin contexto.
+- `--anti silenciar`: el *handler* de la tool devuelve vacío como éxito cuando la fuente falla. Lo hace el código, porque por prompt la brecha llegaba igual al resultado final. `--anti abortar`: un fallo tumba toda la investigación.
 - Señal (§11.3): resultado parcial con la brecha anotada.
 - Tests: forma del contexto de error, anotación de cobertura y diferencia entre vacío y fallo.
 
@@ -114,7 +115,8 @@ Patrón de `app3/01`–`03`: coordinador Sonnet con `tools=["Agent"]` y `coordin
 
 - Los subagentes devuelven datos estructurados (afirmación, fuente, fecha y cifra), con el contenido separado de los metadatos (1.3-S2).
 - El sintetizador conserva el mapeo afirmación–fuente, separa lo establecido de lo disputado, no promedia cifras en conflicto y usa el formato según el tipo de contenido.
-- *Lost in the middle* (5.1): el hallazgo clave en mitad de un texto largo frente al mismo texto con un resumen al principio.
+- Tres pares de cifras en conflicto: uno se explica por el método y la muestra, otro por el periodo y la población, y el tercero no tiene explicación en los metadatos, como contraste (5.6-K4, S2, S4). El investigador devuelve el contexto metodológico de cada cifra.
+- *Lost in the middle* (5.1): el hallazgo clave en mitad de un texto largo, sin tratamiento, con un resumen al principio, con encabezados de sección o con las dos cosas (5.1-S4).
 - `--anti sin_procedencia`: los subagentes devuelven prosa y la síntesis pierde las fuentes. `--anti promedio`: las cifras en conflicto se fusionan.
 - Tests: estructura de lo que devuelve cada subagente, comprobador de procedencia, detector de cifras fusionadas.
 
