@@ -15,7 +15,7 @@ Cada módulo se hace en 5 pasos: orientarte con su ficha, predecir, ejecutar o n
 | [`03_tools_entre_roles.py`](03_tools_entre_roles.py) | TS 2.3-K2, K3, S1, S2, S3 | 2 |
 | [`04_errores_entre_agentes.py`](04_errores_entre_agentes.py) | TS 5.3-K1…K4, S1…S4 · TS 2.2-S3 | 3 |
 | [`05_procedencia.py`](05_procedencia.py) | TS 5.6-K1…K4, S1…S5 · TS 5.1-K2, S4, S5, S6 · TS 1.3-S2 | 3 |
-| `06_contexto_largo.py` | D5 | 3 |
+| [`06_contexto_largo.py`](06_contexto_largo.py) | TS 5.4-K1…K4, S1…S5 | 3 |
 | [`07_extraccion_schema.py`](07_extraccion_schema.py) | TS 4.2-K4, S4, S5 · TS 4.3-K1…K4, S1…S6 | 3 |
 | [`08_validacion_reintento.py`](08_validacion_reintento.py) | TS 4.4-K1…K4, S1…S4 | 3 |
 | [`09_batches.py`](09_batches.py) | TS 4.5-K1…K4, S1…S4 | 3 |
@@ -524,6 +524,108 @@ Dos fuentes dan cifras distintas para el mismo dato, cada una con su fecha. El i
 <summary>Paso 4 · Respuesta</summary>
 
 **D.** La procedencia se conserva si el subagente devuelve datos estructurados con el contenido separado de los metadatos y el sintetizador mantiene el mapeo afirmación–fuente (TS 1.3-S2, TS 5.6); las cifras en conflicto se presentan las dos, con su fuente y su fecha, y lo disputado se separa de lo establecido (TS 5.6). A pierde la fuente en el primer salto; B crea una cifra que ninguna fuente respalda; C descarta una fuente sin decirlo.
+</details>
+
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
+---
+
+## 06 · Contexto largo
+
+<!-- BORRADOR (Sonnet 5.5): pendiente del pase de textos de Opus 5.5 (cabecera del módulo, predicciones y pregunta). -->
+
+> **Qué vas a hacer:** Ver cómo se sostiene una investigación en tres fases sacando el detalle del contexto (scratchpad, subagentes, resumen entre fases) y cómo se retoma tras una caída simulada con un manifest de estado.
+>
+> **Necesitas antes:** Los módulos [01](#01--coordinador-y-subagentes) y [04](#04--errores-entre-agentes) (coordinador, subagente y barrera sobre el mismo servidor de fuentes).
+>
+> **Modo:** Ejecución ligera (puedes hacerlo entero sin ejecutar; lo medido está en el Paso 3).
+
+### Antes de empezar
+
+Los términos comunes (coordinador, subagente, contexto) están en el [glosario](../docs/glosario.md).
+
+- **El sistema:** una investigación en tres fases sobre las fuentes sintéticas: 1) los tiempos de resolución y la satisfacción de cuatro fuentes, 2) el informe largo `SRC-LARGO` (~9.400 caracteres), 3) un informe breve con lo descubierto. La petición de cada fase no dice las cifras que se esperan.
+- **Scratchpad:** un archivo en un directorio temporal con dos tools, `save_finding` (la usa el subagente) y `read_scratchpad` (la usa el coordinador). El detalle de lo que dice cada fuente vive ahí y no en el contexto del coordinador.
+- **Resumen entre fases:** al terminar una fase, el código guarda su cierre (recortado a 1.200 caracteres) y lo inyecta en el contexto inicial de la fase siguiente.
+- **Manifest:** un archivo `manifest.json` en el mismo directorio con las fases hechas, el resumen de cada una, las fuentes cubiertas y el número de hallazgos. Es lo que permite retomar: la ejecución siguiente lo carga y lo inyecta en el prompt de la fase que sigue.
+- **`Explore` y `/compact`:** son de Claude Code y no se ejecutan aquí. Van en un comentario del módulo, con referencia a la sección D3.
+
+### Las tools del ejercicio
+
+| Tool | Quién la usa | Qué hace |
+| :--- | :--- | :--- |
+| `query_source` | el subagente `researcher` (en `todo_en_contexto`, el coordinador) | devuelve el informe de una fuente (igual que en el [módulo 04](#04--errores-entre-agentes)) |
+| `save_finding` | el subagente | guarda un hallazgo clave (`source_id`, `claim`, `figure`) en el scratchpad |
+| `read_scratchpad` | el coordinador | lee los hallazgos guardados, en orden |
+
+### El ejercicio
+
+Qué cambia en el código de cada variante:
+
+- **Correcta:** una conversación por fase. El coordinador delega las consultas al subagente, lee el scratchpad antes de volver a consultar y cierra cada fase con un resumen. La fase siguiente empieza con ese resumen y el estado del manifest.
+- **`--anti todo_en_contexto`:** las tres fases en una sola conversación, sin scratchpad, sin resumen y sin subagentes: el coordinador consulta las fuentes él mismo y los informes en bruto se acumulan en su contexto.
+- **`--simular-caida`:** la correcta corta tras la fase 1. La siguiente ejecución, sin ese argumento, encuentra el manifest a medias y retoma desde la fase 2. `--desde-cero` ignora un manifest a medias.
+
+El código mide sin modelo cuántos caracteres de resultados de tools llegan al contexto del coordinador, cuántas consultas repite sobre fuentes ya cubiertas, cuántas veces lee el scratchpad, cuántos de los cinco hechos descubiertos recoge el informe final y cuántas expresiones de «patrón típico» contiene.
+
+### Predice antes de ejecutar
+
+Con tus palabras; no hay un número que acertar:
+
+1. En la correcta, ¿qué llega al contexto del coordinador de lo que dice cada fuente y qué se queda fuera? ¿Quién decide qué se guarda en el scratchpad, el código o el modelo?
+2. Con `--anti todo_en_contexto`, ¿cuánto contexto esperas acumulado frente a lo que ve el coordinador en cada fase de la correcta? ¿Esperas que el informe final pierda alguno de los hechos o que aparezcan «patrones típicos» en su lugar?
+3. Tras `--simular-caida`, ¿qué tiene que haber en el manifest y en el scratchpad para que la ejecución siguiente no repita consultas? ¿Qué pasaría si faltara uno de los dos?
+4. ¿Cuál de las dos configuraciones esperas que cueste más, y por qué?
+
+### Ejecutar
+
+```bash
+uv run python app3_sistema_multiagente/06_contexto_largo.py                          # correcta: tres fases
+uv run python app3_sistema_multiagente/06_contexto_largo.py --anti todo_en_contexto  # un solo hilo
+uv run python app3_sistema_multiagente/06_contexto_largo.py --simular-caida          # corta tras la fase 1
+uv run python app3_sistema_multiagente/06_contexto_largo.py                          # y retoma desde el manifest
+```
+
+**Si ejecutas:** el manifest, el scratchpad, el resumen entre fases y las medidas se prueban sin modelo; ejecutar sirve para ver el contexto acumulado y la recuperación del estado. El estado queda en un directorio temporal (`ccarf-app3-06` dentro del directorio temporal del sistema), fuera del repositorio.
+
+### Qué observar
+
+Los caracteres de resultados de tools en el contexto del coordinador (por fase y en total), las consultas repetidas a fuentes ya cubiertas, las lecturas del scratchpad, los hechos del informe final y las expresiones de patrón típico.
+
+<details>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+Coordinador Sonnet 5.5, subagente Haiku 5.5, 0,02–0,04 $ por fase (~0,20 $ en total):
+
+| Variante | Señal observada | Qué dice |
+| :--- | :--- | :--- |
+| correcta, completa (1 ejecución) | contexto del coordinador de 4.106, 2.497 y 1.458 caracteres por fase (8.061 en total, nunca juntos); 0 consultas repetidas; el scratchpad se leyó en cada fase; informe final con 5 de 5 hechos; 0,068 $ | el detalle queda fuera del hilo del coordinador y el informe no pierde nada |
+| `--simular-caida` y reanudación (1 + 1) | tras la fase 1: 5 hallazgos y manifest con la fase 1; la ejecución siguiente anunció «retomando: fases hechas [1]» con las 4 fuentes cubiertas; en las fases 2 y 3, **0 consultas repetidas**, 1 lectura del scratchpad por fase y contexto de 2.321 y 1.527 caracteres; informe final con 5 de 5 hechos; 0,039 $ + 0,038 $ | el estado se recupera del manifest y del scratchpad, no de la conversación anterior |
+| `todo_en_contexto` (2 ejecuciones) | **11.134 caracteres** de resultados de tools en el contexto del coordinador, en un solo hilo, con 5 fuentes consultadas por él; informe final con 5 de 5 hechos y **0** expresiones de patrón típico; 0,025–0,029 $ | la acumulación aparece, **la degradación no** |
+
+Notas:
+
+- **Sin señal de degradación (TS 5.4-K1):** con ~11.000 caracteres (unos pocos miles de tokens) el informe del hilo único no perdió ningún hecho ni recurrió a «patrones típicos». Que aparezca en una sesión mucho más larga es una hipótesis sin comprobar; no se alargó la investigación para forzarla. Lo que sí se midió es la diferencia de contexto: 11.134 caracteres juntos frente a un máximo de 4.106 en una fase de la correcta.
+- **Coste:** la correcta cuesta unas 2,5 veces más que el hilo único (0,068 $ frente a 0,025–0,029 $): tres conversaciones y subagentes. Lo que compra no es ahorro, sino contexto acotado por fase y la posibilidad de retomar.
+- **Lo que hizo el subagente:** en la fase 1 el coordinador lanzó un subagente por fuente, en paralelo, y cada uno guardó sus hallazgos (5–7 en total, con algún duplicado del total de tickets). La barrera impidió que el coordinador consultara las fuentes por su cuenta (0 intentos denegados).
+- **Medida de hechos:** la primera versión rechazaba una cifra seguida de `/5` y marcó 3 de 5 en la reanudación, aunque el informe traía «4,1/5» y «3,6/5». Se corrigió con un test: la reanudación recoge los 5 hechos, como la correcta.
+- `Explore` y `/compact` no se pueden observar aquí: son de Claude Code.
+- Las medidas, el scratchpad, el manifest y las opciones se prueban sin modelo en `tests/test_app3_06_contexto_largo.py`.
+</details>
+
+### Pregunta tipo examen
+
+Una investigación en varias fases se corta tras la segunda por un fallo del proceso. Cada agente había dejado su estado en un sitio conocido. ¿Cómo debe retomarse?
+
+- A. Reiniciar desde la fase 1 con un contexto limpio, para no arrastrar un estado que pudiera estar a medias o corrupto.
+- B. Reanudar la conversación completa anterior para conservar el detalle de cada consulta, aunque su contexto ya sea muy largo.
+- C. Cargar el manifest e inyectar el estado y el resumen de la fase anterior en el prompt de la fase que sigue, sin repetir consultas.
+- D. Pedir al coordinador que recuerde por dónde iba y confiar en que el contexto aún retenga los hallazgos clave de cada fase.
+
+<details>
+<summary>Paso 4 · Respuesta</summary>
+
+**C.** Retomar desde un estado exportado a un sitio conocido, con un manifest que el coordinador carga y reinyecta en los prompts, evita repetir el trabajo y mantiene el contexto corto (TS 5.4). A tira el trabajo ya hecho; B arrastra un contexto largo, que es lo que se quería evitar; D depende de lo que el contexto retenga, y tras una caída ya no hay contexto.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).

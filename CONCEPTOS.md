@@ -30,7 +30,7 @@ Las apps se ordenan por complejidad creciente, pero se entregan por bloques de d
 
 El avance de cada entrega se registra en `NOTAS.md`.
 
-**Introducidas: 181/240**
+**Introducidas: 190/240**
 
 | Viñeta | Destino | Estado |
 | :--- | :--- | :---: |
@@ -248,15 +248,15 @@ El avance de cada entrega se registra en `NOTAS.md`.
 | TS 5.3-S2 | app3/04_errores_entre_agentes | ☑ |
 | TS 5.3-S3 | app3/04_errores_entre_agentes | ☑ |
 | TS 5.3-S4 | app3/04_errores_entre_agentes | ☑ |
-| TS 5.4-K1 | app3/06_contexto_largo | ☐ |
-| TS 5.4-K2 | app3/06_contexto_largo | ☐ |
-| TS 5.4-K3 | app3/06_contexto_largo | ☐ |
-| TS 5.4-K4 | app3/06_contexto_largo | ☐ |
-| TS 5.4-S1 | app3/06_contexto_largo | ☐ |
-| TS 5.4-S2 | app3/06_contexto_largo | ☐ |
-| TS 5.4-S3 | app3/06_contexto_largo | ☐ |
-| TS 5.4-S4 | app3/06_contexto_largo | ☐ |
-| TS 5.4-S5 | app3/06_contexto_largo | ☐ |
+| TS 5.4-K1 | app3/06_contexto_largo | ☑ |
+| TS 5.4-K2 | app3/06_contexto_largo | ☑ |
+| TS 5.4-K3 | app3/06_contexto_largo | ☑ |
+| TS 5.4-K4 | app3/06_contexto_largo | ☑ |
+| TS 5.4-S1 | app3/06_contexto_largo | ☑ |
+| TS 5.4-S2 | app3/06_contexto_largo | ☑ |
+| TS 5.4-S3 | app3/06_contexto_largo | ☑ |
+| TS 5.4-S4 | app3/06_contexto_largo | ☑ |
+| TS 5.4-S5 | app3/06_contexto_largo | ☑ |
 | TS 5.5-K1 | app3/10_confianza_y_revision | ☐ |
 | TS 5.5-K2 | app3/10_confianza_y_revision | ☐ |
 | TS 5.5-K3 | app3/10_confianza_y_revision | ☐ |
