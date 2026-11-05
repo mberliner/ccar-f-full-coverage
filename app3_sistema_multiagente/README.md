@@ -594,7 +594,7 @@ Qué cambia en el código de cada variante:
 - **`--anti todo_en_contexto`:** las tres fases en una sola conversación, sin scratchpad, sin resumen y sin subagentes: el coordinador consulta las fuentes él mismo y los informes en bruto se acumulan en su contexto.
 - **`--simular-caida`:** la correcta corta tras la fase 1. La siguiente ejecución, sin ese argumento, encuentra el manifest a medias y retoma desde la fase 2. `--desde-cero` ignora un manifest a medias.
 
-Al retomar, el código valida el manifest (versión, claves, tipos) y comprueba que el scratchpad tiene los hallazgos que dice; si no cuadra, avisa y empieza de cero. Un scratchpad con la última línea cortada por una caída la ignora con un aviso.
+Al retomar, el código valida el manifest (versión, claves, tipos) y comprueba que el scratchpad tiene los hallazgos que dice; si no cuadra, avisa y empieza de cero, pero antes aparta el estado anterior a `app3-06.<fecha-hora>.bak` (junto a `app3-06`, en `estado/<perfil>/`) en vez de borrarlo: un manifest de otra versión podría ser trabajo que se quiere conservar. Una ejecución terminada o `--desde-cero` sí sustituyen el estado sin copia. `save_finding` devuelve un error de validación, no una excepción, si `claim` o `source_id` no son texto o `figure` no es un número. Un scratchpad con la última línea cortada por una caída la ignora con un aviso.
 
 El código mide sin modelo cuántos caracteres de resultados de tools llegan al contexto del coordinador, cuántas consultas repite sobre fuentes ya cubiertas, cuántas veces lee el scratchpad, cuántos de los cinco hechos descubiertos recoge el informe final y cuántas expresiones de «patrón típico» contiene.
 

@@ -73,6 +73,7 @@ import json
 import re
 import shutil
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -220,9 +221,15 @@ def make_scratchpad_tools(directory: Path) -> list[Any]:
          "required": ["source_id", "claim"]},
     )
     async def save_finding(args: dict[str, Any]) -> dict[str, Any]:
-        if not str(args.get("claim", "")).strip():
-            return structured_error("hallazgo vacío: escribe el hallazgo en `claim`")
-        entry = {"source_id": args["source_id"], "claim": args["claim"].strip()}
+        # Validación de entrada como error estructurado (formato de app1/04), no como excepción dentro del handler.
+        claim, source_id = args.get("claim"), args.get("source_id")
+        if not isinstance(claim, str) or not claim.strip():
+            return structured_error("hallazgo vacío o que no es texto: escribe el hallazgo en `claim`")
+        if not isinstance(source_id, str) or not source_id.strip():
+            return structured_error("falta `source_id`: indica la fuente del hallazgo (texto)")
+        if "figure" in args and (isinstance(args["figure"], bool) or not isinstance(args["figure"], int | float)):
+            return structured_error("`figure` debe ser un número")
+        entry = {"source_id": source_id, "claim": claim.strip()}
         if "figure" in args:
             entry["figure"] = args["figure"]
         directory.mkdir(parents=True, exist_ok=True)
@@ -305,7 +312,7 @@ def manifest_problem(manifest: Any) -> str | None:
     missing = [key for key in ("version", "total_phases", "phases_done", "summaries", "sources_covered", "findings") if key not in manifest]
     if missing:
         return f"faltan claves: {', '.join(missing)}"
-    if manifest["version"] != MANIFEST_VERSION:
+    if not is_int(manifest["version"]) or manifest["version"] != MANIFEST_VERSION:  # `True == 1`: un booleano no es una versión
         return f"versión {manifest['version']!r} (este módulo lee la versión {MANIFEST_VERSION})"
     if manifest["total_phases"] != len(PHASES):
         return f"total_phases es {manifest['total_phases']!r} y el módulo tiene {len(PHASES)} fases"
@@ -472,15 +479,32 @@ def generic_phrases(text: str | None) -> list[str]:
 # --- Ejecución -------------------------------------------------------------------------------------------
 
 
+def back_up_state(directory: Path) -> Path:
+    """Mueve el estado a `<directorio>.<fecha-hora>.bak` (con contador si ya existe uno de ese segundo) y devuelve la nueva ruta."""
+    stamp = datetime.now().astimezone().strftime("%Y%m%d-%H%M%S")
+    backup = directory.with_name(f"{directory.name}.{stamp}.bak")
+    counter = 1
+    while backup.exists():
+        counter += 1
+        backup = directory.with_name(f"{directory.name}.{stamp}-{counter}.bak")
+    directory.rename(backup)
+    return backup
+
+
 def start_state(directory: Path, *, resume: bool) -> dict[str, Any]:
     """Retoma el manifest si hay una investigación a medias y se permite; si no, empieza con un directorio limpio."""
     existing = read_manifest(directory)
+    discarded = existing is None and (directory / MANIFEST_FILE).exists()  # ilegible, de otra versión o con claves o tipos mal
     if resume and existing and not is_complete(existing):
         problem = scratchpad_problem(directory, existing)
         if problem is None:
             print(f"[manifest] retomando: fases hechas {existing['phases_done']}, fuentes cubiertas {existing['sources_covered']}")
             return existing
         warn(f"el manifest no cuadra con el scratchpad ({problem}): se empieza desde cero")
+        discarded = True
+    if discarded and directory.exists():
+        # Un estado dudoso puede ser trabajo de otra versión del módulo: se aparta, no se borra.
+        warn(f"el estado anterior se guarda en {back_up_state(directory)}")
     shutil.rmtree(directory, ignore_errors=True)
     manifest = new_manifest()
     write_manifest(directory, manifest)

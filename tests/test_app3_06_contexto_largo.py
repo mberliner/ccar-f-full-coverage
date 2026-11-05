@@ -395,3 +395,68 @@ def test_state_lives_under_the_profile_state_dir_not_the_shared_system_temp(tmp_
     default = mod.state_directory()
     assert Path(tempfile.gettempdir()) not in default.parents and "estado" in default.parts
     assert not hasattr(mod, "STATE_DIR")
+
+
+# --- B4b: copia de seguridad en vez de borrar, validación en save_finding y versión booleana ------
+
+
+def test_a_manifest_with_a_boolean_version_is_rejected(tmp_path):
+    # Caso que fallaba: `version: true` pasaba la validación porque True == 1.
+    write_raw(tmp_path, good_manifest(version=True))
+    assert mod.read_manifest(tmp_path) is None
+
+
+def backups_of(directory):
+    return sorted(p for p in directory.parent.iterdir() if p.name.startswith(directory.name + ".") and p.name.endswith(".bak"))
+
+
+def test_a_discarded_manifest_moves_the_state_to_a_bak_directory_instead_of_deleting_it(tmp_path, capsys):
+    # Caso que fallaba: un manifest de una versión futura se descartaba y `rmtree` borraba también el scratchpad.
+    state = tmp_path / "app3-06"
+    save(state, ("SRC-TICKETS", "a"))
+    write_raw(state, good_manifest(version=2))
+    manifest = mod.start_state(state, resume=True)
+    out = capsys.readouterr().out
+    assert manifest == mod.new_manifest()
+    (backup,) = backups_of(state)
+    assert [json.loads(line)["claim"] for line in (backup / mod.SCRATCHPAD_FILE).read_text(encoding="utf-8").splitlines()] == ["a"]
+    assert backup.name in out and ".bak" in out
+    assert mod.read_scratchpad(state) == []  # el estado nuevo empieza limpio
+
+
+def test_a_manifest_that_does_not_match_the_scratchpad_also_leaves_a_backup(tmp_path, capsys):
+    state = tmp_path / "app3-06"
+    mod.write_manifest(state, mod.complete_phase(mod.new_manifest(), 1, "R", ["SRC-TICKETS"], findings=5))
+    mod.start_state(state, resume=True)
+    assert len(backups_of(state)) == 1 and ".bak" in capsys.readouterr().out
+
+
+def test_two_discards_in_the_same_second_do_not_overwrite_each_others_backup(tmp_path):
+    state = tmp_path / "app3-06"
+    for _ in range(2):
+        write_raw(state, good_manifest(version=2))
+        mod.start_state(state, resume=True)
+    assert len(backups_of(state)) == 2
+
+
+def test_a_clean_start_or_a_finished_run_leaves_no_backup(tmp_path):
+    state = tmp_path / "app3-06"
+    mod.start_state(state, resume=True)  # no hay nada que guardar
+    done = good_manifest(phases_done=[1, 2, 3], summaries={"1": "a", "2": "b", "3": "c"})
+    write_raw(state, done)
+    mod.start_state(state, resume=True)  # una ejecución terminada se sustituye por una nueva
+    assert backups_of(state) == []
+
+
+@pytest.mark.parametrize("args", [
+    {"source_id": "SRC-TICKETS", "claim": 18},
+    {"source_id": "SRC-TICKETS", "claim": None},
+    {"claim": "18 horas"},
+    {"source_id": 7, "claim": "18 horas"},
+    {"source_id": "SRC-TICKETS", "claim": "18 horas", "figure": "dieciocho"},
+])
+def test_save_finding_returns_a_validation_error_instead_of_raising(tmp_path, args):
+    # Casos que fallaban: `claim` numérico daba AttributeError y la falta de `source_id`, KeyError.
+    result = call_tool(tools_for(tmp_path)["save_finding"], args)
+    assert result.is_error and json.loads(result.text)["errorCategory"] == "validation"
+    assert mod.read_scratchpad(tmp_path) == []
