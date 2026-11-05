@@ -281,6 +281,16 @@ def test_a_wrong_decision_is_counted_as_incorrect_and_not_explained_beats_explai
     assert mod.decisions_correct(rec)["tickets reabiertos"] is False and mod.decisions_correct(rec)["tiempo medio de resolución"] is False
 
 
+def test_negated_decisions_are_disputed_not_explained():
+    # Caso que fallaba (B4b): «no explicada» y «no está explicada» caían en explicado.
+    for phrase in ("no explicada", "no está explicada", "no queda explicada", "no es explicable"):
+        text = f"Tiempo medio de resolución (SRC-TICKETS, SRC-AUDITORIA): {phrase}.\nSatisfacción media (SRC-ENCUESTA): explicada por el periodo."
+        rec = RunRecord(tool_calls=[delegation("d1", "synthesizer", prompt=text)])
+        decisions = mod.coordinator_decisions(rec)
+        assert decisions["tiempo medio de resolución"] == "disputado", phrase
+        assert decisions["satisfacción media"] == "explicado"
+
+
 def test_sizes_of_what_the_researcher_returns_and_what_reaches_the_synthesizer():
     rec = RunRecord(tool_calls=[
         delegation("d1", "researcher", prompt="pide", result="a" * 100), delegation("d2", "researcher", result="b" * 50),
@@ -370,6 +380,26 @@ def test_conflicts_presented_treats_negation():
         assert not any(mod.conflicts_presented(text).values()), denial
     # Una negación de otra cosa no anula el desacuerdo.
     assert mod.conflicts_presented("No hay duda: 18 horas y 26 horas discrepan.")["tiempo medio de resolución"]
+
+
+def test_conflicts_presented_negation_only_counts_when_it_is_next_to_the_dispute_word():
+    # Caso que fallaba (B4b): «Sin fusionarlas las fuentes difieren» se borraba entera, con el desacuerdo.
+    figures = "Resolución: SRC-TICKETS 18 horas y SRC-AUDITORIA 26 horas. "
+    assert mod.conflicts_presented(figures + "Sin fusionarlas las fuentes difieren.")["tiempo medio de resolución"]
+    assert mod.conflicts_presented(figures + "No las promediamos: difieren.")["tiempo medio de resolución"]
+    assert not mod.conflicts_presented(figures + "No hay una discrepancia real.")["tiempo medio de resolución"]
+    assert not mod.conflicts_presented(figures + "Las fuentes no son contradictorias.")["tiempo medio de resolución"]
+
+
+def test_conflicts_presented_is_per_pair_when_the_sentence_names_a_pair():
+    # Caso que fallaba (B4b): una sola mención de desacuerdo valía para los tres pares.
+    text = (
+        "Resolución: SRC-TICKETS 18 horas y SRC-AUDITORIA 26 horas, que difieren por el método.\n"
+        "Satisfacción: SRC-ENCUESTA 4,1 y SRC-PROVEEDOR 3,6.\n"
+    )
+    result = mod.conflicts_presented(text)
+    assert result["tiempo medio de resolución"] is True
+    assert result["satisfacción media"] is False  # sus cifras están, pero ninguna frase dice que difieren
 
 
 def test_uses_table_detects_a_markdown_table():

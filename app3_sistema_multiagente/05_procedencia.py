@@ -106,9 +106,14 @@ QUERY_SOURCE = tool_name("query_source")
 METADATA_KEYS = ("source_id", "published_at", "date", "fecha", "url", "location", "excerpt", "relevance")
 DISPUTE_WORDS = re.compile(r"difier|discrep|disput|conflict|contradic|no coincid|no concuerd", re.I)
 # Una palabra de desacuerdo negada («no hay discrepancias», «no difieren», «sin conflicto») no presenta ningún desacuerdo.
-NEGATED_DISPUTE = re.compile(r"\b(?:no|ni|sin|ningun[ao]?|nada)\s+(?:\w+\s+){0,3}?(?:difier\w*|discrep\w*|disput\w*|conflict\w*|contradic\w*)", re.I)
+# La negación va pegada a la palabra (como mucho, auxiliares y un artículo entre las dos): con huecos largos se borraba
+# «sin fusionarlas las fuentes difieren» entera, desacuerdo incluido.
+NEGATED_DISPUTE = re.compile(
+    r"\b(?:no|ni|sin|ningun[ao]?|nada)\s+(?:(?:hay|existe|existen|hubo|se|es|son|tiene|tienen|queda|quedan|que)\s+){0,2}"
+    r"(?:(?:una?|unas?|ninguna?|alguna?|otra|la|las|el|los)\s+)?(?:difier\w*|discrep\w*|disput\w*|conflict\w*|contradic\w*)", re.I)
 # Decisión de reconciliación del coordinador (TS 5.6-S3), leída de su prompt al sintetizador. La negación manda: «no queda explicado» es disputado.
-DECISION_DISPUTED = re.compile(r"disputad|sin explicaci|no se explica|no queda explicad|no (?:est[aá]|queda) reconcili|sin reconcili", re.I)
+DECISION_DISPUTED = re.compile(
+    r"disputad|sin explicaci|no se explica|\bno\s+(?:(?:est[aá]|queda|es|fue)\s+)?(?:explicad\w*|explicable)|no (?:est[aá]|queda) reconcili|sin reconcili", re.I)
 DECISION_EXPLAINED = re.compile(r"explicad|se explica|lo explica|queda explicad", re.I)
 PROXIMITY = 300  # caracteres a cada lado del source_id en los que debe ir su afirmación (sources_passed)
 
@@ -503,12 +508,29 @@ def merged_figures(text: str | None) -> list[tuple[str, str]]:
 
 
 def conflicts_presented(text: str | None) -> dict[str, bool]:
-    """Por conflicto: las dos cifras aparecen y el texto dice, en algún sitio, que difieren (comprobación laxa)."""
-    disputed = bool(DISPUTE_WORDS.search(NEGATED_DISPUTE.sub("", text or "")))
+    """Por conflicto: las dos cifras aparecen y una frase dice que difieren (comprobación laxa).
+
+    Una frase que nombra algún par (por tema, fuente o cifra) solo vale para los que nombra; una que no nombra ninguno
+    («las fuentes discrepan») vale para todos.
+    """
+    pieces = [NEGATED_DISPUTE.sub("", piece) for piece in re.split(r"[;\n]|(?<=[.!?])\s+", text or "")]
+    disputing = [piece for piece in pieces if DISPUTE_WORDS.search(piece)]
     return {
-        conflict["topic"]: disputed and all(has_number(text or "", c["figure_text"].split()[0]) for c in conflict["claims"])
+        conflict["topic"]: any(names_pair(piece, conflict) or not names_any_pair(piece) for piece in disputing)
+        and all(has_number(text or "", c["figure_text"].split()[0]) for c in conflict["claims"])
         for conflict in LABELS["conflicts"]
     }
+
+
+def names_pair(piece: str, conflict: dict[str, Any]) -> bool:
+    """¿Nombra la frase este par (su tema, una de sus fuentes o una de sus cifras)?"""
+    lowered = piece.lower()
+    marks = [TOPIC_KEYS[conflict["topic"]].lower(), conflict["topic"], *(c["source_id"].lower() for c in conflict["claims"])]
+    return any(m in lowered for m in marks) or any(has_number(piece, c["figure_text"].split()[0]) for c in conflict["claims"])
+
+
+def names_any_pair(piece: str) -> bool:
+    return any(names_pair(piece, conflict) for conflict in LABELS["conflicts"])
 
 
 def explanation_found(text: str | None) -> dict[str, list[str]]:
