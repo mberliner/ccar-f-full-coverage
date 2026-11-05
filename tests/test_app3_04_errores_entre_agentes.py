@@ -287,6 +287,17 @@ def test_gap_noted_treats_negation():
     assert mod.gap_noted(f"{FAILED} no falló la primera vez, pero luego falló y queda sin cubrir.", FAILED, NAME)
 
 
+def test_gap_noted_keeps_the_most_natural_gaps_that_contain_a_negation_word():
+    # Casos que fallaban (B4b): la negación se comía «no respondió por timeout» entera, con su palabra de fallo.
+    assert mod.gap_noted(f"{FAILED} no respondió por timeout.", FAILED, NAME)
+    assert mod.gap_noted(f"{FAILED} quedó sin datos por timeout.", FAILED, NAME)
+    assert mod.gap_noted(f"{FAILED} no respondió: timeout.", FAILED, NAME)
+    # La negación sigue valiendo cuando va pegada al fallo.
+    assert not mod.gap_noted(f"{FAILED} no falló: respondió sin datos.", FAILED, NAME)
+    assert not mod.gap_noted(f"{FAILED}: sin error ni brecha.", FAILED, NAME)
+    assert not mod.gap_noted(f"{FAILED} no tuvo timeout.", FAILED, NAME)
+
+
 def test_partial_delivered_means_figures_of_the_healthy_sources_and_no_abort_marker():
     figure = LABELS["established"]["figure_text"]
     assert mod.partial_delivered(f"Se cerraron {figure} tickets.")

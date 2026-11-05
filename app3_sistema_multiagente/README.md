@@ -405,7 +405,7 @@ Notas:
 
 - **`generico`:** la guía dice que el mensaje genérico esconde al coordinador el contexto que necesita (TS 5.3-K3). Aquí no cambió su decisión. Con una sola fuente caída y ninguna alternativa real que elegir, probablemente no había nada que ese contexto pudiera mejorar; es una hipótesis, no algo medido.
 - **Medidas:**
-  - «Brecha anotada» (`gap_noted`) pide la fuente y una palabra de falta en la misma frase, y descarta las negaciones («no falló»). Sigue leyendo palabras: no distingue una brecha bien diagnosticada de una mal diagnosticada, como en `silenciar`.
+  - «Brecha anotada» (`gap_noted`) pide la fuente y una palabra de falta en la misma frase, y descarta las negaciones pegadas a la palabra de fallo («no falló», «sin brecha»). Una versión anterior de la medida también descartaba «no respondió por timeout» y «sin datos por timeout», que son brechas: se corrigió después de registrar las cifras de arriba y no se recalcularon. Sigue leyendo palabras: no distingue una brecha bien diagnosticada de una mal diagnosticada, como en `silenciar`.
   - El fallo tragado se mide en los resultados de la tool, sin modelo (`swallowed_sources`), y las vacías legítimas se cuentan aparte.
   - «Resultado parcial» pide cifras de las fuentes pedidas que respondieron y no cuenta fechas.
   - «Alternativa o reintento mencionados» es laxa (palabras sueltas): léela junto al texto.

@@ -85,8 +85,9 @@ GENERIC_MESSAGE = "búsqueda no disponible"  # el estado de error genérico de l
 CONTEXT_KEYS = ("failure_type", "attempted", "partial_results", "alternatives")
 ALTERNATIVE_WORDS = re.compile(r"alternativ|más tarde|reintent|volver a intentar|pedir|solicitar|contactar|otra fuente", re.I)
 GAP_WORDS = re.compile(r"no se pudo|no pudo|no respond|timeout|fall[óo]|fallo|sin cubrir|sin cobertura|falta|no disponible|brecha|no se obtuvo", re.I)
-# Una palabra de fallo negada («no falló», «sin brecha», «no hubo timeout») no es una brecha.
-NEGATED_GAP = re.compile(r"\b(?:no|ni|sin|ningun[ao]?)\s+(?:\w+\s+){0,2}?(?:fall[óo]s?|fallo|timeouts?|falta|brecha)", re.I)
+# Una palabra de fallo negada («no falló», «sin brecha», «no hubo timeout») no es una brecha. La negación va pegada a la palabra
+# de fallo (como mucho, un auxiliar entre las dos): con huecos más largos se comía «no respondió por timeout» entera, brecha incluida.
+NEGATED_GAP = re.compile(r"\b(?:no|ni|sin)\s+(?:(?:hubo|hay|tuvo|tiene|se)\s+)?(?:fall\w*|timeouts?|falta|errores?|brechas?)\b", re.I)
 # Una cifra suelta: no vale dentro de una fecha (2026-10-18, 18/10/2026) ni dentro de otra cifra (3,18; 18.5).
 FIGURE_BOUNDARY = r"(?<![\d.,/\-])%s(?![\d/\-]|[.,]\d)"
 
