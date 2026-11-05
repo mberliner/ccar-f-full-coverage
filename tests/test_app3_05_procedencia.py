@@ -502,3 +502,24 @@ def test_unexplained_status_tells_disputed_from_wrongly_attributed_to_date_or_me
 def test_merged_figures_covers_the_third_pair_without_flagging_its_originals():
     assert mod.merged_figures("Reabiertos: 9,85 %.") == [("tickets reabiertos", "9,85")]
     assert mod.merged_figures(REPORT) == []
+
+
+def test_subagent_role_defaults_to_subagent_and_accepts_enforcement_for_spot_checks():
+    # Una prueba puntual con Haiku 4.5 se pide con el rol `enforcement`, sin tocar `.env`.
+    parser = mod.build_cli()
+    assert parser.parse_args([]).rol_subagente == "subagent"
+    assert parser.parse_args(["--rol-subagente", "enforcement"]).rol_subagente == "enforcement"
+
+
+def test_draft_status_reads_the_synthesizer_output_that_the_coordinator_may_rewrite():
+    # Con Haiku 4.5 el borrador inventó la causa y el coordinador la quitó del informe final:
+    # el control positivo solo se ve si la medida lee también el borrador.
+    draft = (
+        "Tickets reabiertos: 7,3 % (SRC-CUADRO) frente a 12,4 % (SRC-OFICINA), un desacuerdo.\n"
+        "Los tickets reabiertos difieren por el método de cálculo de cada oficina."
+    )
+    rec = RunRecord(tool_calls=[delegation("a", "researcher"), delegation("b", "synthesizer", result=draft)])
+    rec.final_text = "Tickets reabiertos: 7,3 % (SRC-CUADRO) frente a 12,4 % (SRC-OFICINA), desacuerdo sin explicar."
+    assert mod.draft_unexplained_status(rec) == [mod.unexplained_status(draft)]
+    assert mod.draft_unexplained_status(rec)[0]["tickets reabiertos"]["attributed"] is True
+    assert mod.unexplained_status(rec.final_text)["tickets reabiertos"]["attributed"] is False

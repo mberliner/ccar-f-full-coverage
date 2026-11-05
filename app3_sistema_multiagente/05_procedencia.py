@@ -54,8 +54,9 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
   `docs/hallazgos.md`):
   - Explicar una diferencia solo vale si los metadatos la explican. Por eso hay un
     tercer par sin explicación, de contraste, y `--anti inventar_explicacion` como
-    control: el sintetizador recibe la orden de explicarlo todo. No lo hizo, así que
-    no está demostrado que la medida detecte una explicación inventada.
+    control: el sintetizador recibe la orden de explicarlo todo. Con Haiku 5.5 no lo
+    hizo. Con Haiku 4.5 inventó la causa en algún borrador, pero el coordinador la
+    quitó antes del informe final: el fallo se mide en el borrador, no en el final.
   - El coordinador decidió bien qué pares explica el contexto y cuál queda disputado,
     y pasó esa decisión al sintetizador. La ubicación y el fragmento llegaron al
     sintetizador, pero no al informe final: los parafraseó.
@@ -74,7 +75,7 @@ Pregunta tipo examen: ver `app3_sistema_multiagente/README.md`, módulo 05.
 
 INTRODUCE: TS 5.6-K1, TS 5.6-K2, TS 5.6-K3, TS 5.6-K4, TS 5.6-S1, TS 5.6-S2, TS 5.6-S3, TS 5.6-S4, TS 5.6-S5, TS 5.1-K2, TS 5.1-S4, TS 5.1-S5, TS 5.1-S6, TS 1.3-S2
 
-Uso: `uv run python app3_sistema_multiagente/05_procedencia.py [--parte conflictos|medio] [--texto sin_resumen|con_resumen|con_encabezados|encabezados_y_resumen] [--anti sin_procedencia|promedio|formato_uniforme|inventar_explicacion] [--repeat N]`
+Uso: `uv run python app3_sistema_multiagente/05_procedencia.py [--parte conflictos|medio] [--texto sin_resumen|con_resumen|con_encabezados|encabezados_y_resumen] [--anti sin_procedencia|promedio|formato_uniforme|inventar_explicacion] [--rol-subagente subagent|enforcement] [--repeat N]`
 """
 
 import asyncio
@@ -561,6 +562,15 @@ def unexplained_status(text: str | None) -> dict[str, dict[str, bool]]:
     return {topic: {"attributed": bool(found[topic]), "disputed": presented[topic]} for topic in UNEXPLAINED_TOPICS}
 
 
+def draft_unexplained_status(rec: RunRecord) -> list[dict[str, dict[str, bool]]]:
+    """`unexplained_status` sobre cada borrador del sintetizador, antes de que el coordinador lo revise.
+
+    El coordinador puede reescribir el borrador y quitar una explicación inventada: medido solo en el
+    informe final, el control positivo (`inventar_explicacion`) no se ve aunque el sintetizador falle.
+    """
+    return [unexplained_status(c.result_text) for c in delegated(rec, "synthesizer")]
+
+
 def uses_table(text: str | None) -> bool:
     """Al menos dos filas de tabla Markdown: el formato que pide el tipo de contenido «cifras comparables»."""
     return sum(line.lstrip().startswith("|") for line in (text or "").splitlines()) >= 2
@@ -646,16 +656,25 @@ def print_measures(rec: RunRecord, parte: str) -> None:
     print(f"[medida] contexto que usa el informe por par: {explanation_found(rec.final_text)}")
     print(f"[medida] diferencia explicada con el periodo o el método (pares que los metadatos explican): {explained_by_metadata(rec.final_text)}")
     print(f"[medida] par sin explicación (atribuido a fecha o método · dejado como disputado): {unexplained_status(rec.final_text)}")
+    print(f"[medida] el mismo par en el borrador del sintetizador, antes de que lo revise el coordinador: {draft_unexplained_status(rec)}")
 
 
-async def main_async() -> int:
+def build_cli():
     parser = build_parser(__doc__.splitlines()[0], anti_variants=ANTI_VARIANTS)
     parser.add_argument("--parte", choices=PARTES, default="conflictos")
     parser.add_argument("--texto", choices=TEXTOS, default="sin_resumen", help="técnica de 5.1 sobre el informe largo; solo con --parte medio")
-    args = parser.parse_args()
+    # Prueba puntual con otro modelo de subagente: `enforcement` (Haiku 4.5 por defecto) ya
+    # existe para eso en `harness/config.py`, así que no hace falta tocar `.env`.
+    parser.add_argument("--rol-subagente", choices=["subagent", "enforcement"], default="subagent",
+                        help="rol del modelo de los subagentes; `enforcement` es Haiku 4.5")
+    return parser
+
+
+async def main_async() -> int:
+    args = build_cli().parse_args()
     print(credentials.describe())
     model = report_model("coordinator")
-    subagent_model = report_model("subagent")
+    subagent_model = report_model(args.rol_subagente)
     budget = report_budget(args.budget, "multiagent")
 
     for run in range(1, args.repeat + 1):
