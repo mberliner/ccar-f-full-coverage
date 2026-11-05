@@ -509,7 +509,7 @@ Las afirmaciones estructuradas sin problemas, las fuentes que llegan al sintetiz
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
-Coordinador Sonnet 5.5, subagentes Haiku 5.5, 3 ejecuciones por variante; ~1,18 $ en total entre `conflictos` y `medio`:
+Coordinador Sonnet 5.5, subagentes Haiku 5.5, 3 ejecuciones por variante; ~1,18 $ en `conflictos` (incluidos 0,13 $ de una prueba que no valió) y 0,78 $ en `medio`:
 
 | Variante | Señal observada (3 ejecuciones) | Qué dice |
 | :--- | :--- | :--- |
@@ -624,7 +624,7 @@ Los caracteres de resultados de tools en el contexto del coordinador (por fase y
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
-Coordinador Sonnet 5.5, subagente Haiku 5.5, 0,02–0,04 $ por fase (~0,20 $ en total):
+**Medición anterior a las correcciones B4**, con el informe largo de entonces (B4 cambió su relleno; después solo se volvió a medir la caída simulada, abajo). Coordinador Sonnet 5.5, subagente Haiku 5.5, 0,02–0,04 $ por fase (~0,20 $ en total):
 
 | Variante | Señal observada | Qué dice |
 | :--- | :--- | :--- |

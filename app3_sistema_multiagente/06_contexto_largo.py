@@ -38,7 +38,8 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
   - La guía habla de explorar un código grande. Aquí se explora un conjunto de
     fuentes en tres fases, con los mismos mecanismos.
   - La degradación (5.4-K1) no se reprodujo: el hilo único juntó 11.134 caracteres
-    (4.106 la fase más larga de la versión correcta) y aun así mantuvo los hechos.
+    (4.106 la fase más larga de la versión correcta) y aun así mantuvo los hechos
+    (medición anterior a las correcciones B4, con el informe largo de entonces).
     Lo que se mide es cuánto contexto se acumula y si al retomar se repite trabajo,
     no un fallo que se fuerce.
   - `/compact` (5.4-S5) es de Claude Code y aquí no se ejecuta: el módulo lo explica,
@@ -46,9 +47,9 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
   - Un *manifest* solo sirve si se comprueba al cargarlo. Uno roto, de otra versión
     o que no cuadra con el *scratchpad* llevaría a la fase siguiente a leer hallazgos
     que no existen; el módulo lo rechaza y empieza de cero.
-  - Las fases cuestan más que el hilo único (unas 2,5 veces aquí): el ahorro de
-    contexto se paga en llamadas. Compensa cuando el hilo se acercaría a su límite o
-    cuando hay que poder retomar.
+  - Las fases cuestan más que el hilo único (unas 2,5 veces en esa medición): el
+    ahorro de contexto se paga en llamadas. Compensa cuando el hilo se acercaría a
+    su límite o cuando hay que poder retomar.
 
 Pregunta tipo examen: ver `app3_sistema_multiagente/README.md`, módulo 06.
 
