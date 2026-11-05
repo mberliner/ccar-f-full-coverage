@@ -1,0 +1,128 @@
+{
+  "conflicts": [
+    {
+      "claims": [
+        {
+          "excerpt": "El tiempo medio de resolución fue de 18 horas, medido desde la apertura hasta el cierre registrado en el sistema.",
+          "figure": 18,
+          "figure_text": "18 horas",
+          "location": "Tiempos de resolución",
+          "published_at": "2026-10-02",
+          "source_id": "SRC-TICKETS"
+        },
+        {
+          "excerpt": "Sobre una muestra de 300 tickets del tercer trimestre de 2026, el tiempo medio de resolución fue de 26 horas, contando las esperas de respuesta de la persona usuaria.",
+          "figure": 26,
+          "figure_text": "26 horas",
+          "location": "Resultados de la muestra",
+          "published_at": "2026-10-09",
+          "source_id": "SRC-AUDITORIA"
+        }
+      ],
+      "evidence": {
+        "metodo": "contando las esperas de respuesta",
+        "muestra": "muestra de 300 tickets"
+      },
+      "explained_by": [
+        "metodo",
+        "muestra"
+      ],
+      "topic": "tiempo medio de resolución",
+      "unit": "horas"
+    },
+    {
+      "claims": [
+        {
+          "excerpt": "La satisfacción media fue de 4,1 sobre 5.",
+          "figure": 4.1,
+          "figure_text": "4,1 sobre 5",
+          "location": "Resultados",
+          "published_at": "2026-09-30",
+          "source_id": "SRC-ENCUESTA"
+        },
+        {
+          "excerpt": "La satisfacción media fue de 3,6 sobre 5.",
+          "figure": 3.6,
+          "figure_text": "3,6 sobre 5",
+          "location": "Resultados",
+          "published_at": "2026-10-15",
+          "source_id": "SRC-PROVEEDOR"
+        }
+      ],
+      "evidence": {
+        "periodo": "corte a 31 de agosto de 2026",
+        "poblacion": "95 usuarios"
+      },
+      "explained_by": [
+        "periodo",
+        "poblacion"
+      ],
+      "topic": "satisfacción media",
+      "unit": "sobre 5"
+    },
+    {
+      "claims": [
+        {
+          "excerpt": "El porcentaje de tickets reabiertos fue del 7,3 %.",
+          "figure": 7.3,
+          "figure_text": "7,3 %",
+          "location": "Resultados",
+          "published_at": "2026-10-05",
+          "source_id": "SRC-CUADRO"
+        },
+        {
+          "excerpt": "El porcentaje de tickets reabiertos fue del 12,4 %.",
+          "figure": 12.4,
+          "figure_text": "12,4 %",
+          "location": "Resultados",
+          "published_at": "2026-10-06",
+          "source_id": "SRC-OFICINA"
+        }
+      ],
+      "evidence": {},
+      "explained_by": [
+        "sin_explicacion"
+      ],
+      "shared_context": "Tercer trimestre de 2026, sobre los 1.240 tickets cerrados, medido de apertura a cierre en el sistema.",
+      "topic": "tickets reabiertos",
+      "unit": "%"
+    }
+  ],
+  "empty_sources": [
+    "SRC-ARCHIVO"
+  ],
+  "established": {
+    "figure": 1240,
+    "figure_text": "1.240",
+    "source_ids": [
+      "SRC-TICKETS",
+      "SRC-AUDITORIA"
+    ],
+    "topic": "tickets cerrados en el trimestre"
+  },
+  "failed_sources": [
+    "SRC-MONITOR"
+  ],
+  "long_report": {
+    "figure": 41,
+    "figure_text": "41 %",
+    "headed_report": "## Revisión de la red\n\nEn la sede Norte, el 6 % de las incidencias de red de julio se debió a un conmutador con el firmware sin actualizar, que se resolvió con un cambio de pieza.\n\nEn la sede Sur, el 9 % de las incidencias de red de agosto se debió a un conmutador con el firmware sin actualizar, que se resolvió al sustituir el equipo.\n\nEl equipo de red revisó los registros de los puntos de acceso de la sede Norte y no encontró cambios de configuración fuera de calendario.\n\nEn la sede Centro, el 11 % de las incidencias de red de septiembre se debió a cortes de suministro en el armario de comunicaciones, que se resolvió con apoyo del proveedor.\n\nEn la sede Centro, el 7 % de las incidencias de red de julio se debió a un fallo de resolución DNS en el servidor secundario, que se resolvió al ajustar la planificación.\n\nLa ventana de mantenimiento de la sede Sur se comunicó con antelación y se cumplió, salvo una hora que se aplazó por petición de la dirección.\n\nEn la sede Norte, el 14 % de las incidencias de red de agosto se debió a certificados caducados en los puntos de acceso, que se resolvió con una reconfiguración remota.\n\nEn la sede Sur, el 8,5 % de las incidencias de red de septiembre se debió a certificados caducados en los puntos de acceso, que se resolvió tras una actualización.\n\nSe unificó el formato de las fichas de alta de dispositivos de la sede Centro con el que usan las demás.\n\nEn la sede Sur, el 12 % de las incidencias de red de julio se debió a la saturación del enlace durante las copias nocturnas, que se resolvió con un cambio de pieza.\n\n## Mantenimiento y guardia\n\nEn la sede Centro, el 5 % de las incidencias de red de agosto se debió a una regla del cortafuegos aplicada por error, que se resolvió al sustituir el equipo.\n\nLa guardia de red de la sede Norte mantuvo la rotación semanal y atendió las incidencias fuera de horario por el canal de la mesa.\n\nEn la sede Norte, el 16 % de las incidencias de red de septiembre se debió a cables de parcheo dañados en la planta baja, que se resolvió con apoyo del proveedor.\n\nEn la sede Norte, el 10 % de las incidencias de red de julio se debió a licencias sin renovar del cliente de acceso remoto, que se resolvió al ajustar la planificación.\n\nEl inventario de conmutadores de la sede Sur recoge la ubicación de cada armario y la persona que lo mantiene.\n\nEn la sede Sur, el 13 % de las incidencias de red de agosto se debió a licencias sin renovar del cliente de acceso remoto, que se resolvió con una reconfiguración remota.\n\nEn la sede Centro, el 4 % de las incidencias de red de septiembre se debió a un reinicio no programado del controlador inalámbrico, que se resolvió tras una actualización.\n\nLas pruebas de conmutación entre líneas de Centro se repitieron y los tiempos quedaron anotados en la hoja de seguimiento.\n\nEn la sede Centro, el 15 % de las incidencias de red de julio se debió a interferencias de una nueva instalación eléctrica, que se resolvió con un cambio de pieza.\n\nEn la sede Norte, el 9,5 % de las incidencias de red de agosto se debió a un cambio de direccionamiento sin comunicar a la mesa, que se resolvió al sustituir el equipo.\n\n## Documentación e inventario\n\nEl personal de la sede Norte completó la formación de refuerzo sobre el portal de incidencias.\n\nEn la sede Sur, el 18 % de las incidencias de red de septiembre se debió a un cambio de direccionamiento sin comunicar a la mesa, que se resolvió con apoyo del proveedor.\n\nEn la sede Sur, el 7,5 % de las incidencias de red de julio se debió a baterías agotadas en el sistema de alimentación, que se resolvió al ajustar la planificación.\n\nEl proveedor de comunicaciones entregó el informe de disponibilidad de los enlaces de Sur y se archivó con la documentación del contrato.\n\nEn la sede Centro, el 17 % de las incidencias de red de agosto se debió a un conmutador con el firmware sin actualizar, que se resolvió con una reconfiguración remota.\n\n## Incidencias y causas\n\nEn la sede Norte, el 6 % de las incidencias de red de septiembre se debió a cortes de suministro en el armario de comunicaciones, que se resolvió tras una actualización.\n\nEn Centro se etiquetaron los 24 puertos del armario principal con el mismo criterio que en el resto de sedes.\n\nEn la sede Norte, el 9 % de las incidencias de red de julio se debió a un fallo de resolución DNS en el servidor secundario, que se resolvió con un cambio de pieza.\n\nEn la sede Sur, el 11 % de las incidencias de red de agosto se debió a un fallo de resolución DNS en el servidor secundario, que se resolvió al sustituir el equipo.\n\nEl plan de contingencia de la sede Norte se revisó con las dos personas responsables y no requirió cambios.\n\nEl 41 % de las incidencias de red del trimestre se debió a un único perfil de VPN obsoleto que seguía desplegado en los portátiles antiguos.\n\nEn la sede Centro, el 7 % de las incidencias de red de septiembre se debió a certificados caducados en los puntos de acceso, que se resolvió con apoyo del proveedor.\n\nEn la sede Centro, el 14 % de las incidencias de red de julio se debió a la saturación del enlace durante las copias nocturnas, que se resolvió al ajustar la planificación.\n\nSe retiraron de Sur 7 equipos de red fuera de servicio y su baja quedó registrada en el inventario.\n\nEn la sede Norte, el 8,5 % de las incidencias de red de agosto se debió a una regla del cortafuegos aplicada por error, que se resolvió con una reconfiguración remota.\n\nEn la sede Sur, el 12 % de las incidencias de red de septiembre se debió a una regla del cortafuegos aplicada por error, que se resolvió tras una actualización.\n\nLa sala de comunicaciones de Centro pasó la inspección anual de seguridad sin observaciones.\n\nEn la sede Sur, el 5 % de las incidencias de red de julio se debió a cables de parcheo dañados en la planta baja, que se resolvió con un cambio de pieza.\n\nEn la sede Centro, el 16 % de las incidencias de red de agosto se debió a licencias sin renovar del cliente de acceso remoto, que se resolvió al sustituir el equipo.\n\nEn Norte se probó el acceso de invitados con tres perfiles distintos y se documentó el resultado.\n\n## Formación y proveedores\n\nEn la sede Norte, el 10 % de las incidencias de red de septiembre se debió a un reinicio no programado del controlador inalámbrico, que se resolvió con apoyo del proveedor.\n\nEn la sede Norte, el 13 % de las incidencias de red de julio se debió a interferencias de una nueva instalación eléctrica, que se resolvió al ajustar la planificación.\n\nEl calendario de copias de configuración de los equipos de Sur se ajustó para evitar solapes con el mantenimiento.\n\nEn la sede Sur, el 4 % de las incidencias de red de agosto se debió a interferencias de una nueva instalación eléctrica, que se resolvió con una reconfiguración remota.\n\nEn la sede Centro, el 15 % de las incidencias de red de septiembre se debió a un cambio de direccionamiento sin comunicar a la mesa, que se resolvió tras una actualización.\n\nLa persona responsable de Centro actualizó el diagrama de red tras mover dos puestos de trabajo.\n\nEn la sede Centro, el 9,5 % de las incidencias de red de julio se debió a baterías agotadas en el sistema de alimentación, que se resolvió con un cambio de pieza.\n\nEn la sede Norte, el 18 % de las incidencias de red de agosto se debió a un conmutador con el firmware sin actualizar, que se resolvió al sustituir el equipo.\n\nSe revisaron los contratos de línea de Norte y se pidió al proveedor el desglose de la facturación del trimestre.\n\nEn la sede Sur, el 7,5 % de las incidencias de red de septiembre se debió a un conmutador con el firmware sin actualizar, que se resolvió con apoyo del proveedor.\n\n## Seguimiento y cierre\n\nEn la sede Sur, el 17 % de las incidencias de red de julio se debió a cortes de suministro en el armario de comunicaciones, que se resolvió al ajustar la planificación.\n\nEn Sur se sustituyó el cartel de contacto de la mesa de ayuda por uno con el número interno nuevo.\n\nEn la sede Centro, el 6 % de las incidencias de red de agosto se debió a un fallo de resolución DNS en el servidor secundario, que se resolvió con una reconfiguración remota.\n\nEn la sede Norte, el 9 % de las incidencias de red de septiembre se debió a certificados caducados en los puntos de acceso, que se resolvió tras una actualización.\n\nEl equipo de Centro midió la cobertura inalámbrica de la planta alta y anotó las zonas con señal débil.\n\nEn la sede Norte, el 11 % de las incidencias de red de julio se debió a la saturación del enlace durante las copias nocturnas, que se resolvió con un cambio de pieza.\n\nEn la sede Sur, el 7 % de las incidencias de red de agosto se debió a la saturación del enlace durante las copias nocturnas, que se resolvió al sustituir el equipo.\n\nSe archivaron las actas de las reuniones de coordinación con la sede Norte del trimestre.\n\nEn la sede Centro, el 14 % de las incidencias de red de septiembre se debió a una regla del cortafuegos aplicada por error, que se resolvió con apoyo del proveedor.\n\nEn la sede Centro, el 8,5 % de las incidencias de red de julio se debió a cables de parcheo dañados en la planta baja, que se resolvió al ajustar la planificación.\n\nLa sede Sur recibió el material de repuesto pedido y se guardó en el armario de la sala de comunicaciones.",
+    "key_finding": "El 41 % de las incidencias de red del trimestre se debió a un único perfil de VPN obsoleto que seguía desplegado en los portátiles antiguos.",
+    "section_headings": [
+      "Revisión de la red",
+      "Mantenimiento y guardia",
+      "Documentación e inventario",
+      "Incidencias y causas",
+      "Formación y proveedores",
+      "Seguimiento y cierre"
+    ],
+    "source_id": "SRC-LARGO",
+    "summary_line": "Hallazgo clave: el 41 % de las incidencias de red del trimestre se debió a un único perfil de VPN obsoleto."
+  },
+  "transient_sources": [
+    {
+      "figure_text": "99,2 %",
+      "source_id": "SRC-REDES"
+    }
+  ]
+}

@@ -24,6 +24,7 @@ Uso: `uv run python datos/generar_sinteticos.py [--check]`
 import argparse
 import json
 import random
+import re
 import sys
 from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
@@ -707,6 +708,232 @@ PURCHASE_ORDERS = [
 ]
 
 
+# Fuentes de investigación para app3/04–06 (TS 5.3, 5.6, 5.1 y 5.4): calidad del servicio de la
+# mesa de ayuda en el tercer trimestre. Diez fuentes: seis que discrepan en tres pares de cifras
+# (tiempo de resolución, satisfacción y tickets reabiertos; los dos primeros se explican por el
+# método, la muestra, el periodo o la población, el tercero no) y, de ellas, tickets y auditoría
+# también concuerdan en el total de tickets cerrados; una que falla siempre por *timeout*
+# (monitorización); una que falla solo la primera vez (red de sedes, que solo ve app3/04); una que
+# responde vacía de forma legítima (archivo); y un informe largo con el hallazgo clave en mitad.
+# Texto fijo, sin generador aleatorio. Las afirmaciones etiquetadas van en un archivo aparte que el agente nunca ve.
+CONFLICT_SHARED_CONTEXT = "Tercer trimestre de 2026, sobre los 1.240 tickets cerrados, medido de apertura a cierre en el sistema."
+
+
+def sectioned(*sections: tuple[str, str]) -> str:
+    """Informe con secciones `## título`: la ubicación en la fuente que el investigador puede citar (TS 5.1-S5)."""
+    return "\n\n".join(f"## {title}\n{text}" for title, text in sections)
+
+
+SOURCE_REPORTS = [
+    ("SRC-TICKETS", "Informe del sistema de tickets", "2026-10-02", "ok", sectioned(
+        ("Resumen", "Resumen del tercer trimestre de 2026. Se cerraron 1.240 tickets."),
+        ("Tiempos de resolución", "El tiempo medio de resolución fue de 18 horas, medido desde la apertura hasta el cierre registrado en el sistema."),
+    )),
+    ("SRC-AUDITORIA", "Auditoría interna de calidad", "2026-10-09", "ok", sectioned(
+        ("Resultados de la muestra", "Sobre una muestra de 300 tickets del tercer trimestre de 2026, el tiempo medio de resolución fue de 26 horas, "
+         "contando las esperas de respuesta de la persona usuaria."),
+        ("Volumen", "El total de tickets cerrados en el trimestre fue de 1.240."),
+    )),
+    ("SRC-ENCUESTA", "Encuesta interna de satisfacción", "2026-09-30", "ok", sectioned(
+        ("Metodología", "Encuesta enviada a quienes cerraron un ticket en el trimestre: 212 respuestas."),
+        ("Resultados", "La satisfacción media fue de 4,1 sobre 5."),
+    )),
+    ("SRC-PROVEEDOR", "Informe del proveedor de soporte externo", "2026-10-15", "ok", sectioned(
+        ("Metodología", "Encuesta del proveedor a 95 usuarios con corte a 31 de agosto de 2026."),
+        ("Resultados", "La satisfacción media fue de 3,6 sobre 5."),
+    )),
+    # Tercer par, el contraste: mismo periodo, mismo método y misma población (`CONFLICT_SHARED_CONTEXT`
+    # está en las dos fuentes, dicho igual) y cifras que discrepan sin que nada de los metadatos lo explique.
+    ("SRC-CUADRO", "Cuadro de mandos de operaciones", "2026-10-05", "ok", sectioned(
+        ("Alcance", CONFLICT_SHARED_CONTEXT),
+        ("Resultados", "El porcentaje de tickets reabiertos fue del 7,3 %."),
+    )),
+    ("SRC-OFICINA", "Informe de la oficina de calidad", "2026-10-06", "ok", sectioned(
+        ("Alcance", CONFLICT_SHARED_CONTEXT),
+        ("Resultados", "El porcentaje de tickets reabiertos fue del 12,4 %."),
+    )),
+    ("SRC-MONITOR", "Monitorización de red", "2026-10-01", "timeout", None),
+    # Transitoria (app3/04, TS 5.3-S3): falla con timeout la primera vez que se consulta en una ejecución
+    # y responde bien a la siguiente. Solo la ve el servidor con `transient=True`.
+    ("SRC-REDES", "Informe de disponibilidad de la red de sedes", "2026-10-03", "timeout_once", sectioned(
+        ("Disponibilidad", "Durante el tercer trimestre de 2026 la disponibilidad de la red de las tres sedes fue del 99,2 %."),
+    )),
+    ("SRC-ARCHIVO", "Archivo de informes de incidentes graves", "2026-10-01", "ok", ""),
+    ("SRC-LARGO", "Informe trimestral de incidencias de red", "2026-10-12", "ok", "LONG"),
+]
+
+
+def locate_figure(report: str, figure_text: str) -> tuple[str, str]:
+    """(título de la sección, frase literal) donde aparece la cifra en un informe con secciones."""
+    for block in report.split("\n\n"):
+        title, _, body = block.removeprefix("## ").partition("\n")
+        for sentence in re.split(r"(?<=[.])\s+", body):
+            if figure_text in sentence:
+                return title, sentence
+    raise ValueError(f"{figure_text} no está en el informe")
+
+
+# Relleno del informe largo (TS 5.1-K2): párrafos distintos entre sí y con cifras de distracción del mismo tipo que el
+# hallazgo (porcentajes de incidencias de red), todas menores que la clave. Sin marcas de apartado: el hallazgo no se
+# distingue por ser la única frase con cifra, sino que hay que leerlo para encontrarlo.
+FILLER_CAUSES = [
+    "un conmutador con el firmware sin actualizar", "cortes de suministro en el armario de comunicaciones",
+    "un fallo de resolución DNS en el servidor secundario", "certificados caducados en los puntos de acceso",
+    "la saturación del enlace durante las copias nocturnas", "una regla del cortafuegos aplicada por error",
+    "cables de parcheo dañados en la planta baja", "licencias sin renovar del cliente de acceso remoto",
+    "un reinicio no programado del controlador inalámbrico", "interferencias de una nueva instalación eléctrica",
+    "un cambio de direccionamiento sin comunicar a la mesa", "baterías agotadas en el sistema de alimentación",
+]
+FILLER_SEDES = ["Norte", "Centro", "Sur"]
+FILLER_MESES = ["julio", "agosto", "septiembre"]
+FILLER_PERCENTAGES = ["6", "9", "11", "7", "14", "8,5", "12", "5", "16", "10", "13", "4", "15", "9,5", "18", "7,5", "17"]
+FILLER_ACTIONS = [
+    "con un cambio de pieza", "tras una actualización", "con una reconfiguración remota", "al ajustar la planificación",
+    "con apoyo del proveedor", "al sustituir el equipo",
+]
+FILLER_NEUTRAL = [
+    "El equipo de red revisó los registros de los puntos de acceso de la sede {sede} y no encontró cambios de configuración fuera de calendario.",
+    "La ventana de mantenimiento de la sede {sede} se comunicó con antelación y se cumplió, salvo una hora que se aplazó por petición de la dirección.",
+    "Se unificó el formato de las fichas de alta de dispositivos de la sede {sede} con el que usan las demás.",
+    "La guardia de red de la sede {sede} mantuvo la rotación semanal y atendió las incidencias fuera de horario por el canal de la mesa.",
+    "El inventario de conmutadores de la sede {sede} recoge la ubicación de cada armario y la persona que lo mantiene.",
+    "Las pruebas de conmutación entre líneas de {sede} se repitieron y los tiempos quedaron anotados en la hoja de seguimiento.",
+    "El personal de la sede {sede} completó la formación de refuerzo sobre el portal de incidencias.",
+    "El proveedor de comunicaciones entregó el informe de disponibilidad de los enlaces de {sede} y se archivó con la documentación del contrato.",
+    "En {sede} se etiquetaron los 24 puertos del armario principal con el mismo criterio que en el resto de sedes.",
+    "El plan de contingencia de la sede {sede} se revisó con las dos personas responsables y no requirió cambios.",
+    "Se retiraron de {sede} 7 equipos de red fuera de servicio y su baja quedó registrada en el inventario.",
+    "La sala de comunicaciones de {sede} pasó la inspección anual de seguridad sin observaciones.",
+    "En {sede} se probó el acceso de invitados con tres perfiles distintos y se documentó el resultado.",
+    "El calendario de copias de configuración de los equipos de {sede} se ajustó para evitar solapes con el mantenimiento.",
+    "La persona responsable de {sede} actualizó el diagrama de red tras mover dos puestos de trabajo.",
+    "Se revisaron los contratos de línea de {sede} y se pidió al proveedor el desglose de la facturación del trimestre.",
+    "En {sede} se sustituyó el cartel de contacto de la mesa de ayuda por uno con el número interno nuevo.",
+    "El equipo de {sede} midió la cobertura inalámbrica de la planta alta y anotó las zonas con señal débil.",
+    "Se archivaron las actas de las reuniones de coordinación con la sede {sede} del trimestre.",
+    "La sede {sede} recibió el material de repuesto pedido y se guardó en el armario de la sala de comunicaciones.",
+]
+LONG_KEY_FINDING = "El 41 % de las incidencias de red del trimestre se debió a un único perfil de VPN obsoleto que seguía desplegado en los portátiles antiguos."
+LONG_SUMMARY_LINE = "Hallazgo clave: el 41 % de las incidencias de red del trimestre se debió a un único perfil de VPN obsoleto."
+
+
+# Secciones del informe largo con encabezados (variante de TS 5.1-S4): (índice del primer párrafo, título).
+# El hallazgo clave está en el índice 30, dentro de «Incidencias y causas» (25 a 39) y sin abrir sección:
+# el encabezado ayuda a ubicarlo, no lo señala.
+LONG_SECTIONS = [
+    (0, "Revisión de la red"), (10, "Mantenimiento y guardia"), (20, "Documentación e inventario"),
+    (25, "Incidencias y causas"), (40, "Formación y proveedores"), (50, "Seguimiento y cierre"),
+]
+
+
+def long_report_paragraphs() -> list[str]:
+    """Los 61 párrafos del informe largo: 60 de relleno distintos entre sí y el hallazgo clave en el índice 30.
+
+    Dos de cada tres párrafos de relleno llevan un porcentaje de incidencias de red (cifra de distracción del mismo
+    tipo que el hallazgo); el resto, una actividad sin cifra de ese tipo.
+    """
+    combos = [(c, e, m) for c in range(len(FILLER_CAUSES)) for e in range(len(FILLER_SEDES)) for m in range(len(FILLER_MESES))]
+    paragraphs: list[str] = []
+    with_figure = neutral = 0
+    for n in range(60):
+        if n % 3 == 2:
+            sede = FILLER_SEDES[(neutral * 2) % len(FILLER_SEDES)]
+            paragraphs.append(FILLER_NEUTRAL[neutral].format(sede=sede))
+            neutral += 1
+        else:
+            cause, sede, month = combos[(with_figure * 7) % len(combos)]  # 7 y 108 son coprimos: no se repite ninguna combinación
+            pct = FILLER_PERCENTAGES[with_figure % len(FILLER_PERCENTAGES)]
+            action = FILLER_ACTIONS[(with_figure * 5) % len(FILLER_ACTIONS)]
+            paragraphs.append(
+                f"En la sede {FILLER_SEDES[sede]}, el {pct} % de las incidencias de red de {FILLER_MESES[month]} se debió a "
+                f"{FILLER_CAUSES[cause]}, que se resolvió {action}."
+            )
+            with_figure += 1
+    paragraphs.insert(30, LONG_KEY_FINDING)
+    return paragraphs
+
+
+def build_long_report() -> str:
+    """Informe largo: 30 párrafos de relleno, el hallazgo clave en el 31.º (índice 30) y otros 30 de relleno después."""
+    return "\n\n".join(long_report_paragraphs())
+
+
+def build_headed_long_report() -> str:
+    """El mismo informe largo con un encabezado `## título` antes de cada sección; sin ellos queda igual que el original."""
+    starts = dict(LONG_SECTIONS)
+    parts: list[str] = []
+    for index, paragraph in enumerate(long_report_paragraphs()):
+        if index in starts:
+            parts.append(f"## {starts[index]}")
+        parts.append(paragraph)
+    return "\n\n".join(parts)
+
+
+def build_research_sources() -> tuple[list[dict], dict]:
+    """Fuentes (lo que ve el agente) y etiquetas (solo para puntuar)."""
+    long_report = build_long_report()
+    sources = [
+        {
+            "source_id": source_id, "name": name, "published_at": published, "availability": availability,
+            "report": long_report if report == "LONG" else report,
+        }
+        for source_id, name, published, availability, report in SOURCE_REPORTS
+    ]
+    by_id = {source_id: report for source_id, _, _, _, report in SOURCE_REPORTS}
+    labels = {
+        "established": {
+            "topic": "tickets cerrados en el trimestre", "figure": 1240, "figure_text": "1.240",
+            "source_ids": ["SRC-TICKETS", "SRC-AUDITORIA"],
+        },
+        "conflicts": [
+            {
+                # Cada par dice cómo lo explican (o no) los metadatos: `periodo`, `metodo`, `muestra`,
+                # `poblacion` o `sin_explicacion`, y la frase de las fuentes que lo respalda.
+                "topic": "tiempo medio de resolución", "unit": "horas",
+                "explained_by": ["metodo", "muestra"],
+                "evidence": {"metodo": "contando las esperas de respuesta", "muestra": "muestra de 300 tickets"},
+                "claims": [
+                    {"source_id": "SRC-TICKETS", "figure": 18, "figure_text": "18 horas", "published_at": "2026-10-02"},
+                    {"source_id": "SRC-AUDITORIA", "figure": 26, "figure_text": "26 horas", "published_at": "2026-10-09"},
+                ],
+            },
+            {
+                "topic": "satisfacción media", "unit": "sobre 5",
+                "explained_by": ["periodo", "poblacion"],
+                "evidence": {"periodo": "corte a 31 de agosto de 2026", "poblacion": "95 usuarios"},
+                "claims": [
+                    {"source_id": "SRC-ENCUESTA", "figure": 4.1, "figure_text": "4,1 sobre 5", "published_at": "2026-09-30"},
+                    {"source_id": "SRC-PROVEEDOR", "figure": 3.6, "figure_text": "3,6 sobre 5", "published_at": "2026-10-15"},
+                ],
+            },
+            {
+                # El contraste: mismo periodo, método y población (`shared_context`, igual en las dos fuentes)
+                # y cifras distintas. Nada en los metadatos explica la diferencia.
+                "topic": "tickets reabiertos", "unit": "%",
+                "explained_by": ["sin_explicacion"], "evidence": {}, "shared_context": CONFLICT_SHARED_CONTEXT,
+                "claims": [
+                    {"source_id": "SRC-CUADRO", "figure": 7.3, "figure_text": "7,3 %", "published_at": "2026-10-05"},
+                    {"source_id": "SRC-OFICINA", "figure": 12.4, "figure_text": "12,4 %", "published_at": "2026-10-06"},
+                ],
+            },
+        ],
+        "failed_sources": ["SRC-MONITOR"],
+        "transient_sources": [{"source_id": "SRC-REDES", "figure_text": "99,2 %"}],
+        "empty_sources": ["SRC-ARCHIVO"],
+        "long_report": {
+            "source_id": "SRC-LARGO", "key_finding": LONG_KEY_FINDING, "figure": 41, "figure_text": "41 %",
+            "summary_line": LONG_SUMMARY_LINE,
+            # Variante con encabezados de sección (TS 5.1-S4): el mismo texto con `## título` antes de cada sección.
+            "headed_report": build_headed_long_report(), "section_headings": [title for _, title in LONG_SECTIONS],
+        },
+    }
+    # Ubicación en la fuente y fragmento literal de cada afirmación en conflicto (TS 5.1-S5, 5.6-S1): solo para puntuar.
+    for conflict in labels["conflicts"]:
+        for claim in conflict["claims"]:
+            claim["location"], claim["excerpt"] = locate_figure(by_id[claim["source_id"]], claim["figure_text"])
+    return sources, labels
+
+
 def build_purchase_docs() -> tuple[list[dict], dict]:
     """Documentos (lo que ve el agente) y etiquetas (solo para puntuar), con el total calculado de cada uno."""
     entries = [*PURCHASE_DOCS, ("DC-12", *build_long_note())]
@@ -733,6 +960,7 @@ def build_all() -> dict[str, str]:
     tickets, labels = build_tickets(random.Random(f"{SEED}-tickets"), users)
     articles = build_kb_articles(random.Random(f"{SEED}-kb"))
     purchase_documents, purchase_labels = build_purchase_docs()
+    research_sources, research_labels = build_research_sources()
     datasets = {
         "usuarios.json": users,
         "tickets.json": tickets,
@@ -742,6 +970,8 @@ def build_all() -> dict[str, str]:
         "documentos_compra.json": purchase_documents,
         "documentos_compra_etiquetas.json": purchase_labels,
         "pedidos_compra.json": PURCHASE_ORDERS,
+        "fuentes_investigacion.json": research_sources,
+        "fuentes_investigacion_etiquetas.json": research_labels,
     }
     files = {name: json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True) + "\n" for name, data in datasets.items()}
     # Las rutas con subcarpeta usan «/»: mismo nombre en Windows y en Linux.

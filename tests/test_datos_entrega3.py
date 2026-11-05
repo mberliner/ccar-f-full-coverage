@@ -108,3 +108,170 @@ def test_purchase_orders_cover_every_po_cited_by_a_document_and_are_deterministi
     assert all(set(o) >= {"po_number", "vendor", "status", "expected_total"} for o in orders)
     # Un número por pedido, sin repetidos.
     assert len({o["po_number"] for o in orders}) == len(orders)
+
+
+# --- fuentes de investigación (tanda B: app3/04–06) ------------------------------------------------
+
+
+def sources() -> list[dict]:
+    return json.loads(build_all()["fuentes_investigacion.json"])
+
+
+def source_labels() -> dict:
+    return json.loads(build_all()["fuentes_investigacion_etiquetas.json"])
+
+
+def test_sources_are_deterministic_and_labels_live_apart():
+    files = build_all()
+    assert files["fuentes_investigacion.json"] == build_all()["fuentes_investigacion.json"]
+    for source in sources():
+        # Lo que ve el agente: identidad, estado de acceso y el informe. Nunca las afirmaciones etiquetadas.
+        assert set(source) == {"source_id", "name", "published_at", "availability", "report"}
+        assert "claims" not in source and "conflicts" not in source
+
+
+def test_one_source_times_out_and_one_is_validly_empty():
+    by_id = {s["source_id"]: s for s in sources()}
+    timeouts = [s for s in by_id.values() if s["availability"] == "timeout"]
+    assert len(timeouts) == 1 and timeouts[0]["report"] is None  # falla: no hay informe que devolver
+    empties = [s for s in by_id.values() if s["availability"] == "ok" and not s["report"]]
+    assert len(empties) == 1  # un vacío legítimo: la fuente responde y no tiene nada
+
+
+def test_conflicting_figures_differ_and_each_has_a_source_and_a_date():
+    labels = source_labels()
+    assert len(labels["conflicts"]) >= 2
+    by_id = {s["source_id"]: s for s in sources()}
+    for conflict in labels["conflicts"]:
+        figures = {c["figure"] for c in conflict["claims"]}
+        assert len(figures) >= 2  # cifras distintas para la misma magnitud
+        for claim in conflict["claims"]:
+            assert claim["source_id"] in by_id
+            assert claim["published_at"] == by_id[claim["source_id"]]["published_at"]
+            # La cifra aparece literalmente en el informe de su fuente.
+            assert claim["figure_text"] in by_id[claim["source_id"]]["report"]
+        # Un promedio de las cifras en conflicto no es ninguna de ellas.
+        average = round(sum(c["figure"] for c in conflict["claims"]) / len(conflict["claims"]), 2)
+        assert average not in figures
+
+
+def test_established_claim_agrees_across_sources():
+    labels = source_labels()
+    established = labels["established"]
+    assert len(established["source_ids"]) >= 2 and established["figure_text"]
+    by_id = {s["source_id"]: s for s in sources()}
+    for source_id in established["source_ids"]:
+        assert established["figure_text"] in by_id[source_id]["report"]
+
+
+def test_long_report_hides_the_key_finding_in_the_middle():
+    labels = source_labels()["long_report"]
+    report = next(s["report"] for s in sources() if s["source_id"] == labels["source_id"])
+    position = report.index(labels["key_finding"]) / len(report)
+    assert 0.4 < position < 0.6 and len(report) > 6000
+    assert report.count(labels["key_finding"]) == 1
+    # La línea de resumen (lo que el módulo pone al principio) repite el hallazgo clave con su cifra.
+    assert labels["figure_text"] in labels["key_finding"] and labels["figure_text"] in labels["summary_line"]
+
+
+# --- explicación de los conflictos y encabezados del informe largo (tanda B, completar) -------------
+
+EXPLANATIONS = {"periodo", "metodo", "muestra", "poblacion", "sin_explicacion"}
+
+
+def test_there_are_three_conflicts_and_each_one_says_how_the_metadata_explain_it():
+    conflicts = source_labels()["conflicts"]
+    assert len(conflicts) == 3
+    for conflict in conflicts:
+        assert conflict["explained_by"] and set(conflict["explained_by"]) <= EXPLANATIONS
+    by_topic = {c["topic"]: c["explained_by"] for c in conflicts}
+    assert set(by_topic["tiempo medio de resolución"]) == {"metodo", "muestra"}
+    assert set(by_topic["satisfacción media"]) == {"periodo", "poblacion"}
+    # El contraste: un único par sin explicación, y no mezcla otras.
+    assert by_topic["tickets reabiertos"] == ["sin_explicacion"]
+
+
+def test_each_explanation_is_backed_by_a_phrase_in_the_reports_of_its_pair():
+    by_id = {s["source_id"]: s for s in sources()}
+    for conflict in source_labels()["conflicts"]:
+        reports = " ".join(by_id[c["source_id"]]["report"] for c in conflict["claims"])
+        for kind, phrase in conflict.get("evidence", {}).items():
+            assert kind in conflict["explained_by"] and phrase in reports
+        if conflict["explained_by"] != ["sin_explicacion"]:
+            assert set(conflict["evidence"]) == set(conflict["explained_by"])  # cada explicación tiene su frase
+
+
+def test_the_unexplained_pair_shares_period_method_and_population():
+    by_id = {s["source_id"]: s for s in sources()}
+    (conflict,) = [c for c in source_labels()["conflicts"] if c["explained_by"] == ["sin_explicacion"]]
+    assert "evidence" not in conflict or not conflict["evidence"]
+    for claim in conflict["claims"]:
+        # Mismo periodo, mismo método y misma población, dicho igual en las dos fuentes.
+        assert conflict["shared_context"] in by_id[claim["source_id"]]["report"]
+    assert len({c["source_id"] for c in conflict["claims"]}) == 2 and len({c["figure"] for c in conflict["claims"]}) == 2
+
+
+def test_the_explained_pairs_differ_in_what_the_metadata_say():
+    by_id = {s["source_id"]: s for s in sources()}
+    resolution = " ".join(by_id[s]["report"] for s in ("SRC-TICKETS", "SRC-AUDITORIA"))
+    assert "muestra de 300" in resolution and "esperas" in resolution
+    satisfaction = " ".join(by_id[s]["report"] for s in ("SRC-ENCUESTA", "SRC-PROVEEDOR"))
+    assert "corte a 31 de agosto" in satisfaction and "95 usuarios" in satisfaction
+
+
+def test_headed_long_report_adds_headings_without_changing_the_text():
+    labels = source_labels()["long_report"]
+    plain = next(s["report"] for s in sources() if s["source_id"] == labels["source_id"])
+    headed = labels["headed_report"]
+    headings = [p for p in headed.split("\n\n") if p.startswith("## ")]
+    assert headings == [f"## {h}" for h in labels["section_headings"]] and len(headings) >= 5
+    # Quitando los encabezados queda exactamente el informe de siempre.
+    assert "\n\n".join(p for p in headed.split("\n\n") if not p.startswith("## ")) == plain
+    assert headed.count(labels["key_finding"]) == 1
+    # El hallazgo clave sigue en mitad del texto y no abre sección: el encabezado ayuda a ubicarlo, no lo señala.
+    position = headed.index(labels["key_finding"]) / len(headed)
+    assert 0.4 < position < 0.6
+    assert not headed.split(labels["key_finding"])[0].rstrip().split("\n\n")[-1].startswith("## ")
+
+
+# --- fuente transitoria (B4, app3/04: TS 5.3-S3) ---------------------------------------------------
+
+
+def test_one_source_fails_once_with_timeout_and_then_answers_and_is_labelled():
+    labels = source_labels()
+    (transient,) = labels["transient_sources"]
+    entry = next(s for s in sources() if s["source_id"] == transient["source_id"])
+    assert entry["availability"] == "timeout_once" and entry["report"]  # falla la primera vez; luego hay informe
+    assert transient["figure_text"] in entry["report"]
+    # No es la fuente que falla siempre ni la vacía: son tres comportamientos distintos.
+    assert transient["source_id"] not in labels["failed_sources"] + labels["empty_sources"]
+
+
+# --- ubicación y fragmento de cada afirmación; relleno distinto del informe largo (B4, app3/05) --------
+
+
+def test_each_claim_carries_the_section_and_the_literal_sentence_it_comes_from():
+    by_id = {s["source_id"]: s for s in sources()}
+    for conflict in source_labels()["conflicts"]:
+        for claim in conflict["claims"]:
+            report = by_id[claim["source_id"]]["report"]
+            assert f"## {claim['location']}\n" in report  # la ubicación es el título de una sección de la fuente
+            assert claim["excerpt"] in report and claim["figure_text"] in claim["excerpt"]
+            section = report.split(f"## {claim['location']}\n")[1].split("\n\n")[0]
+            assert claim["excerpt"] in section  # y el fragmento está en esa sección
+
+
+def test_long_report_filler_is_distinct_with_distraction_figures_of_the_same_kind_as_the_finding():
+    import re
+
+    labels = source_labels()["long_report"]
+    report = next(s["report"] for s in sources() if s["source_id"] == labels["source_id"])
+    paragraphs = report.split("\n\n")
+    assert len(paragraphs) == 61 and len(set(paragraphs)) == 61  # ninguno repetido
+    assert "apartado" not in report  # sin marcas de relleno
+    filler = [p for p in paragraphs if p != labels["key_finding"]]
+    distraction = [p for p in filler if re.search(r"\d+(,\d)? % de las incidencias de red", p)]
+    assert len(distraction) >= 30  # la mayoría lleva una cifra del mismo tipo que el hallazgo
+    figures = [float(m.replace(",", ".")) for p in distraction for m in re.findall(r"(\d+(?:,\d)?) %", p)]
+    assert max(figures) < 41 and len(set(figures)) >= 10  # el hallazgo es la cifra mayor, no la única
+    assert all(len(p) > 80 for p in paragraphs)

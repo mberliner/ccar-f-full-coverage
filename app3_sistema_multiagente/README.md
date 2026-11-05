@@ -13,7 +13,9 @@ Cada módulo se hace en 5 pasos: orientarte con su ficha, predecir, ejecutar o n
 | [`01_coordinador.py`](01_coordinador.py) | TS 1.2-K1…K4, S1, S2, S4 · TS 1.3-K1, K2, K3, S1, S4 | 1 |
 | [`02_paralelo_y_descomposicion.py`](02_paralelo_y_descomposicion.py) | TS 1.2-S3 · TS 1.3-S3 · TS 1.6-K1, K3, S1, S3 | 1 |
 | [`03_tools_entre_roles.py`](03_tools_entre_roles.py) | TS 2.3-K2, K3, S1, S2, S3 | 2 |
-| `04_errores_entre_agentes.py` … `06_contexto_largo.py` | D1, D2 y D5 | 3 |
+| [`04_errores_entre_agentes.py`](04_errores_entre_agentes.py) | TS 5.3-K1…K4, S1…S4 · TS 2.2-S3 | 3 |
+| [`05_procedencia.py`](05_procedencia.py) | TS 5.6-K1…K4, S1…S5 · TS 5.1-K2, S4, S5, S6 · TS 1.3-S2 | 3 |
+| [`06_contexto_largo.py`](06_contexto_largo.py) | TS 5.4-K1…K4, S1…S5 | 3 |
 | [`07_extraccion_schema.py`](07_extraccion_schema.py) | TS 4.2-K4, S4, S5 · TS 4.3-K1…K4, S1…S6 | 3 |
 | [`08_validacion_reintento.py`](08_validacion_reintento.py) | TS 4.4-K1…K4, S1…S4 | 3 |
 | [`09_batches.py`](09_batches.py) | TS 4.5-K1…K4, S1…S4 | 3 |
@@ -326,6 +328,347 @@ Un agente de síntesis recibe todas las tools del sistema y, aunque su cometido 
 
 ---
 
+## 04 · Errores entre agentes
+
+> **Qué vas a hacer:** Ver qué le llega al coordinador cuando una de las fuentes de un subagente falla por *timeout*, y qué entrega a partir de ahí.
+>
+> **Necesitas antes:** El [módulo 01](#01--coordinador-y-subagentes) y el [módulo 03](#03--tools-entre-roles) (mismo patrón de coordinador, barrera y subagente).
+>
+> **Modo:** Ejecución obligatoria (el resultado parcial con la brecha anotada solo se ve ejecutando).
+
+### Antes de empezar
+
+Los términos comunes (coordinador, subagente, error estructurado, reintentable, brecha) están en el [glosario](../docs/glosario.md).
+
+- **El sistema:** el coordinador tiene un único subagente, `researcher`, con una sola tool, `query_source`. La petición pide un informe de calidad del servicio con seis fuentes sintéticas (`fuentes_investigacion.json`): tres responden con contenido, una responde **vacía** (no tiene nada que decir), una falla con *timeout* en todas las consultas y la sexta, `SRC-REDES`, es transitoria (ver «El ejercicio»). La petición no dice cuál es cuál.
+- **Informe del subagente:** por cada fuente, un objeto JSON con `source_id`, `status` (`ok`, `empty` o `failed`) y `findings`. Si falla, también `error_context` con cuatro campos: `failure_type`, `attempted`, `partial_results` y `alternatives`.
+- **Reintento local:** el prompt del subagente le deja repetir, con un límite, la consulta que falla con un error reintentable. Lo que haga después depende del modelo.
+- **Vacío frente a fallo:** una fuente que responde con `total: 0` es un resultado válido; una que da *timeout* no ha dicho nada. Las medidas del módulo los distinguen leyendo los resultados de la tool, sin modelo.
+
+### Las tools del ejercicio
+
+| Tool | Qué recibe | Qué devuelve |
+| :--- | :--- | :--- |
+| `query_source` | `source_id` | el informe de la fuente en `content`, con su id, nombre y fecha en `metadata`; `total: 0` si la fuente responde sin contenido; un error transitorio reintentable si hay *timeout*; un error de validación si la fuente no existe |
+
+### El ejercicio
+
+Qué cambia en el código de cada variante `--anti`:
+
+- **`generico`:** el investigador reintenta igual que en la correcta (hasta 2 veces); lo único que cambia es lo que devuelve si la fuente sigue fallando: `status: failed` con el mensaje «búsqueda no disponible» y nada más, sin `error_context`. El coordinador es el mismo que en la correcta.
+- **`silenciar`:** lo hace el **código**, no el prompt. El servidor se construye con `silence_failures=True` y el *handler* de `query_source` devuelve `total: 0` y `results: []` como éxito cuando la fuente da *timeout*. El investigador y el coordinador usan los mismos prompts que en la correcta.
+- **`abortar`:** el prompt del coordinador añade que, si alguna fuente falla, no entregue nada parcial y responda solo `INVESTIGACIÓN ABORTADA`.
+
+Además, la petición incluye una sexta fuente, `SRC-REDES`, **transitoria**: falla con *timeout* la primera vez que se consulta en una ejecución y responde bien a la siguiente (el estado va por ejecución y solo la ve este módulo). Sirve para observar la recuperación local (TS 5.3-S3).
+
+Cada ejecución imprime una línea `[esperado]` con la hipótesis escrita en el código. Es una predicción, no un resultado.
+
+### Predice antes de ejecutar
+
+Con tus palabras; no hay un número que acertar:
+
+1. En la configuración correcta, ¿qué tendría que haber en lo que el subagente le devuelve al coordinador para que este pueda anotar la brecha sin inventarla? ¿Qué distingue ese contenido de un vacío?
+2. La fuente con *timeout* falla en todas las consultas y `SRC-REDES`, solo en la primera. ¿Qué esperas que haga el subagente con cada una y qué le llegará al coordinador de cada una? ¿Qué parte de eso decide el código y qué parte el modelo?
+3. Con `--anti generico`, el subagente reintenta igual que en la correcta, pero al coordinador solo le llega «búsqueda no disponible»: no sabe qué se intentó ni qué alternativas hay. ¿Esperas que haga algo distinto que en la correcta? ¿Podrá anotar la brecha igualmente?
+4. Con `--anti silenciar`, el *handler* convierte el *timeout* en un vacío antes de que lo vea el subagente. ¿Qué sabe entonces el coordinador de esa fuente? ¿Hay algo en lo que recibe que pudiera delatar el fallo?
+5. Con `--anti abortar`, ¿qué se pierde respecto a la correcta, y qué parte del trabajo ya estaba hecha cuando se decide abortar?
+
+### Ejecutar
+
+```bash
+uv run python app3_sistema_multiagente/04_errores_entre_agentes.py                    # correcta
+uv run python app3_sistema_multiagente/04_errores_entre_agentes.py --anti generico    # fallo sin contexto
+uv run python app3_sistema_multiagente/04_errores_entre_agentes.py --anti silenciar   # el handler traga el fallo
+uv run python app3_sistema_multiagente/04_errores_entre_agentes.py --anti abortar     # un fallo tumba la investigación
+uv run python app3_sistema_multiagente/04_errores_entre_agentes.py --repeat 3 --budget 0.60
+```
+
+**Si ejecutas:** las medidas y la forma del contexto de error se prueban sin modelo; ejecutar sirve para ver la señal de la guía: un resultado parcial con la brecha anotada y la fuente transitoria recuperada en local. Con `--repeat 3` cada variante cuesta unos 0,06–0,08 $.
+
+### Qué observar
+
+Las consultas por fuente y los reintentos locales, la cobertura según los informes del subagente, si el contexto de error está completo, los fallos que el *handler* tragó, si la brecha aparece anotada en el resultado, las decisiones del coordinador (cuántas veces delega y si menciona alternativas) y si el resultado es parcial o abortado.
+
+<details>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+Coordinador Sonnet 5.5, subagente Haiku 5.5, 3 ejecuciones por variante (`--repeat 3`), ~0,26 $ las cuatro variantes:
+
+| Variante | Señal observada (3 ejecuciones) | Qué dice |
+| :--- | :--- | :--- |
+| correcta | 1 delegación del coordinador en 3 de 3; informe `failed` con `error_context` completo, brecha de `SRC-MONITOR` anotada y cifras de las fuentes que respondieron, en 3 de 3; **`SRC-REDES` falló una vez y se recuperó con el reintento local en 3 de 3**, sin que el coordinador la viera como fallo (informe `ok`, ninguna brecha anotada) | lo transitorio lo resuelve el subagente y no llega al coordinador; lo que no resuelve llega con su contexto y la cobertura queda dicha |
+| `generico` | sin `error_context` en 3 de 3; 2–3 consultas a la fuente que falla, todas del subagente; **1 delegación del coordinador en 3 de 3**; brecha anotada y cifras en 3 de 3 | **sin efecto visible sobre el coordinador**: hizo lo mismo que en la correcta (ver la medición anterior) |
+| `silenciar` | fallo tragado por el *handler* en 3 de 3: 1 sola consulta, sin reintentos, la fuente llega como `total: 0`; brecha anotada en **1 de 3** | en esa ejecución el informe dice «falta información sobre la monitorización de red» y, a la vez, «respondió vacía, no es un fallo»: anota un hueco, pero lo diagnostica mal. En las otras dos, la fuente que falló se da por vacía |
+| `abortar` | `INVESTIGACIÓN ABORTADA` en 3 de 3, sin cifras ni brecha anotada, con las demás fuentes ya respondidas | un fallo tumba el trabajo de las fuentes que sí respondieron |
+
+Notas:
+
+- **`generico`:** la guía dice que el mensaje genérico esconde al coordinador el contexto que necesita (TS 5.3-K3). Aquí no cambió su decisión. Con una sola fuente caída y ninguna alternativa real que elegir, probablemente no había nada que ese contexto pudiera mejorar; es una hipótesis, no algo medido.
+- **Medidas:**
+  - «Brecha anotada» (`gap_noted`) pide la fuente y una palabra de falta en la misma frase, y descarta las negaciones pegadas a la palabra de fallo («no falló», «sin brecha»). Una versión anterior de la medida también descartaba «no respondió por timeout» y «sin datos por timeout», que son brechas: se corrigió después de registrar las cifras de arriba y no se recalcularon. Sigue leyendo palabras: no distingue una brecha bien diagnosticada de una mal diagnosticada, como en `silenciar`.
+  - El fallo tragado se mide en los resultados de la tool, sin modelo (`swallowed_sources`), y las vacías legítimas se cuentan aparte.
+  - «Resultado parcial» pide cifras de las fuentes pedidas que respondieron y no cuenta fechas.
+  - «Alternativa o reintento mencionados» es laxa (palabras sueltas): léela junto al texto.
+- **Reintento local:** no cuenta como error del coordinador (`coordinator_errors` = 0).
+- **Medición anterior** (antes de las correcciones de la revisión; ya no se reproduce con el código actual):
+  - `generico` decía además «no reintentes». El coordinador **volvió a delegar en 3 de 3** («Reintentar SRC-MONITOR»), con el mismo *timeout*, y costó algo más (0,026–0,030 $ frente a 0,022–0,024 $). Al añadir el reintento local, la segunda delegación desapareció: la causa era que nadie había reintentado (TS 5.3-S3), no el mensaje genérico.
+  - `silenciar` lo hacía el prompt del subagente, no el código. El informe JSON daba la fuente por `ok` sin hallazgos, pero el resultado final anotó la brecha igualmente en las 7 ejecuciones. En una ejecución diagnóstica, el coordinador había pedido en la delegación «si una fuente falla o está vacía, dilo explícitamente». Una explicación posible es que esa instrucción pesara más que la definición del subagente, pero no se comprobó. Por eso la variante actual produce el vacío en el código.
+- Las medidas, la forma del contexto de error y las opciones se prueban sin modelo en `tests/test_app3_04_errores_entre_agentes.py`.
+</details>
+
+### Pregunta tipo examen
+
+Un coordinador delega búsquedas en dos subagentes. Tras su recuperación local, los dos devuelven lo mismo: `{"status": "failed", "message": "búsqueda no disponible"}`. En un caso la fuente dio *timeout*; en el otro, la consulta estaba mal formada y fallará siempre. El coordinador trata los dos fallos igual y el informe solo dice «faltan datos». ¿Qué cambio le permite decidir bien en cada caso?
+
+- A. Que los subagentes reintenten hasta que la fuente responda, para que el coordinador no reciba nunca un fallo que decidir.
+- B. Que los subagentes devuelvan una lista vacía en esos casos, para que el coordinador siga con las demás fuentes sin pararse.
+- C. Que cada subagente devuelva tipo de fallo, consulta, lo obtenido y alternativas, y que el informe anote la brecha.
+- D. Que el coordinador repita las dos delegaciones con el mismo encargo y cancele la investigación si vuelven a fallar.
+
+<details>
+<summary>Paso 4 · Respuesta</summary>
+
+**C.** El mensaje genérico esconde justo la diferencia que importa (TS 5.3-K3): un *timeout* puede merecer otro intento o una fuente alternativa, y una consulta mal formada no se arregla repitiéndola. Con el tipo de fallo, lo intentado, lo obtenido y las alternativas, el coordinador decide en cada caso (TS 5.3-K1, S1), y el informe dice qué queda sin cubrir (TS 5.3-S4). La recuperación local ya se hizo y no hay que repetirla (TS 5.3-S3, TS 2.2-S3). En este módulo, con una sola fuente caída, el mensaje genérico no cambió lo que hizo el coordinador (Paso 3): la pregunta plantea el caso en que sí hay que elegir.
+
+- **A** quita el límite al reintento, y la consulta mal formada no va a responder nunca.
+- **B** convierte dos fallos en vacíos válidos (TS 5.3-K2, K4): el informe dirá que esas fuentes no tenían nada.
+- **D** repite a ciegas lo que ya falló y, si vuelve a fallar, tira el trabajo de las demás fuentes (TS 5.3-K4).
+</details>
+
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
+---
+
+## 05 · Procedencia entre agentes
+
+> **Qué vas a hacer:** Ver si la fuente y la fecha de cada cifra llegan hasta el informe final cuando dos fuentes discrepan, y si un hallazgo clave se pierde en mitad de un texto largo.
+>
+> **Necesitas antes:** El [módulo 04](#04--errores-entre-agentes) (mismo servidor de fuentes) y el [módulo 03](#03--tools-entre-roles) (mismo patrón de coordinador y barrera).
+>
+> **Modo:** Ejecución ligera (puedes hacerlo entero sin ejecutar; lo medido está en el Paso 3).
+
+### Antes de empezar
+
+Los términos comunes (coordinador, subagente, procedencia, *lost in the middle*) están en el [glosario](../docs/glosario.md).
+
+- **El sistema:** el coordinador tiene dos subagentes: `researcher` (consulta las fuentes con `query_source`) y `synthesizer` (sin tools, redacta con lo que le pasen en el prompt). Las fuentes son las sintéticas de `fuentes_investigacion.json`.
+- **Parte `conflictos` (por defecto):** seis fuentes en tres pares de cifras distintas (**tiempo de resolución**, **satisfacción** y **tickets reabiertos**), cada una con su fecha de publicación y el contexto metodológico que dé la fuente (periodo, método, muestra o población); todas coinciden en el total de tickets cerrados. Los informes van en secciones con encabezado. La petición no dice nada de los pares.
+- **Afirmación estructurada:** el investigador devuelve una lista JSON donde cada afirmación separa el contenido (`claim`, `figure`, `unit`, `context`) de los metadatos (`source_id`, `published_at`, `location`, `excerpt` y `relevance`). `context` lleva el periodo, el método, la muestra o la población que dé la fuente; `location`, la sección de la fuente; `excerpt`, la frase literal que respalda la afirmación, y `relevance`, una puntuación de 0 a 1. El código comprueba esa forma y que la fecha, la sección y el fragmento coinciden con la fuente.
+- **Decisión del coordinador:** antes de llamar al sintetizador, el coordinador decide para cada magnitud en conflicto si el contexto la explica o queda disputada, y pasa esa decisión en el prompt del sintetizador junto a las afirmaciones.
+- **Parte `medio`:** el informe `SRC-LARGO` (unas 1.500 palabras) con una sola frase importante en mitad. `--texto` elige la técnica de 5.1 que aplica el servidor al informe: `con_resumen` antepone una línea con el hallazgo clave (sin quitarlo de su sitio), `con_encabezados` pone un encabezado `##` antes de cada una de seis secciones (el hallazgo queda dentro de «Incidencias y causas», sin abrir sección) y `encabezados_y_resumen` aplica las dos.
+
+### Las tools del ejercicio
+
+| Tool | Qué recibe | Qué devuelve |
+| :--- | :--- | :--- |
+| `query_source` | `source_id` | igual que en el [módulo 04](#04--errores-entre-agentes): el informe en `content` y su id, nombre y fecha en `metadata` |
+
+### El ejercicio
+
+Qué cambia en el código de cada variante:
+
+- **`sin_procedencia`:** el prompt del investigador le pide prosa verbosa (uno o dos párrafos largos por fuente, con su razonamiento paso a paso), sin listas, sin identificadores de fuente ni fechas, en vez de afirmaciones con metadatos.
+- **`promedio`:** el prompt del sintetizador le pide una única cifra consolidada, el promedio, cuando dos fuentes discrepan.
+- **`formato_uniforme`:** el prompt del sintetizador pide todo en prosa continua, sin la instrucción de tabla para las cifras comparables.
+- **`inventar_explicacion`:** el sintetizador explica siempre por qué difieren las cifras (periodo, método, muestra o población), aunque el contexto no lo explique; es el control positivo de la medida del par sin explicación.
+- **`--parte medio --texto sin_resumen|con_resumen|con_encabezados|encabezados_y_resumen`:** el mismo informe largo, sin tratamiento, con la línea de resumen al principio, con encabezados de sección o con las dos cosas.
+
+El código mide sin modelo cuántas cifras del informe llevan su fuente en la misma frase o fila, si la ubicación y el fragmento llegan al informe, si la decisión del coordinador aparece en el prompt del sintetizador, si algún conflicto aparece fusionado en un promedio, si la tabla lleva las cifras de los pares, cuánto pesa lo que llega al sintetizador, qué contexto usa el informe para explicar cada diferencia, si deja como disputado lo que el contexto no explica y si el resumen del informe largo cita el hallazgo clave.
+
+### Predice antes de ejecutar
+
+Con tus palabras; no hay un número que acertar:
+
+1. En la configuración correcta, ¿qué parte de la procedencia está garantizada por la estructura de lo que devuelve el investigador y qué parte depende de lo que escriba el sintetizador?
+2. Con `--anti sin_procedencia`, ¿qué sabe el sintetizador de cada cifra? ¿Dónde esperas ver el daño: en lo que devuelve el investigador, en el informe final o en ambos? Razónalo antes de ejecutar.
+3. Con `--anti promedio`, ¿qué cifras tendrá el informe que no sale en ninguna fuente? ¿Seguirán apareciendo también las cifras originales?
+4. Mira el contexto metodológico de cada par en las fuentes (`fuentes_investigacion.json`): ¿qué diferencias explica y cuál no? ¿Qué tendría que hacer un buen informe con cada par, y qué error solo puede delatar un par que nada explica?
+5. Con `--anti formato_uniforme` y con `--anti inventar_explicacion`, el sintetizador recibe una orden que va contra la correcta. ¿Qué esperas ver en el informe con cada una? ¿Cuál crees que obedecerá más, y por qué?
+6. En la parte `medio`, ¿qué cambia al anteponer una línea de resumen, y qué al poner encabezados de sección? ¿Esperas la misma diferencia con un informe mucho más largo que con uno de unas 1.500 palabras?
+
+### Ejecutar
+
+```bash
+uv run python app3_sistema_multiagente/05_procedencia.py                                        # correcta
+uv run python app3_sistema_multiagente/05_procedencia.py --anti sin_procedencia                 # el investigador devuelve prosa
+uv run python app3_sistema_multiagente/05_procedencia.py --anti promedio                        # cifras en conflicto fusionadas
+uv run python app3_sistema_multiagente/05_procedencia.py --anti formato_uniforme                # todo en prosa, sin tabla
+uv run python app3_sistema_multiagente/05_procedencia.py --anti inventar_explicacion            # explica siempre (control positivo)
+uv run python app3_sistema_multiagente/05_procedencia.py --parte medio                          # hallazgo en mitad, sin resumen
+uv run python app3_sistema_multiagente/05_procedencia.py --parte medio --texto con_resumen      # con la línea de resumen al principio
+uv run python app3_sistema_multiagente/05_procedencia.py --parte medio --texto con_encabezados  # con encabezados de sección
+uv run python app3_sistema_multiagente/05_procedencia.py --parte medio --texto encabezados_y_resumen
+```
+
+**Si ejecutas:** las medidas (comprobador de procedencia, detector de cifras fusionadas, forma de las afirmaciones) se prueban sin modelo; ejecutar sirve para ver qué hace el modelo con ellas. Con `--repeat 3`, una variante de `conflictos` cuesta unos 0,20 $ y una variante de `medio`, unos 0,19 $ (la parte `medio` ya no es barata: ~0,065 $ por ejecución).
+
+### Qué observar
+
+Las afirmaciones estructuradas sin problemas, las fuentes que llegan al sintetizador, las cifras con su fuente en la frase, los conflictos presentados como disputados, las cifras fusionadas, qué contexto (periodo, método, muestra, población) usa el informe para cada par y, en la parte `medio`, si el resumen cita el hallazgo clave.
+
+<details>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+Coordinador Sonnet 5.5, subagentes Haiku 5.5, 3 ejecuciones por variante; ~1,18 $ en `conflictos` (incluidos 0,13 $ de una prueba que no valió) y 0,78 $ en `medio`:
+
+| Variante | Señal observada (3 ejecuciones) | Qué dice |
+| :--- | :--- | :--- |
+| correcta | afirmaciones sin problemas (15/15, 13/13 y 12/12), con ubicación y fragmento literal válidos en las 40; las 6 fuentes llegan al sintetizador con su afirmación; **decisión del coordinador acertada en los 3 pares de las 3 ejecuciones (9/9)**; ninguna cifra fusionada; el par que el contexto no explica, disputado en 3 de 3 y atribuido a la fecha o al método en 0 de 3 | la estructura conserva la procedencia y el coordinador decide bien antes de la síntesis |
+| correcta: ubicación y fragmento en el informe final | **0 de 6 fuentes en las 3 ejecuciones** (ni el título de la sección ni un tramo del fragmento) | llegan al sintetizador, pero no al informe: los parafrasea en una columna de método o población |
+| correcta: tabla con las cifras de los pares | tabla en 3 de 3; los tres pares con sus dos cifras dentro en **2 de 3** (en la otra, la satisfacción queda fuera) | hay tabla, pero no siempre con todas las cifras |
+| `formato_uniforme` | **tabla en 0 de 3** | sin la instrucción por tipo, todo sale en prosa |
+| `sin_procedencia` (prosa larga) | 0 afirmaciones estructuradas; fuente en la frase en 7/7, 4/7 y 7/7 cifras del informe final; decisiones del coordinador acertadas en 8 de 9 | la pérdida está en lo que devuelve el investigador, **no en el informe final**: la prosa ya nombraba fuente y fecha |
+| tamaño: estructurado frente a prosa larga | lo que devuelve el investigador: 8.781, 10.045 y 9.007 caracteres frente a 6.597, 8.601 y 9.134; lo que llega al sintetizador: 3.626, 5.703 y 3.320 frente a 2.594, 2.818 y 3.059 | **al revés de lo esperado**: la salida estructurada pesa más; con estos tamaños, 5.1-S6 no se ve en el volumen |
+| `promedio` | fusionó en **1 de 3** (22 horas y 3,85 sobre 5, con las cifras originales también presentes) | señal del anti-patrón, pero no estable |
+| `inventar_explicacion` (control positivo) | par sin explicación atribuido en **0 de 3**, disputado en 3 de 3 | **el control no salió**: el sintetizador no inventó la explicación, así que no está demostrado que la medida detecte ese fallo |
+| `medio` sin resumen, con resumen, con encabezados y con las dos cosas (3 de cada) | el resumen citó el 41 % en **12 de 12** | **sin señal de *lost in the middle*** |
+
+Notas:
+
+- **Parte `medio`:** el informe (unas 1.500 palabras, ~9.400 caracteres) lleva relleno variado, con porcentajes de distracción del 4 al 18 %. Aun así, el 41 % es la cifra más alta y la única de su tipo, así que puede destacar por saliencia y no por su posición. Que el efecto aparezca con un texto más largo, otro modelo o distracciones más parecidas es una hipótesis sin comprobar; no se forzó.
+- **`inventar_explicacion` con Haiku 4.5:** se intentó con `CCARF_MODEL_SUBAGENT=claude-haiku-4-5`, pero `.env` manda sobre el entorno y las ejecuciones usaron Haiku 5.5, así que no cuentan. Sin esa prueba, el control positivo queda sin demostrar.
+- **Medidas** (léelas junto al texto):
+  - `conflicts_presented` pide las dos cifras y una frase con una palabra de desacuerdo, y descarta las negaciones pegadas a ella («no hay discrepancias»). Una frase que nombra un par (tema, fuente o cifra) solo cuenta para ese par; una que no nombra ninguno («las fuentes discrepan») cuenta para todos. Puede dar falsos negativos si el informe usa otras palabras («no comparables»). Las cifras registradas arriba se midieron con la versión anterior, que era global y con una negación más amplia; no se recalcularon.
+  - La decisión del coordinador (`coordinator_decisions`) se lee del prompt del sintetizador, donde el coordinador la escribe en el formato que le fija su prompt («explicada por…» o «disputada»). La negación manda: «no explicada» o «no está explicada» cuentan como disputada. Fuera de ese formato la lectura es laxa.
+  - `explanation_found` mira qué contexto usa el informe en las líneas que nombran cada par. Ya no toma «la tabla muestra» ni «se espera confirmar» por contexto, ni «el mismo método» por atribución, pero sigue leyendo palabras.
+  - `merged_figures` detecta promedios con su unidad («22 horas», «≈4 sobre 5», «10 %»), no cualquier forma de fusionar.
+  - `sources_passed` pide que el id de la fuente vaya con su afirmación en el prompt del sintetizador.
+- **Medición anterior** (antes de las correcciones de la revisión: sin ubicación, fragmento ni decisión del coordinador, con un relleno repetido en el informe largo y medidas más laxas): la correcta explicó los dos pares explicables y no atribuyó el tercero en ninguna de las 9 ejecuciones de `conflictos`. La medida dio 3 «atribuidos», pero leyendo el texto eran falsos positivos («los mismos 1.240 tickets y el mismo método»). `promedio` fusionó en 1 de 3 (22 horas y 9,85 % de reabiertos). La parte `medio` citó el 41 % en 12 de 12.
+- Las medidas, la forma de las afirmaciones y las opciones se prueban sin modelo en `tests/test_app3_05_procedencia.py`.
+</details>
+
+### Pregunta tipo examen
+
+Un sistema multiagente prepara informes de mercado. Dos subagentes leen fuentes distintas y devuelven resúmenes en prosa; un sintetizador redacta el informe. En el último, la cuota de un producto aparece como 18 %, que no figura en ninguna fuente: una daba 14 % con datos de enero y otra, 22 % con datos de junio. Además, quien lee no puede saber de dónde sale cada cifra. ¿Qué cambio resuelve las dos cosas?
+
+- A. Pedir al sintetizador que, ante dos cifras distintas, dé la media de las dos y cite ambas fuentes junto a ese número.
+- B. Que los subagentes devuelvan cada afirmación con su fuente y la fecha de sus datos, y el informe muestre las dos cifras.
+- C. Que los subagentes resuman con más detalle y citen la fuente al final de cada párrafo, para que el sintetizador la deduzca de ahí.
+- D. Pedir al sintetizador que marque como contradicción toda cifra que no coincida entre fuentes y que la deje fuera del informe final.
+
+<details>
+<summary>Paso 4 · Respuesta</summary>
+
+**B.** El 18 % es una fusión de dos cifras que no se contradicen: miden meses distintos. Con la fecha de los datos en la salida estructurada, la diferencia se lee como temporal (TS 5.6-K4, S4), y las dos cifras se presentan con su fuente en vez de fundirse (TS 5.6-K3). El mapeo afirmación–fuente, con el contenido separado de los metadatos, es lo que permite rastrear cada cifra (TS 5.6-S1, K2, TS 1.3-S2).
+
+- **A** es justo lo que produjo el 18 %: citar las dos fuentes no hace que ninguna respalde la media, y las dos cifras eran correctas para su periodo (TS 5.6-K3, K4).
+- **C** sigue confiando la atribución a la prosa: es justo donde se pierde al resumir (TS 5.6-K1).
+- **D** trata una diferencia temporal como una contradicción y quita del informe dos datos válidos (TS 5.6-K4).
+</details>
+
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
+---
+
+## 06 · Contexto largo
+
+> **Qué vas a hacer:** Ver cómo se sostiene una investigación en tres fases sacando el detalle del contexto (scratchpad, subagentes, resumen entre fases) y cómo se retoma tras una caída simulada con un manifest de estado.
+>
+> **Necesitas antes:** Los módulos [01](#01--coordinador-y-subagentes) y [04](#04--errores-entre-agentes) (coordinador, subagente y barrera sobre el mismo servidor de fuentes).
+>
+> **Modo:** Ejecución ligera (puedes hacerlo entero sin ejecutar; lo medido está en el Paso 3).
+
+### Antes de empezar
+
+Los términos comunes (coordinador, subagente, *scratchpad*, *manifest*) están en el [glosario](../docs/glosario.md).
+
+- **El sistema:** una investigación en tres fases sobre las fuentes sintéticas: 1) los tiempos de resolución y la satisfacción de cuatro fuentes, 2) el informe largo `SRC-LARGO` (~9.400 caracteres), 3) un informe breve con lo descubierto. La petición de cada fase no dice las cifras que se esperan.
+- **Scratchpad:** un archivo en tu directorio de estado con dos tools, `save_finding` (la usa el subagente) y `read_scratchpad` (la usa el coordinador).
+- **Resumen entre fases:** al terminar una fase, el código guarda su cierre (recortado a 1.200 caracteres) y lo inyecta en el contexto inicial de la fase siguiente.
+- **Manifest:** un archivo `manifest.json` en el mismo directorio con las fases hechas, el resumen de cada una, las fuentes cubiertas y el número de hallazgos. Es lo que permite retomar: la ejecución siguiente lo carga y lo inyecta en el prompt de la fase que sigue.
+- **`Explore` y `/compact`:** son de Claude Code y no se ejecutan aquí. `Explore` (sección D3) es el subagente de solo lectura que saca la exploración verbosa del hilo principal, como `researcher` en este módulo. `/compact` (TS 5.4-S5) resume una sesión interactiva que se ha llenado de salida de exploración y libera contexto; aquí ese papel lo hace el resumen de cada fase. Puedes probarlo en cualquier sesión larga de Claude Code.
+
+### Las tools del ejercicio
+
+| Tool | Quién la usa | Qué hace |
+| :--- | :--- | :--- |
+| `query_source` | el subagente `researcher` (en `todo_en_contexto`, el coordinador) | devuelve el informe de una fuente (igual que en el [módulo 04](#04--errores-entre-agentes)) |
+| `save_finding` | el subagente | guarda un hallazgo clave (`source_id`, `claim`, `figure`) en el scratchpad |
+| `read_scratchpad` | el coordinador | lee los hallazgos guardados, en orden |
+
+### El ejercicio
+
+Qué cambia en el código de cada variante:
+
+- **Correcta:** una conversación por fase. El coordinador delega las consultas al subagente, lee el scratchpad antes de volver a consultar y cierra cada fase con un resumen. La fase siguiente empieza con ese resumen y el estado del manifest.
+- **`--anti todo_en_contexto`:** las tres fases en una sola conversación, sin scratchpad, sin resumen y sin subagentes: el coordinador consulta las fuentes él mismo y los informes en bruto se acumulan en su contexto.
+- **`--simular-caida`:** la correcta corta tras la fase 1. La siguiente ejecución, sin ese argumento, encuentra el manifest a medias y retoma desde la fase 2. `--desde-cero` ignora un manifest a medias.
+
+Al retomar, el código valida el manifest (versión, claves, tipos) y comprueba que el scratchpad tiene los hallazgos que dice; si no cuadra, avisa y empieza de cero, pero antes aparta el estado anterior a `app3-06.<fecha-hora>.bak` (junto a `app3-06`, en `estado/<perfil>/`) en vez de borrarlo: un manifest de otra versión podría ser trabajo que se quiere conservar. Una ejecución terminada o `--desde-cero` sí sustituyen el estado sin copia. `save_finding` devuelve un error de validación, no una excepción, si `claim` o `source_id` no son texto o `figure` no es un número. Un scratchpad con la última línea cortada por una caída la ignora con un aviso.
+
+El código mide sin modelo cuántos caracteres de resultados de tools llegan al contexto del coordinador, cuántas consultas repite sobre fuentes ya cubiertas, cuántas veces lee el scratchpad, cuántos de los cinco hechos descubiertos recoge el informe final y cuántas expresiones de «patrón típico» contiene.
+
+### Predice antes de ejecutar
+
+Con tus palabras; no hay un número que acertar:
+
+1. En la correcta, ¿qué llega al contexto del coordinador de lo que dice cada fuente y qué se queda fuera? ¿Quién decide qué se guarda en el scratchpad, el código o el modelo?
+2. Con `--anti todo_en_contexto`, ¿cuánto contexto esperas acumulado frente a lo que ve el coordinador en cada fase de la correcta? ¿Esperas que el informe final pierda alguno de los hechos o que aparezcan «patrones típicos» en su lugar?
+3. Tras `--simular-caida`, ¿qué tiene que haber en el manifest y en el scratchpad para que la ejecución siguiente no repita consultas? ¿Qué pasaría si faltara uno de los dos?
+4. ¿Cuál de las dos configuraciones esperas que cueste más, y por qué?
+
+### Ejecutar
+
+```bash
+uv run python app3_sistema_multiagente/06_contexto_largo.py                          # correcta: tres fases
+uv run python app3_sistema_multiagente/06_contexto_largo.py --anti todo_en_contexto  # un solo hilo
+uv run python app3_sistema_multiagente/06_contexto_largo.py --simular-caida          # corta tras la fase 1
+uv run python app3_sistema_multiagente/06_contexto_largo.py                          # y retoma desde el manifest
+```
+
+**Si ejecutas:** el manifest, el scratchpad, el resumen entre fases y las medidas se prueban sin modelo; ejecutar sirve para ver el contexto acumulado y la recuperación del estado. El estado queda en `estado/<perfil>/app3-06/` (el perfil sale de `CCARF_PERFIL`), fuera de git y propio de cada persona.
+
+### Qué observar
+
+Los caracteres de resultados de tools en el contexto del coordinador (por fase y en total), las consultas repetidas a fuentes ya cubiertas, las lecturas del scratchpad, los hechos del informe final y las expresiones de patrón típico.
+
+<details>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+**Medición anterior a las correcciones B4**, con el informe largo de entonces (B4 cambió su relleno; después solo se volvió a medir la caída simulada, abajo). Coordinador Sonnet 5.5, subagente Haiku 5.5, 0,02–0,04 $ por fase (~0,20 $ en total):
+
+| Variante | Señal observada | Qué dice |
+| :--- | :--- | :--- |
+| correcta, completa (1 ejecución) | contexto del coordinador de 4.106, 2.497 y 1.458 caracteres por fase (8.061 en total, nunca juntos); 0 consultas repetidas; el scratchpad se leyó en cada fase; informe final con 5 de 5 hechos; 0,068 $ | el detalle queda fuera del hilo del coordinador y el informe no pierde nada |
+| `--simular-caida` y reanudación (1 + 1) | tras la fase 1: 5 hallazgos y manifest con la fase 1; la ejecución siguiente anunció «retomando: fases hechas [1]» con las 4 fuentes cubiertas; en las fases 2 y 3, **0 consultas repetidas**, 1 lectura del scratchpad por fase y contexto de 2.321 y 1.527 caracteres; informe final con 5 de 5 hechos; 0,039 $ + 0,038 $ | el estado se recupera del manifest y del scratchpad, no de la conversación anterior |
+| `todo_en_contexto` (2 ejecuciones) | **11.134 caracteres** de resultados de tools en el contexto del coordinador, en un solo hilo, con 5 fuentes consultadas por él; informe final con 5 de 5 hechos y **0** expresiones de patrón típico; 0,025–0,029 $ | la acumulación aparece, **la degradación no** |
+
+Notas:
+
+- **Sin señal de degradación (TS 5.4-K1):** con ~11.000 caracteres (unos pocos miles de tokens) el informe del hilo único no perdió ningún hecho ni recurrió a «patrones típicos». Que aparezca en una sesión mucho más larga es una hipótesis sin comprobar; no se alargó la investigación para forzarla. Lo que sí se midió es la diferencia de contexto: 11.134 caracteres juntos frente a un máximo de 4.106 en una fase de la correcta.
+- **Coste:** la correcta cuesta unas 2,5 veces más que el hilo único (0,068 $ frente a 0,025–0,029 $): tres conversaciones y subagentes. Lo que compra no es ahorro, sino contexto acotado por fase y la posibilidad de retomar.
+- **Lo que hizo el subagente:** en la fase 1 el coordinador lanzó un subagente por fuente, en paralelo, y cada uno guardó sus hallazgos (5–7 en total, con algún duplicado del total de tickets). La barrera impidió que el coordinador consultara las fuentes por su cuenta (0 intentos denegados).
+- **Medida de hechos:** la primera versión rechazaba una cifra seguida de `/5` y marcó 3 de 5 en la reanudación, aunque el informe traía «4,1/5» y «3,6/5». Se corrigió con un test: la reanudación recoge los 5 hechos, como la correcta.
+- **Medidas:** «hechos del informe» comprueba que cada cifra aparece, no que vaya con su fuente, y «patrón típico» busca expresiones sueltas. Léelas junto al texto.
+- `Explore` y `/compact` no se pueden observar aquí: son de Claude Code.
+- Las medidas, el scratchpad, el manifest y las opciones se prueban sin modelo en `tests/test_app3_06_contexto_largo.py`.
+
+**Después de las correcciones B4** (una pasada de `--simular-caida` y su reanudación, 0,07 $; el prompt no cambió, así que no se repitió el resto): el estado se escribió en `estado/default/app3-06/`; tras la fase 1, 6 hallazgos y el manifest con la fase 1; la reanudación anunció «retomando: fases hechas [1]» (el scratchpad cuadraba con el manifest, sin avisos), sin consultas repetidas, con 7 hallazgos al final y **5 de 5 hechos** en el informe. Contexto del coordinador por fase: 4.315, 2.256 y 1.472 caracteres (8.043 en total). Los casos del manifest y del scratchpad (bytes no UTF-8, tipos, claves, versión, manifest ajeno, línea truncada) se prueban solo sin modelo: 14 tests con tipos o valores erróneos, 6 con claves que faltan y el resto para versión, coherencia con el scratchpad y línea cortada.
+</details>
+
+### Pregunta tipo examen
+
+Una investigación en tres fases se corta durante la tercera. Al terminar cada fase, los agentes habían guardado su estado en un sitio acordado. ¿Cómo debe retomarse?
+
+- A. Leer el estado guardado, comprobar que está completo y pasar a la fase pendiente lo hecho y su resumen.
+- B. Reanudar la conversación anterior completa, que conserva el detalle de cada consulta aunque ya sea muy larga.
+- C. Empezar de nuevo desde la primera fase con un contexto limpio, por si el estado guardado quedó a medias.
+- D. Relanzar solo la tercera fase con la petición original y dejar que vuelva a consultar las fuentes que necesite.
+
+<details>
+<summary>Paso 4 · Respuesta</summary>
+
+**A.** Para recuperarse de una caída, cada agente exporta su estado a un sitio conocido, y al retomar el coordinador carga el manifest y lo pasa a los prompts (TS 5.4-K4, S4). El resumen de las fases hechas va en el contexto inicial de la siguiente (TS 5.4-S3). Comprobar el estado antes de usarlo evita retomar desde uno roto o ajeno (inferencia de este módulo).
+
+- **B** arrastra un contexto largo, que es lo que favorece la degradación (TS 5.4-K1), y tras una caída puede no haber conversación que reanudar.
+- **C** tira el trabajo que se guardó precisamente para no repetirlo. Un estado dudoso se comprueba; no se descarta por defecto.
+- **D** no repite las fases hechas, pero la tercera arranca sin lo descubierto: vuelve a consultar fuentes y puede contradecir lo que ya se resumió (TS 5.4-S3, S4).
+</details>
+
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
+---
+
 ## 07 · Extracción estructurada con schema
 
 > **Qué vas a hacer:** Extraer los metadatos de 12 documentos de compra con una tool de JSON Schema, puntuar lo que sale contra unas etiquetas que el modelo no ve y, en la última parte, enriquecer la extracción consultando el pedido que cita.
@@ -424,7 +767,7 @@ Un proceso extrae con una tool de JSON Schema el número de pedido, la fecha y e
 - A. Añadir al *system prompt* «no inventes datos» y conservar el campo como `string` obligatorio.
 - B. Validar el número con una expresión regular `PO-nnnn` y reenviar al modelo las facturas que fallen.
 - C. Pasar a `tool_choice` `auto`, para que el modelo pueda contestar en texto cuando le falte el dato.
-- D. Hacer el campo opcional y *nullable*, y decir en su descripción que quede en `null` si no figura.
+- D. Hacer el campo opcional y *nullable*, y que su descripción pida `null` si no figura.
 
 <details>
 <summary>Paso 4 · Respuesta</summary>

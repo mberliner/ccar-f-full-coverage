@@ -30,7 +30,7 @@ Las apps se ordenan por complejidad creciente, pero se entregan por bloques de d
 
 El avance de cada entrega se registra en `NOTAS.md`.
 
-**Introducidas: 158/240**
+**Introducidas: 190/240**
 
 | Viñeta | Destino | Estado |
 | :--- | :--- | :---: |
@@ -53,7 +53,7 @@ El avance de cada entrega se registra en `NOTAS.md`.
 | TS 1.3-K3 | app3/01_coordinador | ☑ |
 | TS 1.3-K4 | app2/06_sesiones | ☑ |
 | TS 1.3-S1 | app3/01_coordinador | ☑ |
-| TS 1.3-S2 | app3/05_procedencia | ☐ |
+| TS 1.3-S2 | app3/05_procedencia | ☑ |
 | TS 1.3-S3 | app3/02_paralelo_y_descomposicion | ☑ |
 | TS 1.3-S4 | app3/01_coordinador | ☑ |
 | TS 1.4-K1 | app2/01_prompt_vs_enforcement | ☑ |
@@ -96,7 +96,7 @@ El avance de cada entrega se registra en `NOTAS.md`.
 | TS 2.2-K4 | app1/04_errores_estructurados | ☑ |
 | TS 2.2-S1 | app1/04_errores_estructurados | ☑ |
 | TS 2.2-S2 | app1/04_errores_estructurados | ☑ |
-| TS 2.2-S3 | app3/04_errores_entre_agentes | ☐ |
+| TS 2.2-S3 | app3/04_errores_entre_agentes | ☑ |
 | TS 2.2-S4 | app1/04_errores_estructurados | ☑ |
 | TS 2.3-K1 | app1/05_scoping_y_tool_choice | ☑ |
 | TS 2.3-K2 | app3/03_tools_entre_roles | ☑ |
@@ -222,15 +222,15 @@ El avance de cada entrega se registra en `NOTAS.md`.
 | TS 4.6-S2 | app3/12_revision_independiente | ☐ |
 | TS 4.6-S3 | app3/12_revision_independiente | ☐ |
 | TS 5.1-K1 | app2/05_multi_concern_y_handoff | ☑ |
-| TS 5.1-K2 | app3/05_procedencia | ☐ |
+| TS 5.1-K2 | app3/05_procedencia | ☑ |
 | TS 5.1-K3 | app1/07_recorte_de_contexto | ☐ |
 | TS 5.1-K4 | app1/01_bucle_manual | ☑ |
 | TS 5.1-S1 | app2/05_multi_concern_y_handoff | ☑ |
 | TS 5.1-S2 | app2/05_multi_concern_y_handoff | ☑ |
 | TS 5.1-S3 | app1/07_recorte_de_contexto | ☐ |
-| TS 5.1-S4 | app3/05_procedencia | ☐ |
-| TS 5.1-S5 | app3/05_procedencia | ☐ |
-| TS 5.1-S6 | app3/05_procedencia | ☐ |
+| TS 5.1-S4 | app3/05_procedencia | ☑ |
+| TS 5.1-S5 | app3/05_procedencia | ☑ |
+| TS 5.1-S6 | app3/05_procedencia | ☑ |
 | TS 5.2-K1 | app2/04_few_shot_y_escalamiento | ☐ |
 | TS 5.2-K2 | app2/04_few_shot_y_escalamiento | ☐ |
 | TS 5.2-K3 | app2/04_few_shot_y_escalamiento | ☐ |
@@ -240,23 +240,23 @@ El avance de cada entrega se registra en `NOTAS.md`.
 | TS 5.2-S3 | app2/04_few_shot_y_escalamiento | ☐ |
 | TS 5.2-S4 | app2/04_few_shot_y_escalamiento | ☐ |
 | TS 5.2-S5 | app2/04_few_shot_y_escalamiento | ☐ |
-| TS 5.3-K1 | app3/04_errores_entre_agentes | ☐ |
-| TS 5.3-K2 | app3/04_errores_entre_agentes | ☐ |
-| TS 5.3-K3 | app3/04_errores_entre_agentes | ☐ |
-| TS 5.3-K4 | app3/04_errores_entre_agentes | ☐ |
-| TS 5.3-S1 | app3/04_errores_entre_agentes | ☐ |
-| TS 5.3-S2 | app3/04_errores_entre_agentes | ☐ |
-| TS 5.3-S3 | app3/04_errores_entre_agentes | ☐ |
-| TS 5.3-S4 | app3/04_errores_entre_agentes | ☐ |
-| TS 5.4-K1 | app3/06_contexto_largo | ☐ |
-| TS 5.4-K2 | app3/06_contexto_largo | ☐ |
-| TS 5.4-K3 | app3/06_contexto_largo | ☐ |
-| TS 5.4-K4 | app3/06_contexto_largo | ☐ |
-| TS 5.4-S1 | app3/06_contexto_largo | ☐ |
-| TS 5.4-S2 | app3/06_contexto_largo | ☐ |
-| TS 5.4-S3 | app3/06_contexto_largo | ☐ |
-| TS 5.4-S4 | app3/06_contexto_largo | ☐ |
-| TS 5.4-S5 | app3/06_contexto_largo | ☐ |
+| TS 5.3-K1 | app3/04_errores_entre_agentes | ☑ |
+| TS 5.3-K2 | app3/04_errores_entre_agentes | ☑ |
+| TS 5.3-K3 | app3/04_errores_entre_agentes | ☑ |
+| TS 5.3-K4 | app3/04_errores_entre_agentes | ☑ |
+| TS 5.3-S1 | app3/04_errores_entre_agentes | ☑ |
+| TS 5.3-S2 | app3/04_errores_entre_agentes | ☑ |
+| TS 5.3-S3 | app3/04_errores_entre_agentes | ☑ |
+| TS 5.3-S4 | app3/04_errores_entre_agentes | ☑ |
+| TS 5.4-K1 | app3/06_contexto_largo | ☑ |
+| TS 5.4-K2 | app3/06_contexto_largo | ☑ |
+| TS 5.4-K3 | app3/06_contexto_largo | ☑ |
+| TS 5.4-K4 | app3/06_contexto_largo | ☑ |
+| TS 5.4-S1 | app3/06_contexto_largo | ☑ |
+| TS 5.4-S2 | app3/06_contexto_largo | ☑ |
+| TS 5.4-S3 | app3/06_contexto_largo | ☑ |
+| TS 5.4-S4 | app3/06_contexto_largo | ☑ |
+| TS 5.4-S5 | app3/06_contexto_largo | ☑ |
 | TS 5.5-K1 | app3/10_confianza_y_revision | ☐ |
 | TS 5.5-K2 | app3/10_confianza_y_revision | ☐ |
 | TS 5.5-K3 | app3/10_confianza_y_revision | ☐ |
@@ -265,15 +265,15 @@ El avance de cada entrega se registra en `NOTAS.md`.
 | TS 5.5-S2 | app3/10_confianza_y_revision | ☐ |
 | TS 5.5-S3 | app3/10_confianza_y_revision | ☐ |
 | TS 5.5-S4 | app3/10_confianza_y_revision | ☐ |
-| TS 5.6-K1 | app3/05_procedencia | ☐ |
-| TS 5.6-K2 | app3/05_procedencia | ☐ |
-| TS 5.6-K3 | app3/05_procedencia | ☐ |
-| TS 5.6-K4 | app3/05_procedencia | ☐ |
-| TS 5.6-S1 | app3/05_procedencia | ☐ |
-| TS 5.6-S2 | app3/05_procedencia | ☐ |
-| TS 5.6-S3 | app3/05_procedencia | ☐ |
-| TS 5.6-S4 | app3/05_procedencia | ☐ |
-| TS 5.6-S5 | app3/05_procedencia | ☐ |
+| TS 5.6-K1 | app3/05_procedencia | ☑ |
+| TS 5.6-K2 | app3/05_procedencia | ☑ |
+| TS 5.6-K3 | app3/05_procedencia | ☑ |
+| TS 5.6-K4 | app3/05_procedencia | ☑ |
+| TS 5.6-S1 | app3/05_procedencia | ☑ |
+| TS 5.6-S2 | app3/05_procedencia | ☑ |
+| TS 5.6-S3 | app3/05_procedencia | ☑ |
+| TS 5.6-S4 | app3/05_procedencia | ☑ |
+| TS 5.6-S5 | app3/05_procedencia | ☑ |
 
 ## Recuento por Task Statement
 

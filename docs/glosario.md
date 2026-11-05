@@ -70,6 +70,12 @@ Términos que usan los módulos de las tres apps y el arnés, para quien llega d
 - ***Hub-and-spoke* (estrella):** organización en la que toda la comunicación entre subagentes pasa por el coordinador.
 - **Descomposición:** dividir una tarea en subtareas, ya sea con una cadena fija de pasos o de forma adaptativa según lo que se va encontrando.
 - **Tool cross-role (entre roles):** una tool de otro rol que se da a un agente de forma muy limitada, para lo frecuente y sencillo.
+- **Brecha (de cobertura):** lo que un informe no cubre porque una fuente no estuvo disponible. Anotarla es decir qué tema queda sin respaldo y por qué, en vez de presentar el resultado como completo.
+- **Reintentable:** un error que puede desaparecer si se repite la llamada, como un *timeout*. Uno de validación o de permisos no lo es. Los errores estructurados lo dicen en `isRetryable`.
+- **Procedencia:** de dónde sale cada afirmación: la fuente, su fecha y, si la hay, la parte que la respalda. Se conserva si viaja junto a la afirmación, en campos aparte, de un agente al siguiente.
+- ***Scratchpad*:** un archivo donde un agente anota lo que descubre, para consultarlo más tarde sin tenerlo en el contexto.
+- ***Manifest*:** un archivo con el estado de un trabajo en curso (qué fases están hechas, qué se encontró y dónde está), para retomarlo si el proceso se corta.
+- ***Lost in the middle*:** la tendencia de un modelo a atender peor lo que está en mitad de una entrada larga que lo que está al principio o al final.
 
 ## Extracción estructurada y lotes
 
