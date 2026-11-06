@@ -19,7 +19,8 @@ Cada módulo se hace en 5 pasos: orientarte con su ficha, predecir, ejecutar o n
 | [`07_extraccion_schema.py`](07_extraccion_schema.py) | TS 4.2-K4, S4, S5 · TS 4.3-K1…K4, S1…S6 | 3 |
 | [`08_validacion_reintento.py`](08_validacion_reintento.py) | TS 4.4-K1, K2, K4, S1, S2, S4 (K3 y S3 en `app3/11`) | 3 |
 | [`09_batches.py`](09_batches.py) | TS 4.5-K1…K4, S1…S4 | 3 |
-| `10_confianza_y_revision.py` … `12_revision_independiente.py` | D3, D4 y D5 | 3 |
+| [`10_confianza_y_revision.py`](10_confianza_y_revision.py) | TS 5.5-K1…K4, S1…S4 | 3 |
+| `11_criterios_y_ci.py` · `12_revision_independiente.py` | TS 3.6 · TS 4.1, 4.2, 4.4, 4.6 · TS 1.6 | 3 |
 
 ---
 
@@ -1048,6 +1049,133 @@ Un equipo usa Claude para dos trabajos. El primero revisa cada *pull request* an
 - **B** deja a quien quiere fusionar esperando hasta 24 h y paga otra vez las 20 000 facturas por unas decenas.
 - **C** renuncia al 50 % en un trabajo que nadie espera.
 - **D** invierte el reparto. Además, dentro de una petición del lote no hay tool calling de varios turnos (TS 4.5-K3).
+</details>
+
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
+---
+
+## 10 · Confianza y revisión humana
+
+<!-- BORRADOR (Sonnet 5.5): pendiente del pase de textos de Opus 5.5. -->
+
+> **Qué vas a hacer:** Medir una población de 292 extracciones con confianza por campo: dónde se equivoca aunque la exactitud global sea alta, si la confianza está calibrada, qué umbrales se pueden fijar por tipo y campo y qué se revisa cuando la capacidad de revisión es limitada.
+>
+> **Necesitas antes:** El [módulo 07](#07--extracción-estructurada-con-schema) (el esquema y las etiquetas de la parte con modelo) y el [08](#08--validación-y-reintento-con-error-concreto) (de ahí viene `conflict_detected`).
+>
+> **Modo:** Ejecución ligera (la parte `poblacion` no usa modelo y sale igual cada vez; la parte con modelo cuesta unos 0,01–0,13 $ y es opcional).
+
+### Antes de empezar
+
+Los términos comunes están en el [glosario](../docs/glosario.md). La parte `poblacion` trabaja con datos sintéticos que genera `datos/generar_sinteticos.py` (`poblacion_extracciones.json` y sus etiquetas, que el módulo solo usa para puntuar): 292 documentos de compra, 6 campos cada uno, la mitad de cada tipo como conjunto de calibración y la otra mitad como producción. La parte `confianza_modelo` usa los 12 documentos del módulo 07 con la Messages API (necesita una API key).
+
+- **Términos propios:**
+  - **Confianza por campo:** el número de 0 a 1 que el modelo declara para cada valor extraído. Aquí es un campo más del esquema de la tool (`field_confidence`).
+  - **Calibración:** si la confianza que declara el modelo se parece al acierto real. Se mide por bandas de confianza: en las extracciones que dicen «0,97–1,00», ¿cuántas son correctas?
+  - **Segmento:** un tipo de documento, un campo o la combinación de ambos. La exactitud se calcula por segmento, no solo en conjunto.
+  - **Umbral de revisión:** la confianza por encima de la cual una extracción se acepta sin revisión. Se fija con el conjunto de calibración, por segmento, y es `None` (todo a revisión) si no hay evidencia suficiente.
+  - **Muestra estratificada:** una muestra aleatoria con un mínimo de elementos por estrato (aquí, tipo de documento y campo), frente a una muestra aleatoria simple de toda la población.
+  - **Cupo de revisión:** cuántos documentos puede mirar el equipo en el periodo. La cola ordena los documentos para que lo que se mire sea lo que más importa.
+
+### El ejercicio
+
+La parte `poblacion` calcula, con reglas de código y sin modelo: la exactitud global y por segmento, las bandas de calibración, el estado de cada segmento (`ready`, `below_target` o `insufficient_data` con un objetivo del 98 % y al menos 20 ejemplos), el enrutado de producción, un experimento de muestreo (500 repeticiones de una muestra de 60) y tres órdenes de la cola de revisión. Los documentos con `conflict_detected` o ambiguos van a revisión aunque su confianza sea alta.
+
+- **Correcta:** un umbral por tipo y campo, calibrado en el conjunto de calibración.
+- **`--anti precision_agregada`:** un único umbral para todos los segmentos, el que cumple el objetivo mirando solo la exactitud global. Todo lo demás es igual.
+- **`--anti confianza_global`:** se decide con una sola confianza por documento (la media de las de sus campos), con un único umbral. Todo lo demás es igual.
+
+La parte `confianza_modelo` pide a un modelo que extraiga los 12 documentos con la confianza de cada campo, y compara lo que dice con lo que acierta. `--sin-reglas-de-formato` quita de las descripciones del esquema las reglas de formato (como en el módulo 08) para que un modelo capaz cometa errores que calibrar.
+
+### Predice antes de ejecutar
+
+Con tus palabras; no hay un número que acertar:
+
+1. Una extracción acierta el 97 % de los valores. ¿Qué tendría que pasar con los demás segmentos para que un tipo de documento rinda mucho peor sin que el titular lo muestre?
+2. De las extracciones de confianza alta, ¿qué muestra esperas que vea mejor los errores de un tipo de documento raro: una aleatoria simple o una estratificada, y por qué? ¿Qué cambiaría si el tipo raro pesara aún menos?
+3. Si el modelo declara 0,99 en un campo, ¿qué más necesitas saber para decidir si basta para no revisarlo?
+4. Un documento tiene una confianza media alta, pero uno de sus campos es dudoso. ¿Qué decide una sola confianza por documento y qué decidiría una por campo?
+5. Con poca capacidad de revisión, ¿pesan igual un documento con conflicto y uno con un campo de baja confianza? ¿Qué errores ve cada orden de la cola?
+
+### Ejecutar
+
+```bash
+uv run python app3_sistema_multiagente/10_confianza_y_revision.py                                  # población, correcta (sin modelo)
+uv run python app3_sistema_multiagente/10_confianza_y_revision.py --anti precision_agregada        # un umbral para todos
+uv run python app3_sistema_multiagente/10_confianza_y_revision.py --anti confianza_global          # una confianza por documento
+uv run python app3_sistema_multiagente/10_confianza_y_revision.py --parte confianza_modelo --repeat 3
+uv run python app3_sistema_multiagente/10_confianza_y_revision.py --parte confianza_modelo --rol-modelo enforcement --sin-reglas-de-formato --repeat 3
+```
+
+**Si ejecutas:** `poblacion` es gratis y sale igual cada vez. La parte con modelo gasta ~0,014 $ con Haiku 5.5 y ~0,13 $ con Haiku 4.5 (3 repeticiones; el tope es `--budget`).
+
+### Qué observar
+
+En `poblacion`: la exactitud global frente a la del peor tipo de documento y del peor formato y campo; las bandas de calibración; qué segmentos no se automatizan y por qué; los errores que quedan entre lo automatizado según la variante; la muestra simple frente a la estratificada; y los errores de extracción y los documentos con conflicto que ve cada orden de la cola. En `confianza_modelo`: la confianza media cuando acierta y cuando falla, los errores con confianza alta y las bandas.
+
+<details>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+**Parte `poblacion`** (sin modelo; mismos números en cada ejecución):
+
+| Variante | Señal observada | Qué dice |
+| :--- | :--- | :--- |
+| correcta | global 97,7 % de 1752 valores; `other`: 62,5 % (72 valores, 27 errores) frente a 99,0 % de las facturas; facturas en prosa, `issue_date`: 86,0 %. Se automatizan 765 valores con **6 errores (0,8 %)** y **0 del tipo raro**: sus 6 campos son `insufficient_data` | el titular esconde el tipo raro; con 6 documentos por conjunto no hay evidencia para automatizarlo |
+| `precision_agregada` | automático 805 valores con **17 errores (2,1 %)**; **34 valores del tipo raro aceptados, 11 con error** | un umbral para todos hereda la confianza de los segmentos grandes |
+| `confianza_global` | umbral 0,92; automático 780 valores con **14 errores (1,8 %)**; 24 del tipo raro aceptados, 8 con error | la media del documento esconde el campo dudoso |
+
+Calibración (conjunto de calibración): la banda 0,95–1,00 acierta el 98,7 % (declara 96,9 %) y la 0,85–0,95, el 97,2 % (declara 92,2 %); hueco ponderado 0,034. **Aun así hay 34 errores con confianza ≥ 0,85 de 41**, la mayoría en el tipo raro: que el hueco sea pequeño en conjunto no quiere decir que la confianza sirva sola.
+
+Muestra de 60 de las 871 extracciones de confianza alta de producción, 500 repeticiones:
+
+| Muestreo | Ve algún error del tipo raro | Patrones de error por muestra (de 8) |
+| :--- | :--- | :--- |
+| aleatorio simple | 53,4 % de las muestras | 1,0 |
+| estratificado (tipo y campo, mínimo 3) | 100 % de las muestras | 3,7 |
+
+Cola de revisión (25 documentos con algo que revisar, capacidad 6, variante correcta):
+
+| Orden | Errores de extracción vistos (de 16) | Documentos con conflicto o ambiguos vistos (de 11) |
+| :--- | :--- | :--- |
+| llegada | 4 | 4 |
+| confianza (la más baja primero) | 8 | 1 |
+| prioridad (conflictos primero) | 0 | 6 |
+
+Los conflictos y los errores de extracción son cosas distintas: con poca capacidad, un orden ve unos y deja los otros. Ninguno gana en todo.
+
+**Parte `confianza_modelo`** (Messages API, 12 documentos × 3 repeticiones):
+
+| Modelo de la medida | Descripciones | Señal observada |
+| :--- | :--- | :--- |
+| Haiku 5.5 (rol `agent`, ~0,014 $) | con reglas de formato | **0 errores en 153 valores extraídos**: no hay nada que calibrar. Confianza media 0,95 cuando acierta; el hueco de calibración es 0,046 por declarar menos de lo que acierta. En los campos que deja en `null` la confianza media es 0,64–0,65 |
+| Haiku 4.5 (rol `enforcement`, ~0,13 $) | sin reglas de formato | **6, 7 y 8 errores por repetición, casi todos de formato de fecha, con confianza ≥ 0,85 en 5, 7 y 7**; banda 0,97–1,00: **acierta el 85,5 %** y declara 99,5 %; banda 0,90–0,97: 90,8 % frente a 95,0 %. En los `null`, confianza media 0,32 y 0 campos que debían tener valor |
+
+Notas:
+
+- **El modelo está más seguro donde falla:** los errores de fecha de Haiku 4.5 llegan con 0,95–1,0, porque el modelo lee bien la fecha y se equivoca en la forma. La confianza declarada no los distingue de los aciertos. Una medida que dé cero no demuestra que detecte el fallo, por eso `tests/test_app3_10_confianza_y_revision.py` incluye un control positivo sintético (un conjunto mal calibrado da un hueco de ~0,45 y uno calibrado, ~0).
+- **La confianza de un campo en `null` habla de la ausencia:** con Haiku 4.5 ronda 0,32 aunque el `null` sea correcto, y mezclarla con los valores extraídos daba un hueco de calibración de 0,137 con Haiku 5.5 que era un artefacto. El módulo la mide aparte.
+- **Segmentos pequeños:** con 6 documentos por conjunto, el tipo raro no llega a los 20 ejemplos de confianza alta que se piden. No se puede validar, así que no se automatiza (`insufficient_data` no es lo mismo que `below_target`).
+- La población es simulada (la genera `datos/generar_sinteticos.py`): la confianza de sus valores no es la de un modelo real. La parte con modelo es la única que mide una confianza declarada de verdad.
+- Lo que no depende del modelo se prueba en `tests/test_app3_10_confianza_y_revision.py` y `tests/test_datos_entrega3c.py`.
+</details>
+
+### Pregunta tipo examen
+
+Un sistema extrae campos de facturas, albaranes y otros documentos de compra. Su exactitud global medida es del 97 %, y el equipo propone aceptar sin revisión todo lo que el modelo marque con confianza alta. ¿Qué debe hacerse antes de reducir la revisión humana?
+
+- A. Fijar el umbral en el valor de confianza más alto que declare el modelo y aceptar sin revisión todo lo que lo supere.
+- B. Medir la exactitud por tipo de documento y por campo con un conjunto etiquetado, automatizar solo los segmentos que alcancen el objetivo con ejemplos suficientes y muestrear de forma estratificada lo automatizado.
+- C. Mantener el 97 % como criterio y revisar cada mes una muestra aleatoria simple de lo que se acepta sin revisión.
+- D. Pedir al modelo una sola confianza por documento y automatizar los documentos cuya confianza supere la media de todos.
+
+<details>
+<summary>Paso 4 · Respuesta</summary>
+
+**B.** La exactitud agregada puede esconder un tipo de documento o un campo que rinde mal (TS 5.5-K1), así que antes de automatizar se valida por tipo de documento y por campo (TS 5.5-K4, S2), con umbrales calibrados contra un conjunto etiquetado (K3, S3) y una muestra estratificada de lo que se acepta sin revisión, para medir su tasa de error y detectar patrones nuevos (K2, S1).
+
+- **A** confía en que la confianza del modelo esté calibrada sin medirlo, y un umbral global no distingue segmentos.
+- **C** decide por el titular y mira con una muestra simple que apenas toca los tipos raros.
+- **D** usa una sola confianza por documento, que esconde el campo dudoso.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).

@@ -953,6 +953,65 @@ def build_purchase_docs() -> tuple[list[dict], dict]:
     return documents, labels
 
 
+# Población de extracciones con confianza por campo para app3/10 (TS 5.5). Simula lo que
+# devolvería un modelo que declara su confianza en cada campo: 292 documentos de compra
+# (facturas, albaranes y un tipo raro, «other») y 6 campos cada uno. La exactitud agregada ronda
+# el 97 %, pero el tipo raro acierta alrededor de la mitad y las facturas en prosa fallan en la
+# fecha (TS 5.5-K1). La confianza simulada es optimista donde se equivoca: la mayoría de los
+# errores del tipo raro llega con confianza alta. Hay documentos con conflicto (`conflict_detected`
+# de app3/08) y ambiguos, con confianza alta. Las etiquetas (qué campo es correcto) van aparte;
+# la mitad de cada tipo es el conjunto de calibración y la otra mitad, producción.
+CONFIDENCE_FIELDS = ["vendor", "document_number", "issue_date", "po_number", "currency", "stated_total"]
+CONFIDENCE_BASE_ERROR = 0.004
+CONFIDENCE_SEGMENTS = [
+    # (tipo, formato, documentos, probabilidad de error por campo; el resto usa la base)
+    ("invoice", "tabla", 90, {}),
+    ("invoice", "prosa", 50, {"issue_date": 0.18}),
+    ("invoice", "lineas", 60, {}),
+    ("delivery_note", "tabla", 30, {}),
+    ("delivery_note", "lineas", 50, {}),
+    ("other", "prosa", 12, {"vendor": 0.10, "document_number": 0.40, "issue_date": 0.60, "po_number": 0.70, "currency": 0.20, "stated_total": 0.60}),
+]
+
+
+def build_confidence_population(rng: random.Random) -> tuple[list[dict], dict]:
+    """Registros (lo que ve el módulo) y etiquetas (solo para puntuar), con la mitad en cada conjunto."""
+    shells = [(kind, form, errors) for kind, form, count, errors in CONFIDENCE_SEGMENTS for _ in range(count)]
+    rng.shuffle(shells)
+    records, labels = [], {}
+    seen_by_type: dict[str, int] = {}
+    for index, (kind, form, errors) in enumerate(shells, start=1):
+        record_id = f"X-{index:03d}"
+        confidences, correct = {}, {}
+        for name in CONFIDENCE_FIELDS:
+            ok = rng.random() >= errors.get(name, CONFIDENCE_BASE_ERROR)
+            if ok:
+                value = min(max(rng.gauss(0.95, 0.03), 0.6), 0.995)
+            elif rng.random() < 0.3:
+                value = rng.uniform(0.35, 0.70)  # el modelo duda y acierta a dudar
+            else:
+                value = rng.uniform(0.86, 0.98)  # se equivoca con seguridad
+            confidences[name] = round(value, 2)
+            correct[name] = ok
+        # El reparto alterna dentro de cada tipo: los dos conjuntos tienen documentos de cada uno.
+        turn = seen_by_type.get(kind, 0)
+        seen_by_type[kind] = turn + 1
+        records.append(
+            {
+                "record_id": record_id,
+                "split": "calibracion" if turn % 2 == 0 else "produccion",
+                "doc_type": kind,
+                "doc_format": form,
+                "conflict_detected": kind == "invoice" and rng.random() < 0.06,
+                "ambiguous": rng.random() < 0.04,
+                "doc_confidence": round(sum(confidences.values()) / len(confidences), 2),
+                "confidences": confidences,
+            }
+        )
+        labels[record_id] = {"correct": correct}
+    return records, labels
+
+
 def build_all() -> dict[str, str]:
     """Genera todos los archivos en memoria: nombre → contenido serializado."""
     # Un generador por conjunto: añadir un conjunto nuevo no altera los existentes.
@@ -961,6 +1020,7 @@ def build_all() -> dict[str, str]:
     articles = build_kb_articles(random.Random(f"{SEED}-kb"))
     purchase_documents, purchase_labels = build_purchase_docs()
     research_sources, research_labels = build_research_sources()
+    population, population_labels = build_confidence_population(random.Random(f"{SEED}-confianza"))
     datasets = {
         "usuarios.json": users,
         "tickets.json": tickets,
@@ -972,6 +1032,8 @@ def build_all() -> dict[str, str]:
         "pedidos_compra.json": PURCHASE_ORDERS,
         "fuentes_investigacion.json": research_sources,
         "fuentes_investigacion_etiquetas.json": research_labels,
+        "poblacion_extracciones.json": population,
+        "poblacion_extracciones_etiquetas.json": population_labels,
     }
     files = {name: json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True) + "\n" for name, data in datasets.items()}
     # Las rutas con subcarpeta usan «/»: mismo nombre en Windows y en Linux.

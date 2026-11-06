@@ -8,9 +8,9 @@ Lo comprueba `tests/test_credenciales_y_modos.py`: clasifica cada módulo leyend
 
 | Qué tienes | Qué puedes hacer |
 | :--- | :--- |
-| **Nada** (sin credencial) | Los módulos de modo **ligera** leyendo, con el resultado de referencia del Paso 3. Además `app2/07` se ejecuta tal cual (no usa modelo) y `app3/09` con `--ventanas`. **No** puedes completar los cuatro de modo obligatoria. |
+| **Nada** (sin credencial) | Los módulos de modo **ligera** leyendo, con el resultado de referencia del Paso 3. Además `app2/07` se ejecuta tal cual (no usa modelo) `app3/09` con `--ventanas` y `app3/10` con `--parte poblacion`. **No** puedes completar los cuatro de modo obligatoria. |
 | **Suscripción** (login de Claude Code) | Lo anterior y los 15 módulos del **Agent SDK**, incluidos tres de los cuatro obligatorios (`app2/01`, `app3/02`, `app3/04`). Según `harness/credentials.py`; no está verificado módulo a módulo. No sirve para la Messages API ni para Batches. |
-| **API key** (`ANTHROPIC_API_KEY`) | Todo, incluidos los cinco módulos de la **Messages API o Batches** (`app1/01`, `app1/05`, `app3/07`, `app3/08`, `app3/09`). `app3/08` es obligatorio y solo funciona con API key. |
+| **API key** (`ANTHROPIC_API_KEY`) | Todo, incluidos los seis módulos de la **Messages API o Batches** (`app1/01`, `app1/05`, `app3/07`, `app3/08`, `app3/09`, `app3/10`). `app3/08` es obligatorio y solo funciona con API key. |
 
 Cada ejecución imprime al empezar la credencial que usa y su tope de gasto (`[presupuesto]`, `--budget`). Los términos están en el [glosario](glosario.md).
 
@@ -53,9 +53,10 @@ Los cuatro módulos de ejecución obligatoria existen porque su lección solo se
 | app3/07 | Extracción estructurada con schema · Messages API | API key | ligera | menos de 0,05 $ por ejecución con Haiku 5.5 | Se completa leyendo (Paso 3) |
 | app3/08 | Validación y reintento · Messages API | API key | obligatoria | 0,05–0,07 $ por ejecución | Hay que ejecutarlo, y solo con API key |
 | app3/09 | Batches: lotes, ventana y fallidos · Batches (Messages API) | API key | ligera | unos céntimos; `--ventanas` no cuesta | Se completa leyendo; `--ventanas` se ejecuta sin credencial |
+| app3/10 | Confianza y revisión · Messages API (parte `confianza_modelo`) | API key | ligera | `--parte poblacion` no cuesta; con modelo, 0,014 $ (Haiku 5.5) a 0,13 $ (Haiku 4.5) | Se completa leyendo; `--parte poblacion` se ejecuta sin credencial |
 
 ## Cómo se mantiene
 
 - Un módulo nuevo necesita su fila antes de poder cerrarse: el test falla si falta.
 - La columna «Credencial mínima» sale de leer el código del módulo: `import anthropic` o `require_api_key` (Messages API o Batches) dan «API key»; las opciones del Agent SDK (`isolated_options`, `query`), «API key o suscripción»; ninguna de las dos, «Ninguna». Un módulo que use las dos cuenta como «API key».
-- Un módulo con una parte que no usa modelo (como `app3/09` con `--ventanas`) se clasifica entero y la parte se anota en «Sin credencial».
+- Un módulo con una parte que no usa modelo (como `app3/09` con `--ventanas` o `app3/10` con `--parte poblacion`) se clasifica entero y la parte se anota en «Sin credencial».

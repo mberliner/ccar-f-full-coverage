@@ -99,6 +99,8 @@ Una fila por parte o variante que el módulo ejecuta. La columna de evidencia re
 | app3/09 | `--batch-id` | Probabilística con control positivo | Los resultados llegan en otro orden; 11 ok y 1 truncado |
 | app3/09 | `--batch-id --anti por_orden` | Probabilística con control positivo | 11 de 11 documentos reciben los datos de otro; por `custom_id`, ninguno |
 | app3/09 | `--batch-id --reenviar` | Probabilística con control positivo | 4 trozos y 4 de 4 correctos; el re-troceo en cadena no se vio en vivo |
+| app3/10 | `--parte poblacion` (correcta, `--anti precision_agregada`, `--anti confianza_global`) | Determinista | Sin modelo y con los mismos números en cada ejecución: global 97,7 % frente a 62,5 % del tipo raro; 6, 17 y 14 errores entre lo automatizado |
+| app3/10 | `--parte confianza_modelo` | Probabilística con control positivo | Se ve con Haiku 4.5 sin reglas de formato (modelo de la medida): los errores llegan con confianza alta (banda 0,97–1,00: 85,5 % de acierto); con Haiku 5.5 no hay errores que calibrar |
 
 ## Cómo se mantiene
 
