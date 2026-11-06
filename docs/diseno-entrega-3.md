@@ -138,6 +138,8 @@ Patrón de `app3/01`–`03`: coordinador Sonnet con `tools=["Agent"]` y `coordin
 - `--anti confianza_global`: una sola confianza por documento esconde el campo malo.
 - Tests: calibración, muestreo estratificado y precisión por tipo y campo.
 
+**Construido así (tanda C):** dos partes. `--parte poblacion` trabaja sin modelo con `poblacion_extracciones*.json` (292 documentos con confianza simulada, donde el tipo raro acierta el 62,5 % detrás de una exactitud global del 97,7 %, con conjuntos de calibración y de producción) y cubre el segmento malo (K1), las bandas de calibración, los umbrales por tipo y campo, el muestreo estratificado frente al simple, y una cola con capacidad limitada que manda a revisión los documentos con `conflict_detected` o ambiguos. `--parte confianza_modelo` extrae los 12 documentos de `07` con confianza por campo y mide si está calibrada (Haiku 5.5 no se equivoca; Haiku 4.5 sin reglas de formato sí). Variantes: `--anti confianza_global` y `--anti precision_agregada`, cada una cambia solo una cosa del enrutado.
+
 #### `app3_sistema_multiagente/11_criterios_y_ci.py` · 3.6 K1–3, S1–5 · 4.1 K1–3, S1–3 · 4.2 S2–3 · 4.4 K3, S3
 
 - `claude -p --output-format json --json-schema` sobre un `git diff` de una copia temporal de `repo_mesa`, en una instancia distinta de la que generó el código.
@@ -147,12 +149,16 @@ Patrón de `app3/01`–`03`: coordinador Sonnet con `tools=["Agent"]` y `coordin
 - Señal: JSON válido contra el schema, fallos sembrados encontrados y el cambio correcto no marcado.
 - Tests: schema, generación del diff, puntuación de hallazgos contra lo sembrado, orden de `claude -p` construida.
 
+**Construido así (tanda C):** el cambio de prueba son dos commits sobre una copia temporal de `repo_mesa`, con cinco fallos sembrados (`bug`, `security`, `comment` y dos entre archivos), un cambio correcto y un patrón aceptable, todo en `datos/generar_sinteticos.py` (`cambio_revision*.json`; el diff se genera en la copia, con `git`). Partes: `orden` (sin modelo), `revision`, `rerevision` (3.6-S3, con una lista de hallazgos previos fija) y `tests` (3.6-S4 y S5, sin tools). Variantes: `--anti conservador`, `--anti sin_ejemplos`, `--anti sin_previos`, `--anti sin_tests_existentes`, `--anti sin_estandares` y `--sin-categoria comment` (4.1-S2). La orden la construye `harness/headless.py` (sonda C1) y antepone una línea `[contexto]`. La puntuación reconoce un fallo por archivo y línea (±2) o por su símbolo.
+
 #### `app3_sistema_multiagente/12_revision_independiente.py` · 4.6 K1–3, S1–3 · 1.6 K2, S2 · 3.6-K4
 
 - Sobre el mismo diff. Correcta: una segunda instancia sin contexto del generador, con pasada por archivo y pasada de integración, y confianza por hallazgo.
 - `--anti autorrevision`: la sesión que generó se revisa a sí misma con `resume`.
 - Señal: hallazgos de la autorrevisión frente a los de la instancia nueva, y los que solo aparecen en la pasada de integración.
 - Tests: reparto de pasadas, fusión de hallazgos y confianza.
+
+**Construido así (tanda C):** la autorrevisión necesita una sesión que haya generado el código: una sesión generadora (con `Write`) recibe el mensaje y el contenido exacto de cada archivo del primer commit de `11` y explica por qué tomó cada decisión; el diff que deja es lo que se revisa. Tres ramas con los mismos prompts y una diferencia cada una: instancia nueva, `--resume --fork-session` de la generadora (`--anti autorrevision`) y la misma con una frase de autorrevisión explícita (`--anti autorrevision_explicita`). Pasada por archivo (sin tools), de integración (con lectura y los hallazgos locales) y de verificación (confianza por hallazgo, calibrada con `app3/10`). El tope de la rama lo lleva `headless.Ledger`, porque `--max-budget-usd` no cuenta el histórico de la sesión y `total_cost_usd` sí es acumulado. Un segundo fallo entre archivos (`F`, una fracción que otro archivo imprime como porcentaje) sustituyó la expectativa de que uno solo bastara: el primero (`D`) lo veía ya la pasada local.
 
 ### Tanda D
 
