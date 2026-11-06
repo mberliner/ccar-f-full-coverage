@@ -214,7 +214,11 @@ Sonnet 5.5 (rol `reviewer`), `claude -p` aislado con `harness/headless.py`; ~0,0
 - **El modelo cita las líneas de forma aproximada (3–5 de más):** con una ventana de ±2 líneas, un acierto con la línea desplazada contaba como falso positivo (se vio con `sin_ejemplos`, donde el «falso positivo» era F). La puntuación reconoce ahora también el símbolo, con un test de cada caso. Las cifras «antes» no se recalcularon. → roadmap §4.3
 - Medida por caso y no por texto: cada hallazgo se puntúa contra un fallo etiquetado; una marca del cambio correcto no se cuenta como falso positivo, sino aparte.
 
-### `app3/12`, revisión independiente (tanda C, 2026-11-06)
+### `app3/12`, revisión independiente: batería de la autorrevisión (tanda C, 2026-11-06)
+
+Dos mediciones del mismo módulo. **Antes:** la de la tanda C, con 3 ejecuciones de instancia nueva y 2 de autorrevisión, y `autorrevision_explicita` sin medir. **Después:** la batería de esta tarea, 5 + 5 + 5, con la misma versión del código y de la puntuación en las tres ramas. Son cifras de producto observado (no evaluable); la respuesta de examen es la de la guía.
+
+#### Antes (tanda C: 3 + 2 ejecuciones)
 
 Sonnet 5.5 (rol `reviewer`); ~1,3 $ en total, con las ejecuciones de prueba y una tanda abortada por un cambio de la puntuación a mitad.
 
@@ -224,3 +228,34 @@ Sonnet 5.5 (rol `reviewer`); ~1,3 $ en total, con las ejecuciones de prueba y un
 - **La verificación (instancia nueva, 17 hallazgos):** todos coinciden con un fallo sembrado y la verificación les da 0,61, 0,89 y 0,95 de media por banda; hueco de calibración 0,20 por quedarse corta. Sin falsos positivos, la confianza no tiene qué separar. En la segunda autorrevisión, una pasada se quedó sin presupuesto (el tope de 0,40 $ no alcanzaba para una sesión generadora más seis pasadas con contexto acumulado) y sus hallazgos quedaron sin confianza.
 - **`--max-budget-usd` y las sesiones bifurcadas:** el flag cuenta lo gastado en esa invocación, no el histórico de la sesión (sonda C1). El módulo le pasa a cada pasada lo que queda del tope de la rama (`headless.Ledger`); una pasada con muy poco margen puede cortar con `budget_exhausted` y sin resultado.
 - **Una tanda de ejecuciones con un cambio de código a mitad no es comparable:** al ajustar la puntuación con una batería en marcha, las ramas habrían quedado puntuadas con reglas distintas. Se paró y se repitió entera. Dato de método, local de esta implementación.
+
+#### Después (batería de 5 + 5 + 5, 2026-11-06)
+
+Sonnet 5.5 (rol `reviewer`), CLI 2.1.309 del SDK, mismo commit y misma puntuación en las tres ramas (sin cambios de código a mitad). Cada rama es **una invocación** con su sesión generadora (que cuenta una vez) y 5 revisiones de 4 o 5 pasadas por archivo, una de integración y una de verificación. Fallos sembrados del primer commit: A, B, C, D y F (E es del segundo commit y no entra aquí).
+
+**Tope por invocación.** Con las cifras de «antes» (instancia nueva ~0,10 $ por revisión, autorrevisión ~0,19 $, generador ~0,05 $) se esperaban ~0,55 $ y ~1,0 $. Topes: 0,90 $ para la instancia nueva y 1,50 $ para cada autorrevisión, con suma 3,9 $ (< 4 $). **Error de ejecución:** `--budget 1.5` no sube el tope por encima del de `.env` (aviso del arnés: «no sube el tope: se usa 1.0»), así que las dos autorrevisiones corrieron con **1,0 $** y no con 1,5 $. Gastaron 0,70 $ y 0,68 $ (margen 1,4×): ninguna pasada se quedó sin presupuesto y no hay hallazgos sin confianza. Los topes por invocación no cambian lo medido, y cada `[fin]` quedó dentro de su tope.
+
+| Rama | Ejecuciones | A, B, C, D y F encontrados | Por pasada de archivo | Por pasada de integración | Falsos positivos | Sin confianza | Coste |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Instancia nueva | 5/5 | las 5 en **5/5** | A, B, C 5/5; D 1/5; F 0/5 | D 4/5; F 5/5 | 0 de 36 hallazgos | 0 | **0,527 $** (generador 0,071 $ + ~0,091 $ por revisión), tope 0,90 $ |
+| `autorrevision` | 5/5 | las 5 en **5/5** | A, B, C, D y F 5/5 | 0/5 en todos | 0 de 41 | 0 | **0,696 $** (generador 0,062 $ + ~0,127 $ por revisión), tope 1,0 $ |
+| `autorrevision_explicita` | 5/5 | las 5 en **5/5** | A, B, C, D y F 5/5 | 0/5 en todos | 0 de 38; 1 marca del cambio correcto en 1/5 ejecuciones | 0 | **0,676 $** (generador 0,063 $ + ~0,123 $ por revisión), tope 1,0 $ |
+
+Total de la batería: **1,90 $**. Una pasada cuenta para «archivo» si salió en ella (aunque saliera también en la de integración); «integración» es lo que solo salió ahí.
+
+- **Control positivo:** la medida detecta los cinco fallos en la rama de la instancia nueva (cero ausentes en 5 de 5 ejecuciones). Pasa, pero no sirve para discriminar: las tres ramas encuentran todo en todas las ejecuciones (0 ausentes en 25 oportunidades por rama; por la regla de tres, un fallo perdido con frecuencia mayor de ~12 % por oportunidad no habría pasado inadvertido). **La autorrevisión no encuentra menos, ni con ni sin la instrucción explícita.** No se fuerza ninguna diferencia.
+- **Falta señal, no falta muestra:** con el techo al 100 % en la instancia nueva, más ejecuciones no mostrarían nada. Para ver un efecto haría falta un fallo más sutil que los sembrados (cambio de datos y puntuación, fuera del alcance de esta tarea, que no cambia nada).
+- **Dónde sale cada fallo sí difiere, pero no es la diferencia que dice la guía:** la instancia nueva (solo con el trozo de diff, sin tools en la pasada de archivo) ve D y F sobre todo en la pasada de integración (D 4/5, F 5/5; por archivo, 1/5 y 0/5), como en «antes» (2/3 y 1/3). La sesión bifurcada los ve todos en la pasada de archivo (10/10 en ambas ramas), porque recuerda los demás archivos: sus pasadas locales no son locales. Esto sí respalda 4.6-K3/S2 (los fallos entre archivos necesitan la pasada de integración con una instancia que solo ve un archivo), no 4.6-K1/K2.
+- **Confusión de la rama de instancia nueva:** su sesión generadora no copió el cambio exacto y añadió `tests/test_sla.py` (diff de 125 líneas y 5 archivos, 5 pasadas por archivo), mientras que en las dos autorrevisiones el diff fue el dado (93 líneas, 4 archivos). Cada rama puntúa el diff que escribió su generador, así que no revisaron exactamente lo mismo. La pauta D/F por integración es consistente con «antes», pero queda sin una rama de instancia nueva sobre el diff exacto. No se repitió la rama.
+- **Calibración de la verificación (hallazgos de las 5 ejecuciones juntos):** instancia nueva, 36 hallazgos, todos coinciden con un fallo sembrado, hueco 0,219 (por quedarse corta: 0,37 de media en la banda más baja); `autorrevision`, 41 y todos coinciden, hueco 0,138; `autorrevision_explicita`, 38 y 37 coinciden, hueco 0,104 (el que no coincide, con confianza 0,40, es la marca del cambio correcto, que no es un falso positivo). Sin falsos positivos, la confianza casi no tiene qué separar.
+- **Coste:** la autorrevisión costó ~0,127 $ por revisión frente a ~0,091 $ de la instancia nueva (1,4×), no el doble de «antes» (~0,19 $ frente a ~0,10 $). La causa de la diferencia con «antes» no se comprobó.
+
+**Propuesta para `docs/tipos-de-senal.md` (sin aplicar; la aplica Opus en el pase de correcciones):**
+
+| Parte | Tipo propuesto | Por qué |
+| :--- | :--- | :--- |
+| `--parte revision` (instancia nueva) | `Probabilística con control positivo`, **con la señal redactada de otro modo** | Responde a la pregunta del pase de textos. El contraste con la autorrevisión no da señal, así que la fila ya no puede apoyarse en él. Sí hay una señal medida con control positivo: la instancia nueva encuentra los 5 fallos en 5/5 y los dos entre archivos salen por la pasada de integración (D 4/5, F 5/5) y casi nunca por la de archivo (1/5 y 0/5). Es 4.6-K3/S2. Si en cambio la fila debe cubrir 4.6-K1/K2 (instancia nueva frente a quien generó), la clasificación honesta es `Sin señal estable`. |
+| `--anti autorrevision` | `Sin señal estable` | 5/5 ejecuciones: A, B, C, D y F en 5/5, sin falsos positivos, sin diferencia con la instancia nueva. El efecto que predice la guía no apareció. |
+| `--anti autorrevision_explicita` | `Sin señal estable` (hoy `Sin medir`) | Se midió: 5/5 ejecuciones, las mismas cifras. La frase añadida no cambió lo encontrado. Ya no es `Sin medir`. |
+
+Lo que queda sin señal: la tesis central de la viñeta (4.6-K1/K2, 3.6-K4): que quien generó el código lo revise peor. Con estos fallos y este montaje no se ve, y la respuesta de examen sigue siendo la de la guía.
