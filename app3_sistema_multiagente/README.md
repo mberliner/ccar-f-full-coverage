@@ -1184,24 +1184,22 @@ Un sistema extrae campos de facturas, albaranes y un tipo de documento de compra
 
 ## 11 · Criterios y revisión en CI
 
-<!-- BORRADOR (Sonnet 5.5): pendiente del pase de textos de Opus 5.5. -->
-
 > **Qué vas a hacer:** Revisar con `claude -p` un cambio de dos commits sobre una copia temporal de `repo_mesa` que lleva fallos sembrados, un cambio correcto y un patrón aceptable: con criterios categóricos o con «sé conservador», con y sin ejemplos, con y sin los hallazgos de la revisión anterior, y pedir también los tests que faltan.
 >
-> **Necesitas antes:** El [módulo 08](#08--validación-y-reintento-con-error-concreto), de donde viene `conflict_detected` y el patrón de fallo que aquí pasa a llamarse `detected_pattern`.
+> **Necesitas antes:** Nada. Si vienes del [módulo 08](#08--validación-y-reintento-con-error-concreto), su patrón de fallo agrupa las causas de una extracción que falla; el `detected_pattern` de aquí es otra cosa: agrupa los hallazgos de revisión que se descartan.
 >
 > **Modo:** Ejecución ligera (`--parte orden` no usa modelo y enseña la orden entera; cada ejecución con modelo cuesta unos 0,02 $).
 
 ### Antes de empezar
 
-Los términos comunes están en el [glosario](../docs/glosario.md). Este módulo no usa la Messages API ni el Agent SDK: lanza la CLI `claude -p` con la orden que construye [`harness/headless.py`](../harness/headless.py) y que imprime entera antes de ejecutarla. Hereda la credencial del entorno (se probó con una API key). El cambio y sus etiquetas (que el revisor nunca ve) los genera `datos/generar_sinteticos.py` (`cambio_revision.json` y `cambio_revision_etiquetas.json`) y se aplica sobre una copia temporal de `repo_mesa` con `git`, así que `datos/sinteticos/` no se toca.
+Los términos comunes (`detected_pattern`, *few-shot*, sesión, JSON Schema) están en el [glosario](../docs/glosario.md). Este módulo no usa la Messages API ni el Agent SDK: lanza la CLI `claude -p` con la orden que construye [`harness/headless.py`](../harness/headless.py) y que imprime entera antes de ejecutarla. Hereda la credencial del entorno (se probó con una API key). El cambio y sus etiquetas (que el revisor nunca ve) los genera `datos/generar_sinteticos.py` (`cambio_revision.json` y `cambio_revision_etiquetas.json`) y se aplica sobre una copia temporal de `repo_mesa` con `git`, así que `datos/sinteticos/` no se toca.
 
 - **El sistema:** una copia temporal de `repo_mesa` con su propio `CLAUDE.md` (el contexto de CI: convenciones y estándares de tests), un commit base y dos commits de cambio. El primero siembra cinco fallos de categorías distintas (`bug`, `security`, `comment` y dos entre archivos) y lleva además un cambio correcto que parece un fallo y un patrón aceptable que parece un problema. El segundo arregla uno y añade otro nuevo.
 - **La orden:** `claude -p --output-format json --json-schema …`, con la configuración de usuario y los servidores MCP fuera, solo el `CLAUDE.md` del directorio de trabajo, solo las tools `Read`, `Grep` y `Glob`, un tope de coste y el prompt por la entrada estándar. La sonda C1 (`docs/hallazgos.md`) explica cada flag.
 - **Términos propios:**
   - **Hallazgo:** un elemento de la salida estructurada, con archivo, línea, categoría, severidad, problema, arreglo propuesto y `detected_pattern`.
   - **Criterios categóricos:** lista de lo que se informa (`bug`, `comment`, `security`), de lo que no (estilo menor, patrones locales) y de qué es cada severidad con un ejemplo de código.
-  - **`detected_pattern`:** nombre corto, en `snake_case`, del patrón de código que provoca el hallazgo. Lo escribe el propio modelo; sirve para agrupar los hallazgos que se descartan.
+  - **`detected_pattern` aquí:** un nombre corto en `snake_case` que escribe el propio modelo en cada hallazgo. El registro de descartados agrupa por ese nombre tras igualar mayúsculas y separadores (`normalize_pattern`).
   - **Descartado:** un hallazgo que no coincide con ningún fallo sembrado: un falso positivo, o una marca del cambio correcto o del patrón aceptable.
   - **Segunda revisión:** la revisión del diff completo de la rama tras un commit nuevo. Con hallazgos previos, el prompt los lista y pide informar solo de lo nuevo o de lo no resuelto.
   - **Coincide con un fallo sembrado:** el hallazgo cae en su archivo, a dos líneas o menos, o nombra su función o símbolo; un fallo entre archivos también se encuentra en sus llamadores si el hallazgo habla de la clave o de la unidad.
@@ -1221,11 +1219,11 @@ Los términos comunes están en el [glosario](../docs/glosario.md). Este módulo
 
 Con tus palabras; no hay un número que acertar:
 
-1. Cambias el prompt de «aplica estos criterios» a «sé conservador». ¿Qué dos efectos esperas en lo que el revisor encuentra y en lo que marca de más? ¿Cómo lo comprobarías con varias ejecuciones y no con una?
-2. Una categoría genera varios falsos positivos y la desactivas del prompt y del schema. ¿Qué esperas que pase con el hallazgo que antes era de esa categoría?
+1. Dos variantes tocan el prompt de la revisión: una sustituye los criterios por «sé conservador» y otra quita los ejemplos. ¿Dónde podría notarse cada cambio, en lo que el revisor encuentra o en lo que marca de más? ¿Cuántas ejecuciones necesitarías para distinguir un efecto de la variación de una ejecución a otra?
+2. Una categoría genera falsos positivos y la quitas del prompt y del schema. ¿Qué puede pasar con el hallazgo que antes caía en esa categoría? ¿Qué te diría cada posibilidad sobre el criterio?
 3. Revisas una segunda vez, tras un commit nuevo, el diff completo de la rama. ¿Qué repetirá un revisor que no sabe lo que ya se publicó, y qué cambia si le das la lista?
-4. Le pides los tests que faltan con y sin los tests existentes en el contexto. ¿Qué esperas que cambie en los escenarios repetidos y en los que tocan lo que cambió?
-5. Un hallazgo tiene `detected_pattern` vacío o escrito distinto cada vez («Nombre corto», «nombre_corto»). ¿Qué se pierde al agrupar los descartados?
+4. Pides los tests que faltan con y sin los tests existentes en el contexto, y con y sin los estándares de tests en el `CLAUDE.md`. ¿Qué podría cambiar en los escenarios que repiten lo ya cubierto? ¿Qué harías si el resultado no fuera el que esperas?
+5. El modelo escribe el `detected_pattern` del mismo falso positivo de varias formas. ¿Qué se pierde al agrupar los descartados, y qué parte de eso arregla el código y qué parte no?
 
 ### Ejecutar
 
@@ -1255,60 +1253,73 @@ Sonnet 5.5 (rol `reviewer`), `claude -p` aislado. Hubo **dos cambios de lo medid
 | :--- | :--- | :--- |
 | correcta, antes (8 ejecuciones) | encuentra A a D en 7 de 8 (A, los argumentos intercambiados, se pierde en 1); **marca el cambio correcto** (el comentario de `REINTENTOS`, patrón `misleading_comment`) en 3 de 8; 0 falsos positivos | el criterio de `comment` dice «contradice el código» y aun así el modelo marca un comentario que justifica un valor |
 | correcta, después (2 ejecuciones) | A a D y F en 2 de 2; marca el cambio correcto en 2 de 2 | igual que antes; F, el fallo entre archivos, también sale |
-| `conservador`, antes (8 ejecuciones) | A se pierde en 2 de 8 (en 2 de las 3 primeras y en ninguna de las 5 siguientes); B, C y D en 8 de 8; ninguna marca del cambio correcto ni falsos positivos | **sin diferencia estable** con la correcta (A se pierde en 1 de 8 con ella): con tres ejecuciones parecía que «sé conservador» perdía A, y con cinco más no |
-| `sin_ejemplos` (10 ejecuciones en tres momentos) | antes (3): A se pierde en 1 de 3 y marca el cambio correcto en 2 de 3. Después, con la puntuación por línea (5): **B (`os.system`) no sale en 3 de 5** y marca el cambio correcto en 5 de 5. Después, con la puntuación por símbolo (2): A a D y F en 2 de 2 y ninguna marca del cambio correcto | **sin señal estable**: el ejemplo que se quita (una inyección en la shell) se parece al fallo B, y la pérdida de B no se repite en las dos últimas |
-| `--sin-categoria comment`, antes (3 ejecuciones) | C (el comentario que contradice el código) se encuentra en 3 de 3, ahora como `bug`; sigue marcándose el cambio correcto en 2 de 3 | desactivar la categoría **no quitó el falso positivo**: el modelo lo reclasificó como `bug` (4.1-S2 es una medida para mientras se arregla el criterio, no un arreglo) |
+| `conservador`, antes (8 ejecuciones) | A se pierde en 2 de 8 (en 2 de las 3 primeras y en ninguna de las 5 siguientes); B, C y D en 8 de 8; ninguna marca del cambio correcto ni falsos positivos | **sin diferencia estable** con la correcta (A se pierde en 1 de 8 con ella): con tres ejecuciones parecía que «sé conservador» perdía A, y con cinco más no. La medida no separa las dos variantes |
+| `sin_ejemplos` (10 ejecuciones en tres momentos) | antes (3): A se pierde en 1 de 3 y marca el cambio correcto en 2 de 3. Después, con la puntuación por línea (5): **B (`os.system`) no sale en 3 de 5** y marca el cambio correcto en 5 de 5. Después, con la puntuación por símbolo (2): A a D y F en 2 de 2 y ninguna marca del cambio correcto | **sin señal estable**: la pérdida de B no se repite en las dos últimas. Una lectura posible, sin comprobar: el ejemplo que se quita (una inyección en la shell) se parece al fallo B |
+| `--sin-categoria comment`, antes (3 ejecuciones) | C (el comentario que contradice el código) se encuentra en 3 de 3, ahora como `bug`; sigue marcándose el cambio correcto en 2 de 3 | **sin efecto visible** sobre el falso positivo: el modelo reclasificó el hallazgo como `bug` |
 | rerevision correcta (antes, 3 ejecuciones) | hallazgos 0, 1 y 0: **0 repetidos** de la primera revisión; E, el bug nuevo, sale en 1 de 3 | con la lista y la orden, no repite lo ya publicado |
 | `rerevision --anti sin_previos` (antes, 3 ejecuciones) | hallazgos 4, 4 y 5: **repite B, C y D en 3 de 3**; E sale en 1 de 3 | sin la lista, publica otra vez lo ya publicado; encontrar lo nuevo no mejora |
 | `tests` correcta (antes y después, 3 + 3) | **1 escenario repetido por ejecución** (siempre `calcular_sla(alta, 3)`); 6–7 y 7–10 escenarios nuevos | ver la nota |
-| `tests --anti sin_tests_existentes` (antes, 3) | **0 repetidos**; 6–11 nuevos | **al revés de lo esperado**: con los tests en el contexto hay un repetido; sin ellos, ninguno |
+| `tests --anti sin_tests_existentes` (antes, 3) | **0 repetidos**; 6–11 nuevos | **al revés de lo esperado**: 1 escenario repetido por ejecución con los tests existentes en el contexto y 0 sin ellos |
 | `tests --anti sin_estandares` (antes, 3) | 1 repetido por ejecución; 7–9 nuevos | **sin diferencia** con los estándares en el `CLAUDE.md` |
 
 Notas:
 
 - **Los criterios categóricos no resuelven el comentario del cambio correcto:** el falso positivo más estable es el comentario de `REINTENTOS`. El registro de descartados lo agrupa por `detected_pattern`, pero el modelo escribe un nombre distinto casi cada vez (`misleading_comment`, `comentario_sin_respaldo_en_codigo`, `comentario_poco_relacionado`, `comentario_justificacion_dudosa`…): agrupar por ese campo sin normalizarlo lo dispersa. `normalize_pattern` solo iguala mayúsculas y separadores.
-- **Los tests existentes en contexto no redujeron los duplicados con este modelo.** Una hipótesis sin comprobar: ver los tests ancla al modelo en los escenarios que ya existen; sin verlos, propone solo lo que toca el cambio. Lo que dice la guía (3.6-S4) sigue siendo que los tests existentes van en el contexto; esto es lo observado aquí.
 - **`--parte tests` y los estándares:** el `CLAUDE.md` de CI con los estándares llega a la sesión (la sonda C1 lo comprueba), pero no cambió nada de lo medido.
-- **El modelo cita las líneas de forma aproximada**, hasta 3–5 líneas de más, y por eso la puntuación reconoce también el símbolo del fallo. Las cifras «antes» se midieron con la ventana de líneas y no se recalcularon.
+
+**Lo que no coincide con la guía.** **Producto observado (no evaluable):** tres medidas de este módulo no muestran lo que dice la guía. Ninguna cambia la respuesta de examen, que es siempre la de la guía.
+
+- **Tests existentes en el contexto (3.6-S4): al revés de lo esperado.** Con ellos salió 1 escenario repetido por ejecución (siempre `calcular_sla(alta, 3)`) y sin ellos, 0. Hipótesis sin comprobar: ver los tests ancla al modelo en los escenarios que ya existen, y sin verlos propone solo lo que toca el cambio. En el examen, los tests existentes van en el contexto para no proponer escenarios ya cubiertos.
+- **`--anti conservador` (4.1-K2): la medida no respalda ni contradice la viñeta.** Con tres ejecuciones parecía perder el fallo A y con cinco más no; con 8 ejecuciones de cada una, no se separa de la correcta. La lección de 4.1-K2 es conceptual y no se apoya en esta medida.
+- **`--anti sin_ejemplos` y `--sin-categoria comment`: sin señal estable.** No contradicen la guía (4.2-S2, S3 y 4.1-S2), pero tampoco la demuestran. Desactivar `comment` no quitó el falso positivo, lo reclasificó como `bug`. Inferencia propia: 4.1-S2 es una medida para recuperar la confianza mientras se arregla el criterio, no el arreglo.
+
+Avisos sobre las cifras y la ejecución:
+
+- **Antes y después del fallo F:** las cifras «antes» se midieron con cuatro fallos sembrados (A a D); las «después», con el quinto, F, el segundo fallo entre archivos, que se añadió para el módulo 12.
+- **La puntuación por símbolo no recalculó las cifras anteriores:** el modelo cita las líneas de forma aproximada, hasta 3–5 líneas de más, y por eso la puntuación reconoce ahora también el símbolo del fallo. Las cifras «antes» se midieron con la ventana de líneas y no se recalcularon.
 - **El tope de coste** es `--max-budget-usd` de cada `claude -p`: el módulo reparte `--budget` entre las repeticiones y le pasa a cada una lo que queda.
 - Lo que no depende del modelo se prueba en `tests/test_app3_11_criterios_y_ci.py`, `tests/test_headless.py` y `tests/test_datos_entrega3c.py`. Coste de las ejecuciones con modelo de este módulo: ~1,0 $.
 </details>
 
 ### Pregunta tipo examen
 
-**Pregunta 1 (una respuesta).** Un equipo ejecuta Claude Code en CI para revisar cada pull request y publica sus hallazgos como comentarios. Los desarrolladores empiezan a ignorarlos porque una categoría, la de estilo, genera muchos falsos positivos. ¿Qué debe hacer el equipo?
+**Pregunta 1 (una respuesta).** Un equipo ejecuta Claude Code en CI para revisar cada *pull request* y publica los hallazgos como comentarios en línea. La categoría «comentario inexacto» marca a menudo comentarios del código que son correctos, y los desarrolladores han empezado a ignorar también los hallazgos de seguridad. ¿Qué debe hacer el equipo?
 
-- A. Añadir al prompt «sé conservador y solo informa de lo que tengas alta confianza», sin cambiar nada más.
-- B. Lanzar `claude` en modo interactivo dentro del pipeline para que una persona confirme cada hallazgo antes de publicarlo.
-- C. Definir criterios categóricos de qué informar y qué no, desactivar la categoría con más falsos positivos mientras se mejora y analizar lo descartado con un campo `detected_pattern`.
-- D. Pedir una severidad por hallazgo, sin ejemplos de código, y publicar solo los de severidad alta.
+- A. Añadir al prompt que informe solo de lo que tenga alta confianza y mantener activas todas las categorías mientras tanto.
+- B. Apagar esa categoría por ahora, reescribir su criterio para marcar solo un comentario que contradiga al código y añadir `detected_pattern`.
+- C. Pedir una puntuación de confianza por hallazgo y publicar solo los que pasen de un umbral, sin tocar el criterio de ninguna categoría.
+- D. Mantener todas las categorías y juntar los hallazgos en un único comentario de resumen al final del PR, para que molesten menos.
 
 <details>
 <summary>Paso 4 · Respuesta</summary>
 
-**C.** Los criterios explícitos mejoran la precisión (TS 4.1-K1), dicen qué se informa y qué no (4.1-S1) y la categoría con muchos falsos positivos se desactiva temporalmente mientras se arregla, porque desconfiar de una hace desconfiar de todas (4.1-K3, S2); el campo `detected_pattern` permite analizar qué patrones se descartan (4.4-K3, S3).
+**B.** Una categoría con muchos falsos positivos hace desconfiar también de las que aciertan (TS 4.1-K3), así que se desactiva temporalmente mientras se mejora su prompt (4.1-S2). El arreglo es un criterio explícito, que marque un comentario solo cuando lo que dice no coincide con lo que hace el código (4.1-K1, S1), y el campo `detected_pattern` permite analizar qué patrones se descartan (4.4-K3, S3).
 
-- **A** es lo que la guía descarta: «sé conservador» o «solo alta confianza» no mejoran la precisión frente a criterios categóricos (4.1-K2).
-- **B** necesita una persona en el bucle de un pipeline que se lanza con `-p` precisamente para que no se quede esperando (3.6-K1, S1).
-- **D** deja las severidades sin ejemplos de código concretos (4.1-S3) y filtra por un número que el modelo escribe.
+- **A** es la instrucción general que la guía descarta: «solo alta confianza» no mejora la precisión frente a criterios categóricos (4.1-K2), y la categoría que resta confianza sigue publicando.
+- **C** filtra por la confianza en vez de definir qué se informa y qué no (4.1-S1); el criterio vago sigue igual.
+- **D** no reduce los falsos positivos (4.1-K3) y renuncia a los comentarios en línea, que es para lo que sirve la salida estructurada en CI (3.6-S2).
+
+**Producto observado (no evaluable):** en este módulo, quitar la categoría `comment` no hizo desaparecer el falso positivo, que el modelo reclasificó como `bug` (Paso 3). No cambia la respuesta de examen: apagar la categoría es la medida temporal y el arreglo es el criterio.
 </details>
 
-**Pregunta 2 (multiple-response).** Un equipo usa `claude -p --output-format json --json-schema` para revisar los commits de una rama, y también para pedir los tests que faltan para el cambio. Tras un commit nuevo, la revisión vuelve a publicar comentarios que ya estaban, y los tests propuestos son flojos. **Selecciona dos** cambios que sigan la guía. Evalúa cada opción por separado.
+**Pregunta 2 (multiple-response).** Un equipo usa `claude -p --output-format json --json-schema` para revisar los commits de una rama y para pedir los tests que faltan. Tras cada commit nuevo, la revisión vuelve a publicar comentarios que ya estaban, y los tests propuestos repiten escenarios ya cubiertos o aportan poco. **Selecciona dos** cambios que sigan la guía. Evalúa cada opción por separado.
 
-- A. En la segunda revisión, incluir los hallazgos previos en el contexto y ordenar informar solo de lo nuevo o de lo no resuelto.
-- B. Pedir los tests sin darle al modelo los tests existentes, para que no se limite a copiarlos.
-- C. Poner en el `CLAUDE.md` del proyecto los estándares de tests, los criterios de un test valioso y las *fixtures* disponibles.
-- D. Quitar `--json-schema` y leer los hallazgos del texto de la respuesta para publicarlos como comentarios.
+- A. Pedir los tests sin darle al modelo los tests existentes, para que no se ancle en lo que ya está escrito.
+- B. En la segunda revisión, incluir los hallazgos previos y ordenar que informe solo de lo nuevo o de lo no resuelto.
+- C. Quitar `--json-schema` y extraer los hallazgos del texto de la respuesta para publicarlos como comentarios.
+- D. Documentar en el `CLAUDE.md` del proyecto los estándares de tests, qué hace valioso un test y las *fixtures* disponibles.
 
 <details>
 <summary>Paso 4 · Respuesta (pregunta 2)</summary>
 
-**A y C.** La primera evita duplicar comentarios (TS 3.6-S3) y la segunda da a Claude Code en CI el contexto del proyecto (3.6-K3) para que los tests generados sean mejores (3.6-S5).
+**B y D.** La primera evita los comentarios duplicados (TS 3.6-S3) y la segunda da a Claude Code en CI el contexto del proyecto (3.6-K3) para que los tests generados sean mejores y aporten más (3.6-S5).
 
-- **A** es la práctica de la guía para no duplicar comentarios al revisar de nuevo.
-- **B** invierte lo que dice la guía: los tests existentes van en el contexto para no proponer escenarios ya cubiertos (3.6-S4). **Producto observado (no evaluable):** en este módulo, con Sonnet 5.5, ver los tests no redujo los duplicados; no cambia la respuesta de examen.
-- **C** es el uso de `CLAUDE.md` que la guía asigna al contexto de CI.
-- **D** pierde la salida estructurada que una máquina necesita para publicar comentarios en línea (3.6-K2, S2).
+- **A** invierte lo que dice la guía: los tests existentes van en el contexto para no proponer escenarios que la suite ya cubre (3.6-S4).
+- **B** es la práctica de la guía para no repetir comentarios al revisar de nuevo tras commits nuevos.
+- **C** pierde la salida estructurada que una máquina necesita para publicar comentarios en línea (3.6-K2, S2).
+- **D** es el uso de `CLAUDE.md` que la guía asigna al contexto de Claude Code en CI.
+
+**Producto observado (no evaluable):** en este módulo, con los tests existentes en el contexto salió 1 escenario repetido por ejecución y sin ellos 0, al revés de lo esperado (Paso 3). No cambia la respuesta de examen: A sigue siendo incorrecta.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).

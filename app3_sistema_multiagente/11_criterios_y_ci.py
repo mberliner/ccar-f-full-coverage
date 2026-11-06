@@ -1,45 +1,64 @@
 """Criterios categóricos y revisión en CI con `claude -p`: salida estructurada, contexto de proyecto y falsos positivos.
 
-BORRADOR (Sonnet 5.5): pendiente del pase de textos de Opus 5.5. La cabecera y las secciones del README de este módulo están escritas contra las viñetas resumidas del encargo, no contra el texto de la guía.
-
 CONCEPTO [TS 3.6-K1, K2, K3 · S1, S2, S3, S4, S5 · TS 4.1-K1, K2, K3 · S1, S2, S3 · TS 4.2-S2, S3 · TS 4.4-K3, S3]:
 revisar un cambio con `claude -p --output-format json --json-schema` desde un directorio cuyo `CLAUDE.md` es el contexto
 de CI, con criterios categóricos y severidades con ejemplos de código, *few-shot* de formato y de patrón aceptable,
-`detected_pattern` en cada hallazgo y un registro de los descartados.
+`detected_pattern` en cada hallazgo y un registro de los descartados; revisar de nuevo tras otro commit y pedir los tests
+que faltan.
 
-QUÉ DICE LA GUÍA (paráfrasis provisional):
-- Claude Code se usa sin interacción con `-p` (3.6-K1, S1: no se queda esperando entrada), con `--output-format json` y
-  `--json-schema` para obtener una salida estructurada que una máquina pueda publicar como comentarios en línea de un PR
-  (3.6-K2, S2).
-- `CLAUDE.md` da a Claude Code en CI el contexto del proyecto: estándares de tests, convenciones de *fixtures* y criterios
-  de revisión (3.6-K3). Con los estándares de tests, los criterios de un test valioso y las *fixtures* disponibles ahí, los
-  tests generados mejoran (3.6-S5); con los tests existentes en contexto, no se proponen escenarios ya cubiertos (3.6-S4).
-- Al revisar de nuevo tras commits nuevos se incluyen los hallazgos previos y se ordena informar solo de lo nuevo o de lo
-  no resuelto, para no duplicar comentarios (3.6-S3).
-- Criterios explícitos frente a instrucciones vagas («marca un comentario solo si lo que dice contradice el código» frente
-  a «comprueba que los comentarios son correctos») (4.1-K1). «Sé conservador» o «solo alta confianza» no mejoran la
-  precisión frente a criterios categóricos (4.1-K2). Una categoría con muchos falsos positivos hace desconfiar también de
-  las acertadas (4.1-K3).
-- Los criterios dicen qué informar (bugs, seguridad) y qué no (estilo menor, patrones locales) (4.1-S1); las categorías con
-  muchos falsos positivos se desactivan mientras se mejoran (4.1-S2); cada severidad lleva ejemplos de código concretos
-  (4.1-S3).
-- *Few-shot* con el formato de salida (ubicación, problema, severidad, arreglo propuesto) (4.2-S2) y que distinguen un
-  patrón aceptable de un problema real (4.2-S3).
-- Un campo `detected_pattern` en cada hallazgo permite analizar qué patrones descartan los desarrolladores (4.4-K3, S3).
+QUÉ DICE LA GUÍA:
+- En un pipeline, Claude Code se lanza en modo no interactivo con `-p` (o `--print`), para que no se quede esperando una
+  entrada que nadie va a dar (3.6-K1, S1).
+- `--output-format json` junto con `--json-schema` imponen una salida estructurada; en CI eso da hallazgos que una
+  máquina puede leer y publicar como comentarios en línea del PR (3.6-K2, S2).
+- El contexto del proyecto le llega a Claude Code en CI por `CLAUDE.md`: estándares de tests, convenciones de *fixtures*,
+  criterios de revisión (3.6-K3). Documentar ahí los estándares, qué hace valioso un test y qué *fixtures* hay mejora los
+  tests generados y reduce los que aportan poco (3.6-S5).
+- Al generar tests, los tests existentes van en el contexto, para no proponer escenarios que la suite ya cubre (3.6-S4).
+- Al revisar otra vez tras commits nuevos, los hallazgos anteriores van en el contexto con la orden de informar solo de lo
+  nuevo o de lo que sigue sin resolver, para no repetir comentarios (3.6-S3).
+- Un criterio explícito precisa más que una instrucción vaga: marcar un comentario solo cuando lo que dice que hace el
+  código no es lo que hace, en vez de pedir que se compruebe que los comentarios son correctos (4.1-K1). Las instrucciones
+  generales del tipo «sé conservador» o «informa solo de lo que tengas muy claro» no mejoran la precisión como lo hacen
+  los criterios categóricos (4.1-K2).
+- Los falsos positivos cuestan confianza: una categoría que se equivoca a menudo hace que se desconfíe también de las que
+  aciertan (4.1-K3). Por eso los criterios dicen qué se informa (bugs, seguridad) y qué se deja (estilo menor, patrones
+  locales) en vez de filtrar por confianza (4.1-S1); una categoría con muchos falsos positivos se apaga por un tiempo,
+  mientras se mejora su prompt (4.1-S2); y cada severidad se define con ejemplos de código concretos (4.1-S3).
+- Los *few-shot* fijan el formato de cada hallazgo (ubicación, problema, severidad, arreglo propuesto) (4.2-S2) y enseñan a
+  distinguir un patrón aceptable de un problema real, lo que reduce falsos positivos sin impedir generalizar (4.2-S3).
+- Un campo `detected_pattern` en cada hallazgo registra qué construcción del código lo provocó, y permite analizar de forma
+  sistemática los patrones que los desarrolladores descartan (4.4-K3, S3).
 
-POR QUÉ IMPORTA (inferencia propia): un revisor automático vive de la confianza de quien lee sus comentarios. Un solo
-patrón que falle a menudo hace que se ignoren también los hallazgos buenos, y la forma de arreglarlo es precisar el
-criterio y mirar qué se descarta, no pedir al modelo que «sea prudente».
+POR QUÉ IMPORTA (inferencia propia): un revisor automático vive de la confianza de quien lee sus comentarios. Un patrón que
+falla a menudo hace que se ignoren también los hallazgos buenos, y lo que se puede corregir es el criterio y lo que se
+aprende de los descartes, no la prudencia que se le pide al modelo.
 
 ANTI-PATRÓN / TRAMPA DEL EXAMEN:
-- Hechos de la guía (provisional): sustituir los criterios por «sé conservador» (`--anti conservador`); no dar ejemplos
-  (`--anti sin_ejemplos`); dejar activa una categoría que genera falsos positivos.
+- Hechos de la guía:
+  - Sustituir los criterios por «sé conservador» o «solo alta confianza» (`--anti conservador`, 4.1-K2).
+  - Dar instrucciones detalladas sin ejemplos cuando el formato o los casos ambiguos salen inconsistentes
+    (`--anti sin_ejemplos`, 4.2-S2, S3).
+  - Dejar activa una categoría con muchos falsos positivos (`--sin-categoria comment` es la medida de 4.1-S2).
+  - Revisar de nuevo sin los hallazgos previos (`--anti sin_previos`, 3.6-S3); generar tests sin los existentes
+    (`--anti sin_tests_existentes`, 3.6-S4) o sin los estándares en `CLAUDE.md` (`--anti sin_estandares`, 3.6-S5).
+  - Lanzar Claude Code en CI sin `-p`, o leer los hallazgos del texto libre en vez de una salida con schema.
+- Lo medido aquí no respalda todas las viñetas (cifras, con «antes» y «después», en el README y en `docs/hallazgos.md`):
+  - `conservador`, `sin_ejemplos` y `--sin-categoria comment` no dieron una señal estable. Con tres ejecuciones,
+    `conservador` parecía perder un fallo; con cinco más, no. La medida no separa las variantes, así que ni respalda ni
+    contradice 4.1-K2: esa lección es conceptual.
+  - Con los tests existentes en el contexto salió 1 escenario repetido por ejecución y sin ellos 0, al revés de lo
+    esperado. En el examen manda 3.6-S4.
 - Inferencias propias:
-  - El `CLAUDE.md` del directorio de CI llega a `claude -p` aunque se aísle la configuración de usuario, pero solo con
-    una combinación de flags (ver `harness/headless.py` y la sonda C1 en `docs/hallazgos.md`).
-  - La confianza declarada y el `detected_pattern` los rellena el propio modelo: sirven para agrupar, no para decidir.
+  - Desactivar una categoría no quita el falso positivo si el modelo puede reclasificarlo en otra; 4.1-S2 es una medida
+    temporal mientras se arregla el criterio, no el arreglo.
+  - La confianza declarada y el `detected_pattern` los rellena el propio modelo: sirven para agrupar los descartes, y
+    agrupar sin normalizar el nombre los dispersa.
   - Los hallazgos previos de la segunda revisión son una lista fija construida desde las etiquetas, para que las dos
     ramas partan de lo mismo.
+- Producto observado (no evaluable): `--setting-sources project` no basta para que a `claude -p` le llegue solo el
+  `CLAUDE.md` del directorio de CI; hace falta además `claudeMdExcludes` (sonda C1 en `docs/hallazgos.md`,
+  `harness/headless.py`). Con un schema imposible, la CLI responde `success` sin objeto, así que el módulo valida otra vez.
 
 Pregunta tipo examen: ver `app3_sistema_multiagente/README.md`, módulo 11.
 
