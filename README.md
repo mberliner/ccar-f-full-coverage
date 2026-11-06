@@ -8,7 +8,7 @@ Apps agénticas de demostración para practicar, con código ejecutable, todas l
 
 **Qué es un módulo.** Un ejercicio, con dos partes: un script de una app (por ejemplo, `app1_agente_unico/05_scoping_y_tool_choice.py`) y su sección `## NN` en el `README.md` de esa app. La sección dice qué hacer en cada paso; el script no hace falta leerlo.
 
-**Qué necesitas.** Usar la terminal. Saber leer Python ayuda, pero no es imprescindible: el ciclo se sigue con los textos y la salida. Para ejecutar con modelo hace falta una API key ([Instalación](#instalación-una-vez)); sin ella puedes hacer los módulos en modo ligero. Los términos están en el [glosario](docs/glosario.md).
+**Qué necesitas.** Usar la terminal. Saber leer Python ayuda, pero no es imprescindible: el ciclo se sigue con los textos y la salida. Para ejecutar con modelo hace falta una API key o, en los módulos del Agent SDK, la suscripción de Claude Code ([Instalación](#instalación-una-vez)). Sin credencial puedes hacer en modo ligero los módulos que lo permiten, pero cuatro son de ejecución obligatoria: qué pide cada módulo está en [credenciales y modos](docs/credenciales-y-modos.md). Los términos están en el [glosario](docs/glosario.md).
 
 ### Cómo empezar: con guía (recomendado)
 
@@ -83,7 +83,7 @@ Cada módulo introduce las viñetas que `CONCEPTOS.md` le asigna, así que una a
 - Python ≥ 3.10
 - [`uv`](https://docs.astral.sh/uv/)
 - [Claude Code](https://claude.com/claude-code) (para la práctica guiada y para trabajar en el proyecto; no para ejecutar los tests ni los módulos)
-- Una `ANTHROPIC_API_KEY` solo para las ejecuciones con modelo
+- Para las ejecuciones con modelo, una `ANTHROPIC_API_KEY` o, solo en los módulos del Agent SDK, la suscripción de Claude Code (tabla por módulo en [`docs/credenciales-y-modos.md`](docs/credenciales-y-modos.md))
 
 ### 1. Clonar e instalar
 
