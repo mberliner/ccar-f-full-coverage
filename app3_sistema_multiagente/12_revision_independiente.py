@@ -1,34 +1,52 @@
 """Revisión independiente: quién revisa un cambio importa tanto como cómo lo revisa.
 
-BORRADOR (Sonnet 5.5): pendiente del pase de textos de Opus 5.5. La cabecera y las secciones del README de este módulo están escritas contra las viñetas resumidas del encargo, no contra el texto de la guía.
-
 CONCEPTO [TS 4.6-K1, K2, K3 · S1, S2, S3 · TS 1.6-K2, S2 · TS 3.6-K4]: revisar un cambio con una segunda instancia sin el
-contexto de quien lo generó, en varias pasadas (una por archivo y otra de integración) y con la confianza de cada hallazgo,
-frente a revisarlo en la misma sesión que lo generó.
+contexto de quien lo generó, en pasadas encadenadas (una por archivo y otra de integración entre archivos) y con una
+pasada de verificación que da la confianza de cada hallazgo, frente a revisarlo en la misma sesión que lo generó.
 
-QUÉ DICE LA GUÍA (paráfrasis provisional):
-- El modelo conserva el razonamiento con el que generó el código y cuestiona menos sus decisiones dentro de la misma sesión
-  (4.6-K1; 3.6-K4: la sesión que generó el código revisa peor sus cambios que una instancia independiente).
-- Una instancia independiente, sin ese contexto, encuentra mejor los problemas sutiles que las instrucciones de
-  autorrevisión o el *extended thinking* (4.6-K2); una segunda instancia revisa el código generado (4.6-S1).
-- La revisión se reparte en varias pasadas: una por archivo para lo local y otra de integración para el flujo de datos entre
-  archivos, lo que evita la dilución de la atención y los hallazgos contradictorios (4.6-K3, S2). Es un encadenamiento de
-  prompts: cada archivo y después la integración (1.6-K2, S2).
-- Una pasada de verificación da la confianza de cada hallazgo, para enrutar la revisión (4.6-S3).
+QUÉ DICE LA GUÍA:
+- La autorrevisión tiene un límite: el modelo conserva el contexto de razonamiento con el que generó el código y, en la
+  misma sesión, es menos probable que ponga en duda sus propias decisiones (4.6-K1). Es el motivo de aislar el contexto
+  de la sesión: la que generó el código revisa sus cambios peor que una instancia de revisión independiente (3.6-K4).
+- Una instancia independiente, sin ese razonamiento previo, detecta mejor los problemas sutiles que pedirle a la misma
+  sesión que se revise o darle más razonamiento extendido (4.6-K2). En la práctica, una segunda instancia de Claude
+  revisa el código generado sin el contexto del generador (4.6-S1).
+- Una revisión grande de varios archivos se parte en pasadas: una por archivo para lo local y otra aparte de
+  integración para el flujo de datos entre archivos, lo que evita diluir la atención y obtener hallazgos contradictorios
+  (4.6-K3, S2).
+- Es un encadenamiento de prompts fijo: analizar cada archivo y después hacer una pasada de integración entre archivos
+  (1.6-K2), el patrón adecuado para una revisión predecible de varios aspectos, frente a la descomposición dinámica de
+  una investigación abierta (1.6-S2).
+- Una pasada de verificación, en la que el modelo informa de su confianza junto a cada hallazgo, permite enrutar la
+  revisión de forma calibrada (4.6-S3).
 
-POR QUÉ IMPORTA (inferencia propia): quien revisa en la misma sesión parte de haber decidido ya que el código es razonable.
-Una instancia nueva solo tiene el diff, y por eso cuestiona lo que la otra daba por hecho; y un fallo entre archivos solo lo ve
-quien mira a la vez a quien cambia y a quien llama.
+POR QUÉ IMPORTA (inferencia propia): quien revisa en la misma sesión parte de haber decidido ya que el código es
+razonable. Una instancia nueva solo tiene el diff y lo que lea, así que no hereda esas decisiones; y un fallo entre
+archivos solo lo ve quien mira a la vez al que cambia y al que llama.
 
 ANTI-PATRÓN / TRAMPA DEL EXAMEN:
-- Hechos de la guía (provisional): revisar en la misma sesión que generó (`--anti autorrevision`), también con una
-  instrucción explícita de autorrevisión (`--anti autorrevision_explicita`) o con *extended thinking* (no se mide aquí).
+- Hechos de la guía:
+  - Revisar en la misma sesión que generó el código (`--anti autorrevision`).
+  - Creer que una instrucción de autorrevisión lo arregla (`--anti autorrevision_explicita`) o que lo arregla más
+    razonamiento extendido (no se ejecuta aquí): la guía pone a los dos por debajo de la instancia independiente.
+  - Revisar muchos archivos en una sola pasada larga, que diluye la atención.
+- Lo medido aquí no respalda la viñeta central (cifras en el README y en `docs/hallazgos.md`):
+  - La autorrevisión con `--resume --fork-session` no encontró menos que la instancia nueva (2 ejecuciones) y costó cerca
+    del doble. En el examen manda la guía (4.6-K1, K2; 3.6-K4); la lección queda como conceptual.
+  - `autorrevision_explicita` está implementada y probada sin modelo, pero no se midió: no hay cifra.
+  - Los fallos entre archivos salieron por la pasada de integración en unas ejecuciones y por la de archivo en otras:
+    ninguna pasada sola los garantizó.
 - Inferencias propias:
-  - La sesión generadora aquí copia el cambio que se le da y explica sus decisiones: su «razonamiento de generación» es el de
-    copiar, no el de diseñar. Es una aproximación y no reproduce toda la situación de la guía.
-  - Un revisor sin tools no puede ver a los llamadores: el fallo entre archivos solo sale en la pasada de integración, que sí
-    puede leer el repositorio.
-  - La confianza de cada hallazgo la da una pasada de verificación y se mide contra lo sembrado con la calibración de `app3/10`.
+  - El «razonamiento de generación» de la sesión generadora es el de copiar un cambio que se le da y explicar sus
+    decisiones, no el de diseñarlo. Es una adaptación: no reproduce del todo la situación de la guía, y puede ser una de
+    las razones de que la autorrevisión no se viera peor.
+  - Una sesión bifurcada de la generadora no hace pasadas locales de verdad: recuerda todos los archivos que escribió.
+    Solo una instancia nueva sin tools mira un archivo sin ver el resto.
+  - La confianza de cada hallazgo la da la pasada de verificación y se mide contra lo sembrado con la calibración de
+    `app3/10`. Con todos los hallazgos reales, no hay nada que separar.
+- Producto observado (no evaluable): el `total_cost_usd` de una sesión reanudada es acumulado y `--max-budget-usd` no
+  cuenta ese histórico, así que el tope de la rama lo lleva `headless.Ledger` (sonda C1 en `docs/hallazgos.md`). Una
+  pasada con poco margen puede cortar sin resultado, y sus hallazgos quedan sin confianza.
 
 Pregunta tipo examen: ver `app3_sistema_multiagente/README.md`, módulo 12.
 
