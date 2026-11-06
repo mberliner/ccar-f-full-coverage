@@ -15,7 +15,7 @@
 | C-02 ruta raíz de app3 | ✅ **Terminado** | `README.md` describe `01`→`09` y deja `10`–`12` como pendientes. |
 | C-03 `app3/CLAUDE.md` | ✅ **Terminado** | Diez fuentes (verificado en `datos/generar_sinteticos.py`) y estado de `06` en `estado/<perfil>/app3-06/`. |
 | G-01 strict mode en `app3/07` | ⏳ Pendiente | Requiere comprobar antes si `strict` se puede aplicar a tools MCP del Agent SDK. |
-| G-05 test de perímetro | ⏳ Pendiente | Renombrar la garantía y ampliar `perimetro_excluido.yaml` con excepción para módulos de apoyo. |
+| G-05 test de perímetro | ✅ **Terminado** | La garantía se rebautiza como «lista de exclusión conocida» (docstring del test y del YAML). Se añaden `updatedInput` y `disallowed_tools` con `permitido_en` por archivo, y un test que obliga a borrar las excepciones que ya no se usan. `permission_mode` queda fuera de la lista a propósito: `dontAsk` es fontanería en unos 14 módulos y la excepción no protegería nada. |
 | Resto (G-04, G-06 a G-09, C-04, C-05, D-01 a D-05) | ⏳ Pendiente | Fases 1 a 3 del plan. |
 
 Verificación: `uv run pytest -q -rsx` → 829 passed, 1 skipped, 1 xfailed (sin cambios respecto de la auditoría).
@@ -173,7 +173,7 @@ Usar otro modelo como banco de pruebas puede ser legítimo para construir una de
 
 **Mejora recomendada:** dejar una única demostración estable del mecanismo; trasladar comparaciones, tasas por modelo y calibración histórica a `docs/hallazgos.md` como material experimental no evaluable.
 
-### MEDIA — G-05. La garantía atribuida al test de perímetro es mayor que su capacidad real
+### MEDIA — G-05. La garantía atribuida al test de perímetro es mayor que su capacidad real ✅ TERMINADO 2026-11-06
 
 **Clasificación:** falso sentido de cobertura.  
 **Certeza:** alta.

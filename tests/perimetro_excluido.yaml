@@ -1,13 +1,25 @@
-# Lista de exclusión del perímetro (roadmap §3, reglas 2 y 5).
+# Lista de exclusión CONOCIDA del perímetro (roadmap §3, reglas 2 y 5).
 # Mecanismos del producto que la Exam Guide v1.0 no nombra: en el examen son distractores.
 # La usan tests/test_perimetro.py y, como criterio categórico, el revisor de app3/11.
 # Nombres comprobados contra claude-agent-sdk 0.2.173 y la documentación de Claude Code (2026-10-23).
+#
+# Es una lista, no una garantía: el test solo detecta estos patrones exactos en el código Python.
+# Lo que no está aquí no se comprueba. Se amplía a mano, a partir de los apartados In-Scope y
+# Out-of-Scope de la guía y de la revisión humana de cada tanda.
 #
 # kind:
 #   identifier   nombre, atributo, keyword de llamada o import con ese nombre exacto
 #   string       constante de texto exactamente igual (p. ej. un nombre de tool en allowed_tools)
 #   env_enabled  clave de un dict literal (env=...) con un valor distinto de "0"/"false";
 #                apagarla de forma explícita está permitido (regla 4)
+#
+# permitido_en (opcional): rutas desde la raíz donde el patrón es infraestructura o apéndice
+#   no evaluable. Un módulo nuevo que lo use falla hasta que se añada aquí de forma deliberada,
+#   y una ruta que ya no lo usa también falla (para que la excepción no se pudra).
+#
+# No se incluye `permission_mode`: `dontAsk` es fontanería de ejecución no interactiva en unos
+# 14 módulos y una excepción tan larga no protegería nada. Que su semántica no se enseñe como
+# examen lo cubre app2/03, rotulado como comprobación operativa no evaluable.
 
 - pattern: output_format
   kind: identifier
@@ -28,3 +40,18 @@
 - pattern: CLAUDE_CODE_FORK_SUBAGENT
   kind: env_enabled
   motivo: subagentes fork, que heredan el contexto del padre; la guía enseña que el subagente no hereda contexto (1.3)
+
+- pattern: updatedInput
+  kind: string
+  motivo: salida de PreToolUse que reescribe los argumentos; la guía solo cubre el hook que bloquea y redirige (1.4-S1, 1.5-S2)
+  permitido_en:
+    - app2_agente_con_control/07_hook_reescritura.py
+    - harness/offline.py
+
+- pattern: disallowed_tools
+  kind: identifier
+  motivo: opción del SDK que quita una tool; la guía restringe por rol con AgentDefinition y allowedTools (2.3), no con listas de exclusión
+  permitido_en:
+    - app2_agente_con_control/03_permisos.py
+    - app2_agente_con_control/05_multi_concern_y_handoff.py
+    - app2_agente_con_control/06_sesiones.py

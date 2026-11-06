@@ -1,15 +1,19 @@
 """Test de perímetro (roadmap §3, regla 5, y §11.2).
 
-PROPÓSITO: marcar en el código de las apps y del arnés cualquier uso de los
-mecanismos de `perimetro_excluido.yaml`.
+PROPÓSITO: marcar en el código Python de las apps y del arnés cualquier uso de
+los mecanismos de la lista de exclusión conocida (`perimetro_excluido.yaml`).
 
 POR QUÉ EXISTE: practicar con funcionalidades que la guía v1.0 no reconoce
 entrena respuestas que en el examen son distractores. Una revisión a ojo no
 escala a 25 módulos.
 
-QUÉ NO HACE: no revisa comentarios ni docstrings, porque ahí se permite citar lo
-nuevo como `EN PRODUCCIÓN (no evaluable)`. Por eso analiza el AST y no el
-texto. No llama al modelo.
+QUÉ NO HACE: no demuestra que el repositorio entero esté dentro del blueprint.
+Solo detecta los patrones exactos de la lista, en el AST de los `.py` de cuatro
+directorios; no revisa comentarios ni docstrings (ahí se permite citar lo nuevo
+como `EN PRODUCCIÓN (no evaluable)`), ni README, configuración ni preguntas.
+Lo que no está en la lista no se comprueba: el perímetro de contenido lo
+decide la revisión humana contra los apartados In-Scope y Out-of-Scope de la
+guía. No llama al modelo.
 """
 
 import ast
@@ -35,17 +39,25 @@ def docstring_nodes(tree: ast.AST) -> set[int]:
     return ids
 
 
-def violations(source: str, filename: str = "<src>") -> list[str]:
-    """Lista «archivo:línea patrón» de cada uso excluido en el código fuente."""
+def violations(source: str, filename: str = "<src>", apply_allowlist: bool = True) -> list[str]:
+    """Lista «archivo:línea patrón» de cada uso excluido en el código fuente.
+
+    Un patrón con `permitido_en` no se marca en esos archivos (infraestructura o apéndice
+    no evaluable); `apply_allowlist=False` devuelve todos los usos, para comprobar la lista.
+    """
     tree = ast.parse(source, filename)
     docs = docstring_nodes(tree)
     by_kind: dict[str, set[str]] = {}
+    allowed_here: set[str] = set()
     for entry in EXCLUDED:
         by_kind.setdefault(entry["kind"], set()).add(entry["pattern"])
+        if apply_allowlist and filename in entry.get("permitido_en", []):
+            allowed_here.add(entry["pattern"])
     found = []
 
     def hit(node: ast.AST, pattern: str) -> None:
-        found.append(f"{filename}:{node.lineno} {pattern}")
+        if pattern not in allowed_here:
+            found.append(f"{filename}:{node.lineno} {pattern}")
 
     for node in ast.walk(tree):
         names = []
@@ -77,8 +89,21 @@ def violations(source: str, filename: str = "<src>") -> list[str]:
 def test_exclusion_list_is_well_formed():
     assert EXCLUDED
     for entry in EXCLUDED:
-        assert set(entry) == {"pattern", "kind", "motivo"}, entry
+        assert {"pattern", "kind", "motivo"} <= set(entry) <= {"pattern", "kind", "motivo", "permitido_en"}, entry
         assert entry["kind"] in {"identifier", "string", "env_enabled"}, entry
+        assert isinstance(entry.get("permitido_en", []), list), entry
+
+
+def test_allowlist_paths_exist_and_still_use_the_pattern():
+    """Una excepción que ya no se usa es una excepción que sobra: obliga a borrarla."""
+    for entry in EXCLUDED:
+        for rel in entry.get("permitido_en", []):
+            path = ROOT / rel
+            assert path.is_file(), f"{rel} no existe: bórralo de permitido_en de {entry['pattern']}"
+            raw = violations(path.read_text(encoding="utf-8"), rel, apply_allowlist=False)
+            assert any(v.endswith(f" {entry['pattern']}") for v in raw), (
+                f"{rel} ya no usa {entry['pattern']}: bórralo de permitido_en"
+            )
 
 
 def test_repository_stays_inside_perimeter():
@@ -102,6 +127,16 @@ def test_detects_excluded_usage():
     assert sorted(v.split(" ")[1] for v in violations(source)) == sorted(
         ["output_format", "Workflow", "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS"]
     )
+
+
+def test_allowlist_exempts_only_the_listed_file():
+    source = "hook = {'updatedInput': {}}\noptions = dict(disallowed_tools=['x'])\n"
+    # Fuera de las listas de excepción, ambos mecanismos se marcan.
+    assert sorted(v.split(" ")[1] for v in violations(source, "app9/nuevo.py")) == ["disallowed_tools", "updatedInput"]
+    # En el apéndice permitido, `updatedInput` pasa y `disallowed_tools` (no permitido ahí) sigue marcado.
+    assert [v.split(" ")[1] for v in violations(source, "app2_agente_con_control/07_hook_reescritura.py")] == [
+        "disallowed_tools"
+    ]
 
 
 def test_ignores_comments_docstrings_and_disabled_env():
