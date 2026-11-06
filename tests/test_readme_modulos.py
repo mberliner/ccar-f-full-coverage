@@ -82,6 +82,8 @@ MULTI = re.compile(r"\*\*Selecciona (dos|tres|cuatro)\*\*", re.IGNORECASE)
 COUNTS = {"dos": 2, "tres": 3, "cuatro": 4}
 # `AskUserQuestion`, con el que `practica-guiada` plantea la pregunta, admite 4 opciones como máximo.
 MAX_OPTIONS = 4
+# Un módulo que introduce al menos tantas viñetas debe llevar una pregunta multiple-response (auditoría G-06, D-01).
+DENSE_MIN = 10
 ANSWER_BLOCK = re.compile(r"<details>\s*<summary>Paso 4 · Respuesta[^<]*</summary>(.*?)</details>", re.DOTALL)
 ANSWER_HEAD = re.compile(r"\s*\*\*([A-F](?:(?:, | y )[A-F])*)\.\*\*")
 
@@ -222,11 +224,43 @@ def test_multi_response_questions_follow_the_format():
     assert not failing, f"preguntas multiple-response mal formadas: {failing}"
 
 
-def test_pilot_modules_practice_multiple_response():
-    """Piloto de G-06: estos módulos llevan, además de la pregunta de respuesta única, una multiple-response."""
+def assigned_counts() -> dict[str, int]:
+    """{destino de `CONCEPTOS.md`: nº de viñetas que le asigna}, contando las ya introducidas y las pendientes."""
+    counts: dict[str, int] = {}
+    for line in (ROOT / "CONCEPTOS.md").read_text(encoding="utf-8").splitlines():
+        match = re.match(r"\| TS [\d.]+-[KS]\d \| ([^|]+?) \| [☑☐] \|", line)
+        if match:
+            counts[match.group(1).strip()] = counts.get(match.group(1).strip(), 0) + 1
+    return counts
+
+
+def dense_modules() -> list[str]:
+    """Los módulos entregados que introducen `DENSE_MIN` viñetas o más, con la clave de `all_sections()`."""
+    counts = assigned_counts()
+    dense = []
+    for key in all_sections():
+        folder, number = key.split(" ")
+        prefix = f"{folder.split('_')[0]}/{number}_"
+        if sum(n for destination, n in counts.items() if destination.startswith(prefix)) >= DENSE_MIN:
+            dense.append(key)
+    return dense
+
+
+def test_dense_modules_are_found():
+    """Con el umbral actual, los tres módulos que la auditoría llama densos (D-01); si cambia, cambia esto."""
+    assert dense_modules() == [
+        "app3_sistema_multiagente 01", "app3_sistema_multiagente 05", "app3_sistema_multiagente 07",
+    ]
+
+
+def test_dense_modules_practice_multiple_response():
+    """G-06: un módulo que introduce `DENSE_MIN` viñetas o más lleva, además de la de respuesta única, una multiple-response.
+
+    Los módulos nuevos de las tandas C y D nacen sujetos a esta regla (`app2/04` y `app3/11` la cumplirán al entregarse).
+    """
     sections = all_sections()
-    for name in ("app3_sistema_multiagente 01", "app3_sistema_multiagente 05"):
-        assert MULTI.search(sections[name]), f"{name} debería llevar una pregunta «Selecciona N»"
+    missing = [name for name in dense_modules() if not MULTI.search(sections[name])]
+    assert not missing, f"módulos densos (≥ {DENSE_MIN} viñetas) sin una pregunta «Selecciona N»: {missing}"
 
 
 @pytest.mark.parametrize("name", sorted(PENDING_ONBOARDING))

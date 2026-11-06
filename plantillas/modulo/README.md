@@ -79,7 +79,7 @@ Enunciado, opciones de longitud y registro parejos (la correcta no siempre en la
 **X.** Por qué, con las viñetas.
 </details>
 
-<!-- Variante multiple-response (opcional; el examen real mezcla los dos formatos). Se añade DESPUÉS de la
+<!-- Variante multiple-response (opcional; obligatoria si el módulo introduce 10 o más viñetas; el examen real mezcla los dos formatos). Se añade DESPUÉS de la
 pregunta de respuesta única, dentro de esta misma sección `### Pregunta tipo examen`, con su propio «Paso 4».
 Si la añades, etiqueta la primera como «**Pregunta 1 (una respuesta).**». Reglas, que comprueba
 `tests/test_readme_modulos.py`:

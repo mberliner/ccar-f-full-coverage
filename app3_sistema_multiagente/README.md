@@ -806,7 +806,7 @@ Notas:
 
 ### Pregunta tipo examen
 
-Un proceso extrae con una tool de JSON Schema el número de pedido, la fecha y el total de miles de facturas. Todas las respuestas son JSON válido. Sin embargo, una auditoría encuentra números de pedido plausibles que no existen, siempre en facturas que no citan ninguno. En el esquema, el campo es `string` y figura en `required`. ¿Qué cambio ataca la causa?
+**Pregunta 1 (una respuesta).** Un proceso extrae con una tool de JSON Schema el número de pedido, la fecha y el total de miles de facturas. Todas las respuestas son JSON válido. Sin embargo, una auditoría encuentra números de pedido plausibles que no existen, siempre en facturas que no citan ninguno. En el esquema, el campo es `string` y figura en `required`. ¿Qué cambio ataca la causa?
 
 - A. Añadir al *system prompt* «no inventes datos» y conservar el campo como `string` obligatorio.
 - B. Validar el número con una expresión regular `PO-nnnn` y reenviar al modelo las facturas que fallen.
@@ -821,6 +821,24 @@ Un proceso extrae con una tool de JSON Schema el número de pedido, la fecha y e
 - **A** pide por escrito lo contrario de lo que exige el esquema, y gana el esquema.
 - **B** no detecta el problema: el número inventado tiene el formato correcto y pasa la expresión regular. Además, reintentar no sirve cuando el dato no está en el documento (módulo 08).
 - **C** sacrifica la garantía de salida estructurada (TS 4.3-K2) para resolver algo que el esquema resuelve por sí solo.
+</details>
+
+**Pregunta 2 (multiple-response).** Un equipo extrae importes y categorías de facturas con una tool de JSON Schema y activa el modo estricto. Tras una semana ya no hay respuestas con JSON mal formado, pero en una factura las líneas no suman el total declarado y en otra el IVA aparece en el campo del subtotal. **Selecciona dos** afirmaciones correctas. Evalúa cada opción por separado.
+
+- A. El modo estricto garantiza también que los valores coincidan con el documento, así que los totales erróneos apuntan a un fallo del modelo y no del esquema.
+- B. Con el modo estricto la salida cumple siempre el esquema: no hay JSON mal formado, ni tipos equivocados, ni valores fuera del `enum`.
+- C. Un total que no suma o un valor en el campo que no le toca son errores de significado: el esquema, estricto o no, no los evita.
+- D. Marcar como obligatorios más campos del esquema obliga al modelo a ser más preciso y elimina esos errores de significado.
+
+<details>
+<summary>Paso 4 · Respuesta (pregunta 2)</summary>
+
+**B y C.** La primera dice qué garantiza el modo estricto; la segunda, qué queda fuera de esa garantía.
+
+- **A** Es justo lo que el modo estricto no promete: garantiza la forma, no que el valor sea el del documento (TS 4.3-K3).
+- **B** Una tool con esquema estricto elimina los errores de sintaxis: la salida cumple el esquema (TS 4.3-K1, 4.3-K3).
+- **C** Líneas que no suman el total y valores en el campo equivocado son los errores semánticos que la guía cita como no evitables con el esquema, estricto o no (TS 4.3-K3).
+- **D** Declarar más campos obligatorios no mejora el significado: un campo que el documento puede no traer obliga al modelo a fabricarlo, y la forma de decir «puede no estar» es opcional y *nullable* (TS 4.3-K4, 4.3-S4).
 </details>
 
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
