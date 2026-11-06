@@ -168,3 +168,26 @@ La guía deja fuera de alcance las métricas de comparación entre modelos. Los 
 - **`app1/05`, coste de pasar a 18 tools** (`scoping`): +36 % con Haiku 5.5 y **+58 % con Haiku 4.5**. El README conserva la cifra de Haiku 5.5 y remite aquí. La ausencia de degradación de acierto (18/18 con los dos modelos) y la petición cuya tool cambió con Haiku 4.5 siguen en la nota del módulo.
 - **Coste de ejecutar con el rol `enforcement`** (Haiku 4.5): `app1/03 --anti minimas` es unas 15 veces más caro que con Haiku 5.5, y `app3/07 --parte few_shot --rol-modelo enforcement --repeat 3` cuesta unos 0,23 $ frente a 0,03–0,04 $ de las otras partes. Esas cifras se dejan en los README como aviso de gasto antes de ejecutar (no como comparación).
 - **`app3/07`, `enriquecimiento --anti auto_desde_inicio`:** la fila que nombraba los dos modelos pasó a dos filas, una por modelo (Haiku 5.5: 7/12 con el pedido extraído; Haiku 4.5: 9/12; consulta antes de extraer 0/12 y número ajeno 0 en los dos). No se movió ningún dato.
+
+## Entrega 3 · tanda C, sonda C1 de `claude -p` (2026-11-06)
+
+CLI instalada 2.1.319 y CLI incluida en el SDK fijado (`claude-agent-sdk` 0.2.173, CLI 2.1.309); cada resultado se comprobó en las dos y **no difiere**. Modelo: Sonnet 5.5 (rol `reviewer`) en las pruebas de contexto y Haiku 5.5 en las de forma y coste. Coste total ~0,4 $. Los módulos usan la CLI del SDK. Construye la orden `harness/headless.py`, con sus tests sin modelo (`tests/test_headless.py`).
+
+- **Forma de la salida** (`--output-format json`): un único objeto `type: result` con `result` (texto), `session_id`, `total_cost_usd`, `num_turns`, `subtype`, `is_error`, `terminal_reason`, `usage` y `modelUsage`. Con `--json-schema` añade `structured_output` (el objeto ya parseado) y `result` trae el mismo JSON como texto; hace falta un turno más (`num_turns` 3). Cada llamada arrastra ~23.000 tokens de contexto base, casi todo de caché.
+- **Si el modelo no cumple el schema, la CLI no falla:** con un schema imposible (`minimum` 10 y `maximum` 5) el resultado fue `subtype: success`, `is_error: false`, **sin `structured_output`** y con texto libre en `result` explicando que no pudo (mismo comportamiento con las dos CLI). Un módulo que solo mire `subtype` da por buena una respuesta sin objeto, así que `parse_result` exige `structured_output` y valida de nuevo con `jsonschema`. → roadmap §5
+- **Aislamiento** (marcas distintas en la memoria de usuario, en un `CLAUDE.md` de un directorio padre y en el del `cwd`; `CLAUDE_CONFIG_DIR` temporal):
+
+  | Flags | Marcas que llegan |
+  | :--- | :--- |
+  | ninguno | usuario, padre y `cwd` |
+  | `--setting-sources project` | padre y `cwd` |
+  | `--setting-sources ""` | ninguna |
+  | `--bare` (con o sin `--add-dir <cwd>`) | ninguna |
+  | `--setting-sources project` + `--settings '{"claudeMdExcludes":["!<cwd>/**"]}'` | **solo la del `cwd`** |
+
+  `--setting-sources project` no basta: los `CLAUDE.md` de los directorios padre siguen entrando. `--bare` y `--setting-sources ""` aíslan, pero también quitan el del `cwd`, que en `11` es el contexto de CI (TS 3.6-K3); `--bare --add-dir` tampoco lo recupera. La combinación de la última fila lo conserva y deja fuera todo lo demás (es la negación que ya usa `.claude/settings.local.json`). → roadmap §3 regla 3
+- **Qué ve el proceso aislado** (línea `init` con `--output-format stream-json --verbose`, config de usuario real de la cuenta): sin flags, 18 skills, 50 comandos y 27 tools; con `--setting-sources project --strict-mcp-config --disable-slash-commands` y `claudeMdExcludes`, 0 servidores MCP, 0 skills, 0 comandos y sin la tool `Skill`. Los cuatro plugins `@builtin` y los agentes integrados siguen (como en el Agent SDK, `app1/06`). `--tools` fija el conjunto de tools: `Read,Grep,Glob` para revisar.
+- **Tope de coste:** hay flag, `--max-budget-usd`. Al agotarse: `subtype: error_max_budget_usd`, `is_error: true`, `terminal_reason: budget_exhausted`, código de salida 1 y sin `result`. Se comprueba entre turnos: con 0,003 $ de tope la ejecución costó 0,0042 $. No es un corte exacto. `--max-turns` queda solo como red.
+- **`--resume` desde `claude -p`:** conserva el `session_id` y el contexto (el generador, que había editado `f.py`, recordó por qué). Hay que lanzarlo con la misma configuración de datos y desde el mismo `cwd`, y la sesión de origen no puede haberse lanzado con `--no-session-persistence`.
+  - **El `total_cost_usd` es acumulado**, como en el SDK (✓ roadmap §4.3): generador 0,001186 $, primer `resume` 0,001464 $ (propio 0,000278 $, recalculado desde `usage`), segundo `resume` 0,001528 $ (se suma al anterior, porque `resume` sin `--fork-session` modifica la sesión). Con la CLI del SDK, igual (0,001032 → 0,001272 → 0,001334).
+  - **`--max-budget-usd` no cuenta ese histórico:** con 0,0013 $ de tope y 0,0018 $ ya acumulados, un `resume` de dos turnos terminó con `success` (0,0022 $ acumulados, 0,0005 $ propios). El tope de una rama con `--resume` lo tiene que llevar el arnés: coste de cada invocación = diferencia de acumulados, y el flag de la siguiente = tope de la rama − gastado (`headless.Ledger`). → roadmap §4.3 y §5

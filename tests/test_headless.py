@@ -1,0 +1,282 @@
+"""Tests de `harness/headless.py`: la orden aislada de `claude -p`, el tope y la lectura del resultado.
+
+PROPÓSITO: fijar sin modelo lo que la sonda C1 midió con modelo (docs/hallazgos.md, tanda C).
+
+POR QUÉ EXISTE: la orden de `claude -p` es la lección de `app3/11` y `12`: si un flag de
+aislamiento o el tope desaparecen, la ejecución dependería de la máquina o no tendría coste
+acotado, y ningún otro test lo notaría.
+
+QUÉ NO HACE: no ejecuta la CLI ni llama al modelo; el ejecutor se sustituye por uno falso.
+"""
+
+import json
+import os
+from pathlib import Path
+
+import pytest
+
+from harness import headless
+from harness.options import ISOLATION_ENV
+
+SCHEMA = {
+    "type": "object",
+    "properties": {"n": {"type": "integer"}},
+    "required": ["n"],
+    "additionalProperties": False,
+}
+
+
+def build(tmp_path: Path, **kwargs):
+    kwargs.setdefault("model", "claude-sonnet-5-5")
+    kwargs.setdefault("max_budget_usd", 0.2)
+    return headless.build_command(cwd=tmp_path, **kwargs)
+
+
+def value_after(cmd: list[str], flag: str) -> str:
+    return cmd[cmd.index(flag) + 1]
+
+
+# --- la orden ---------------------------------------------------------------
+
+
+def test_command_is_print_mode_json_with_budget(tmp_path):
+    cmd = build(tmp_path)
+    assert "-p" in cmd
+    assert value_after(cmd, "--output-format") == "json"
+    assert value_after(cmd, "--max-budget-usd") == "0.2"
+    assert value_after(cmd, "--model") == "claude-sonnet-5-5"
+
+
+@pytest.mark.parametrize("budget", [None, 0, -1, float("nan")])
+def test_budget_is_required(tmp_path, budget):
+    with pytest.raises(ValueError):
+        build(tmp_path, max_budget_usd=budget)
+
+
+def test_isolation_flags(tmp_path):
+    cmd = build(tmp_path)
+    # Solo el proyecto: la memoria y la configuración de usuario no entran.
+    assert value_after(cmd, "--setting-sources") == "project"
+    assert "--strict-mcp-config" in cmd
+    assert "--disable-slash-commands" in cmd
+    # `--bare` y `--setting-sources ""` también quitarían el CLAUDE.md del cwd, que aquí es el contexto de CI.
+    assert "--bare" not in cmd
+    assert value_after(cmd, "--setting-sources") != ""
+
+
+def test_only_cwd_claude_md_is_kept(tmp_path):
+    """`--setting-sources project` deja pasar el CLAUDE.md de los directorios padre; la exclusión negada lo corta."""
+    cmd = build(tmp_path)
+    settings = json.loads(value_after(cmd, "--settings"))
+    assert settings == {"claudeMdExcludes": ["!" + tmp_path.resolve().as_posix() + "/**"]}
+
+
+def test_default_tools_are_read_only_and_denied_otherwise(tmp_path):
+    cmd = build(tmp_path)
+    assert value_after(cmd, "--tools") == "Read,Grep,Glob"
+    assert value_after(cmd, "--allowedTools") == "Read,Grep,Glob"
+    # `dontAsk`: lo que no está permitido se deniega en vez de esperar una respuesta que no llegará (3.6-S1).
+    assert value_after(cmd, "--permission-mode") == "dontAsk"
+
+
+def test_tools_can_be_changed_for_the_generator(tmp_path):
+    cmd = build(tmp_path, tools=("Read", "Edit"))
+    assert value_after(cmd, "--tools") == "Read,Edit"
+    assert value_after(cmd, "--allowedTools") == "Read,Edit"
+
+
+def test_schema_goes_as_compact_json(tmp_path):
+    cmd = build(tmp_path, schema=SCHEMA)
+    assert json.loads(value_after(cmd, "--json-schema")) == SCHEMA
+    assert "--json-schema" not in build(tmp_path)
+
+
+def test_resume_keeps_the_session_and_fresh_runs_are_not_persisted(tmp_path):
+    fresh = build(tmp_path)
+    assert "--no-session-persistence" in fresh and "--resume" not in fresh
+    resumed = build(tmp_path, resume="abc-123")
+    assert value_after(resumed, "--resume") == "abc-123"
+    # Sin persistencia no habría nada que reanudar.
+    assert "--no-session-persistence" not in resumed
+
+
+def test_generator_that_will_be_resumed_must_persist(tmp_path):
+    cmd = build(tmp_path, persist=True)
+    assert "--no-session-persistence" not in cmd
+
+
+def test_prompt_is_not_in_the_command(tmp_path):
+    """El prompt (con el diff) va por stdin: la orden queda corta y legible."""
+    cmd = build(tmp_path)
+    assert all("diff --git" not in part for part in cmd)
+
+
+def test_cli_defaults_to_the_one_bundled_with_the_pinned_sdk(tmp_path):
+    cmd = build(tmp_path)
+    assert Path(cmd[0]).name.startswith("claude")
+    assert "_bundled" in cmd[0]
+
+
+def test_cli_can_be_overridden(tmp_path):
+    assert build(tmp_path, cli="claude")[0] == "claude"
+
+
+def test_cwd_must_exist(tmp_path):
+    with pytest.raises(FileNotFoundError):
+        headless.build_command(cwd=tmp_path / "no_existe", model="m", max_budget_usd=0.1)
+
+
+def test_env_has_the_isolation_values(tmp_path):
+    env = headless.build_env()
+    for key, value in ISOLATION_ENV.items():
+        assert env[key] == value
+    # El resto del entorno (PATH, la credencial) se conserva.
+    assert env["PATH"] == os.environ["PATH"]
+
+
+def test_command_is_printed_whole_before_running(tmp_path, capsys):
+    cmd = build(tmp_path, schema=SCHEMA)
+    headless.print_command(cmd, stdin_chars=1234)
+    out = capsys.readouterr().out
+    assert out.startswith("[orden] ")
+    for part in ("--max-budget-usd", "--setting-sources", "--json-schema", "--strict-mcp-config"):
+        assert part in out
+    assert "1234" in out  # el prompt se anuncia por su tamaño, no se omite en silencio
+
+
+def test_printed_command_can_be_pasted_in_a_shell(tmp_path):
+    line = headless.format_command(build(tmp_path, schema=SCHEMA))
+    # El JSON del schema lleva comillas y llaves: se cita para que sobreviva.
+    assert "'" in line or '"' in line
+
+
+# --- el resultado -----------------------------------------------------------
+
+
+def raw(**fields) -> str:
+    base = {
+        "type": "result",
+        "subtype": "success",
+        "is_error": False,
+        "terminal_reason": "completed",
+        "num_turns": 3,
+        "session_id": "sid-1",
+        "total_cost_usd": 0.01,
+        "result": "texto",
+    }
+    base.update(fields)
+    return json.dumps(base)
+
+
+def test_parse_structured_output_valid():
+    result = headless.parse_result(raw(structured_output={"n": 3}), SCHEMA)
+    assert result.structured == {"n": 3}
+    assert result.status == "ok" and result.ok
+    assert result.session_id == "sid-1" and result.cost_usd == 0.01
+
+
+def test_parse_structured_output_invalid_against_schema():
+    """El CLI da por buena una salida; el módulo valida de nuevo por si acaso."""
+    result = headless.parse_result(raw(structured_output={"n": "tres"}), SCHEMA)
+    assert result.status == "schema_invalid" and not result.ok
+    assert "n" in result.detail
+
+
+def test_parse_missing_structured_output_is_not_a_success():
+    """Sonda C1: con un schema imposible el CLI devuelve `subtype: success` y texto libre."""
+    result = headless.parse_result(raw(result="No pude cumplir el esquema"), SCHEMA)
+    assert result.status == "no_structured_output" and not result.ok
+    assert result.text == "No pude cumplir el esquema"
+
+
+def test_parse_without_schema_only_needs_a_success():
+    result = headless.parse_result(raw(), None)
+    assert result.status == "ok" and result.structured is None
+
+
+def test_parse_budget_exhausted():
+    result = headless.parse_result(
+        raw(subtype="error_max_budget_usd", is_error=True, terminal_reason="budget_exhausted", result=None, total_cost_usd=0.0042),
+        SCHEMA,
+    )
+    assert result.status == "budget_exhausted" and not result.ok
+    assert result.cost_usd == 0.0042
+
+
+def test_parse_not_json():
+    result = headless.parse_result("Traceback...", SCHEMA)
+    assert result.status == "not_json" and not result.ok
+
+
+def test_parse_other_error():
+    result = headless.parse_result(raw(subtype="error_during_execution", is_error=True, result=None), SCHEMA)
+    assert result.status == "error" and "error_during_execution" in result.detail
+
+
+# --- coste acumulado de la sesión reanudada --------------------------------
+
+
+def test_resumed_cost_is_cumulative_so_the_invocation_cost_is_the_difference():
+    """Sonda C1: `total_cost_usd` de `--resume` incluye el de la sesión (0,001186 → 0,001464 → 0,001528)."""
+    ledger = headless.Ledger(limit_usd=0.5)
+    generator = headless.parse_result(raw(total_cost_usd=0.001186), None)
+    review = headless.parse_result(raw(total_cost_usd=0.001464), None)
+    assert ledger.add(generator) == pytest.approx(0.001186)
+    assert ledger.add(review, resumed_from=generator) == pytest.approx(0.000278)
+    assert ledger.spent == pytest.approx(0.001464)  # no 0,00265: no se cuenta dos veces
+
+
+def test_fresh_runs_add_up():
+    ledger = headless.Ledger(limit_usd=0.5)
+    ledger.add(headless.parse_result(raw(total_cost_usd=0.01), None))
+    ledger.add(headless.parse_result(raw(total_cost_usd=0.02), None))
+    assert ledger.spent == pytest.approx(0.03)
+
+
+def test_remaining_feeds_the_next_flag_and_stops_at_zero():
+    """El flag de la CLI no cuenta el histórico de la sesión: el tope de la rama lo lleva el arnés."""
+    ledger = headless.Ledger(limit_usd=0.05)
+    ledger.add(headless.parse_result(raw(total_cost_usd=0.02), None))
+    assert ledger.remaining() == pytest.approx(0.03)
+    ledger.add(headless.parse_result(raw(total_cost_usd=0.04), None))
+    with pytest.raises(headless.BudgetExhausted):
+        ledger.remaining()
+
+
+def test_ledger_limit_is_required():
+    with pytest.raises(ValueError):
+        headless.Ledger(limit_usd=0)
+
+
+# --- ejecución con ejecutor falso ------------------------------------------
+
+
+class FakeRun:
+    def __init__(self, stdout: str, returncode: int = 0):
+        self.stdout, self.returncode, self.stderr = stdout, returncode, ""
+        self.calls: list[dict] = []
+
+    def __call__(self, cmd, **kwargs):
+        self.calls.append({"cmd": cmd, **kwargs})
+        return self
+
+    # `subprocess.CompletedProcess` expone estos tres atributos
+
+
+def test_run_prints_command_then_runs_and_passes_prompt_by_stdin(tmp_path, capsys):
+    fake = FakeRun(raw(structured_output={"n": 1}))
+    cmd = build(tmp_path, schema=SCHEMA)
+    result = headless.run(cmd, "PROMPT LARGO", cwd=tmp_path, schema=SCHEMA, runner=fake)
+    out = capsys.readouterr().out
+    assert out.index("[orden]") < out.index("[resultado]")
+    call = fake.calls[0]
+    assert call["input"] == "PROMPT LARGO"
+    assert Path(call["cwd"]) == tmp_path
+    assert call["env"]["CLAUDE_CODE_DISABLE_AUTO_MEMORY"] == "1"
+    assert result.ok and result.structured == {"n": 1}
+
+
+def test_run_reports_nonzero_exit_with_budget_error(tmp_path):
+    fake = FakeRun(raw(subtype="error_max_budget_usd", is_error=True, result=None), returncode=1)
+    result = headless.run(build(tmp_path), "p", cwd=tmp_path, schema=None, runner=fake)
+    assert result.status == "budget_exhausted"
