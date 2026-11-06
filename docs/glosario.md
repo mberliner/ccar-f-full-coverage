@@ -66,7 +66,7 @@ Términos que usan los módulos de las tres apps y el arnés, para quien llega d
 
 - **Coordinador:** el agente principal de un sistema multiagente. Recibe la tarea, la reparte entre subagentes y compone la respuesta.
 - **Subagente:** un agente que otro agente lanza para una subtarea, con su propio prompt, sus propias tools y su propio contexto. En el SDK se define con `AgentDefinition`.
-- **`Agent` / `Task`:** la tool con la que un coordinador lanza un subagente. La guía la llama `Task`; el SDK de este proyecto, `Agent`.
+- **`Task` (guía) / `Agent` (CLI):** la tool con la que un coordinador lanza un subagente. En el examen el nombre que hay que reconocer es `Task`: la guía exige que `allowedTools` la incluya para que el coordinador pueda invocar subagentes (TS 1.3-K1). La CLI de este proyecto la expone como `Agent`, que es el nombre que verás en los registros y en `tools=["Agent"]`. Es la misma tool.
 - ***Hub-and-spoke* (estrella):** organización en la que toda la comunicación entre subagentes pasa por el coordinador.
 - **Descomposición:** dividir una tarea en subtareas, ya sea con una cadena fija de pasos o de forma adaptativa según lo que se va encontrando.
 - **Tool cross-role (entre roles):** una tool de otro rol que se da a un agente de forma muy limitada, para lo frecuente y sencillo.

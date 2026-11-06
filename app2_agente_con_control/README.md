@@ -230,7 +230,7 @@ Varias tools MCP de un agente devuelven fechas en formatos distintos (timestamps
 
 ### El ejercicio: cuatro configuraciones
 
-Tools: las del [servidor `helpdesk`](#el-servidor-helpdesk-y-sus-tools); en `subagente`, además, la tool integrada `Agent`, que lanza [subagentes](../docs/glosario.md#sistemas-multiagente). El módulo no tiene `--anti`: cada configuración es un caso que comparar, y `--config` ejecuta solo una.
+Tools: las del [servidor `helpdesk`](#el-servidor-helpdesk-y-sus-tools); en `subagente`, además, la tool integrada `Task` (guía) / `Agent` (CLI), que lanza [subagentes](../docs/glosario.md#sistemas-multiagente). El módulo no tiene `--anti`: cada configuración es un caso que comparar, y `--config` ejecuta solo una.
 
 | Configuración | Qué pone el código |
 | :--- | :--- |
