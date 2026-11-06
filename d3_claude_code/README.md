@@ -5,7 +5,7 @@ El dominio 3 trata de cómo se configura y se usa Claude Code, así que no tiene
 1. **Ruta por los archivos reales:** las 27 viñetas que ya viven en un archivo de configuración.
 2. **Guion de lo que no cabe en un archivo:** las 13 viñetas que se introducen aquí y dos comparaciones que el examen suele plantear.
 3. **Práctica propia:** la haces tú, en tu sesión.
-4. **Tres preguntas tipo examen.**
+4. **Cinco comprobaciones cortas (una por TS) y tres preguntas tipo examen integradas.**
 
 La TS 3.6 (CI/CD) no está en esta sección: llega con la entrega 3 (ver `CONCEPTOS.md`).
 
@@ -381,9 +381,90 @@ Qué esperar de cada paso no es opinión: sale de estas fuentes. La última colu
 
 ---
 
-## 4 · Preguntas tipo examen
+## 4 · Comprobaciones y preguntas tipo examen
 
-### Pregunta 1 (TS 3.1 y 3.3)
+Las 40 viñetas de D3 se comprueban en dos tandas. Primero, **una comprobación corta por TS** (3.1 a 3.5): una sola respuesta, para fijar cada grupo antes de mezclarlos. Después, **tres preguntas integradas** que combinan varias TS, como hace el examen. Responde antes de abrir cada respuesta; si fallas alguna, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
+### 4.1 Comprobaciones cortas, una por TS
+
+#### TS 3.1 · Jerarquía y modularidad de `CLAUDE.md`
+
+Un monorepo tiene un paquete de pagos y otro de informes. Las normas de seguridad financiera solo le interesan al primero y las de formato de informes, al segundo. Quien mantiene cada paquete sabe qué normas le corresponden. ¿Cómo conviene organizarlo?
+
+- A. Copiar todas las normas en el `CLAUDE.md` raíz, para que los dos paquetes las reciban siempre.
+- B. Guardar las normas de cada paquete en el `~/.claude/CLAUDE.md` de quien lo mantiene, para no engordar el repositorio.
+- C. En el `CLAUDE.md` de cada paquete, importar con `@` solo el archivo de normas que le corresponde.
+- D. Reunir todas las normas en un único `CLAUDE.md` del proyecto, ordenadas por paquete con encabezados.
+
+<details>
+<summary>Respuesta</summary>
+
+**C.** El `@import` mantiene el `CLAUDE.md` modular (TS 3.1-K3), y la persona que conoce cada paquete elige qué estándares importa en el suyo (TS 3.1-S2). A y D cargan todas las normas en sesiones que no las necesitan y acumulan todo en un archivo, justo lo que la guía propone dividir (TS 3.1-K4). B pone las normas en el nivel de usuario, que no viaja por git ni llega al resto del equipo (TS 3.1-K2).
+</details>
+
+#### TS 3.2 · Comandos y skills
+
+El equipo quiere que todas las personas tengan un comando `/revisar-migracion` en cuanto clonen el repositorio, sin instalar nada. ¿Dónde se define?
+
+- A. En un archivo de `.claude/commands/` del repositorio, que se versiona y llega a todo el equipo con el clon.
+- B. En `~/.claude/commands/` de cada persona, copiado desde un archivo que el equipo comparte.
+- C. En `~/.claude/skills/` con otro nombre, para no pisar el comando de ningún compañero.
+- D. En el `CLAUDE.md` raíz, descrito como un comando que Claude reconoce al abrir la sesión.
+
+<details>
+<summary>Respuesta</summary>
+
+**A.** Un comando de proyecto vive en `.claude/commands/` y se comparte por control de versiones (TS 3.2-K1, TS 3.2-S1). B es el comando de usuario: cada persona tendría que copiarlo y mantenerlo a mano. C es una variante personal (TS 3.2-K4), pensada para no afectar a nadie, justo lo contrario de lo que se busca. D no crea ningún comando: el `CLAUDE.md` da instrucciones, no registra comandos.
+</details>
+
+#### TS 3.3 · Reglas por ruta
+
+Una regla de `.claude/rules/` tiene este frontmatter: `paths: ["**/*.test.tsx"]`. ¿Qué describe mejor su comportamiento?
+
+- A. Se carga al inicio de cada sesión, y los patrones solo sirven para fijar su prioridad frente a otras reglas.
+- B. Se aplica únicamente a los archivos de test que están en la misma carpeta donde vive la regla.
+- C. Se carga siempre, pero Claude solo la sigue cuando el archivo que edita coincide con el patrón.
+- D. Se carga solo al editar un archivo que coincide con el patrón, esté en el directorio que esté.
+
+<details>
+<summary>Respuesta</summary>
+
+**D.** El campo `paths` condiciona la carga a los archivos que coinciden con el glob (TS 3.3-K1), así que la regla no gasta contexto cuando se edita otra cosa (TS 3.3-K2), y el patrón `**/` la aplica por tipo de archivo en cualquier directorio (TS 3.3-S2). A y C la cargan siempre, que es lo que la regla por ruta evita. B la ata a una carpeta, cuando el glob existe precisamente para no depender de dónde están los archivos.
+</details>
+
+#### TS 3.4 · Plan mode y ejecución directa
+
+Para planificar una migración hay que recorrer cientos de archivos buscando los usos de una API antigua. En intentos anteriores, esa exploración llenó la ventana de contexto antes de empezar a cambiar nada. ¿Qué conviene?
+
+- A. Hacer la búsqueda archivo por archivo en la conversación principal, resumiéndola a mano cada cierto tiempo.
+- B. Delegar el descubrimiento en el subagente `Explore`, que devuelve un resumen y deja libre la conversación principal.
+- C. Pasar a ejecución directa y cambiar los usos según aparezcan, sin una fase previa de búsqueda.
+- D. Abrir una conversación nueva cada pocos archivos y repetir la instrucción desde cero en cada una.
+
+<details>
+<summary>Respuesta</summary>
+
+**B.** `Explore` aísla la salida verbosa del descubrimiento y devuelve solo un resumen, que preserva el contexto de la conversación principal (TS 3.4-K4, TS 3.4-S3). A llena de todos modos el contexto con la exploración. C se salta la exploración de un cambio de muchos archivos, que es el caso de plan mode (TS 3.4-K1). D pierde lo ya descubierto en cada conversación nueva.
+</details>
+
+#### TS 3.5 · Refinamiento iterativo
+
+Una persona va a implementar una capa de caché en un dominio que no conoce y no sabe qué estrategias de invalidación ni qué fallos debería prever. ¿Qué técnica conviene antes de implementar?
+
+- A. Escribir una especificación larga en prosa con todo lo que se le ocurra y pedir la implementación completa.
+- B. Dar dos o tres ejemplos de entrada y salida de la caché, para que Claude infiera cómo debe comportarse.
+- C. Pedir a Claude que le haga preguntas que saquen a la luz estrategias de invalidación y modos de fallo.
+- D. Implementar una primera versión y corregir los problemas de uno en uno según los vaya notando en producción.
+
+<details>
+<summary>Respuesta</summary>
+
+**C.** El patrón de entrevista hace que Claude pregunte para sacar a la luz consideraciones que la persona no había previsto, como la invalidación de la caché o sus modos de fallo, antes de implementar (TS 3.5-K3, TS 3.5-S3). B sirve para fijar una transformación que la prosa deja ambigua (TS 3.5-K1, TS 3.5-S1), no para descubrir qué decisiones faltan. A solo recoge lo que la persona ya sabe prever. D descubre los fallos cuando ya cuestan.
+</details>
+
+### 4.2 Preguntas integradas
+
+#### Pregunta 1 (TS 3.1 y 3.3)
 
 Una persona se incorpora al equipo y Claude no aplica en sus sesiones las convenciones de testing, que sí cumple en las de la responsable técnica. Al revisarlo con `/memory`, la persona nueva ve el `CLAUDE.md` del proyecto pero no las convenciones. Los tests están repartidos por muchos directorios del repositorio. ¿Qué cambio es el más adecuado?
 
@@ -398,7 +479,7 @@ Una persona se incorpora al equipo y Claude no aplica en sus sesiones las conven
 **B.** El diagnóstico es de jerarquía: las convenciones estaban en el nivel de usuario de la responsable, que no se comparte (TS 3.1-K2, TS 3.1-S1), y `/memory` es lo que lo revela (TS 3.1-S4). La solución las sube al proyecto como regla por ruta: se versiona, y con un glob se carga solo con los archivos de test, estén donde estén (TS 3.3-K1, TS 3.3-K2, TS 3.3-S2). A sigue dependiendo de una copia personal que nadie mantiene en común. C funciona, pero repite la convención en cada carpeta: es justo lo que la regla por ruta evita cuando los archivos están dispersos (TS 3.3-K3, TS 3.3-S3). D también la compartiría, pero la carga en todas las sesiones aunque no se toque ningún test y engorda el `CLAUDE.md` que la guía propone dividir (TS 3.1-K4).
 </details>
 
-### Pregunta 2 (TS 3.2)
+#### Pregunta 2 (TS 3.2)
 
 El equipo tiene una skill de proyecto, `analizar-dependencias`, que recorre todo el repositorio. Cada vez que alguien la ejecuta, cientos de líneas de exploración se quedan en la conversación principal, y en alguna ocasión la skill ha modificado archivos aunque solo debía leerlos. ¿Qué cambio en su `SKILL.md` es el más adecuado?
 
@@ -413,7 +494,7 @@ El equipo tiene una skill de proyecto, `analizar-dependencias`, que recorre todo
 **D.** `context: fork` ejecuta la skill en un subagente aislado, y a la conversación principal solo vuelve el resultado (TS 3.2-K3, TS 3.2-S2); `allowed-tools` restringe las tools mientras corre, así que una skill de lectura no puede editar (TS 3.2-S3). A usa `argument-hint` para algo que no resuelve: sirve para pedir un parámetro requerido (TS 3.2-S4), no para aislar la salida ni impedir ediciones. B confunde la variante personal (TS 3.2-K4) con una solución: el equipo pierde la skill compartida y el problema sigue en cada máquina. C va al revés de TS 3.2-S5: un flujo bajo demanda no debe cargarse siempre.
 </details>
 
-### Pregunta 3 (TS 3.4 y 3.5)
+#### Pregunta 3 (TS 3.4 y 3.5)
 
 Un equipo tiene que cambiar la librería de fechas en unos 45 archivos. Un primer intento en ejecución directa, con la instrucción «normaliza todas las fechas a ISO 8601», dejó formatos distintos según el archivo: unos con zona horaria, otros sin ella y otros en hora local. ¿Qué enfoque es el más adecuado para el segundo intento?
 

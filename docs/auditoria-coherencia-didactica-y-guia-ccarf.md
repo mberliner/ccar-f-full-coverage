@@ -14,6 +14,7 @@
 | C-01 fila de `app3/08` | ✅ **Terminado** | La tabla indica K1, K2, K4, S1, S2 y S4, con K3 y S3 en `app3/11`. |
 | C-02 ruta raíz de app3 | ✅ **Terminado** | `README.md` describe `01`→`09` y deja `10`–`12` como pendientes. |
 | C-03 `app3/CLAUDE.md` | ✅ **Terminado** | Diez fuentes (verificado en `datos/generar_sinteticos.py`) y estado de `06` en `estado/<perfil>/app3-06/`. |
+| D-04 comprobaciones de D3 | ✅ **Terminado** | La sección 4 de `d3_claude_code/README.md` pasa de 3 a 8 preguntas: una comprobación corta por TS (3.1 a 3.5), cada una sobre viñetas que las tres integradas no cubrían (`@import` selectivo, comando de proyecto, `paths`, `Explore`, patrón de entrevista), más las tres integradas. `tests/test_d3_comprobaciones.py` comprueba el formato, que cada comprobación cite viñetas de su TS y que las respuestas no se delaten por letra ni por longitud. Queda fuera TS 3.6, que llega con la entrega 3. |
 | G-06 multiple-response | 🟡 **Piloto hecho** | Formato definido en `plantillas/modulo/README.md` y `docs/estandares-flujo.md`; el narrador muestra todas las preguntas y respuestas de un módulo; `tests/test_readme_modulos.py` comprueba cuántas elegir, el número de opciones y la justificación por opción. Piloto en `app3/01` (TS 1.2) y `app3/05` (TS 5.6), añadido a la pregunta de respuesta única. Las multiple-response tienen como máximo 4 opciones (límite de `AskUserQuestion`), comprobado por test. Pendiente: extender a más módulos y a las tandas C y D. |
 | G-01 strict mode en `app3/07` | ✅ **Terminado** | El módulo usa la Messages API, así que `strict: true` va en la definición de la tool sin el problema que se temía con MCP. Sonda previa (0,0008 $): la API acepta `type: ["string","null"]` y opcionales fuera de `required` con `strict`; solo exige `additionalProperties: false`. Nueva `build_tool(strict=True)` y parte `--parte estricto` (con/sin `strict` sobre el `enum` cerrado: forma 10/12 → 12/12, tipo correcto 11/12 → 9/12). Cabecera y README corrigen que la guía no lo nombra, y separan «JSON válido», «forma válida» y «dato correcto». |
 | G-05 test de perímetro | ✅ **Terminado** | La garantía se rebautiza como «lista de exclusión conocida» (docstring del test y del YAML). Se añaden `updatedInput` y `disallowed_tools` con `permitido_en` por archivo, y un test que obliga a borrar las excepciones que ya no se usan. `permission_mode` queda fuera de la lista a propósito: `dontAsk` es fontanería en unos 14 módulos y la excepción no protegería nada. |
@@ -308,7 +309,7 @@ Las marcas `EN PRODUCCIÓN (no evaluable)` ayudan, pero algunos contenidos sigue
 - **Producto observado en versión X**;
 - **Diseño de producción adicional**.
 
-#### D-04. D3 concentra demasiada materia en pocas comprobaciones
+#### D-04. D3 concentra demasiada materia en pocas comprobaciones ✅ TERMINADO 2026-11-06
 
 Hay 40 objetivos D3 ya introducidos, pero la sección usa tres preguntas finales y queda fuera del narrador de módulos. La práctica operacional es valiosa, aunque la recuperación explícita por objetivo es menor que en las apps.
 
