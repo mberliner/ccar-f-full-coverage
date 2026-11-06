@@ -16,7 +16,12 @@ QUÉ DICE LA GUÍA:
   sabe de qué tipo es el documento (4.3-S2); forzar una tool asegura que esa extracción
   se haga antes de los pasos que la enriquecen (4.3-S3).
 - El esquema elimina los errores de sintaxis, no los de significado: líneas que no suman
-  el total o un valor en el campo que no le toca pasan igual (4.3-K3).
+  el total o un valor en el campo que no le toca pasan igual (4.3-K3). La guía nombra el
+  modo estricto de ese mecanismo (`strict: true` en la tool), que es el que elimina los
+  errores de sintaxis del esquema; sin él, la API no impide que el modelo escriba un valor
+  fuera del `enum` o un tipo distinto. Por eso hay tres niveles que no se confunden:
+  JSON válido (parseable), forma válida (cumple el esquema) y dato correcto (dice la verdad
+  del documento). `strict` garantiza el segundo y no promete el tercero.
 - Diseño del esquema: qué es obligatorio y qué opcional, y `enum` con `other` más un
   campo de detalle para categorías que pueden crecer (4.3-K4). Si el documento puede no
   traer un dato, el campo va opcional y *nullable*, para que el modelo no lo fabrique
@@ -39,7 +44,9 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
     rellena el campo con algo plausible.
   - Un `enum` sin `other` ni `unclear` (`--anti enum_cerrado`): lo que no encaja se
     mete en la categoría equivocada.
-  - Confundir «el JSON es válido» con «la extracción es correcta».
+  - Confundir «el JSON es válido» con «la extracción es correcta», o creer que `strict`
+    arregla el significado (`--parte estricto`): garantiza que la forma cumple el esquema,
+    no que el valor sea el del documento.
   - Elegir el grado de `tool_choice` al revés: `auto` cuando hace falta una tool sí o
     sí, o una tool forzada cuando el tipo del documento es desconocido.
   - Dejar `auto` desde el primer turno cuando la extracción tiene que ir antes del
@@ -52,6 +59,13 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
   - Un `enum` cerrado no siempre fuerza la categoría equivocada. Sin modo estricto, el
     modelo puede escribir un valor que el `enum` no admite, y la API no lo rechaza. Por
     eso el módulo valida la forma de lo que recibe en vez de darla por hecha.
+  - Con `strict`, ese valor ya no puede salir, pero el documento no mejora: el que antes
+    se clasificaba bien como `other` cae en una categoría que no es (`--parte estricto`).
+    La forma se arregla con `strict`; el significado, con un `enum` abierto y con
+    comprobar contra algo.
+  - Observado en este repositorio: la API acepta `strict` con campos `["string", "null"]`
+    y con opcionales fuera de `required`; solo exige cerrar los objetos con
+    `additionalProperties: false`.
   - El *few-shot* solo se nota si el modelo falla sin él: con Haiku 5.5 no hubo nada
     que corregir, y con Haiku 4.5 sí (`--rol-modelo enforcement`). Lo que corrigió fueron
     fechas mal escritas; campos con valor que salieran vacíos no hubo con ningún modelo.
@@ -62,14 +76,15 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
     prompt que ve el modelo. La parte `few_shot` las quita para dejar solo los ejemplos.
   - Observado en este repositorio (`docs/hallazgos.md`): `any` y la tool forzada
     devuelven 400 con Sonnet 5.5, así que el módulo usa el rol `agent` (Haiku 5.5).
-- EN PRODUCCIÓN (no evaluable): el modo estricto de las tools garantiza el esquema,
-  pero la guía no lo nombra y queda fuera (`tests/perimetro_excluido.yaml`).
+- EN PRODUCCIÓN (no evaluable): `output_config.format` (salida estructurada sin tool) es otro
+  mecanismo del SDK que la guía no nombra y queda fuera (`output_format` en
+  `tests/perimetro_excluido.yaml`). El modo estricto de las tools, en cambio, sí está en la guía.
 
 Pregunta tipo examen: ver `app3_sistema_multiagente/README.md`, módulo 07.
 
 INTRODUCE: TS 4.2-K4, TS 4.2-S4, TS 4.2-S5, TS 4.3-K1, TS 4.3-K2, TS 4.3-K3, TS 4.3-K4, TS 4.3-S1, TS 4.3-S2, TS 4.3-S3, TS 4.3-S4, TS 4.3-S5, TS 4.3-S6
 
-Uso: `uv run python app3_sistema_multiagente/07_extraccion_schema.py --parte forzada|tipo_desconocido|few_shot|enriquecimiento [--anti sin_nullable|enum_cerrado (forzada) | auto_desde_inicio (enriquecimiento)] [--rol-modelo agent|enforcement] [--repeat N]`
+Uso: `uv run python app3_sistema_multiagente/07_extraccion_schema.py --parte forzada|estricto|tipo_desconocido|few_shot|enriquecimiento [--anti sin_nullable|enum_cerrado (forzada) | auto_desde_inicio (enriquecimiento)] [--rol-modelo agent|enforcement] [--repeat N]`
 """
 
 import copy
@@ -89,7 +104,7 @@ from harness.cli import build_parser, report_budget  # noqa: E402
 from harness.config import report_model  # noqa: E402
 from harness.data import load  # noqa: E402
 
-PARTS = ["forzada", "tipo_desconocido", "few_shot", "enriquecimiento"]
+PARTS = ["forzada", "estricto", "tipo_desconocido", "few_shot", "enriquecimiento"]
 # Cada `--anti` pertenece a una parte: `sin_nullable` y `enum_cerrado` a `forzada`, `auto_desde_inicio` a `enriquecimiento`.
 ANTI_BY_PART = {"forzada": ["sin_nullable", "enum_cerrado"], "enriquecimiento": ["auto_desde_inicio"]}
 ANTI_VARIANTS = [v for variants in ANTI_BY_PART.values() for v in variants]
@@ -107,13 +122,28 @@ SYSTEM = "Extraes metadatos de documentos de compra de equipos de una mesa de ay
 # --- Schema (4.3) ------------------------------------------------------------------------
 
 
-def build_tool(variant: str = "correcta", *, normalization: bool = True) -> dict:
+def close_objects(schema: Any) -> None:
+    """Pone `additionalProperties: false` en cada objeto del esquema, a cualquier profundidad (lo exige `strict`)."""
+    if isinstance(schema, dict):
+        if schema.get("type") == "object":
+            schema["additionalProperties"] = False
+        for value in schema.values():
+            close_objects(value)
+    elif isinstance(schema, list):
+        for item in schema:
+            close_objects(item)
+
+
+def build_tool(variant: str = "correcta", *, normalization: bool = True, strict: bool = False) -> dict:
     """La tool `extract_metadata` en una de sus tres variantes.
 
     - `correcta`: opcionales *nullable* y fuera de `required`, `enum` con `other` y `unclear`.
     - `sin_nullable`: todo obligatorio y sin `null`: si el dato no está, hay que inventarlo.
     - `enum_cerrado`: sin `other` ni `unclear`: el tipo raro solo cabe en una categoría que no es.
     `normalization=False` deja las descripciones sin las reglas de formato (fecha ISO, punto decimal).
+    `strict=True` añade `strict: true` a la tool y cierra los objetos: la API garantiza entonces que la
+    entrada cumple el esquema. El esquema en sí no cambia: nullable, `required`, `enum` y descripciones
+    son los mismos que sin `strict`.
     """
     if variant not in ("correcta", "sin_nullable", "enum_cerrado"):
         raise ValueError(f"variante desconocida: {variant}")
@@ -151,11 +181,16 @@ def build_tool(variant: str = "correcta", *, normalization: bool = True) -> dict
         },
     }
     required = ["doc_type", "line_items"] if nullable else list(props)
-    return {
+    tool = {
         "name": TOOL_NAME,
         "description": "Extrae los metadatos de un documento de compra de equipos.",
         "input_schema": {"type": "object", "properties": props, "required": required},
     }
+    if strict:
+        # `strict` va en la definición de la tool (no en `tool_choice`) y exige objetos cerrados.
+        tool["strict"] = True
+        close_objects(tool["input_schema"])
+    return tool
 
 
 def build_type_tools() -> list[dict]:
@@ -555,6 +590,36 @@ def run_forzada(args: Any, create: Callable[..., Any], model: str) -> None:
     print("[sintaxis frente a semántica] «forma válida» solo dice que el JSON cumple el esquema; «incorrectos» e «inventados» salen de comparar con las etiquetas")
 
 
+def strict_arms(create: Callable[..., Any], model: str) -> dict[str, list[Score]]:
+    """El mismo esquema con `enum` cerrado, sin y con `strict`, sobre los mismos documentos (TS 4.3-K1, K3).
+
+    Se usa el `enum_cerrado` porque es donde el modelo quiere escribir un valor que el `enum` no admite
+    (`other`): sin `strict` se cuela; con `strict` no puede salir, pero el documento sigue mal clasificado.
+    """
+    scores: dict[str, list[Score]] = {}
+    for arm, strict in (("sin estricto", False), ("con estricto", True)):
+        tool = build_tool("enum_cerrado", strict=strict)
+        results = run_documents(create, [tool], "forzada", model)
+        scores[arm] = [score_extraction(found[1] if found else {}, LABELS[doc_id], tool["input_schema"]) for doc_id, found in results.items()]
+    return scores
+
+
+def run_estricto(args: Any, create: Callable[..., Any], model: str) -> None:
+    print(f"\n=== estricto · esquema con enum cerrado, sin y con `strict: true` · {len(DOCS)} documentos × {args.repeat} ===")
+    print("[esperado] con `strict` la forma siempre es válida (nada fuera del enum); el tipo correcto no sube: eso es significado")
+    for run in range(1, args.repeat + 1):
+        for arm, scores in strict_arms(create, model).items():
+            summary = summarize(scores)
+            # Tres niveles distintos: JSON válido (la API ya lo entrega parseado), forma válida (cumple el esquema)
+            # y dato correcto (coincide con la etiqueta).
+            print(
+                f"[{run}/{args.repeat}] {arm}: forma válida {summary['sintaxis_ok']}/{summary['documentos']} · "
+                f"fuera del enum {summary['fuera_de_enum']} · tipo correcto {summary['tipo_ok']}/{summary['documentos']} · "
+                f"valores incorrectos {summary['valores_incorrectos']} · líneas correctas {summary['lineas_ok']}/{summary['documentos']}"
+            )
+    print("[tres niveles] JSON válido: la API lo entrega parseado · forma válida: cumple el esquema (lo que garantiza `strict`) · dato correcto: coincide con la etiqueta (lo que no garantiza)")
+
+
 def run_tipo_desconocido(args: Any, create: Callable[..., Any], model: str) -> None:
     tools = build_type_tools()
     print(f"\n=== tipo desconocido · {len(tools)} tools por tipo · {len(DOCS)} documentos × {args.repeat} ===")
@@ -631,7 +696,7 @@ def main() -> int:
     guard = CostGuard(model, budget)
     create = make_create(anthropic.Anthropic(), guard)
     try:
-        {"forzada": run_forzada, "tipo_desconocido": run_tipo_desconocido, "few_shot": run_few_shot, "enriquecimiento": run_enriquecimiento}[args.parte](args, create, model)
+        {"forzada": run_forzada, "estricto": run_estricto, "tipo_desconocido": run_tipo_desconocido, "few_shot": run_few_shot, "enriquecimiento": run_enriquecimiento}[args.parte](args, create, model)
     except BudgetExceeded as exc:
         print(f"[corte] {exc}")
         return 1

@@ -141,3 +141,12 @@ Mediciones nuevas con Sonnet 5.5 de coordinador y Haiku 5.5 de subagente, separa
 - **`app3/06`**
   - `read_manifest` valida bytes, tipos, claves y versión, y el retomar comprueba el *scratchpad* (recuento y huella); `read_scratchpad` ignora una última línea cortada con aviso y falla con la línea si la corrupción está en medio; el estado va a `estado/<perfil>/app3-06/`. Todo con tests, sin modelo.
   - Una pasada de caída simulada y reanudación: sin consultas repetidas, 5 de 5 hechos, estado en `estado/default/app3-06/`.
+
+## Auditoría 2026-11-06 · G-01, modo estricto en `app3/07`
+
+Haiku 5.5 (rol `agent`), Messages API. Coste total: ~0,021 $ (sonda de aceptación 0,0008 $ y `--parte estricto --repeat 3` 0,020 $).
+
+- **`strict: true` es un campo de la definición de la tool** (junto a `name`, `description` e `input_schema`), no de `tool_choice`, y exige `additionalProperties: false` en cada objeto del esquema.
+- **Sondeado: la API acepta el esquema de `extract_metadata` tal cual.** Con `type: ["string", "null"]`, con `anyOf` en su lugar y con todo en `required`, las tres variantes devolvieron `tool_use` sin error; hizo falta solo cerrar los objetos. No hay que reescribir los campos *nullable* para usar `strict`.
+- **`strict` arregla la forma y no el significado, y puede empeorar el tipo.** Con el `enum` cerrado (`invoice`, `delivery_note`): sin `strict`, forma válida 10/12, 2 fuera del `enum` y tipo correcto 11/12; con `strict`, forma válida 12/12, 0 fuera del `enum` y tipo correcto **9/12**. El modelo escribía `other` (correcto) en la garantía y el presupuesto; con `strict` no puede y los fuerza a una categoría que no es. Idéntico en las 3 repeticiones. Es la razón de que el `enum` abierto con `other` y `unclear` (TS 4.3-K4) siga haciendo falta con `strict`.
+- Corrige una afirmación previa del repositorio: la guía **sí** nombra el modo estricto (TS 4.3-K1, K3 y la lista de tecnologías), así que no es «EN PRODUCCIÓN (no evaluable)».

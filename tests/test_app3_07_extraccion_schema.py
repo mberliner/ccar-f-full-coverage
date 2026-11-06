@@ -69,6 +69,95 @@ def test_unknown_variant_fails():
         mod.build_tool("otra")
 
 
+# --- modo estricto (TS 4.3-K1, K3): strict en la tool y objetos cerrados -------------------------
+
+def objects_in(schema):
+    """Todos los sub-esquemas de tipo objeto, a cualquier profundidad."""
+    found = []
+    if isinstance(schema, dict):
+        if schema.get("type") == "object":
+            found.append(schema)
+        for value in schema.values():
+            found += objects_in(value)
+    elif isinstance(schema, list):
+        for item in schema:
+            found += objects_in(item)
+    return found
+
+
+def without_closing(schema):
+    """El esquema sin `additionalProperties`, para compararlo con el no estricto."""
+    if isinstance(schema, dict):
+        return {k: without_closing(v) for k, v in schema.items() if k != "additionalProperties"}
+    if isinstance(schema, list):
+        return [without_closing(i) for i in schema]
+    return schema
+
+
+@pytest.mark.parametrize("variant", ["correcta", "sin_nullable", "enum_cerrado"])
+def test_strict_tool_sets_the_flag_and_closes_every_object(variant):
+    tool = mod.build_tool(variant, strict=True)
+    assert tool["strict"] is True
+    objects = objects_in(tool["input_schema"])
+    assert len(objects) >= 2, "el esquema tiene al menos la raíz y el objeto de las líneas"
+    assert all(obj.get("additionalProperties") is False for obj in objects)
+
+
+@pytest.mark.parametrize("variant", ["correcta", "sin_nullable", "enum_cerrado"])
+def test_non_strict_tool_is_left_as_it_was(variant):
+    tool = mod.build_tool(variant)
+    assert "strict" not in tool
+    assert all("additionalProperties" not in obj for obj in objects_in(tool["input_schema"]))
+
+
+@pytest.mark.parametrize("variant", ["correcta", "sin_nullable", "enum_cerrado"])
+def test_strict_only_adds_the_guarantee_not_other_schema_changes(variant):
+    """Con y sin `strict` el esquema dice lo mismo: nullable, `required`, `enum` y descripciones no cambian."""
+    strict = mod.build_tool(variant, strict=True)
+    plain = mod.build_tool(variant)
+    assert without_closing(strict["input_schema"]) == plain["input_schema"]
+    assert strict["description"] == plain["description"] and strict["name"] == plain["name"]
+
+
+class RecordingCreate:
+    """`create` falso para la comparación con y sin estricto: guarda las peticiones y contesta con la etiqueta.
+
+    Imita lo que hace `strict`: un `doc_type` fuera del `enum` no se puede emitir, así que cae en el valor
+    más cercano que el `enum` admite. Sin `strict`, el modelo escribe el valor que quiere (`other`).
+    """
+
+    def __init__(self):
+        self.requests = []
+        self.by_text = {text: doc_id for doc_id, text in DOCS.items()}
+
+    def __call__(self, **request):
+        self.requests.append(request)
+        tool = request["tools"][0]
+        doc_id = self.by_text[request["messages"][0]["content"].removeprefix("Documento:\n\n")]
+        data = mod.label_to_extraction(LABELS[doc_id])
+        allowed = tool["input_schema"]["properties"]["doc_type"]["enum"]
+        if tool.get("strict") and data["doc_type"] not in allowed:
+            data["doc_type"] = "invoice"
+        return SimpleNamespace(content=[SimpleNamespace(type="tool_use", name=tool["name"], input=data, id="t")])
+
+
+def test_strict_arms_compare_the_same_schema_with_and_without_strict():
+    create = RecordingCreate()
+    arms = mod.strict_arms(create, "modelo-falso")
+    assert list(arms) == ["sin estricto", "con estricto"]
+    sent = [(r["tools"][0].get("strict"), r["tool_choice"]) for r in create.requests]
+    assert sent.count((None, {"type": "tool", "name": "extract_metadata"})) == len(DOCS)
+    assert sent.count((True, {"type": "tool", "name": "extract_metadata"})) == len(DOCS)
+    plain, strict = (mod.summarize(arms[name]) for name in arms)
+    outside = sum(1 for label in LABELS.values() if label["doc_type"] not in ("invoice", "delivery_note"))
+    assert outside > 0
+    # La forma: sin estricto el valor fuera del `enum` se cuela; con estricto no puede salir.
+    assert plain["fuera_de_enum"] == outside and strict["fuera_de_enum"] == 0
+    assert plain["sintaxis_ok"] == len(DOCS) - outside and strict["sintaxis_ok"] == len(DOCS)
+    # El fondo: el estricto no arregla el significado: esos documentos siguen con el tipo equivocado.
+    assert strict["tipo_ok"] == len(DOCS) - outside and strict["tipo_ok"] < strict["sintaxis_ok"]
+
+
 # --- validador de forma (sintaxis) -------------------------------------------------------
 
 def test_label_as_extraction_conforms_to_the_correct_schema_for_every_document():

@@ -723,7 +723,8 @@ Los términos comunes (Messages API, `tool_choice`, *few-shot*, presupuesto) est
 - **Términos propios:**
   - **Campo *nullable*:** un campo cuyo tipo admite `null` (`["string", "null"]`) y que no está en `required`: es la forma de decir «el documento puede no traerlo».
   - **`enum` abierto:** una lista de valores permitidos con una salida (`other`, más un campo de detalle, y `unclear`) para lo que no encaja.
-  - **Forma frente a fondo:** que el JSON cumpla el esquema (forma, «sintaxis») no quiere decir que sus valores sean los de la etiqueta (fondo, «semántica»). El módulo mide las dos cosas por separado.
+  - **Tres niveles:** *JSON válido* (se puede parsear), *forma válida* (cumple el esquema: tipos, `required`, `enum`) y *dato correcto* (coincide con la etiqueta). Un nivel no implica el siguiente. El módulo mide los dos últimos por separado (forma, «sintaxis»; fondo, «semántica»).
+  - **Modo estricto (`strict: true`):** un campo de la definición de la tool que hace que la API garantice que su entrada cumple el esquema, con los objetos cerrados (`additionalProperties: false`). Elimina los errores de sintaxis del esquema; no los de significado (TS 4.3-K1, K3).
   - **Campo inventado:** uno que la etiqueta dice que no está en el documento y para el que el modelo devuelve algo distinto de `null` (incluidos `'null'` como texto, `''` o un valor deducido).
 
 ### Las tools del ejercicio
@@ -738,9 +739,10 @@ Las tools de extracción no hacen nada: lo que importa es lo que el modelo escri
 
 ### El ejercicio
 
-Cuatro partes (`--parte`) y variantes `--anti` en la primera y en la última:
+Cinco partes (`--parte`) y variantes `--anti` en la primera y en la última:
 
 - **`forzada`:** `tool_choice` forzado a `extract_metadata`. La versión correcta tiene los campos opcionales *nullable*, el `enum` con `other` y `unclear`, y las reglas de formato (fecha ISO, número con punto decimal) en la descripción. `--anti sin_nullable` hace obligatorios todos los campos y quita `null` de los tipos. `--anti enum_cerrado` deja el `enum` solo con `invoice` y `delivery_note`.
+- **`estricto`:** el esquema de `enum` cerrado de la parte anterior, sin y con `strict: true`, sobre los mismos 12 documentos. Imprime los tres niveles: forma válida, fuera del `enum` y tipo correcto. El esquema es el mismo en las dos; solo cambia el campo `strict` y que los objetos van cerrados.
 - **`tipo_desconocido`:** tres tools, una por tipo de documento, y `tool_choice` `any` (el modelo tiene que llamar a una, pero elige cuál). Se compara con `auto` y con forzar siempre la tool de factura.
 - **`few_shot`:** el mismo esquema sin las reglas de formato en las descripciones, con y sin tres ejemplos en el *system prompt* (una factura en tabla, otra en prosa y un albarán en líneas sueltas). Admite `--rol-modelo enforcement` (Haiku 4.5). Además de las fechas, imprime los campos con valor en la etiqueta que salen `null` o vacíos (**faltantes**) y los que el modelo inventa donde la etiqueta dice que no están (**inventados**), con y sin ejemplos.
 - **`enriquecimiento`:** dos tools, `extract_metadata` y `lookup_purchase_order(po_number)`, cuyo resultado sale de `pedidos_compra.json` (determinista). El primer turno va con `tool_choice` forzado a `extract_metadata`; los siguientes, en `auto`, con la extracción devuelta como `tool_result`. `--anti auto_desde_inicio` usa `auto` desde el primer turno. Se mide el orden de las llamadas, si el modelo consulta un pedido antes de extraer o con un número que no sale del documento, y si el resultado final usa el pedido extraído.
@@ -754,6 +756,7 @@ Con tus palabras; no hay un número que acertar:
 3. Con las tres tools por tipo, ¿qué esperas de `any`, de `auto` y de forzar siempre la tool de factura? ¿Qué le pasa a un albarán en cada caso?
 4. La parte `few_shot` quita de las descripciones la regla de cómo escribir una fecha. ¿Qué tendría que ocurrir sin ejemplos para que los ejemplos se notaran? ¿Esperas lo mismo con dos modelos distintos? ¿Y con los campos que el documento sí trae pero el modelo podría dejar vacíos?
 5. En `enriquecimiento`, el modelo tiene una tool para extraer y otra para consultar el pedido. Con `auto` desde el primer turno, ¿qué podría hacer mal? Si en tus ejecuciones no lo hace nunca, ¿basta eso para prescindir del primer turno forzado?
+6. En `estricto`, el `enum` solo admite `invoice` y `delivery_note`. Con `strict: true`, ¿puede salir algún valor fuera del `enum`? ¿Qué pasará con el certificado de garantía? ¿Esperas que «forma válida» y «tipo correcto» suban, bajen o se queden igual con `strict` respecto de sin él? ¿Y qué te dice eso de lo que el modo estricto garantiza y de lo que no?
 
 ### Ejecutar
 
@@ -761,17 +764,18 @@ Con tus palabras; no hay un número que acertar:
 uv run python app3_sistema_multiagente/07_extraccion_schema.py --parte forzada                          # correcta
 uv run python app3_sistema_multiagente/07_extraccion_schema.py --parte forzada --anti sin_nullable      # todo obligatorio
 uv run python app3_sistema_multiagente/07_extraccion_schema.py --parte forzada --anti enum_cerrado      # enum sin other ni unclear
+uv run python app3_sistema_multiagente/07_extraccion_schema.py --parte estricto --repeat 3             # el mismo enum cerrado, sin y con strict
 uv run python app3_sistema_multiagente/07_extraccion_schema.py --parte tipo_desconocido
 uv run python app3_sistema_multiagente/07_extraccion_schema.py --parte few_shot --rol-modelo enforcement --repeat 3
 uv run python app3_sistema_multiagente/07_extraccion_schema.py --parte enriquecimiento --repeat 3                          # extracción forzada y después auto
 uv run python app3_sistema_multiagente/07_extraccion_schema.py --parte enriquecimiento --anti auto_desde_inicio --repeat 3  # auto desde el primer turno
 ```
 
-**Si ejecutas:** la construcción del esquema por variante, el validador de forma y la puntuación contra etiquetas se prueban sin modelo; ejecutar sirve para ver qué hace de verdad el modelo con un campo que no puede rellenar. Cada ejecución cuesta menos de 0,05 $ con Haiku 5.5 (`few_shot` y `enriquecimiento` con `--repeat 3`: unos 0,03–0,04 $); con Haiku 4.5 y `--repeat 3`, `few_shot` cuesta unos 0,23 $ y `enriquecimiento`, unos 0,24 $.
+**Si ejecutas:** la construcción del esquema por variante, el validador de forma y la puntuación contra etiquetas se prueban sin modelo; ejecutar sirve para ver qué hace de verdad el modelo con un campo que no puede rellenar. Cada ejecución cuesta menos de 0,05 $ con Haiku 5.5 (`estricto` con `--repeat 3`: unos 0,02 $; `few_shot` y `enriquecimiento` con `--repeat 3`: unos 0,03–0,04 $); con Haiku 4.5 y `--repeat 3`, `few_shot` cuesta unos 0,23 $ y `enriquecimiento`, unos 0,24 $.
 
 ### Qué observar
 
-En cada ejecución, `forma válida`, `campos ausentes rellenados`, `tipo correcto`, `fuera del enum` y `valores incorrectos`; en `tipo_desconocido`, qué tool eligió el modelo para cada documento; en `few_shot`, fechas incorrectas, faltantes e inventados con y sin ejemplos; en `enriquecimiento`, el orden de las tools por documento, las consultas antes de extraer, los números que no salen del documento y si el resultado final usa el pedido extraído.
+En cada ejecución, `forma válida`, `campos ausentes rellenados`, `tipo correcto`, `fuera del enum` y `valores incorrectos`; en `estricto`, cómo se mueven `forma válida` y `tipo correcto` entre sin y con `strict`; en `tipo_desconocido`, qué tool eligió el modelo para cada documento; en `few_shot`, fechas incorrectas, faltantes e inventados con y sin ejemplos; en `enriquecimiento`, el orden de las tools por documento, las consultas antes de extraer, los números que no salen del documento y si el resultado final usa el pedido extraído.
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
@@ -783,6 +787,7 @@ Haiku 5.5 (rol `agent`), 12 documentos, tres repeticiones salvo donde se dice:
 | `forzada`, correcta | forma válida 12/12, tipo correcto 12/12, campos ausentes rellenados 1/21 en 3 repeticiones y 2/21 en otra ejecución (siempre el total de un presupuesto, deducido de su única línea), líneas correctas 11/12 | con el campo *nullable* el modelo devuelve `null` casi siempre |
 | `forzada`, `sin_nullable` | campos ausentes rellenados **21/21**, forma válida **6/12** | con campos obligatorios inventa: `'null'` como texto, `''`, un valor deducido; los que usan `'null'` en un campo numérico ni siquiera cumplen el esquema |
 | `forzada`, `enum_cerrado` | tipo correcto 11/12, **2 de 12 con un tipo fuera del `enum`** (`other` en la garantía y el presupuesto), el ilegible forzado a `invoice` | el modelo escribe `other` aunque no esté en el `enum`: un esquema no se impone solo, el validador de forma lo detecta |
+| `estricto` (Haiku 5.5, `enum` cerrado, 3 repeticiones, ~0,02 $) | sin `strict`: forma válida **10/12**, 2 fuera del `enum`, tipo correcto **11/12**. Con `strict`: forma válida **12/12**, 0 fuera del `enum`, tipo correcto **9/12**. Idéntico en las tres repeticiones | `strict` garantiza la forma y no el significado: la garantía **empeora** el tipo, porque lo que antes el modelo escribía bien como `other` (garantía y presupuesto) ahora cae en una categoría que no es. Es el motivo del `enum` abierto con `other` y `unclear` (TS 4.3-K4) |
 | `tipo_desconocido` | `any`: la tool de su tipo en 12/12 (3 repeticiones); `auto`: igual; **forzada a factura: 5/12**, los otros 7 se tratan como factura | forzar una tool trata como factura todo lo que no lo es; `any` deja elegir |
 | `few_shot` con Haiku 5.5 | 0 fechas incorrectas con y sin ejemplos; faltantes 0 en las seis ejecuciones; inventados 0–1 de 21 (un `stated_total` en `DC-11`, o un número en `DC-07` sin ejemplos) | **sin señal**: este modelo ya escribe la fecha en ISO sin que nadie se lo pida y no deja vacío ningún campo con valor |
 | `few_shot` con Haiku 4.5 (`--rol-modelo enforcement`, 3 repeticiones, ~0,23 $) | sin ejemplos: **5, 6 y 6 fechas incorrectas** de 12, líneas correctas 10/12; con ejemplos: **0, 0 y 0**, líneas correctas 11/12. Faltantes 0 y inventados 2/21 (`DC-11`: fecha y total) en las seis ejecuciones | los ejemplos de las tres formas arreglan el formato que la descripción no dice; **no** cambian los campos faltantes (ya eran 0) ni los inventados |
@@ -792,7 +797,8 @@ Haiku 5.5 (rol `agent`), 12 documentos, tres repeticiones salvo donde se dice:
 Notas:
 
 - **Forma y fondo:** `DC-06` (el certificado de garantía) sale en las tres repeticiones con una línea inventada (el modelo cuenta la garantía como un artículo), con la forma válida. El esquema lo deja pasar; la etiqueta, no.
-- **El `enum` no se impone:** que el modelo devuelva un valor que no está en el `enum` no es un error de la API. El modo estricto lo evitaría, pero la guía no lo nombra y el repositorio no lo usa.
+- **El `enum` no se impone sin `strict`:** que el modelo devuelva un valor que no está en el `enum` no es un error de la API. El modo estricto (`strict: true`, que la guía nombra) lo evita, y `--parte estricto` lo muestra; el resto de partes usan la tool sin `strict` a propósito, para que el validador de forma tenga algo que detectar.
+- **`strict` con campos *nullable*:** la API aceptó el esquema tal cual, con `["string", "null"]` y los opcionales fuera de `required`; solo exige `additionalProperties: false` en cada objeto (comprobado con Haiku 5.5, 3 variantes de esquema, 0,0008 $).
 - **El anti de `enriquecimiento` no se nota:** se probó con Haiku 5.5 y con Haiku 4.5 y no hay diferencia entre forzar el primer turno y no hacerlo. Lo que hace el forzado es garantizar el orden por construcción; no se ha podido mostrar el fallo que evita.
 - **El identificador de la petición:** en una primera versión de la sonda el prompt llevaba «Documento DC-07:» y el modelo lo copió como `document_number`. El prompt ya no lleva el identificador.
 - Detalle y coste de las sondas: `docs/hallazgos.md`. Lo que no depende del modelo (esquemas, validador, puntuación, petición por modo y ejemplos) se prueba en `tests/test_app3_07_extraccion_schema.py`.

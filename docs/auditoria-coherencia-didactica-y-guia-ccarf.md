@@ -15,7 +15,7 @@
 | C-02 ruta raíz de app3 | ✅ **Terminado** | `README.md` describe `01`→`09` y deja `10`–`12` como pendientes. |
 | C-03 `app3/CLAUDE.md` | ✅ **Terminado** | Diez fuentes (verificado en `datos/generar_sinteticos.py`) y estado de `06` en `estado/<perfil>/app3-06/`. |
 | G-06 multiple-response | 🟡 **Piloto hecho** | Formato definido en `plantillas/modulo/README.md` y `docs/estandares-flujo.md`; el narrador muestra todas las preguntas y respuestas de un módulo; `tests/test_readme_modulos.py` comprueba cuántas elegir, el número de opciones y la justificación por opción. Piloto en `app3/01` (TS 1.2) y `app3/05` (TS 5.6), añadido a la pregunta de respuesta única. Las multiple-response tienen como máximo 4 opciones (límite de `AskUserQuestion`), comprobado por test. Pendiente: extender a más módulos y a las tandas C y D. |
-| G-01 strict mode en `app3/07` | ⏳ Pendiente | Requiere comprobar antes si `strict` se puede aplicar a tools MCP del Agent SDK. |
+| G-01 strict mode en `app3/07` | ✅ **Terminado** | El módulo usa la Messages API, así que `strict: true` va en la definición de la tool sin el problema que se temía con MCP. Sonda previa (0,0008 $): la API acepta `type: ["string","null"]` y opcionales fuera de `required` con `strict`; solo exige `additionalProperties: false`. Nueva `build_tool(strict=True)` y parte `--parte estricto` (con/sin `strict` sobre el `enum` cerrado: forma 10/12 → 12/12, tipo correcto 11/12 → 9/12). Cabecera y README corrigen que la guía no lo nombra, y separan «JSON válido», «forma válida» y «dato correcto». |
 | G-05 test de perímetro | ✅ **Terminado** | La garantía se rebautiza como «lista de exclusión conocida» (docstring del test y del YAML). Se añaden `updatedInput` y `disallowed_tools` con `permitido_en` por archivo, y un test que obliga a borrar las excepciones que ya no se usan. `permission_mode` queda fuera de la lista a propósito: `dontAsk` es fontanería en unos 14 módulos y la excepción no protegería nada. |
 | Resto (G-04, G-06 a G-09, C-04, C-05, D-01 a D-05) | ⏳ Pendiente | Fases 1 a 3 del plan. |
 
@@ -77,7 +77,7 @@ No se ejecutaron módulos con modelo. Las cifras históricas de Haiku, Sonnet o 
 
 ## 4. Hallazgos de alineación con la guía
 
-### ALTA — G-01. `app3/07` excluye erróneamente el modo estricto
+### ALTA — G-01. `app3/07` excluye erróneamente el modo estricto ✅ TERMINADO 2026-11-06
 
 **Clasificación:** contradicción directa con la Exam Guide y riesgo de enseñar TS 4.3 con una configuración distinta de la que fundamenta la garantía oficial.  
 **Certeza:** alta.
