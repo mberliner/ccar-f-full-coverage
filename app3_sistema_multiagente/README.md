@@ -132,19 +132,17 @@ Notas:
 - A. El coordinador analiza cada petición y decide qué subagentes invocar según su complejidad, en lugar de recorrer siempre el pipeline completo.
 - B. Los subagentes de búsqueda se envían directamente sus resultados entre sí para evitar consultas repetidas y reducir pasos del coordinador.
 - C. El coordinador asigna a cada subagente de búsqueda un subtema o un tipo de fuente distinto, para cubrir el tema amplio sin duplicar consultas.
-- D. Se añade al final de la cadena fija un subagente revisor que valida el formato del informe antes de entregarlo.
-- E. El prompt de cada subagente de búsqueda pide que investigue todo lo relevante del tema, para que ninguna parte quede sin cubrir.
+- D. El prompt de cada subagente de búsqueda pide que investigue todo lo relevante del tema, para que ninguna parte quede sin cubrir.
 
 <details>
 <summary>Paso 4 · Respuesta (pregunta 2)</summary>
 
-**A y C.** Cada una corrige un problema distinto, y las otras tres no corrigen ninguno.
+**A y C.** Cada una corrige un problema distinto, y las otras dos no corrigen ninguno.
 
 - **A** El coordinador es quien analiza qué necesita cada petición y decide qué subagentes invocar según su complejidad; recorrer siempre el pipeline completo es lo que esa habilidad pide evitar (TS 1.2-S1, 1.2-K3).
 - **B** Rompe el patrón hub-and-spoke: la comunicación entre subagentes pasa por el coordinador, que da la observabilidad, el tratamiento uniforme de errores y el flujo controlado de información (TS 1.2-S4, 1.2-K1).
 - **C** Repartir subtemas o tipos de fuente entre los subagentes evita duplicados y huecos, que es justo el riesgo de una descomposición demasiado estrecha en un tema amplio (TS 1.2-S2, 1.2-K4).
-- **D** Añade un paso fijo más: no cambia qué subagentes se invocan ni cómo se reparte el alcance, así que no toca ninguno de los dos problemas.
-- **E** No reparte el alcance: los tres buscan lo mismo y se duplican, sin garantizar cobertura. Dividir el alcance es trabajo del coordinador (TS 1.2-S2, 1.2-K3).
+- **D** No reparte el alcance: los tres buscan lo mismo y se duplican, sin garantizar cobertura. Dividir el alcance es trabajo del coordinador (TS 1.2-S2, 1.2-K3).
 </details>
 
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
@@ -583,19 +581,17 @@ Notas:
 - A. Resumir cada informe en un párrafo breve antes de la síntesis, para que el sintetizador trabaje con menos texto.
 - B. Quedarse con la cifra del informe publicado más recientemente y descartar la otra, para que el informe final sea coherente.
 - C. Incluir las dos cifras con su fuente, anotadas como conflicto, y que el coordinador decida cómo reconciliarlas antes de pasarlas a la síntesis.
-- D. Convertir todos los hallazgos a una lista uniforme de viñetas, para que las cifras en conflicto se comparen en el mismo formato.
-- E. Dedicar una sección del informe a los hallazgos establecidos y otra a los disputados, conservando cómo cada fuente caracteriza su cifra y su método.
+- D. Dedicar una sección del informe a los hallazgos establecidos y otra a los disputados, conservando cómo cada fuente caracteriza su cifra y su método.
 
 <details>
 <summary>Paso 4 · Respuesta (pregunta 2)</summary>
 
-**C y E.** Las dos conservan el conflicto con su fuente en vez de esconderlo.
+**C y D.** Las dos conservan el conflicto con su fuente en vez de esconderlo.
 
 - **A** Resumir sin un mapa afirmación–fuente es donde se pierde la atribución (TS 5.6-K1): menos texto no ayuda a quien no puede saber de dónde sale cada cifra.
 - **B** Elegir una cifra de forma arbitraria oculta el conflicto; lo correcto es anotarlo con su fuente (TS 5.6-K3). Y la fecha de publicación no decide aquí: sirve para no leer como contradicción una diferencia temporal (TS 5.6-K4), y estos informes cubren el mismo periodo.
 - **C** El análisis incluye los valores en conflicto, anotados, y el coordinador decide cómo reconciliarlos antes de la síntesis (TS 5.6-S3, 5.6-K3).
-- **D** Cada tipo de contenido se presenta de la forma que le corresponde (los datos financieros, en tablas), no en un formato uniforme (TS 5.6-S5).
-- **E** El informe distingue lo establecido de lo disputado y conserva la caracterización y el método de cada fuente (TS 5.6-S2).
+- **D** El informe distingue lo establecido de lo disputado y conserva la caracterización y el método de cada fuente (TS 5.6-S2).
 </details>
 
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).

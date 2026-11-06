@@ -80,6 +80,8 @@ def shape_problems(section: str) -> list[str]:
 
 MULTI = re.compile(r"\*\*Selecciona (dos|tres|cuatro)\*\*", re.IGNORECASE)
 COUNTS = {"dos": 2, "tres": 3, "cuatro": 4}
+# `AskUserQuestion`, con el que `practica-guiada` plantea la pregunta, admite 4 opciones como máximo.
+MAX_OPTIONS = 4
 ANSWER_BLOCK = re.compile(r"<details>\s*<summary>Paso 4 · Respuesta[^<]*</summary>(.*?)</details>", re.DOTALL)
 ANSWER_HEAD = re.compile(r"\s*\*\*([A-F](?:(?:, | y )[A-F])*)\.\*\*")
 
@@ -97,6 +99,8 @@ def multi_response_problems(section: str) -> list[str]:
         letters = re.findall(r"^- ([A-F])\. ", after.split("<details>", 1)[0], re.MULTILINE)
         if len(letters) < wanted + 1:
             problems.append(f"«Selecciona {wanted}» necesita al menos {wanted + 1} opciones y hay {len(letters)}")
+        if len(letters) > MAX_OPTIONS:
+            problems.append(f"«Selecciona {wanted}» admite como máximo {MAX_OPTIONS} opciones y hay {len(letters)}")
         block = ANSWER_BLOCK.search(after)
         head = ANSWER_HEAD.match(block.group(1)) if block else None
         if not head:
@@ -183,6 +187,8 @@ def test_multi_response_detects_each_deviation():
     assert "la respuesta nombra una letra que no es una opción" in multi_response_problems(unknown)
     unexplained = GOOD_MULTI.replace("- **D** no.\n", "")
     assert multi_response_problems(unexplained) == ["la respuesta no justifica la opción D"]
+    five = GOOD_MULTI.replace("- D. cuatro\n", "- D. cuatro\n- E. cinco\n").replace("- **D** no.\n", "- **D** no.\n- **E** no.\n")
+    assert multi_response_problems(five) == [f"«Selecciona 2» admite como máximo {MAX_OPTIONS} opciones y hay 5"]
     no_answer = GOOD_MULTI.split("<details>")[0]
     assert multi_response_problems(no_answer) == ["«Selecciona 2» sin respuesta plegada que empiece por «**X y Y.**»"]
 
