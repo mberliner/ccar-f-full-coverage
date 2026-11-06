@@ -2,6 +2,8 @@
 
 Cómo se practica con varias preguntas que comparten un mismo contexto, como en el examen. Este documento fija el formato; todavía no hay ningún caso escrito. La plantilla está en [`plantillas/simulacion/ESCENARIO.md`](../plantillas/simulacion/ESCENARIO.md) y el formato lo comprueba `tests/test_simulaciones_formato.py`.
 
+> **Dónde encaja.** Esto es un complemento propio y opcional, no una entrega del roadmap. Lo propuso la auditoría (G-07). El roadmap prevé, tras la entrega 3, un repaso sin código nuevo (`S-1`, roadmap §10) con las filas pendientes de `FALLOS.md` y las preguntas tipo examen de los módulos y de D3 mezcladas; no menciona escenarios. Los simulacros de examen completo del plan de estudio son externos (mocks y simulacros del propio plan), y ahí es donde se practican varias preguntas de un mismo escenario. Con el examen cerca, escribir un caso compite con terminar las tandas C y D y con repasar `FALLOS.md`, así que por ahora no se escribe ninguno. Este formato queda definido por si se retoma, por ejemplo dentro de `S-1`.
+
 ## Por qué
 
 Según la guía, el examen tiene 60 ítems de respuesta única y múltiple, en 120 minutos, y los agrupa en 4 escenarios elegidos al azar de un banco de 6. Cada escenario presenta un contexto de producción que enmarca varias preguntas. La práctica de este repositorio es de preguntas sueltas por módulo, que no ejercita mantener un contexto y unas restricciones a lo largo de varias preguntas, ni alternar de un tema a otro dentro del mismo caso.
