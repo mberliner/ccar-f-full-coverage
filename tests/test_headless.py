@@ -280,3 +280,60 @@ def test_run_reports_nonzero_exit_with_budget_error(tmp_path):
     fake = FakeRun(raw(subtype="error_max_budget_usd", is_error=True, result=None), returncode=1)
     result = headless.run(build(tmp_path), "p", cwd=tmp_path, schema=None, runner=fake)
     assert result.status == "budget_exhausted"
+
+
+# --- [contexto]: qué ve el proceso al empezar (verificación §11.6) -------------------------------------------------
+
+
+def init_line(**fields) -> str:
+    base = {"type": "system", "subtype": "init", "tools": ["Read", "Grep", "Glob"], "mcp_servers": [], "skills": [], "slash_commands": [],
+            "plugins": [{"name": "cc-plugin-agents-md"}], "apiKeySource": "ANTHROPIC_API_KEY", "model": "claude-sonnet-5-5"}
+    base.update(fields)
+    return json.dumps(base)
+
+
+def test_stream_json_output_needs_verbose(tmp_path):
+    cmd = build(tmp_path, stream=True)
+    assert value_after(cmd, "--output-format") == "stream-json" and "--verbose" in cmd
+    assert "--verbose" not in build(tmp_path)
+
+
+def test_parse_init_reads_the_system_init_line_among_other_messages():
+    stream = "\n".join(['{"type":"assistant"}', init_line(), '{"type":"result","subtype":"success"}'])
+    init = headless.parse_init(stream)
+    assert init["tools"] == ["Read", "Grep", "Glob"]
+    assert headless.parse_init("no es json\n") is None
+    assert headless.parse_init('{"type":"result"}') is None
+
+
+def test_context_line_reports_tools_mcp_skills_plugins_credential_and_model():
+    line = headless.context_line(headless.parse_init(init_line()))
+    assert line.startswith("[contexto] ")
+    for part in ("tools=3", "mcp=[]", "skills=[]", "plugins=['cc-plugin-agents-md']", "credencial=ANTHROPIC_API_KEY", "modelo=claude-sonnet-5-5"):
+        assert part in line
+
+
+def test_isolation_problems_flag_skills_commands_and_mcp_servers():
+    assert headless.isolation_problems(headless.parse_init(init_line())) == []
+    dirty = headless.parse_init(init_line(skills=["deep-research"], mcp_servers=[{"name": "x"}], slash_commands=["init"]))
+    problems = headless.isolation_problems(dirty)
+    assert any("skills" in p for p in problems) and any("mcp" in p for p in problems)
+
+
+def test_isolation_problems_accept_the_builtin_commands_that_the_cli_always_lists():
+    """Con `--disable-slash-commands` la lista de comandos queda vacía; si no lo está, se avisa."""
+    assert headless.isolation_problems(headless.parse_init(init_line(slash_commands=["init", "compact"]))) != []
+
+
+# --- bifurcar la sesión (autorrevisión de app3/12) ------------------------------------------------------------------------------
+
+
+def test_fork_creates_a_new_session_from_the_resumed_one(tmp_path):
+    cmd = build(tmp_path, resume="abc-123", fork=True)
+    assert value_after(cmd, "--resume") == "abc-123" and "--fork-session" in cmd
+    assert "--fork-session" not in build(tmp_path, resume="abc-123")
+
+
+def test_fork_without_resume_is_rejected(tmp_path):
+    with pytest.raises(ValueError):
+        build(tmp_path, fork=True)

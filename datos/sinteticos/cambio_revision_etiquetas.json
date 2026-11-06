@@ -1,0 +1,162 @@
+{
+  "acceptable_patterns": [
+    {
+      "commit": 1,
+      "file": "notificaciones/avisos.py",
+      "id": "PA-1",
+      "line": 14,
+      "marker": "except ValueError as exc:",
+      "symbols": [
+        "texto_vencido"
+      ],
+      "why": "usar ValueError de calcular_sla como señal de vencido es el patrón local (como debe_escalar)"
+    }
+  ],
+  "correct_changes": [
+    {
+      "commit": 1,
+      "file": "config.py",
+      "id": "OK-1",
+      "line": 6,
+      "marker": "REINTENTOS = 5",
+      "symbols": [
+        "REINTENTOS"
+      ],
+      "why": "más reintentos, con el motivo en el comentario: no es un fallo"
+    }
+  ],
+  "existing_scenarios": [
+    {
+      "args": {
+        "horas_abiertas": 3,
+        "prioridad": "alta"
+      },
+      "function": "calcular_sla"
+    },
+    {
+      "args": {
+        "horas_abiertas": 9,
+        "prioridad": "alta"
+      },
+      "function": "calcular_sla"
+    },
+    {
+      "args": {
+        "horas_abiertas": 5,
+        "prioridad": "urgente"
+      },
+      "function": "debe_escalar"
+    },
+    {
+      "args": {
+        "horas_abiertas": 1,
+        "prioridad": "urgente"
+      },
+      "function": "debe_escalar"
+    }
+  ],
+  "seeded": [
+    {
+      "category": "bug",
+      "commit": 1,
+      "file": "tickets/escalado.py",
+      "id": "A",
+      "line": 18,
+      "marker": "debe_escalar(t[\"horas\"], t[\"prioridad\"])",
+      "resolved_in": 2,
+      "summary": "argumentos intercambiados: debe_escalar espera (prioridad, horas_abiertas)",
+      "symbols": [
+        "debe_escalar_lote"
+      ]
+    },
+    {
+      "category": "security",
+      "commit": 1,
+      "file": "notificaciones/avisos.py",
+      "id": "B",
+      "line": 21,
+      "marker": "os.system(",
+      "summary": "el mensaje y el id llegan sin validar a una orden de shell",
+      "symbols": [
+        "enviar_aviso",
+        "os.system"
+      ]
+    },
+    {
+      "category": "comment",
+      "commit": 1,
+      "file": "config.py",
+      "id": "C",
+      "line": 12,
+      "marker": "TIMEOUT = 60",
+      "summary": "el comentario dice que el máximo es 30 y el valor es 60",
+      "symbols": [
+        "TIMEOUT"
+      ]
+    },
+    {
+      "callers": [
+        "informes/resumen.py",
+        "notificaciones/avisos.py",
+        "tests/test_sla.py"
+      ],
+      "category": "cross_file",
+      "commit": 1,
+      "file": "core/sla.py",
+      "id": "D",
+      "keywords": [
+        "restante_horas",
+        "restante_minutos",
+        "minutos",
+        "unidad",
+        "clave"
+      ],
+      "line": 12,
+      "marker": "\"restante_minutos\"",
+      "summary": "calcular_sla devuelve minutos y sus llamadores siguen leyendo restante_horas",
+      "symbols": [
+        "calcular_sla",
+        "restante_minutos"
+      ]
+    },
+    {
+      "callers": [
+        "core/sla.py"
+      ],
+      "category": "cross_file",
+      "commit": 1,
+      "file": "notificaciones/avisos.py",
+      "id": "F",
+      "keywords": [
+        "fracción",
+        "fraccion",
+        "porcentaje",
+        "0 a 1",
+        "0-1",
+        "100",
+        "unidad",
+        "escala"
+      ],
+      "line": 26,
+      "marker": "% del plazo consumido",
+      "summary": "avance_plazo devuelve una fracción (0 a 1) y texto_progreso la imprime como porcentaje",
+      "symbols": [
+        "texto_progreso",
+        "avance_plazo"
+      ]
+    },
+    {
+      "category": "bug",
+      "commit": 2,
+      "file": "informes/resumen.py",
+      "id": "E",
+      "line": 13,
+      "marker": "/ len(restantes)",
+      "summary": "división por cero con una lista vacía",
+      "symbols": [
+        "promedio_restante",
+        "len(restantes)"
+      ]
+    }
+  ]
+}

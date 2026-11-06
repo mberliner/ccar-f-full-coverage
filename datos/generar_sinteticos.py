@@ -1012,6 +1012,200 @@ def build_confidence_population(rng: random.Random) -> tuple[list[dict], dict]:
     return records, labels
 
 
+# Cambio de prueba para app3/11 y app3/12 (TS 3.6, 4.1, 4.2, 4.4, 4.6, 1.6): dos commits sobre una copia de
+# `repo_mesa`. El primero («SLA en minutos y plazo crítico») siembra cuatro fallos de categorías distintas:
+# un bug visible en el propio archivo (argumentos intercambiados), un problema de seguridad (entrada hacia la
+# shell), un comentario que contradice el código y un fallo entre archivos (`calcular_sla` devuelve minutos y
+# sus llamadores, que el diff no toca, siguen leyendo horas). Lleva además un cambio correcto que parece un fallo
+# (más reintentos, con su motivo) y un patrón aceptable que parece un problema (una excepción usada como control
+# de flujo, que es el patrón local del repositorio). El segundo commit arregla el bug de los argumentos y añade
+# otro (división por cero con una lista vacía). Las etiquetas van aparte: el revisor nunca las ve. Texto fijo.
+REVIEW_COMMIT_1_MESSAGE = "SLA en minutos, plazo crítico, aviso de vencimiento y escalado por lote"
+REVIEW_COMMIT_2_MESSAGE = "Corrige el escalado por lote y añade la media de horas restantes"
+REVIEW_COMMIT_1 = {
+    "core/sla.py": '''"""Cálculo de plazos de SLA."""
+
+# Horas máximas de resolución por prioridad.
+LIMITE_HORAS = {"critica": 1, "urgente": 4, "alta": 8, "normal": 24, "baja": 72}
+
+
+def calcular_sla(prioridad, horas_abiertas):
+    limite = LIMITE_HORAS[prioridad]
+    if horas_abiertas > limite:
+        raise ValueError(f"SLA vencido para prioridad {prioridad}: {horas_abiertas} h de {limite} h")
+    # El margen sale en minutos para que el aviso pueda mostrar una cuenta atrás precisa.
+    return {"limite_horas": limite, "restante_minutos": (limite - horas_abiertas) * 60}
+
+
+def avance_plazo(prioridad, horas_abiertas):
+    """Avance del plazo, de 0 a 1."""
+    return horas_abiertas / LIMITE_HORAS[prioridad]
+''',
+    "config.py": '''"""Configuración de los clientes de la mesa de ayuda."""
+
+# Cliente de la API de tickets
+API_URL = "https://api.mesa-ejemplo.test/tickets"
+TIMEOUT = 30
+REINTENTOS = 5  # el proveedor corta las conexiones inactivas cada pocos segundos
+
+# Cliente de notificaciones
+NOTIF_URL = "https://notif.mesa-ejemplo.test/avisos"
+REMITENTE = "mesa@mesa-ejemplo.test"
+ASUNTO = "Aviso de plazo"
+TIMEOUT = 60  # segundos; el contrato con el proveedor fija un máximo de 30
+CANAL = "correo"
+''',
+    "tickets/escalado.py": '''"""Decide si un ticket hay que escalarlo."""
+
+from ..core.sla import calcular_sla
+
+
+def debe_escalar(prioridad, horas_abiertas):
+    try:
+        calcular_sla(prioridad, horas_abiertas)
+    except ValueError:
+        return True
+    return False
+
+
+def debe_escalar_lote(tickets):
+    """Ids de los tickets del lote que hay que escalar."""
+    escalar = []
+    for t in tickets:
+        if debe_escalar(t["horas"], t["prioridad"]):
+            escalar.append(t["ticket_id"])
+    return escalar
+''',
+    "notificaciones/avisos.py": '''"""Avisos de plazo a la persona responsable."""
+
+import os
+
+from ..api import sla_ticket as plazo
+from ..config import NOTIF_URL
+from ..core.sla import avance_plazo
+
+
+def texto_vencido(ticket_id, prioridad, horas):
+    """Texto del aviso si el plazo ya venció; None si sigue en plazo."""
+    try:
+        plazo(prioridad, horas)
+    except ValueError as exc:
+        return f"{ticket_id}: {exc}"
+    return None
+
+
+def enviar_aviso(ticket_id, mensaje):
+    """Envía el aviso al servicio de notificaciones."""
+    os.system(f"curl -s {NOTIF_URL} -d 'ticket={ticket_id}&texto={mensaje}'")
+
+
+def texto_progreso(ticket_id, prioridad, horas):
+    """Texto con el avance del plazo."""
+    return f"{ticket_id}: {avance_plazo(prioridad, horas)}% del plazo consumido"
+
+
+def texto_aviso(ticket_id, prioridad, horas):
+    restante = plazo(prioridad, horas)["restante_horas"]
+    return f"{ticket_id}: quedan {restante} h"
+''',
+}
+REVIEW_COMMIT_2 = {
+    "tickets/escalado.py": '''"""Decide si un ticket hay que escalarlo."""
+
+from ..core.sla import calcular_sla
+
+
+def debe_escalar(prioridad, horas_abiertas):
+    try:
+        calcular_sla(prioridad, horas_abiertas)
+    except ValueError:
+        return True
+    return False
+
+
+def debe_escalar_lote(tickets):
+    """Ids de los tickets del lote que hay que escalar."""
+    escalar = []
+    for t in tickets:
+        if debe_escalar(t["prioridad"], t["horas"]):
+            escalar.append(t["ticket_id"])
+    return escalar
+''',
+    "informes/resumen.py": '''"""Resumen de plazos para el informe semanal."""
+
+from ..api import sla_ticket
+
+
+def horas_restantes(tickets):
+    return {t["ticket_id"]: sla_ticket(t["prioridad"], t["horas"])["restante_horas"] for t in tickets}
+
+
+def promedio_restante(tickets):
+    """Media de horas restantes de los tickets."""
+    restantes = horas_restantes(tickets)
+    return sum(restantes.values()) / len(restantes)
+''',
+}
+# Escenarios que ya cubren los tests de `repo_mesa` (función y argumentos), para medir los duplicados de la generación de tests.
+REVIEW_EXISTING_SCENARIOS = [
+    {"function": "calcular_sla", "args": {"prioridad": "alta", "horas_abiertas": 3}},
+    {"function": "calcular_sla", "args": {"prioridad": "alta", "horas_abiertas": 9}},
+    {"function": "debe_escalar", "args": {"prioridad": "urgente", "horas_abiertas": 5}},
+    {"function": "debe_escalar", "args": {"prioridad": "urgente", "horas_abiertas": 1}},
+]
+REVIEW_CALLERS = ["informes/resumen.py", "notificaciones/avisos.py", "tests/test_sla.py"]
+
+
+def _marker_line(content: str, marker: str) -> int:
+    """Número de línea (desde 1) de la primera línea que contiene `marker`."""
+    for number, line in enumerate(content.splitlines(), start=1):
+        if marker in line:
+            return number
+    raise ValueError(f"marcador no encontrado: {marker!r}")
+
+
+def build_review_change() -> tuple[dict, dict]:
+    """El cambio (lo que ve el revisor, aplicado sobre `repo_mesa`) y sus etiquetas (solo para puntuar)."""
+    change = {
+        "message_1": REVIEW_COMMIT_1_MESSAGE,
+        "message_2": REVIEW_COMMIT_2_MESSAGE,
+        "commit_1": REVIEW_COMMIT_1,
+        "commit_2": REVIEW_COMMIT_2,
+    }
+
+    def item(identifier: str, commit: int, file: str, marker: str, **extra: object) -> dict:
+        content = (REVIEW_COMMIT_1 if commit == 1 else REVIEW_COMMIT_2)[file]
+        return {"id": identifier, "commit": commit, "file": file, "marker": marker, "line": _marker_line(content, marker), **extra}
+
+    labels = {
+        "seeded": [
+            item("A", 1, "tickets/escalado.py", 'debe_escalar(t["horas"], t["prioridad"])', category="bug", resolved_in=2, symbols=["debe_escalar_lote"],
+                 summary="argumentos intercambiados: debe_escalar espera (prioridad, horas_abiertas)"),
+            item("B", 1, "notificaciones/avisos.py", "os.system(", category="security", symbols=["enviar_aviso", "os.system"],
+                 summary="el mensaje y el id llegan sin validar a una orden de shell"),
+            item("C", 1, "config.py", "TIMEOUT = 60", category="comment", symbols=["TIMEOUT"],
+                 summary="el comentario dice que el máximo es 30 y el valor es 60"),
+            item("D", 1, "core/sla.py", '"restante_minutos"', category="cross_file", callers=REVIEW_CALLERS,
+                 keywords=["restante_horas", "restante_minutos", "minutos", "unidad", "clave"], symbols=["calcular_sla", "restante_minutos"],
+                 summary="calcular_sla devuelve minutos y sus llamadores siguen leyendo restante_horas"),
+            item("F", 1, "notificaciones/avisos.py", "% del plazo consumido", category="cross_file", callers=["core/sla.py"],
+                 keywords=["fracción", "fraccion", "porcentaje", "0 a 1", "0-1", "100", "unidad", "escala"], symbols=["texto_progreso", "avance_plazo"],
+                 summary="avance_plazo devuelve una fracción (0 a 1) y texto_progreso la imprime como porcentaje"),
+            item("E", 2, "informes/resumen.py", "/ len(restantes)", category="bug", symbols=["promedio_restante", "len(restantes)"],
+                 summary="división por cero con una lista vacía"),
+        ],
+        "correct_changes": [
+            item("OK-1", 1, "config.py", "REINTENTOS = 5", symbols=["REINTENTOS"], why="más reintentos, con el motivo en el comentario: no es un fallo"),
+        ],
+        "acceptable_patterns": [
+            item("PA-1", 1, "notificaciones/avisos.py", "except ValueError as exc:", symbols=["texto_vencido"],
+                 why="usar ValueError de calcular_sla como señal de vencido es el patrón local (como debe_escalar)"),
+        ],
+        "existing_scenarios": REVIEW_EXISTING_SCENARIOS,
+    }
+    return change, labels
+
+
 def build_all() -> dict[str, str]:
     """Genera todos los archivos en memoria: nombre → contenido serializado."""
     # Un generador por conjunto: añadir un conjunto nuevo no altera los existentes.
@@ -1021,6 +1215,7 @@ def build_all() -> dict[str, str]:
     purchase_documents, purchase_labels = build_purchase_docs()
     research_sources, research_labels = build_research_sources()
     population, population_labels = build_confidence_population(random.Random(f"{SEED}-confianza"))
+    review_change, review_labels = build_review_change()
     datasets = {
         "usuarios.json": users,
         "tickets.json": tickets,
@@ -1034,6 +1229,8 @@ def build_all() -> dict[str, str]:
         "fuentes_investigacion_etiquetas.json": research_labels,
         "poblacion_extracciones.json": population,
         "poblacion_extracciones_etiquetas.json": population_labels,
+        "cambio_revision.json": review_change,
+        "cambio_revision_etiquetas.json": review_labels,
     }
     files = {name: json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True) + "\n" for name, data in datasets.items()}
     # Las rutas con subcarpeta usan «/»: mismo nombre en Windows y en Linux.

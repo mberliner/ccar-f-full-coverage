@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DOC = ROOT / "docs" / "credenciales-y-modos.md"
 # Qué dice la columna «Credencial mínima» de cada clase de módulo.
 LABEL = {"api_key": "API key", "sdk": "API key o suscripción", "ninguna": "Ninguna"}
-SDK_NAMES = {"isolated_options", "query", "ClaudeSDKClient"}
+SDK_NAMES = {"isolated_options", "query", "ClaudeSDKClient", "headless"}
 
 
 def classify(source: str) -> str:
@@ -72,6 +72,7 @@ def test_classify_tells_the_three_kinds_apart():
     assert classify("from harness import credentials\ncredentials.require_api_key()") == "api_key"
     assert classify("opts = isolated_options(model='m')\nasync for m in query(prompt='x', options=opts): pass") == "sdk"
     assert classify("from claude_agent_sdk import HookMatcher\nHOOK = HookMatcher(matcher='x')") == "ninguna"
+    assert classify("from harness import credentials, headless\nheadless.run(cmd, 'p', cwd=path, schema=None)") == "sdk"
 
 
 def test_classify_ignores_words_in_comments_and_docstrings():

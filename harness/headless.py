@@ -61,6 +61,8 @@ def build_command(
     resume: str | None = None,
     persist: bool = False,
     cli: str | None = None,
+    stream: bool = False,
+    fork: bool = False,
 ) -> list[str]:
     """Orden completa de `claude -p`. El prompt no va aquí: se pasa por stdin."""
     # Mismo criterio que harness/options.py: el tope se impone en código, no en prosa.
@@ -77,7 +79,7 @@ def build_command(
     cmd = [
         cli or bundled_cli(),
         "-p",  # no interactivo: no se queda esperando entrada (TS 3.6-K1, S1)
-        "--output-format", "json",  # un único objeto con resultado, sesión y coste (TS 3.6-K2)
+        "--output-format", "stream-json" if stream else "json",  # `json`: un único objeto con resultado, sesión y coste (TS 3.6-K2)
         "--model", model,
         "--max-budget-usd", str(max_budget_usd),
         "--setting-sources", "project",  # sin memoria ni configuración de usuario
@@ -88,10 +90,15 @@ def build_command(
         "--allowedTools", ",".join(tools),
         "--permission-mode", "dontAsk",
     ]
+    if stream:
+        cmd.append("--verbose")  # la CLI exige `--verbose` con `stream-json`; da la línea `init` de [contexto]
     if schema is not None:
         cmd += ["--json-schema", json.dumps(schema, ensure_ascii=False)]
+    if fork and not resume:
+        raise ValueError("fork necesita una sesión que reanudar (resume)")
     if resume:
-        cmd += ["--resume", resume]
+        # `--fork-session`: cada repetición parte de la misma sesión base sin añadirle su turno (sin él, `--resume` la modifica).
+        cmd += ["--resume", resume] + (["--fork-session"] if fork else [])
     elif not persist:
         # Sin sesión que reanudar no hay razón para dejar nada en disco.
         cmd.append("--no-session-persistence")
@@ -159,6 +166,46 @@ def parse_result(stdout: str, schema: dict[str, Any] | None) -> HeadlessResult:
         path = "/".join(str(p) for p in error.absolute_path) or "(raíz)"
         return HeadlessResult("schema_invalid", structured=structured, detail=f"{path}: {error.message}", **base)
     return HeadlessResult("ok", structured=structured, **base)
+
+
+def parse_init(stdout: str) -> dict[str, Any] | None:
+    """La línea `system`/`init` de una salida `stream-json`, o None si no hay."""
+    for line in (stdout or "").splitlines():
+        try:
+            message = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(message, dict) and message.get("type") == "system" and message.get("subtype") == "init":
+            return message
+    return None
+
+
+def context_line(init: dict[str, Any]) -> str:
+    """Línea `[contexto]` con la misma forma que `harness/recorder.py` (evidencia de aislamiento, §11.6)."""
+    servers = [s.get("name") for s in init.get("mcp_servers", [])]
+    plugins = [p.get("name") for p in init.get("plugins", [])]
+    return (
+        f"[contexto] tools={len(init.get('tools', []))} mcp={servers} skills={init.get('skills', [])} plugins={plugins} "
+        f"credencial={init.get('apiKeySource')} modelo={init.get('model')}"
+    )
+
+
+def isolation_problems(init: dict[str, Any]) -> list[str]:
+    """Lo que no debería ver un proceso aislado: skills, comandos de usuario o servidores MCP."""
+    problems = []
+    if init.get("skills"):
+        problems.append(f"skills visibles: {init['skills']}")
+    if init.get("slash_commands"):
+        problems.append(f"comandos visibles: {len(init['slash_commands'])}")
+    if init.get("mcp_servers"):
+        problems.append(f"mcp visibles: {[s.get('name') for s in init['mcp_servers']]}")
+    return problems
+
+
+def probe_context(cmd: list[str], *, cwd: Path, runner: Callable[..., Any] = subprocess.run, timeout: int = 120) -> dict[str, Any] | None:
+    """Ejecuta una vez la misma orden (en `stream-json`) con un prompt mínimo y devuelve su línea `init`."""
+    proc = runner(cmd, input="Responde solo: ok.", cwd=str(cwd), env=build_env(), capture_output=True, text=True, encoding="utf-8", timeout=timeout)
+    return parse_init(proc.stdout)
 
 
 class BudgetExhausted(RuntimeError):

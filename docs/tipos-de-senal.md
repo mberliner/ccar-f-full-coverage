@@ -101,6 +101,13 @@ Una fila por parte o variante que el módulo ejecuta. La columna de evidencia re
 | app3/09 | `--batch-id --reenviar` | Probabilística con control positivo | 4 trozos y 4 de 4 correctos; el re-troceo en cadena no se vio en vivo |
 | app3/10 | `--parte poblacion` (correcta, `--anti precision_agregada`, `--anti confianza_global`) | Determinista | Sin modelo y con los mismos números en cada ejecución: global 97,7 % frente a 62,5 % del tipo raro; 6, 17 y 14 errores entre lo automatizado |
 | app3/10 | `--parte confianza_modelo` | Probabilística con control positivo | Se ve con Haiku 4.5 sin reglas de formato (modelo de la medida): los errores llegan con confianza alta (banda 0,97–1,00: 85,5 % de acierto); con Haiku 5.5 no hay errores que calibrar |
+| app3/11 | `--parte orden` | Determinista | Sin modelo: construye la copia temporal, el diff y la orden de `claude -p`, y la imprime entera |
+| app3/11 | `--parte revision` (correcta) | Probabilística con control positivo | Encuentra los fallos sembrados (A a D en 7 de 8 ejecuciones) y marca el cambio correcto en 3 de 8; ~0,02 $ por ejecución |
+| app3/11 | `--parte revision --anti conservador` | Sin señal estable | Sin diferencia con la correcta: A se pierde en 2 de 8 frente a 1 de 8, y con tres ejecuciones parecía una señal |
+| app3/11 | `--parte revision --anti sin_ejemplos` | Sin señal estable | B no salió en 3 de 5 ejecuciones y sí en las 2 siguientes: inestable |
+| app3/11 | `--parte revision --sin-categoria comment` | Sin señal estable | Sin efecto: el modelo reclasifica el hallazgo del comentario como `bug` y sigue marcando el cambio correcto |
+| app3/11 | `--parte rerevision` (correcta y `--anti sin_previos`) | Probabilística con control positivo | Con los hallazgos previos, 0 repetidos; sin ellos, repite B, C y D en 3 de 3 |
+| app3/11 | `--parte tests` (correcta, `--anti sin_tests_existentes`, `--anti sin_estandares`) | Sin señal estable | Al revés de lo esperado: 1 escenario repetido por ejecución con los tests existentes y 0 sin ellos; sin diferencia con los estándares |
 
 ## Cómo se mantiene
 
