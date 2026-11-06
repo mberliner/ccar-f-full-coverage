@@ -8,8 +8,8 @@ Lo comprueba `tests/test_credenciales_y_modos.py`: clasifica cada módulo leyend
 
 | Qué tienes | Qué puedes hacer |
 | :--- | :--- |
-| **Nada** (sin credencial) | Los módulos de modo **ligera** leyendo, con el resultado de referencia del Paso 3. Además `app2/07` se ejecuta tal cual (no usa modelo), `app3/09` con `--ventanas`, `app3/10` con `--parte poblacion` y `app3/11` con `--parte orden`. **No** puedes completar los cuatro de modo obligatoria. |
-| **Suscripción** (login de Claude Code) | Lo anterior y los 15 módulos del **Agent SDK** y el de **`claude -p`** (`app3/11`), incluidos tres de los cuatro obligatorios (`app2/01`, `app3/02`, `app3/04`). Según `harness/credentials.py`; no está verificado módulo a módulo. No sirve para la Messages API ni para Batches. |
+| **Nada** (sin credencial) | Los módulos de modo **ligera** leyendo, con el resultado de referencia del Paso 3. Además `app2/07` se ejecuta tal cual (no usa modelo), `app3/09` con `--ventanas`, `app3/10` con `--parte poblacion`, `app3/11` con `--parte orden` y `app3/12` con `--parte plan`. **No** puedes completar los cuatro de modo obligatoria. |
+| **Suscripción** (login de Claude Code) | Lo anterior y los 15 módulos del **Agent SDK** y los dos de **`claude -p`** (`app3/11` y `app3/12`), incluidos tres de los cuatro obligatorios (`app2/01`, `app3/02`, `app3/04`). Según `harness/credentials.py`; no está verificado módulo a módulo. No sirve para la Messages API ni para Batches. |
 | **API key** (`ANTHROPIC_API_KEY`) | Todo, incluidos los seis módulos de la **Messages API o Batches** (`app1/01`, `app1/05`, `app3/07`, `app3/08`, `app3/09`, `app3/10`). `app3/08` es obligatorio y solo funciona con API key. |
 
 Cada ejecución imprime al empezar la credencial que usa y su tope de gasto (`[presupuesto]`, `--budget`). Los términos están en el [glosario](glosario.md).
@@ -55,6 +55,7 @@ Los cuatro módulos de ejecución obligatoria existen porque su lección solo se
 | app3/09 | Batches: lotes, ventana y fallidos · Batches (Messages API) | API key | ligera | unos céntimos; `--ventanas` no cuesta | Se completa leyendo; `--ventanas` se ejecuta sin credencial |
 | app3/10 | Confianza y revisión · Messages API (parte `confianza_modelo`) | API key | ligera | `--parte poblacion` no cuesta; con modelo, 0,014 $ (Haiku 5.5) a 0,13 $ (Haiku 4.5) | Se completa leyendo; `--parte poblacion` se ejecuta sin credencial |
 | app3/11 | Criterios y revisión en CI · `claude -p` (CLI) | API key o suscripción | ligera | unos 0,02 $ por ejecución con Sonnet 5.5; `--parte orden` no cuesta | Se completa leyendo; `--parte orden` se ejecuta sin credencial |
+| app3/12 | Revisión independiente · `claude -p` (CLI) | API key o suscripción | ligera | 0,15–0,25 $ por ejecución completa; `--parte plan` no cuesta | Se completa leyendo; `--parte plan` se ejecuta sin credencial |
 
 ## Cómo se mantiene
 

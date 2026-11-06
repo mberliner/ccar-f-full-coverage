@@ -108,6 +108,10 @@ Una fila por parte o variante que el módulo ejecuta. La columna de evidencia re
 | app3/11 | `--parte revision --sin-categoria comment` | Sin señal estable | Sin efecto: el modelo reclasifica el hallazgo del comentario como `bug` y sigue marcando el cambio correcto |
 | app3/11 | `--parte rerevision` (correcta y `--anti sin_previos`) | Probabilística con control positivo | Con los hallazgos previos, 0 repetidos; sin ellos, repite B, C y D en 3 de 3 |
 | app3/11 | `--parte tests` (correcta, `--anti sin_tests_existentes`, `--anti sin_estandares`) | Sin señal estable | Al revés de lo esperado: 1 escenario repetido por ejecución con los tests existentes y 0 sin ellos; sin diferencia con los estándares |
+| app3/12 | `--parte plan` | Determinista | Sin modelo: el reparto en pasadas, sus tools y la orden de la autorrevisión |
+| app3/12 | `--parte revision` (instancia nueva) | Probabilística con control positivo | Los fallos entre archivos salen por la pasada de integración en 2 de 3 ejecuciones y por la de archivo en 1 de 3 |
+| app3/12 | `--parte revision --anti autorrevision` | Sin señal estable | Sin diferencia con la instancia nueva (2 ejecuciones): la sesión bifurcada encuentra A, B, C, D y F por archivo |
+| app3/12 | `--parte revision --anti autorrevision_explicita` | Sin medir | Implementada y probada sin modelo; no cupo en el tope de coste |
 
 ## Cómo se mantiene
 

@@ -30,7 +30,7 @@ Las apps se ordenan por complejidad creciente, pero se entregan por bloques de d
 
 El avance de cada entrega se registra en `NOTAS.md`.
 
-**Introducidas: 216/240**
+**Introducidas: 225/240**
 
 | Viñeta | Destino | Estado |
 | :--- | :--- | :---: |
@@ -69,10 +69,10 @@ El avance de cada entrega se registra en `NOTAS.md`.
 | TS 1.5-S2 | app2/02_hooks_pre_post | ☑ |
 | TS 1.5-S3 | app2/02_hooks_pre_post | ☑ |
 | TS 1.6-K1 | app3/02_paralelo_y_descomposicion | ☑ |
-| TS 1.6-K2 | app3/12_revision_independiente | ☐ |
+| TS 1.6-K2 | app3/12_revision_independiente | ☑ |
 | TS 1.6-K3 | app3/02_paralelo_y_descomposicion | ☑ |
 | TS 1.6-S1 | app3/02_paralelo_y_descomposicion | ☑ |
-| TS 1.6-S2 | app3/12_revision_independiente | ☐ |
+| TS 1.6-S2 | app3/12_revision_independiente | ☑ |
 | TS 1.6-S3 | app3/02_paralelo_y_descomposicion | ☑ |
 | TS 1.7-K1 | app2/06_sesiones | ☑ |
 | TS 1.7-K2 | app2/06_sesiones | ☑ |
@@ -168,7 +168,7 @@ El avance de cada entrega se registra en `NOTAS.md`.
 | TS 3.6-K1 | app3/11_criterios_y_ci | ☑ |
 | TS 3.6-K2 | app3/11_criterios_y_ci | ☑ |
 | TS 3.6-K3 | app3/11_criterios_y_ci | ☑ |
-| TS 3.6-K4 | app3/12_revision_independiente | ☐ |
+| TS 3.6-K4 | app3/12_revision_independiente | ☑ |
 | TS 3.6-S1 | app3/11_criterios_y_ci | ☑ |
 | TS 3.6-S2 | app3/11_criterios_y_ci | ☑ |
 | TS 3.6-S3 | app3/11_criterios_y_ci | ☑ |
@@ -215,12 +215,12 @@ El avance de cada entrega se registra en `NOTAS.md`.
 | TS 4.5-S2 | app3/09_batches | ☑ |
 | TS 4.5-S3 | app3/09_batches | ☑ |
 | TS 4.5-S4 | app3/09_batches | ☑ |
-| TS 4.6-K1 | app3/12_revision_independiente | ☐ |
-| TS 4.6-K2 | app3/12_revision_independiente | ☐ |
-| TS 4.6-K3 | app3/12_revision_independiente | ☐ |
-| TS 4.6-S1 | app3/12_revision_independiente | ☐ |
-| TS 4.6-S2 | app3/12_revision_independiente | ☐ |
-| TS 4.6-S3 | app3/12_revision_independiente | ☐ |
+| TS 4.6-K1 | app3/12_revision_independiente | ☑ |
+| TS 4.6-K2 | app3/12_revision_independiente | ☑ |
+| TS 4.6-K3 | app3/12_revision_independiente | ☑ |
+| TS 4.6-S1 | app3/12_revision_independiente | ☑ |
+| TS 4.6-S2 | app3/12_revision_independiente | ☑ |
+| TS 4.6-S3 | app3/12_revision_independiente | ☑ |
 | TS 5.1-K1 | app2/05_multi_concern_y_handoff | ☑ |
 | TS 5.1-K2 | app3/05_procedencia | ☑ |
 | TS 5.1-K3 | app1/07_recorte_de_contexto | ☐ |
