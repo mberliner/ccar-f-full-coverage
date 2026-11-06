@@ -129,6 +129,16 @@ def details_body(text: str, summary_prefix: str) -> str:
     return ""
 
 
+def all_details_body(text: str, summary_prefix: str) -> str:
+    """Cuerpos de todos los `<details>` cuyo `summary` empieza por `summary_prefix`, en orden y separados.
+
+    Un módulo con varias preguntas (p. ej. una de respuesta única y otra multiple-response) lleva un
+    «Paso 4 · Respuesta» por pregunta; la fase `respuesta` los muestra todos.
+    """
+    bodies = [body.strip("\n") + "\n" for summary, body in DETAILS.findall(text) if summary.strip().startswith(summary_prefix)]
+    return "\n".join(bodies)
+
+
 def app_context(text: str) -> str:
     """Lo común de la app antes de «Ruta de lectura» (intro, equivalencias, servidor y sus tools)."""
     head = text.split(ROUTE_HEADING, 1)[0]
@@ -235,7 +245,7 @@ def phase(module: Module, name: str) -> str:
         return render([(heading, body + "\n")])
     step5 = next((line for line in section.splitlines() if line.startswith(STEP5)), "")
     return (
-        details_body(section, STEP4)
+        all_details_body(section, STEP4)
         + f"\n{step5}\n\n## Para profundizar: cabecera de `{script}`\n\n"
         + module.script_docstring()
         + "\n"

@@ -79,4 +79,36 @@ Enunciado, opciones de longitud y registro parejos (la correcta no siempre en la
 **X.** Por qué, con las viñetas.
 </details>
 
+<!-- Variante multiple-response (opcional; el examen real mezcla los dos formatos). Se añade DESPUÉS de la
+pregunta de respuesta única, dentro de esta misma sección `### Pregunta tipo examen`, con su propio «Paso 4».
+Si la añades, etiqueta la primera como «**Pregunta 1 (una respuesta).**». Reglas, que comprueba
+`tests/test_readme_modulos.py`:
+- El enunciado dice cuántas elegir con «**Selecciona dos**» (o tres, cuatro), siempre declarado.
+- Al menos una opción más que las que hay que elegir (lo habitual: cinco opciones, dos correctas).
+- El `summary` empieza por «Paso 4 · Respuesta» (p. ej. «Paso 4 · Respuesta (pregunta 2)») y el cuerpo, por
+  «**A y C.**» con las letras correctas.
+- El cuerpo justifica cada opción por separado con una viñeta `- **A** …`, también las incorrectas.
+- Cada opción se puede juzgar sola: ninguna depende de otra ni el enunciado empareja opciones con problemas.
+
+**Pregunta 2 (multiple-response).** Escenario. **Selecciona dos** … Evalúa cada opción por separado.
+
+- A. …
+- B. …
+- C. …
+- D. …
+- E. …
+
+<details>
+<summary>Paso 4 · Respuesta (pregunta 2)</summary>
+
+**A y C.** Resumen de por qué.
+
+- **A** …
+- **B** …
+- **C** …
+- **D** …
+- **E** …
+</details>
+-->
+
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).

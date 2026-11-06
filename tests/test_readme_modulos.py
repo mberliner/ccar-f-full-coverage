@@ -78,6 +78,39 @@ def shape_problems(section: str) -> list[str]:
     return problems
 
 
+MULTI = re.compile(r"\*\*Selecciona (dos|tres|cuatro)\*\*", re.IGNORECASE)
+COUNTS = {"dos": 2, "tres": 3, "cuatro": 4}
+ANSWER_BLOCK = re.compile(r"<details>\s*<summary>Paso 4 · Respuesta[^<]*</summary>(.*?)</details>", re.DOTALL)
+ANSWER_HEAD = re.compile(r"\s*\*\*([A-F](?:(?:, | y )[A-F])*)\.\*\*")
+
+
+def multi_response_problems(section: str) -> list[str]:
+    """Desvíos del formato multiple-response: cuántas elegir, opciones, respuesta con sus letras y una justificación por opción.
+
+    Convención: el enunciado dice «**Selecciona dos**» (o tres, cuatro); la respuesta plegada empieza por
+    «**A y C.**» y justifica cada opción con una viña `- **A** …`.
+    """
+    problems = []
+    for match in MULTI.finditer(section):
+        wanted = COUNTS[match.group(1).lower()]
+        after = section[match.end():]
+        letters = re.findall(r"^- ([A-F])\. ", after.split("<details>", 1)[0], re.MULTILINE)
+        if len(letters) < wanted + 1:
+            problems.append(f"«Selecciona {wanted}» necesita al menos {wanted + 1} opciones y hay {len(letters)}")
+        block = ANSWER_BLOCK.search(after)
+        head = ANSWER_HEAD.match(block.group(1)) if block else None
+        if not head:
+            problems.append(f"«Selecciona {wanted}» sin respuesta plegada que empiece por «**X y Y.**»")
+            continue
+        correct = set(re.split(r", | y ", head.group(1)))
+        if len(correct) != wanted:
+            problems.append(f"dice «Selecciona {wanted}» pero la respuesta nombra {len(correct)}")
+        if not correct <= set(letters):
+            problems.append("la respuesta nombra una letra que no es una opción")
+        problems += [f"la respuesta no justifica la opción {letter}" for letter in letters if f"**{letter}**" not in block.group(1)]
+    return problems
+
+
 def all_sections() -> dict[str, str]:
     found = {}
     for readme in sorted(ROOT.glob("app*/README.md")):
@@ -116,6 +149,44 @@ def test_shape_problems_detects_each_deviation():
     assert len(shape_problems(no_steps)) == 2
 
 
+GOOD_MULTI = """**Selecciona dos**
+
+- A. uno
+- B. dos
+- C. tres
+- D. cuatro
+
+<details>
+<summary>Paso 4 · Respuesta (pregunta 2)</summary>
+
+**A y C.** porque sí.
+
+- **A** correcta.
+- **B** no.
+- **C** correcta.
+- **D** no.
+</details>
+"""
+
+
+def test_multi_response_accepts_the_documented_format():
+    assert multi_response_problems(GOOD_MULTI) == []
+    assert multi_response_problems("Una sola respuesta.\n- A. x\n") == []  # sin «Selecciona N»: no aplica
+
+
+def test_multi_response_detects_each_deviation():
+    wrong_count = GOOD_MULTI.replace("**A y C.**", "**A, B y C.**")
+    assert multi_response_problems(wrong_count) == ["dice «Selecciona 2» pero la respuesta nombra 3"]
+    few = GOOD_MULTI.replace("- C. tres\n- D. cuatro\n", "").replace("- **C** correcta.\n- **D** no.\n", "")
+    assert any("necesita al menos 3 opciones" in problem for problem in multi_response_problems(few))
+    unknown = GOOD_MULTI.replace("**A y C.**", "**A y E.**")
+    assert "la respuesta nombra una letra que no es una opción" in multi_response_problems(unknown)
+    unexplained = GOOD_MULTI.replace("- **D** no.\n", "")
+    assert multi_response_problems(unexplained) == ["la respuesta no justifica la opción D"]
+    no_answer = GOOD_MULTI.split("<details>")[0]
+    assert multi_response_problems(no_answer) == ["«Selecciona 2» sin respuesta plegada que empiece por «**X y Y.**»"]
+
+
 # --- Comprobación sobre los README reales -------------------------------------
 
 def test_readmes_have_module_sections():
@@ -138,6 +209,18 @@ def test_every_module_follows_template_shape():
         if shape_problems(body)
     }
     assert not failing, f"módulos que se desvían de plantillas/modulo/README.md: {failing}"
+
+
+def test_multi_response_questions_follow_the_format():
+    failing = {name: multi_response_problems(body) for name, body in all_sections().items() if multi_response_problems(body)}
+    assert not failing, f"preguntas multiple-response mal formadas: {failing}"
+
+
+def test_pilot_modules_practice_multiple_response():
+    """Piloto de G-06: estos módulos llevan, además de la pregunta de respuesta única, una multiple-response."""
+    sections = all_sections()
+    for name in ("app3_sistema_multiagente 01", "app3_sistema_multiagente 05"):
+        assert MULTI.search(sections[name]), f"{name} debería llevar una pregunta «Selecciona N»"
 
 
 @pytest.mark.parametrize("name", sorted(PENDING_ONBOARDING))

@@ -6,6 +6,7 @@ from harness.narrador import (
     PHASES,
     PendingModule,
     UnknownModule,
+    all_details_body,
     details_body,
     menu,
     phase,
@@ -87,6 +88,22 @@ def test_strip_details_removes_every_folded_block():
     assert "mira esto" in stripped and "¿Cuál?" in stripped
 
 
+SECTION_TWO_ANSWERS = SECTION.replace(
+    "**Paso 5 ·** anota.",
+    "<details>\n<summary>Paso 4 · Respuesta (pregunta 2)</summary>\n\n**A y C.** SECRETO DE LA SEGUNDA\n</details>\n\n**Paso 5 ·** anota.",
+)
+
+
+def test_all_details_body_joins_every_matching_block():
+    joined = all_details_body(SECTION_TWO_ANSWERS, FOLDED_STEP4)
+    assert "SECRETO DE LA RESPUESTA" in joined and "SECRETO DE LA SEGUNDA" in joined
+    assert joined.index("SECRETO DE LA RESPUESTA") < joined.index("SECRETO DE LA SEGUNDA")
+    assert "SECRETO DEL CONTRASTE" not in joined
+    assert all_details_body(SECTION_TWO_ANSWERS, "Paso 9") == ""
+    # details_body sigue devolviendo solo el primero.
+    assert "SEGUNDA" not in details_body(SECTION_TWO_ANSWERS, FOLDED_STEP4)
+
+
 def test_details_body_returns_only_the_named_block():
     assert details_body(SECTION, FOLDED_STEP3).strip() == "SECRETO DEL CONTRASTE"
     assert "SECRETO DE LA RESPUESTA" in details_body(SECTION, FOLDED_STEP4)
@@ -136,7 +153,8 @@ def test_phases_never_reveal_ahead(module):
     texts = {name: phase(module, name) for name in PHASES}
     assert all(text.strip() for text in texts.values()), "alguna fase sale vacía"
     section = module.section()
-    step3, step4 = details_body(section, FOLDED_STEP3), details_body(section, FOLDED_STEP4)
+    # Todas las respuestas del módulo (una por pregunta), no solo la primera.
+    step3, step4 = details_body(section, FOLDED_STEP3), all_details_body(section, FOLDED_STEP4)
     assert step3.strip() and step4.strip(), "el módulo no tiene sus dos bloques plegados"
     before = [name for name in PHASES if PHASES.index(name) < PHASES.index("contraste")]
     for name in before + ["pregunta"]:
