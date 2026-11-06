@@ -84,3 +84,10 @@ Términos que usan los módulos de las tres apps y el arnés, para quien llega d
 - **`required`:** la lista de propiedades obligatorias de un JSON Schema. Una propiedad que no está en esa lista puede faltar.
 - **`max_tokens`:** el tope de tokens de salida de una petición. Si el modelo lo alcanza, la respuesta se corta, y su `stop_reason` lo indica.
 - **Etiqueta:** en los módulos de extracción, el valor correcto de cada campo de un documento. Está en un archivo aparte que el modelo no ve, y el código la usa para puntuar.
+
+## Confianza, revisión y CI
+
+- **Confianza por campo:** un número de 0 a 1 que el modelo declara junto a cada valor que extrae. La escribe el propio modelo, así que no sirve para decidir hasta que se calibra.
+- **Calibración:** comprobar, contra un conjunto etiquetado, si la confianza declarada se parece al acierto real (de los valores que dicen 0,95, ¿cuántos son correctos?). Los umbrales de revisión salen de esa comprobación, no de la confianza tal cual.
+- **Muestreo estratificado:** sortear la muestra dentro de cada grupo (por ejemplo, tipo de documento y campo) con un mínimo por grupo, en vez de sobre toda la población. Así un grupo pequeño entra siempre en la muestra.
+- **Cola de revisión:** lo que espera a que una persona lo mire. Si hay más de lo que se puede revisar, el orden de la cola decide qué se ve y qué no.

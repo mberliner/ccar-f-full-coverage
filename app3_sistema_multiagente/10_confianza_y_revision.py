@@ -1,35 +1,45 @@
 """Confianza y revisión humana: una exactitud alta no dice dónde se equivoca la extracción.
 
-BORRADOR (Sonnet 5.5): pendiente del pase de textos de Opus 5.5. La cabecera y las secciones del README de este módulo están escritas contra las viñetas resumidas del encargo, no contra el texto de la guía.
+CONCEPTO [TS 5.5-K1, K2, K3, K4 · S1, S2, S3, S4]: medir la exactitud por tipo de documento y por campo,
+calibrar la confianza de cada campo con un conjunto etiquetado, fijar los umbrales de revisión por segmento,
+muestrear de forma estratificada lo que se acepta sin revisión y repartir una capacidad de revisión limitada.
 
-CONCEPTO [TS 5.5-K1, K2, K3, K4 · S1, S2, S3, S4]: medir la exactitud por tipo de documento y por campo, calibrar la confianza de cada campo con un conjunto etiquetado, fijar los umbrales de revisión por segmento, muestrear de forma estratificada lo que se automatiza y enrutar a una cola de revisión con capacidad limitada.
+QUÉ DICE LA GUÍA:
+- Una cifra de exactitud agregada, aunque sea alta, puede ocultar que un tipo de documento o un
+  campo concreto rinde mal (5.5-K1). Por eso, antes de dejar de revisar las extracciones de
+  confianza alta, se comprueba la exactitud segmento a segmento, por tipo de documento y por
+  campo, y se exige que sea consistente en todos (5.5-K4, S2).
+- La confianza por campo la emite el propio modelo junto a cada valor; sirve para decidir dónde
+  mirar solo después de calibrarla contra un conjunto de validación etiquetado, que es de donde
+  salen los umbrales de revisión (5.5-K3, S3).
+- Lo que se acepta con confianza alta se sigue vigilando con una muestra aleatoria estratificada:
+  mide la tasa de error de forma continua y deja ver patrones de error que no se conocían
+  (5.5-K2, S1).
+- A una persona van las extracciones con confianza baja y las de documentos ambiguos o
+  contradictorios, y la cola se prioriza porque la capacidad de revisión es limitada (5.5-S4).
 
-QUÉ DICE LA GUÍA (paráfrasis provisional):
-- Una exactitud agregada alta (por ejemplo, 97 %) puede esconder un tipo de documento o un campo
-  que rinde mal (5.5-K1).
-- Para medir la tasa de error de lo que se acepta con confianza alta y descubrir patrones de
-  error nuevos, se toma una muestra aleatoria estratificada de esas extracciones (5.5-K2, S1).
-- La confianza por campo la da el propio modelo y se calibra contra un conjunto etiquetado, que
-  fija los umbrales de revisión (5.5-K3, S3).
-- Antes de automatizar las extracciones de confianza alta o de reducir la revisión humana, se
-  valida la exactitud por tipo de documento y por campo (5.5-K4, S2).
-- A revisión humana van las extracciones de confianza baja o con documentos ambiguos o
-  contradictorios, priorizando cuando la capacidad de revisión es limitada (5.5-S4).
-
-POR QUÉ IMPORTA (inferencia propia): el titular de «97 % de acierto» decide cuánto se revisa. Si
-el 3 % que falla está concentrado en un tipo raro, automatizar por el titular deja pasar justo
-esos errores, y una muestra aleatoria simple casi no los ve porque el tipo raro pesa poco.
+POR QUÉ IMPORTA (inferencia propia): el titular de exactitud decide cuánto se revisa. Si los
+errores se concentran en un tipo poco frecuente, automatizar por el titular deja pasar justo
+esos, y una muestra aleatoria simple los ve poco porque ese tipo pesa poco en la población.
 
 ANTI-PATRÓN / TRAMPA DEL EXAMEN:
-- Hechos de la guía (provisional):
-  - Decidir con la exactitud global (`--anti precision_agregada`).
-  - Una sola confianza por documento, que no distingue el campo dudoso (`--anti confianza_global`).
+- Hechos de la guía:
+  - Reducir la revisión porque la exactitud global es alta, sin mirarla por tipo y por campo
+    (`--anti precision_agregada`: un único umbral elegido con la cifra global).
+  - Usar la confianza del modelo como umbral sin calibrarla contra datos etiquetados.
+  - Vigilar lo automatizado con una muestra que no está estratificada.
 - Inferencias propias:
-  - Con la confianza de un modelo real, la lección es medir si está calibrada, no suponerlo
-    (`--parte confianza_modelo`).
-  - Un segmento con pocos ejemplos no se puede validar: no se automatiza, no se da por bueno.
-  - Los documentos con `conflict_detected` (app3/08) o ambiguos van a revisión aunque su
-    confianza sea alta: la confianza mide la extracción, no la coherencia del documento.
+  - Una sola confianza por documento esconde el campo dudoso detrás de los buenos
+    (`--anti confianza_global`). La guía habla de confianza por campo; que la media por
+    documento sea el error concreto es la lectura de este módulo.
+  - Un segmento con pocos ejemplos etiquetados no se puede validar, así que no se automatiza:
+    «sin evidencia suficiente» no es lo mismo que «por debajo del objetivo».
+  - La confianza mide la extracción, no la coherencia del documento: los que traen
+    `conflict_detected` (`app3/08`) o son ambiguos van a revisión aunque su confianza sea alta.
+  - Con poca capacidad, ordenar la cola por confianza y ordenarla por conflictos ven errores
+    distintos; ninguno de los dos órdenes lo ve todo.
+  - La parte `poblacion` simula la confianza; la única confianza declarada de verdad es la de
+    `--parte confianza_modelo`, y lo que enseña es que hay que medir si está calibrada.
 
 Pregunta tipo examen: ver `app3_sistema_multiagente/README.md`, módulo 10.
 

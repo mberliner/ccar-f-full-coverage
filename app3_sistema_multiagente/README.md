@@ -1058,9 +1058,7 @@ Un equipo usa Claude para dos trabajos. El primero revisa cada *pull request* an
 
 ## 10 · Confianza y revisión humana
 
-<!-- BORRADOR (Sonnet 5.5): pendiente del pase de textos de Opus 5.5. -->
-
-> **Qué vas a hacer:** Medir una población de 292 extracciones con confianza por campo: dónde se equivoca aunque la exactitud global sea alta, si la confianza está calibrada, qué umbrales se pueden fijar por tipo y campo y qué se revisa cuando la capacidad de revisión es limitada.
+> **Qué vas a hacer:** Medir la exactitud de 292 extracciones con confianza por campo, en conjunto y por tipo de documento y campo; comprobar si la confianza está calibrada, fijar umbrales de revisión por segmento, comparar dos formas de muestrear lo automatizado y decidir qué se revisa cuando la capacidad de revisión es limitada.
 >
 > **Necesitas antes:** El [módulo 07](#07--extracción-estructurada-con-schema) (el esquema y las etiquetas de la parte con modelo) y el [08](#08--validación-y-reintento-con-error-concreto) (de ahí viene `conflict_detected`).
 >
@@ -1068,15 +1066,15 @@ Un equipo usa Claude para dos trabajos. El primero revisa cada *pull request* an
 
 ### Antes de empezar
 
-Los términos comunes están en el [glosario](../docs/glosario.md). La parte `poblacion` trabaja con datos sintéticos que genera `datos/generar_sinteticos.py` (`poblacion_extracciones.json` y sus etiquetas, que el módulo solo usa para puntuar): 292 documentos de compra, 6 campos cada uno, la mitad de cada tipo como conjunto de calibración y la otra mitad como producción. La parte `confianza_modelo` usa los 12 documentos del módulo 07 con la Messages API (necesita una API key).
+Los términos comunes (confianza por campo, calibración, muestreo estratificado, cola de revisión, etiqueta) están en el [glosario](../docs/glosario.md). La parte `poblacion` trabaja con datos sintéticos que genera `datos/generar_sinteticos.py` (`poblacion_extracciones.json` y sus etiquetas, que el módulo solo usa para puntuar): 292 documentos de compra, 6 campos cada uno, la mitad de cada tipo como conjunto de calibración y la otra mitad como producción. La parte `confianza_modelo` usa los 12 documentos del módulo 07 con la Messages API (necesita una API key).
 
 - **Términos propios:**
-  - **Confianza por campo:** el número de 0 a 1 que el modelo declara para cada valor extraído. Aquí es un campo más del esquema de la tool (`field_confidence`).
-  - **Calibración:** si la confianza que declara el modelo se parece al acierto real. Se mide por bandas de confianza: en las extracciones que dicen «0,97–1,00», ¿cuántas son correctas?
+  - **`field_confidence`:** el campo del esquema de la tool donde el modelo escribe la confianza de cada valor. En la parte `poblacion` la confianza no la da un modelo: la simula el generador.
+  - **Banda de confianza:** un intervalo de confianza declarada («0,95–1,00»). La calibración se mide banda a banda: acierto real frente a confianza media declarada.
   - **Segmento:** un tipo de documento, un campo o la combinación de ambos. La exactitud se calcula por segmento, no solo en conjunto.
   - **Umbral de revisión:** la confianza por encima de la cual una extracción se acepta sin revisión. Se fija con el conjunto de calibración, por segmento, y es `None` (todo a revisión) si no hay evidencia suficiente.
-  - **Muestra estratificada:** una muestra aleatoria con un mínimo de elementos por estrato (aquí, tipo de documento y campo), frente a una muestra aleatoria simple de toda la población.
-  - **Cupo de revisión:** cuántos documentos puede mirar el equipo en el periodo. La cola ordena los documentos para que lo que se mire sea lo que más importa.
+  - **Estrato:** aquí, la combinación de tipo de documento y campo. La muestra estratificada toma un mínimo de cada uno; la simple sortea sobre toda la población.
+  - **Cupo de revisión:** cuántos documentos puede mirar el equipo en el periodo. El módulo compara tres órdenes de la cola con el mismo cupo.
 
 ### El ejercicio
 
@@ -1092,11 +1090,12 @@ La parte `confianza_modelo` pide a un modelo que extraiga los 12 documentos con 
 
 Con tus palabras; no hay un número que acertar:
 
-1. Una extracción acierta el 97 % de los valores. ¿Qué tendría que pasar con los demás segmentos para que un tipo de documento rinda mucho peor sin que el titular lo muestre?
-2. De las extracciones de confianza alta, ¿qué muestra esperas que vea mejor los errores de un tipo de documento raro: una aleatoria simple o una estratificada, y por qué? ¿Qué cambiaría si el tipo raro pesara aún menos?
-3. Si el modelo declara 0,99 en un campo, ¿qué más necesitas saber para decidir si basta para no revisarlo?
+1. Una extracción acierta el 97 % de los valores. ¿Qué tendría que pasar con los demás segmentos para que un tipo de documento rinda mucho peor sin que el titular lo muestre? ¿De qué depende cuánto puede esconder?
+2. Para vigilar lo que se acepta con confianza alta, ¿qué muestra esperas que vea más a menudo los errores de un tipo de documento poco frecuente, una aleatoria simple o una estratificada? ¿Qué cambiaría si ese tipo pesara aún menos?
+3. Si el modelo declara 0,99 en un campo, ¿qué más necesitas saber para decidir si basta para no revisarlo? ¿Y si el segmento tiene muy pocos ejemplos etiquetados?
 4. Un documento tiene una confianza media alta, pero uno de sus campos es dudoso. ¿Qué decide una sola confianza por documento y qué decidiría una por campo?
-5. Con poca capacidad de revisión, ¿pesan igual un documento con conflicto y uno con un campo de baja confianza? ¿Qué errores ve cada orden de la cola?
+5. Con poca capacidad de revisión, ¿pesan igual un documento con conflicto y uno con un campo de baja confianza? ¿Qué tipo de problema dejará sin ver cada orden de la cola?
+6. En la parte con modelo, ¿qué tiene que haber en las extracciones para que se pueda medir si la confianza declarada está calibrada? ¿Dónde esperas que el modelo esté más seguro de lo que debería?
 
 ### Ejecutar
 
@@ -1162,21 +1161,21 @@ Notas:
 
 ### Pregunta tipo examen
 
-Un sistema extrae campos de facturas, albaranes y otros documentos de compra. Su exactitud global medida es del 97 %, y el equipo propone aceptar sin revisión todo lo que el modelo marque con confianza alta. ¿Qué debe hacerse antes de reducir la revisión humana?
+Un sistema extrae campos de facturas, albaranes y un tipo de documento de compra poco frecuente. Su exactitud global medida es del 97 %, y el equipo propone dejar de revisar todo lo que el modelo marque con confianza alta. ¿Qué debe hacerse antes de reducir la revisión humana?
 
-- A. Fijar el umbral en el valor de confianza más alto que declare el modelo y aceptar sin revisión todo lo que lo supere.
-- B. Medir la exactitud por tipo de documento y por campo con un conjunto etiquetado, automatizar solo los segmentos que alcancen el objetivo con ejemplos suficientes y muestrear de forma estratificada lo automatizado.
-- C. Mantener el 97 % como criterio y revisar cada mes una muestra aleatoria simple de lo que se acepta sin revisión.
-- D. Pedir al modelo una sola confianza por documento y automatizar los documentos cuya confianza supere la media de todos.
+- A. Elegir un único umbral de confianza con el que la exactitud global de lo aceptado llegue al 99 % y no revisar lo que lo supere.
+- B. Pedir al modelo una confianza por documento, la media de las de sus campos, y no revisar los documentos que superen un umbral.
+- C. Mantener el 97 % como criterio de aceptación y revisar cada mes una muestra aleatoria simple de lo que se acepta sin revisión.
+- D. Medir la exactitud por tipo de documento y por campo contra datos etiquetados, fijar ahí umbrales por segmento y muestrear lo aceptado por estratos.
 
 <details>
 <summary>Paso 4 · Respuesta</summary>
 
-**B.** La exactitud agregada puede esconder un tipo de documento o un campo que rinde mal (TS 5.5-K1), así que antes de automatizar se valida por tipo de documento y por campo (TS 5.5-K4, S2), con umbrales calibrados contra un conjunto etiquetado (K3, S3) y una muestra estratificada de lo que se acepta sin revisión, para medir su tasa de error y detectar patrones nuevos (K2, S1).
+**D.** Una exactitud agregada alta puede esconder un tipo de documento o un campo que rinde mal (TS 5.5-K1), así que antes de automatizar se comprueba la exactitud por tipo y por campo (K4, S2). La confianza por campo solo sirve para enrutar después de calibrarla con un conjunto etiquetado, que fija los umbrales (K3, S3), y lo aceptado se sigue vigilando con una muestra aleatoria estratificada (K2, S1).
 
-- **A** confía en que la confianza del modelo esté calibrada sin medirlo, y un umbral global no distingue segmentos.
-- **C** decide por el titular y mira con una muestra simple que apenas toca los tipos raros.
-- **D** usa una sola confianza por documento, que esconde el campo dudoso.
+- **A** elige el umbral mirando la cifra global, que es justo la que puede esconder el segmento malo (K1, K4).
+- **B** junta los campos de un documento en una sola cifra: la guía habla de confianza por campo (K3), y la media esconde el campo dudoso detrás de los buenos (inferencia propia).
+- **C** decide por el titular y vigila con una muestra simple, que apenas toca un tipo poco frecuente; la guía pide estratificarla (K2, S1).
 </details>
 
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
