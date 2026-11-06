@@ -14,6 +14,18 @@ Lo comprueba `tests/test_credenciales_y_modos.py`: clasifica cada módulo leyend
 
 Cada ejecución imprime al empezar la credencial que usa y su tope de gasto (`[presupuesto]`, `--budget`). Los términos están en el [glosario](glosario.md).
 
+## Qué demuestra cada camino
+
+Que un módulo se pueda hacer sin credencial no quiere decir que sea equivalente a ejecutarlo, ni a construir:
+
+| Camino | Qué es | Qué no es |
+| :--- | :--- | :--- |
+| **Leer en modo ligero** | *Preparación conceptual sin coste*: fija conceptos, vocabulario de la guía y los anti-patrones, con el resultado de referencia del Paso 3. | No muestra cómo se comporta el modelo hoy, ni te enfrenta a lo que sale distinto en tu máquina. |
+| **Ejecutar los módulos** | Contacto práctico con el comportamiento real: lo que el modelo hace con una regla, un esquema o un reintento. | No es construir un sistema: los módulos son pequeños, con datos sintéticos y el diseño ya resuelto. |
+| **Construir algo propio** | La *competencia práctica* que la guía describe: seis meses o más construyendo con las APIs de Claude, el Agent SDK, Claude Code y MCP. La práctica propia de D3 (`d3_claude_code/README.md`) es el primer paso. | No lo sustituye ningún módulo de este repositorio. |
+
+Los cuatro módulos de ejecución obligatoria existen porque su lección solo se ve ejecutando. Quien los hace leyendo se queda con el concepto, no con la observación.
+
 ## La tabla
 
 «Coste según su README» recoge solo lo que cada README dice; donde no da una cifra, la tabla tampoco la inventa.

@@ -10,6 +10,8 @@ Apps agénticas de demostración para practicar, con código ejecutable, todas l
 
 **Qué necesitas.** Usar la terminal. Saber leer Python ayuda, pero no es imprescindible: el ciclo se sigue con los textos y la salida. Para ejecutar con modelo hace falta una API key o, en los módulos del Agent SDK, la suscripción de Claude Code ([Instalación](#instalación-una-vez)). Sin credencial puedes hacer en modo ligero los módulos que lo permiten, pero cuatro son de ejecución obligatoria: qué pide cada módulo está en [credenciales y modos](docs/credenciales-y-modos.md). Los términos están en el [glosario](docs/glosario.md).
 
+**Qué te da cada camino.** Hacer los módulos en modo ligero es *preparación conceptual sin coste*: fija los conceptos y el vocabulario de la guía. No equivale a *competencia práctica demostrada*. La guía describe a un candidato con seis meses o más construyendo con las APIs de Claude, el Agent SDK, Claude Code y MCP, y para prepararse recomienda construir (un agente, una configuración de Claude Code, tools MCP, una extracción estructurada), no solo leer. Ejecutar los módulos y hacer la práctica propia de D3 se acerca más a eso, pero tampoco sustituye construir un sistema tuyo.
+
 ### Cómo empezar: con guía (recomendado)
 
 Un asistente te narra cada módulo paso a paso: te explica de qué va, espera tus predicciones, te dice cuándo ejecutar y no te enseña el resultado ni la respuesta antes de tiempo. No tienes que abrir ningún archivo.

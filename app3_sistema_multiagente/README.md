@@ -578,8 +578,8 @@ Notas:
 
 **Pregunta 2 (multiple-response).** Un subagente de análisis de documentos recibe dos informes financieros de fuentes creíbles que dan cifras distintas para los ingresos de la misma división en el mismo trimestre: 4,2 M€ y 3,9 M€. Ambos cubren el mismo periodo y la misma población, y el informe final debe seguir siendo fiable para quien lo lee. **Selecciona dos** prácticas adecuadas. Evalúa cada opción por separado.
 
-- A. Resumir cada informe en un párrafo breve antes de la síntesis, para que el sintetizador trabaje con menos texto.
-- B. Quedarse con la cifra del informe publicado más recientemente y descartar la otra, para que el informe final sea coherente.
+- A. Resumir cada informe en un párrafo breve que no conserva qué fuente respalda cada cifra, para que el sintetizador trabaje con menos texto y sin ruido.
+- B. Quedarse con la cifra del informe publicado más recientemente y descartar la otra, porque es la más probable y así el informe final queda coherente y sin dudas.
 - C. Incluir las dos cifras con su fuente, anotadas como conflicto, y que el coordinador decida cómo reconciliarlas antes de pasarlas a la síntesis.
 - D. Dedicar una sección del informe a los hallazgos establecidos y otra a los disputados, conservando cómo cada fuente caracteriza su cifra y su método.
 
@@ -588,7 +588,7 @@ Notas:
 
 **C y D.** Las dos conservan el conflicto con su fuente en vez de esconderlo.
 
-- **A** Resumir sin un mapa afirmación–fuente es donde se pierde la atribución (TS 5.6-K1): menos texto no ayuda a quien no puede saber de dónde sale cada cifra.
+- **A** Un resumen que no conserva qué fuente respalda cada cifra es donde se pierde la atribución (TS 5.6-K1): menos texto no ayuda a quien no puede saber de dónde sale cada cifra.
 - **B** Elegir una cifra de forma arbitraria oculta el conflicto; lo correcto es anotarlo con su fuente (TS 5.6-K3). Y la fecha de publicación no decide aquí: sirve para no leer como contradicción una diferencia temporal (TS 5.6-K4), y estos informes cubren el mismo periodo.
 - **C** El análisis incluye los valores en conflicto, anotados, y el coordinador decide cómo reconciliarlos antes de la síntesis (TS 5.6-S3, 5.6-K3).
 - **D** El informe distingue lo establecido de lo disputado y conserva la caracterización y el método de cada fuente (TS 5.6-S2).
@@ -824,10 +824,10 @@ Notas:
 - **C** sacrifica la garantía de salida estructurada (TS 4.3-K2) para resolver algo que el esquema resuelve por sí solo.
 </details>
 
-**Pregunta 2 (multiple-response).** Un equipo extrae importes y categorías de facturas con una tool de JSON Schema y activa el modo estricto. Tras una semana ya no hay respuestas con JSON mal formado, pero en una factura las líneas no suman el total declarado y en otra el IVA aparece en el campo del subtotal. **Selecciona dos** afirmaciones correctas. Evalúa cada opción por separado.
+**Pregunta 2 (multiple-response).** Un equipo extrae importes y categorías de facturas con una tool de JSON Schema y activa el modo estricto. Tras una semana el equipo ya no tiene fallos al procesar las respuestas, pero en una factura las líneas no suman el total declarado y en otra el IVA aparece en el campo del subtotal. **Selecciona dos** afirmaciones correctas. Evalúa cada opción por separado.
 
 - A. El modo estricto garantiza también que los valores coincidan con el documento, así que los totales erróneos apuntan a un fallo del modelo y no del esquema.
-- B. Con el modo estricto la salida cumple siempre el esquema: no hay JSON mal formado, ni tipos equivocados, ni valores fuera del `enum`.
+- B. Con el modo estricto desaparecen los errores de sintaxis del esquema: la salida es JSON bien formado que cumple el esquema.
 - C. Un total que no suma o un valor en el campo que no le toca son errores de significado: el esquema, estricto o no, no los evita.
 - D. Marcar como obligatorios más campos del esquema obliga al modelo a ser más preciso y elimina esos errores de significado.
 

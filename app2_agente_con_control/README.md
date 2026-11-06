@@ -542,17 +542,17 @@ Esta pregunta se apoya solo en lo que la guía nombra: el hook que bloquea y red
 
 Un flujo de reembolsos exige que `process_refund` no se ejecute nunca con un `customer_id` distinto del que devolvió `get_customer`. A veces el modelo escribe un ID con los dígitos cambiados. ¿Qué solución garantiza que ese pago erróneo no se ejecute?
 
-- A. Una línea en el prompt de sistema que ordena copiar literalmente el `customer_id` devuelto por `get_customer`.
-- B. Un hook `PreToolUse` que bloquea la llamada cuando `customer_id` no es el verificado y devuelve al modelo un motivo que lo redirige a reintentar con el ID correcto.
-- C. Un hook `PostToolUse` que revisa el resultado de `process_refund` y avisa al modelo cuando el ID no coincide.
-- D. Varios ejemplos en el prompt de reembolsos que muestran la llamada con el ID copiado correctamente.
+- A. Una instrucción en el prompt de sistema que ordena al modelo copiar literalmente el `customer_id` devuelto por `get_customer` en cada llamada a `process_refund`.
+- B. Un hook `PreToolUse` que bloquea `process_refund` si `customer_id` no es el verificado y devuelve al modelo un motivo para reintentar con el ID correcto.
+- C. Un hook `PostToolUse` que revisa el resultado de `process_refund` cuando termina y avisa al modelo si el `customer_id` usado no coincide con el verificado.
+- D. Varios ejemplos en el prompt de reembolsos que muestran la llamada a `process_refund` con el `customer_id` copiado correctamente de `get_customer`.
 
 <details>
 <summary>Paso 4 · Respuesta</summary>
 
-**B.** El hook actúa sobre la llamada saliente antes de que se ejecute y la bloquea de forma determinista, sin depender del modelo (TS 1.5-K2, TS 1.4-K2); el motivo la redirige a un reintento válido (TS 1.5-S2) y el prerrequisito se hace cumplir en código (TS 1.4-S1). A y D son guía en el prompt, con una tasa de fallo distinta de cero (TS 1.4-K1). C corre cuando la tool ya se ejecutó: `PostToolUse` no impide una acción (TS 1.5-K2).
+**B.** El hook actúa sobre la llamada saliente antes de que se ejecute y la bloquea de forma determinista, sin depender del modelo (TS 1.5-K2, TS 1.5-K3); el motivo la redirige a un reintento válido (TS 1.5-S2) y el prerrequisito se hace cumplir en código (TS 1.4-S1). A y D son guía en el prompt, con una tasa de fallo distinta de cero (TS 1.4-K2, TS 1.5-K3). C actúa sobre el resultado, cuando la tool ya se ejecutó (TS 1.5-K1), y no sobre la llamada saliente (TS 1.5-K2), así que no puede impedir ese pago.
 
-**Qué queda fuera de esta pregunta:** reescribir el argumento con `updatedInput` es lo que muestra el módulo como ampliación (EN PRODUCCIÓN, no evaluable). La guía no lo nombra, así que ninguna respuesta evaluable depende de él.
+**Qué queda fuera de esta pregunta:** reescribir el argumento con `updatedInput` es lo que muestra el módulo como ampliación. **EN PRODUCCIÓN (no evaluable):** la guía no lo nombra, así que ninguna respuesta evaluable depende de él.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).

@@ -106,3 +106,10 @@ def test_mode_column_matches_the_module_readme(module):
 def test_the_front_page_points_to_the_table():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert "docs/credenciales-y-modos.md" in readme
+
+
+def test_light_mode_is_not_sold_as_practical_competence():
+    """D-05: el modo ligero es preparación conceptual sin coste, no competencia práctica demostrada."""
+    for text in ((ROOT / "README.md").read_text(encoding="utf-8"), DOC.read_text(encoding="utf-8")):
+        text = text.lower()
+        assert "preparación conceptual" in text and "competencia práctica" in text

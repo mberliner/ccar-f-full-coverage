@@ -25,6 +25,22 @@ Importado por `CLAUDE.md`. Se aplica a todo el proyecto; lo específico de un ti
 - La lista de exclusión es `tests/perimetro_excluido.yaml` y la comprueba `tests/test_perimetro.py`.
 - `claude-agent-sdk` está fijado en `pyproject.toml` y solo se actualiza de forma deliberada.
 
+## Carriles de contenido
+
+Toda la documentación distingue tres carriles, para que quien la lee sepa de un vistazo qué entra en el examen:
+
+- **Examen (guía v1.0):** lo que la guía dice, sin marca. Es lo único que decide la respuesta de una pregunta tipo examen, y en el examen manda siempre.
+- **`Producto observado (no evaluable)`:** lo que hacen hoy Claude Code, el SDK o la API y la guía no describe (qué lista `/memory`, que `argument-hint` no obliga a pasar el argumento, que `tool_choice` forzado devuelve 400 con un modelo). Se comprueba en una versión, que se anota cuando importa.
+- **`EN PRODUCCIÓN (no evaluable)`:** una práctica o un mecanismo adicional que la guía no nombra (`updatedInput`, `output_config.format`). Va como mucho en un comentario, una nota o un apéndice rotulado, y nunca como la respuesta correcta de una pregunta tipo examen.
+
+Aparte, una **inferencia propia** es razonamiento del proyecto que la guía no respalda literalmente: se rotula así y se separa de los hechos de la guía.
+
+Reglas de uso:
+
+- En un módulo, el Paso 3 (lo observado) es donde vive el producto observado; la pregunta y su respuesta se apoyan en la guía. Si una nota de producto aparece junto a la respuesta, lleva su rótulo y aclara que no cambia la respuesta de examen.
+- Los dos rótulos se escriben exactamente así. `tests/test_carriles_de_contenido.py` rechaza otras grafías (`En producción (no evaluable)`, `EN PRODUCCIÓN, no evaluable`, `nota de producto (no evaluable)`).
+- Los hallazgos de producto con fecha y versión van a `docs/hallazgos.md` (ver `docs/estandares-flujo.md`).
+
 ## Ejecución con modelo
 
 - `ClaudeAgentOptions` se construye con `harness/options.py`, que aplica el aislamiento (`setting_sources=[]`, `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`, `ENABLE_CLAUDEAI_MCP_SERVERS=false`) y exige `max_budget_usd`.

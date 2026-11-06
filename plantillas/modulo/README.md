@@ -66,7 +66,7 @@ Qué señal mirar en la salida, sin dar aquí el resultado.
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
-Lo medido con modelo (modelo y fecha), lo estable frente a lo que varía y las notas. Una fila por variante y modelo, con el «modelo de la medida»: no se enfrentan dos modelos en una misma fila o cabecera (las comparaciones van a `docs/hallazgos.md`).
+Lo medido con modelo (modelo y fecha), lo estable frente a lo que varía y las notas. Una fila por variante y modelo, con el «modelo de la medida»: no se enfrentan dos modelos en una misma fila o cabecera (las comparaciones van a `docs/hallazgos.md`). Lo que hace hoy el producto y la guía no dice se rotula **Producto observado (no evaluable)**; una práctica adicional que la guía no nombra, **EN PRODUCCIÓN (no evaluable)** (carriles en `docs/estandares-codigo.md`).
 </details>
 
 ### Pregunta tipo examen

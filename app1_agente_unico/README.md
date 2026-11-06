@@ -552,7 +552,7 @@ Notas:
 - ***Tool search*:** `ENABLE_TOOL_SEARCH=false` se fija por precaución y la salida confirma `cargas diferidas=0`. En las sondas no se activó con ningún valor de la variable, así que no hay prueba de que `false` apague algo: solo de que aquí no interviene (`docs/hallazgos.md`).
 - **`auto`:** depende de la petición. Con «¿qué te parece?» o «¿es urgente?» Haiku 5.5 sí llamaba a la tool y el contraste no se veía; con una petición de opinión contesta con texto. Ese es el caso que `any` y el forzado resuelven.
 - **Un turno, no todos:** el modo forzado o `any` solo va en el primer turno. En todos los turnos, el modelo estaría obligado a llamar a una tool también después de recibir los resultados y no podría dar su respuesta final.
-- **En producción (no evaluable):** `any` y la forzada devuelven 400 en Sonnet 5.5 (comprobado) y, según la documentación del repositorio de estudio, en Opus 5.5 y Fable 5.1. Haiku 5.5 y Haiku 4.5 las aceptan. En el examen manda la guía.
+- **Producto observado (no evaluable):** `any` y la forzada devuelven 400 en Sonnet 5.5 (comprobado) y, según la documentación del repositorio de estudio, en Opus 5.5 y Fable 5.1. Haiku 5.5 y Haiku 4.5 las aceptan. En el examen manda la guía.
 - La petición por modo, la secuencia forzado → `auto` y el clasificador de la primera respuesta se prueban sin modelo en `tests/test_app1_05_scoping_y_tool_choice.py`.
 </details>
 
@@ -665,7 +665,7 @@ Haiku 5.5:
 
 Notas:
 
-- **Los resources no los descubre el modelo solo.** La variante correcta cambia dos cosas a la vez, las tools de resources y la frase que las anuncia. Con las tools solas, sin avisar, el agente exploró con búsquedas: la aplicación debe decirle que existen (aquí, una frase en el prompt del sistema). En el SDK se alcanzan con `ListMcpResourcesTool` y `ReadMcpResourceTool`. Es una nota de producto (no evaluable).
+- **Los resources no los descubre el modelo solo.** La variante correcta cambia dos cosas a la vez, las tools de resources y la frase que las anuncia. Con las tools solas, sin avisar, el agente exploró con búsquedas: la aplicación debe decirle que existen (aquí, una frase en el prompt del sistema). En el SDK se alcanzan con `ListMcpResourcesTool` y `ReadMcpResourceTool`. Es **Producto observado (no evaluable)**.
 - **`descripcion`: la señal que dice la guía no se vio.** Según la guía, una descripción mínima hace que el agente prefiera `Grep`. Con Haiku 5.5 y con Haiku 4.5 (sondas, 6 repeticiones por condición) no cambió la preferencia: sin avisar de que hay archivos, `Grep` salió 0/6 con las dos descripciones, y avisando salió igual de a menudo con una que con otra (4/6 y 5/6 con Haiku 5.5). Lo que movió al agente a `Grep` fue saber que los archivos existían, no la descripción. La viñeta se enseña igualmente (cabecera y pregunta); en el examen manda la guía.
 - **`init` puede traer la lista de tools incompleta:** en 2 de unas 8 ejecuciones, los servidores stdio constaban como conectados pero sus tools no estaban aún en `init`; el módulo lo avisa con `[aviso]`. Las llamadas funcionan igualmente.
 - **Sin aprobación:** con `setting_sources=["project"]` el SDK conecta los servidores de `.mcp.json` sin pedir aprobación; la CLI interactiva sí puede pedirla.

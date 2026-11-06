@@ -9,7 +9,7 @@ El dominio 3 trata de cómo se configura y se usa Claude Code, así que no tiene
 
 La TS 3.6 (CI/CD) no está en esta sección: llega con la entrega 3 (ver `CONCEPTOS.md`).
 
-En todo el README, «la guía» es la Exam Guide v1.0. Lo que hace el producto actual y la guía no dice va marcado como **EN PRODUCCIÓN (no evaluable)**. En el examen manda la guía.
+En todo el README, «la guía» es la Exam Guide v1.0. Lo que hace el producto actual y la guía no dice va marcado como **Producto observado (no evaluable)**, y una práctica o mecanismo adicional que la guía no nombra, como **EN PRODUCCIÓN (no evaluable)**. En el examen manda la guía.
 
 ---
 
@@ -84,11 +84,11 @@ Lo inverso también ocurre: los `CLAUDE.md` de directorios **padre** del clon se
 
 **Caso de este proyecto:** es la primera comprobación de §11.5 del roadmap y la de «Contexto heredado» de `CLAUDE.md`: en `/memory` deben salir el `CLAUDE.md` del proyecto y sus dos `@import`, y ningún `CLAUDE.md` padre.
 
-**EN PRODUCCIÓN (no evaluable):** en el producto actual, `/memory` lista las *ubicaciones* de memoria (también las que no existen) para abrirlas y editarlas, y **no lista las reglas** de `.claude/rules/`. Lo cargado al arrancar se ve con `/context`; las reglas con `paths` y los `CLAUDE.md` de subcarpetas se cargan bajo demanda y lo anuncian con una línea `Loaded` en el terminal (`conceptos-generales.md` §4.6 del repositorio de estudio; `docs/hallazgos.md`). En el examen, `/memory` es la respuesta para «verificar qué memoria está cargada».
+**Producto observado (no evaluable):** en el producto actual, `/memory` lista las *ubicaciones* de memoria (también las que no existen) para abrirlas y editarlas, y **no lista las reglas** de `.claude/rules/`. Lo cargado al arrancar se ve con `/context`; las reglas con `paths` y los `CLAUDE.md` de subcarpetas se cargan bajo demanda y lo anuncian con una línea `Loaded` en el terminal (`conceptos-generales.md` §4.6 del repositorio de estudio; `docs/hallazgos.md`). En el examen, `/memory` es la respuesta para «verificar qué memoria está cargada».
 
 **Por qué importa (inferencia propia):** cuando dos sesiones se comportan distinto, lo primero es saber qué instrucciones tiene cargadas cada una. Discutir el comportamiento sin mirar eso es adivinar.
 
-**Anti-patrón / trampa del examen:** tratar la inconsistencia como un problema del modelo sin mirar qué se cargó: repetir la instrucción en el prompt, suponer que «se olvidó» o preguntarle al propio asistente qué instrucciones sigue (su respuesta es una descripción, no una comprobación). La guía da el comando que lo comprueba, `/memory` (TS 3.1-S4). Que el producto reparta hoy esa información entre `/memory`, `/context` y la línea `Loaded` es EN PRODUCCIÓN (ver arriba) y no cambia la respuesta de examen.
+**Anti-patrón / trampa del examen:** tratar la inconsistencia como un problema del modelo sin mirar qué se cargó: repetir la instrucción en el prompt, suponer que «se olvidó» o preguntarle al propio asistente qué instrucciones sigue (su respuesta es una descripción, no una comprobación). La guía da el comando que lo comprueba, `/memory` (TS 3.1-S4). Que el producto reparta hoy esa información entre `/memory`, `/context` y la línea `Loaded` es **Producto observado (no evaluable)** (ver arriba) y no cambia la respuesta de examen.
 
 ### 2.3 Variantes personales de una skill
 
@@ -96,7 +96,7 @@ Lo inverso también ocurre: los `CLAUDE.md` de directorios **padre** del clon se
 
 **Qué dice la guía (TS 3.2-K4):** para personalizar una skill sin afectar a los compañeros, se crea una variante personal en `~/.claude/skills/` **con un nombre distinto**.
 
-**Caso de este proyecto:** si quieres una versión de `verificar-concepto` que se salte la comprobación de la pregunta tipo examen, no edites `.claude/skills/verificar-concepto/`: ese cambio llegaría a todos por git. Crea `~/.claude/skills/verificar-concepto-rapido/SKILL.md`. Con otro nombre, las dos conviven y cada una se invoca por el suyo. Con el mismo nombre, las dos responderían a `/verificar-concepto` y no sabrías a simple vista cuál se ejecuta (cuál gana es comportamiento del producto: EN PRODUCCIÓN, no evaluable). La guía solo lo dice de las skills; aplicar lo mismo a un comando personal en `~/.claude/commands/` es extensión propia.
+**Caso de este proyecto:** si quieres una versión de `verificar-concepto` que se salte la comprobación de la pregunta tipo examen, no edites `.claude/skills/verificar-concepto/`: ese cambio llegaría a todos por git. Crea `~/.claude/skills/verificar-concepto-rapido/SKILL.md`. Con otro nombre, las dos conviven y cada una se invoca por el suyo. Con el mismo nombre, las dos responderían a `/verificar-concepto` y no sabrías a simple vista cuál se ejecuta (cuál gana es comportamiento del producto, **Producto observado (no evaluable)**). La guía solo lo dice de las skills; aplicar lo mismo a un comando personal en `~/.claude/commands/` es extensión propia.
 
 **Por qué importa (inferencia propia):** personalizar una skill es legítimo, pero la copia personal no debe cambiar lo que recibe el equipo ni esconder sus cambios. Un nombre distinto deja claro que son dos cosas.
 
@@ -117,7 +117,7 @@ Lo inverso también ocurre: los `CLAUDE.md` de directorios **padre** del clon se
 
 La prueba rápida: si la instrucción tiene que cumplirse aunque nadie la recuerde, es de `CLAUDE.md` (o de una regla). Si es un procedimiento que alguien lanza, es una skill o un comando.
 
-**Por qué importa (inferencia propia):** `CLAUDE.md` se carga en toda sesión, así que lo que se pone ahí se paga siempre; lo que solo se usa a veces es contexto desperdiciado el resto del tiempo. **EN PRODUCCIÓN (no evaluable):** en el producto actual, una skill ocupa solo su descripción hasta que se invoca; en el `/context` de la práctica (2026-10-27), `CLAUDE.md` ocupaba 1,1k tokens y la descripción de `verificar-concepto`, unos 80.
+**Por qué importa (inferencia propia):** `CLAUDE.md` se carga en toda sesión, así que lo que se pone ahí se paga siempre; lo que solo se usa a veces es contexto desperdiciado el resto del tiempo. **Producto observado (no evaluable):** en el producto actual, una skill ocupa solo su descripción hasta que se invoca; en el `/context` de la práctica (2026-10-27), `CLAUDE.md` ocupaba 1,1k tokens y la descripción de `verificar-concepto`, unos 80.
 
 **Anti-patrón / trampa del examen:** meter en `CLAUDE.md` un procedimiento que solo se lanza a veces (engorda cada sesión) o, al revés, convertir en skill una regla que debe cumplirse siempre (si nadie la invoca, no se aplica). La guía da el criterio: una skill, bajo demanda, para un flujo concreto; `CLAUDE.md`, para los estándares universales (TS 3.2-S5).
 
@@ -232,10 +232,10 @@ Escribe `/memory`.
 ```
 
 - **`Project instructions` con las dos líneas `L … @-imported`:** es lo esperado. El `CLAUDE.md` del proyecto, con sus dos `@import` (TS 3.1-K3).
-- **`User instructions  Saved in ~/.claude/CLAUDE.md`:** es el **nivel de usuario** (TS 3.1-K1, K2), no un `CLAUDE.md` de un directorio padre, así que no incumple «ningún padre». Y **no implica que el archivo exista**: `/memory` lista la ubicación para poder abrirla y editarla (**EN PRODUCCIÓN, no evaluable**). Lo decide el sistema de archivos: PowerShell `Test-Path "$HOME/.claude/CLAUDE.md"`, Bash `ls ~/.claude/CLAUDE.md`. Si da `False` o «No such file», la línea es solo una ubicación vacía y no se carga nada. Si existe, se carga en todas tus sesiones, también en esta (salvo que lo excluyas con el archivo local del paso 5): anota su contenido, porque entra en tu contexto aunque no sea del proyecto.
+- **`User instructions  Saved in ~/.claude/CLAUDE.md`:** es el **nivel de usuario** (TS 3.1-K1, K2), no un `CLAUDE.md` de un directorio padre, así que no incumple «ningún padre». Y **no implica que el archivo exista**: `/memory` lista la ubicación para poder abrirla y editarla (**Producto observado (no evaluable)**). Lo decide el sistema de archivos: PowerShell `Test-Path "$HOME/.claude/CLAUDE.md"`, Bash `ls ~/.claude/CLAUDE.md`. Si da `False` o «No such file», la línea es solo una ubicación vacía y no se carga nada. Si existe, se carga en todas tus sesiones, también en esta (salvo que lo excluyas con el archivo local del paso 5): anota su contenido, porque entra en tu contexto aunque no sea del proyecto.
 - **`Auto-memory  true`:** la memoria automática está activa en tu sesión interactiva. Es normal. Las **apps** la apagan (`CLAUDE_CODE_DISABLE_AUTO_MEMORY=1` en `harness/options.py`) para que cada ejecución sea nueva, y el proyecto prohíbe guardar directivas suyas ahí (`docs/estandares-flujo.md`, «Directivas»).
 
-`/memory` no lista las reglas de `.claude/rules/` (**EN PRODUCCIÓN, no evaluable**; ver la sección 2.2).
+`/memory` no lista las reglas de `.claude/rules/` (**Producto observado (no evaluable)**; ver la sección 2.2).
 
 Tres comprobaciones rápidas que complementan a `/memory`:
 
@@ -269,7 +269,7 @@ Antes, escribe `/skills` y busca dos líneas del proyecto: `verificar-concepto �
    - **No debe quedar en tu conversación:** las decenas de lecturas y búsquedas que la skill hizo para llegar ahí. Corre en un subagente aislado (`context: fork`) y solo vuelve el resultado (TS 3.2-K3, S2).
 3. Escribe `/verificar-concepto` sin argumento y pulsa Intro.
    - **Debe volver:** la línea `Falta la viñeta. Uso: /verificar-concepto <TS x.y-Kn|Sn>`, sin ninguna búsqueda. El asistente principal puede envolverla en una frase suya o añadir un ejemplo (el 2026-10-27 añadió «escribe el comando con la viñeta que quieres comprobar»): esa frase no es de la skill. Lo que cuenta es que la skill se detuvo y no hubo lecturas ni búsquedas.
-   - **Lectura (EN PRODUCCIÓN, no evaluable):** `argument-hint` solo se muestra al teclear; el producto lanza la skill igualmente sin argumento. Por eso la propia skill comprueba `$ARGUMENTS` y se detiene (TS 3.2-S4).
+   - **Lectura, Producto observado (no evaluable):** `argument-hint` solo se muestra al teclear; el producto lanza la skill igualmente sin argumento. Por eso la propia skill comprueba `$ARGUMENTS` y se detiene (TS 3.2-S4).
 
 Si sale «unknown skill» o similar: comprueba que abriste `claude` desde la raíz del repositorio; la skill está en `.claude/skills/verificar-concepto/SKILL.md`.
 
@@ -449,11 +449,11 @@ Para planificar una migración hay que recorrer cientos de archivos buscando los
 
 #### TS 3.5 · Refinamiento iterativo
 
-Una persona va a implementar una capa de caché en un dominio que no conoce y no sabe qué estrategias de invalidación ni qué fallos debería prever. ¿Qué técnica conviene antes de implementar?
+Una persona va a implementar una capa de caché en un dominio que no conoce y no sabe qué decisiones de diseño ni qué casos límite debería prever. ¿Qué técnica conviene antes de implementar?
 
 - A. Escribir una especificación larga en prosa con todo lo que se le ocurra y pedir la implementación completa.
 - B. Dar dos o tres ejemplos de entrada y salida de la caché, para que Claude infiera cómo debe comportarse.
-- C. Pedir a Claude que le haga preguntas que saquen a la luz estrategias de invalidación y modos de fallo.
+- C. Pedir a Claude que le haga preguntas sobre requisitos y riesgos antes de escribir código.
 - D. Implementar una primera versión y corregir los problemas de uno en uno según los vaya notando en producción.
 
 <details>
