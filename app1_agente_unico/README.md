@@ -321,12 +321,16 @@ La tasa de acierto y las peticiones falladas de cada variante; si repites con `-
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
-| Variante | Qué cambia | Haiku 5.5 (`--rol-modelo agent`, por defecto) | Haiku 4.5 (`--rol-modelo enforcement`) |
-| :--- | :--- | :--- | :--- |
-| correcta | 4 tools renombradas y divididas, con descripciones de propósito, entrada, ejemplo, casos borde y diferencias | 18/18 | 24/24 |
-| `minimas` | 2 tools genéricas con una línea cada una | **inestable**: 15/18 en una medida y 89/90 en otras tres (ver notas) | 14/24 y 14/18 (58–78 %) |
-| `palabra_clave` | las descripciones buenas, pero el prompt dice «si menciona un documento, usa `summarize_article`» | 12/18: las 2 peticiones con «documento», siempre | 24/24: **no obedece la regla** |
-| `nombre_enganoso` | la tool de verificación se llama `get_ticket_status` (nombre de tickets) con su descripción de siempre | 30/30 | 24/24 (y 48/48 en dos casos más duros, ver notas) |
+Cada variante se mide con el modelo en que su señal se ve (el módulo es un banco de pruebas del mecanismo, no una comparación entre modelos):
+
+| Variante | Qué cambia | Modelo de la medida | Resultado | Qué dice |
+| :--- | :--- | :--- | :--- | :--- |
+| correcta | 4 tools renombradas y divididas, con descripciones de propósito, entrada, ejemplo, casos borde y diferencias | Haiku 5.5 (`--rol-modelo agent`, por defecto) | 18/18 | con descripciones buenas el agente acierta |
+| `minimas` | 2 tools genéricas con una línea cada una | Haiku 4.5 (`--rol-modelo enforcement`) | 14/24 y 14/18 (58–78 %) | la ambigüedad de dos tools genéricas hace fallar la selección; con el otro rol de modelo la señal es inestable (ver notas) |
+| `palabra_clave` | las descripciones buenas, pero el prompt dice «si menciona un documento, usa `summarize_article`» | Haiku 5.5 (por defecto) | 12/18: las 2 peticiones con «documento», siempre | la regla del prompt gana a la descripción; con el otro rol de modelo no la obedece y no hay señal (ver notas) |
+| `nombre_enganoso` | la tool de verificación se llama `get_ticket_status` (nombre de tickets) con su descripción de siempre | Haiku 5.5 (por defecto) | 30/30 | sin señal: la descripción pesa más que el nombre (ver notas) |
+
+Las cifras de la otra variante de modelo en cada fila, tal como estaban en esta tabla, están en `docs/hallazgos.md` («Comparaciones entre modelos y calibración», no evaluable).
 
 Notas:
 
@@ -544,7 +548,7 @@ Haiku 5.5:
 
 Notas:
 
-- **`scoping`:** la guía dice que 18 tools degradan la fiabilidad de selección; aquí no se vio en el acierto. Con Haiku 5.5 y con Haiku 4.5 (sonda: 18/18 y 18/18) las peticiones son claras y el modelo elige bien. Lo que sí se vio: más coste con 18 tools (+36 % con Haiku 5.5, +58 % con Haiku 4.5) y, con Haiku 4.5, una petición cuya tool cambió entre repeticiones (`get_user` o `get_employee`). Con peticiones más ambiguas o más tools, la degradación de acierto sería previsiblemente más fácil de provocar (hipótesis sin comprobar). En el examen manda la guía.
+- **`scoping`:** la guía dice que 18 tools degradan la fiabilidad de selección; aquí no se vio en el acierto. Con Haiku 5.5 y con Haiku 4.5 (sonda: 18/18 y 18/18) las peticiones son claras y el modelo elige bien. Lo que sí se vio: más coste con 18 tools (+36 % con Haiku 5.5; la cifra con Haiku 4.5 está en `docs/hallazgos.md`) y, con Haiku 4.5, una petición cuya tool cambió entre repeticiones (`get_user` o `get_employee`). Con peticiones más ambiguas o más tools, la degradación de acierto sería previsiblemente más fácil de provocar (hipótesis sin comprobar). En el examen manda la guía.
 - ***Tool search*:** `ENABLE_TOOL_SEARCH=false` se fija por precaución y la salida confirma `cargas diferidas=0`. En las sondas no se activó con ningún valor de la variable, así que no hay prueba de que `false` apague algo: solo de que aquí no interviene (`docs/hallazgos.md`).
 - **`auto`:** depende de la petición. Con «¿qué te parece?» o «¿es urgente?» Haiku 5.5 sí llamaba a la tool y el contraste no se veía; con una petición de opinión contesta con texto. Ese es el caso que `any` y el forzado resuelven.
 - **Un turno, no todos:** el modo forzado o `any` solo va en el primer turno. En todos los turnos, el modelo estaría obligado a llamar a una tool también después de recibir los resultados y no podría dar su respuesta final.

@@ -150,3 +150,21 @@ Haiku 5.5 (rol `agent`), Messages API. Coste total: ~0,021 $ (sonda de aceptaci�
 - **Sondeado: la API acepta el esquema de `extract_metadata` tal cual.** Con `type: ["string", "null"]`, con `anyOf` en su lugar y con todo en `required`, las tres variantes devolvieron `tool_use` sin error; hizo falta solo cerrar los objetos. No hay que reescribir los campos *nullable* para usar `strict`.
 - **`strict` arregla la forma y no el significado, y puede empeorar el tipo.** Con el `enum` cerrado (`invoice`, `delivery_note`): sin `strict`, forma válida 10/12, 2 fuera del `enum` y tipo correcto 11/12; con `strict`, forma válida 12/12, 0 fuera del `enum` y tipo correcto **9/12**. El modelo escribía `other` (correcto) en la garantía y el presupuesto; con `strict` no puede y los fuerza a una categoría que no es. Idéntico en las 3 repeticiones. Es la razón de que el `enum` abierto con `other` y `unclear` (TS 4.3-K4) siga haciendo falta con `strict`.
 - Corrige una afirmación previa del repositorio: la guía **sí** nombra el modo estricto (TS 4.3-K1, K3 y la lista de tecnologías), así que no es «EN PRODUCCIÓN (no evaluable)».
+
+## Comparaciones entre modelos y calibración (no evaluable) · auditoría G-04, 2026-11-06
+
+La guía deja fuera de alcance las métricas de comparación entre modelos. Los README de módulo usan un modelo como banco de pruebas de un mecanismo (una fila por modelo y por variante, con «modelo de la medida»), pero no enfrentan dos modelos en una fila (`tests/test_sin_comparacion_de_modelos.py`). Aquí queda lo que se sacó de los README, tal como estaba. Es calibración de esta implementación, no materia del examen.
+
+- **`app1/03`, tabla original con una columna por modelo** (Haiku 5.5 con `--rol-modelo agent` y Haiku 4.5 con `--rol-modelo enforcement`). La mayoría de estas cifras ya figuraban en la revisión independiente de la entrega 2 (punto 3) y en la entrada de `nombre_enganoso`; la fila `correcta` con Haiku 5.5 (18/18) solo estaba en el README.
+
+  | Variante | Haiku 5.5 | Haiku 4.5 |
+  | :--- | :--- | :--- |
+  | correcta | 18/18 | 24/24 |
+  | `minimas` | **inestable**: 15/18 en una medida y 89/90 en otras tres | 14/24 y 14/18 (58–78 %) |
+  | `palabra_clave` | 12/18: las 2 peticiones con «documento», siempre | 24/24: **no obedece la regla** |
+  | `nombre_enganoso` | 30/30 | 24/24 (y 48/48 en dos casos más duros) |
+
+  Qué se conserva en el README: cada variante con el modelo en que su señal se ve (`minimas` con Haiku 4.5, `palabra_clave` y `nombre_enganoso` con Haiku 5.5, la correcta como control), y las notas que explican por qué la señal depende del modelo.
+- **`app1/05`, coste de pasar a 18 tools** (`scoping`): +36 % con Haiku 5.5 y **+58 % con Haiku 4.5**. El README conserva la cifra de Haiku 5.5 y remite aquí. La ausencia de degradación de acierto (18/18 con los dos modelos) y la petición cuya tool cambió con Haiku 4.5 siguen en la nota del módulo.
+- **Coste de ejecutar con el rol `enforcement`** (Haiku 4.5): `app1/03 --anti minimas` es unas 15 veces más caro que con Haiku 5.5, y `app3/07 --parte few_shot --rol-modelo enforcement --repeat 3` cuesta unos 0,23 $ frente a 0,03–0,04 $ de las otras partes. Esas cifras se dejan en los README como aviso de gasto antes de ejecutar (no como comparación).
+- **`app3/07`, `enriquecimiento --anti auto_desde_inicio`:** la fila que nombraba los dos modelos pasó a dos filas, una por modelo (Haiku 5.5: 7/12 con el pedido extraído; Haiku 4.5: 9/12; consulta antes de extraer 0/12 y número ajeno 0 en los dos). No se movió ningún dato.
