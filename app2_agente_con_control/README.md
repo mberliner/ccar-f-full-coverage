@@ -273,7 +273,9 @@ Mismo pedido de pago con cuatro configuraciones. La línea `[medida]` dice si `p
 Para el examen vale la lectura de la documentación. La diferencia observada con `disallowed_tools` está anotada en `docs/hallazgos.md`.
 </details>
 
-### Pregunta tipo examen
+### Pregunta tipo examen (comprobación operativa, no evaluable)
+
+Este módulo es apoyo técnico para ejecutar el SDK. La guía no define `permission_mode`, `disallowed_tools` ni la semántica de `allowed_tools` como pre-aprobación, así que esta comprobación no entrena una respuesta de examen. Lo evaluable (TS 1.4 y TS 1.5) está en los módulos 01 y 02.
 
 Un agente tiene `allowed_tools=["Read", "Grep"]` y modo de permisos por defecto. El equipo cree que así no puede ejecutar `Bash`. ¿Qué es cierto?
 
@@ -472,6 +474,8 @@ Ayer un desarrollador analizó un módulo con Claude Code en una sesión con nom
 > **Necesitas antes:** La puerta de [`01`](#01--regla-en-el-prompt-frente-a-puerta-programática) y los hooks de [`02`](#02--hooks-pretooluse-y-posttooluse).
 >
 > **Modo:** Ejecución ligera (sin modelo y sin coste, así que conviene ejecutarlo).
+>
+> **Carril:** apéndice de producción (no evaluable). `updatedInput` no está en la guía; solo la pregunta final entrena lo que la guía sostiene (el hook que bloquea).
 
 ### Antes de empezar
 
@@ -534,21 +538,21 @@ La línea `[control]` y, en cada variante, qué `user_id` recibe la tool y si se
 
 ### Pregunta tipo examen
 
-Práctica de diseño con formato de examen: la respuesta correcta usa un mecanismo que la guía no nombra (ver la nota EN PRODUCCIÓN).
+Esta pregunta se apoya solo en lo que la guía nombra: el hook que bloquea y redirige (TS 1.4-S1, TS 1.5-S2). `updatedInput` no interviene en la respuesta.
 
-Un flujo de reembolsos exige que `process_refund` se llame siempre con el `customer_id` que devolvió `get_customer`. A veces el modelo escribe un ID con los dígitos cambiados. ¿Qué solución garantiza el valor?
+Un flujo de reembolsos exige que `process_refund` no se ejecute nunca con un `customer_id` distinto del que devolvió `get_customer`. A veces el modelo escribe un ID con los dígitos cambiados. ¿Qué solución garantiza que ese pago erróneo no se ejecute?
 
-- A. Un hook `PreToolUse` que permite la llamada y sustituye `customer_id` por el ID verificado antes de ejecutarla.
-- B. Un hook `PreToolUse` que deniega la llamada y escribe en el motivo el `customer_id` verificado para el modelo.
-- C. Un hook `PostToolUse` que revisa el resultado de `process_refund` y corrige el ID cuando no coincide.
-- D. Una línea en el prompt de sistema que ordena copiar literalmente el `customer_id` devuelto por `get_customer`.
+- A. Una línea en el prompt de sistema que ordena copiar literalmente el `customer_id` devuelto por `get_customer`.
+- B. Un hook `PreToolUse` que bloquea la llamada cuando `customer_id` no es el verificado y devuelve al modelo un motivo que lo redirige a reintentar con el ID correcto.
+- C. Un hook `PostToolUse` que revisa el resultado de `process_refund` y avisa al modelo cuando el ID no coincide.
+- D. Varios ejemplos en el prompt de reembolsos que muestran la llamada con el ID copiado correctamente.
 
 <details>
 <summary>Paso 4 · Respuesta</summary>
 
-**A.** El hook actúa sobre la propia llamada y fija el valor: la tool recibe siempre el ID verificado (TS 1.5-K2), sin depender del modelo (TS 1.4-K2). B bloquea, pero el pago correcto exige que el modelo reintente bien: deny devuelve texto, no un valor. C corre cuando la tool ya se ejecutó (`PostToolUse` no impide una acción, TS 1.5-K2). D es guía en el prompt, con una tasa de fallo distinta de cero (TS 1.4-K1).
+**B.** El hook actúa sobre la llamada saliente antes de que se ejecute y la bloquea de forma determinista, sin depender del modelo (TS 1.5-K2, TS 1.4-K2); el motivo la redirige a un reintento válido (TS 1.5-S2) y el prerrequisito se hace cumplir en código (TS 1.4-S1). A y D son guía en el prompt, con una tasa de fallo distinta de cero (TS 1.4-K1). C corre cuando la tool ya se ejecutó: `PostToolUse` no impide una acción (TS 1.5-K2).
 
-**Y si la guía no nombra `updatedInput`:** esta práctica no permite saber qué ofrecerá una pregunta real. Si una opción propone reescribir el argumento para fijar el valor, es la que lo garantiza (A). Si no la hay, el hook `PreToolUse` que bloquea es el patrón que la guía sostiene (TS 1.4-S1, TS 1.5-S2). B no es un error: lo único que no hace es fijar el valor.
+**Qué queda fuera de esta pregunta:** reescribir el argumento con `updatedInput` es lo que muestra el módulo como ampliación (EN PRODUCCIÓN, no evaluable). La guía no lo nombra, así que ninguna respuesta evaluable depende de él.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).

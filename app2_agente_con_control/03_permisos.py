@@ -25,7 +25,8 @@ puede pagar». Puede intentarlo: la tool sigue ahí y el resultado depende del
 modo. Para que no exista, `disallowed_tools`; para que no pase nada sin
 aprobar, `dontAsk`; para una regla de negocio, un hook.
 
-Pregunta tipo examen: ver `app2_agente_con_control/README.md`, módulo 03.
+Comprobación operativa (no evaluable): el README la rotula así porque la guía no
+define esta semántica de permisos. Ver `app2_agente_con_control/README.md`, módulo 03.
 
 USA: TS 1.4-K1
 

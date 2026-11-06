@@ -41,7 +41,7 @@ Para profundizar, la cabecera del script explica el concepto, qué dice la guía
 
 1. [`app1_agente_unico/`](app1_agente_unico/README.md): `01` (bucle escrito a mano) → `02` a `06` (Agent SDK, tools integradas, MCP, errores, scoping y configuración MCP).
 2. [`app2_agente_con_control/`](app2_agente_con_control/README.md): `01`, `02`, `03`, `05`, `06` y `07` (reglas en código, hooks, permisos, *handoff*, sesiones).
-3. [`app3_sistema_multiagente/`](app3_sistema_multiagente/README.md): `01` → `03` (coordinador y subagentes, paralelo, tools por rol).
+3. [`app3_sistema_multiagente/`](app3_sistema_multiagente/README.md): `01` → `09` (coordinador y subagentes, paralelo, tools por rol, errores, procedencia, contexto largo, extracción con schema, validación con reintento y lotes). Los módulos `10` a `12` están pendientes.
 
 Si prefieres ir por viñeta, `CONCEPTOS.md` dice qué módulo introduce cada una.
 

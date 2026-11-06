@@ -40,6 +40,8 @@ otro. Lo que haría el modelo tras un deny son hipótesis, y se imprimen como
 tales. Aquí el hook es el único control: el servidor se construye con
 `gate=False` para que no se mezcle con la puerta del handler de app2/01.
 
+Apéndice de producción (no evaluable): la pregunta del README se apoya solo en el
+hook que bloquea y redirige; `updatedInput` no determina ninguna respuesta de examen.
 Pregunta tipo examen: ver `app2_agente_con_control/README.md`, módulo 07.
 
 USA: TS 1.4-K1, TS 1.4-K2, TS 1.5-K2

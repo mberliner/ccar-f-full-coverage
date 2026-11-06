@@ -17,7 +17,7 @@ Cada módulo se hace en 5 pasos: orientarte con su ficha, predecir, ejecutar o n
 | [`05_procedencia.py`](05_procedencia.py) | TS 5.6-K1…K4, S1…S5 · TS 5.1-K2, S4, S5, S6 · TS 1.3-S2 | 3 |
 | [`06_contexto_largo.py`](06_contexto_largo.py) | TS 5.4-K1…K4, S1…S5 | 3 |
 | [`07_extraccion_schema.py`](07_extraccion_schema.py) | TS 4.2-K4, S4, S5 · TS 4.3-K1…K4, S1…S6 | 3 |
-| [`08_validacion_reintento.py`](08_validacion_reintento.py) | TS 4.4-K1…K4, S1…S4 | 3 |
+| [`08_validacion_reintento.py`](08_validacion_reintento.py) | TS 4.4-K1, K2, K4, S1, S2, S4 (K3 y S3 en `app3/11`) | 3 |
 | [`09_batches.py`](09_batches.py) | TS 4.5-K1…K4, S1…S4 | 3 |
 | `10_confianza_y_revision.py` … `12_revision_independiente.py` | D3, D4 y D5 | 3 |
 
