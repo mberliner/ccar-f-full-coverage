@@ -31,6 +31,7 @@
         "horas_abiertas": 3,
         "prioridad": "alta"
       },
+      "expected": "restante_horas 5",
       "function": "calcular_sla"
     },
     {
@@ -38,6 +39,7 @@
         "horas_abiertas": 9,
         "prioridad": "alta"
       },
+      "expected": "ValueError",
       "function": "calcular_sla"
     },
     {
@@ -45,6 +47,7 @@
         "horas_abiertas": 5,
         "prioridad": "urgente"
       },
+      "expected": "True",
       "function": "debe_escalar"
     },
     {
@@ -52,7 +55,21 @@
         "horas_abiertas": 1,
         "prioridad": "urgente"
       },
+      "expected": "False",
       "function": "debe_escalar"
+    },
+    {
+      "args": {
+        "tickets": [
+          {
+            "horas": 4,
+            "prioridad": "normal",
+            "ticket_id": "T1"
+          }
+        ]
+      },
+      "expected": "{'T1': 20}",
+      "function": "horas_restantes"
     }
   ],
   "seeded": [
@@ -88,10 +105,10 @@
       "file": "config.py",
       "id": "C",
       "line": 12,
-      "marker": "TIMEOUT = 60",
+      "marker": "NOTIF_TIMEOUT = 60",
       "summary": "el comentario dice que el máximo es 30 y el valor es 60",
       "symbols": [
-        "TIMEOUT"
+        "NOTIF_TIMEOUT"
       ]
     },
     {

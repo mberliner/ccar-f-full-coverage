@@ -6,6 +6,7 @@ ningún otro test lo notaría.
 """
 
 import json
+import re
 from collections import defaultdict
 
 from datos.generar_sinteticos import build_all
@@ -202,9 +203,25 @@ def test_existing_scenarios_are_the_ones_the_repo_tests_really_cover():
     assert {s["function"] for s in labels["existing_scenarios"]} >= {"calcular_sla", "debe_escalar"}
     files = final_files()
     text = "\n".join(v for k, v in files.items() if "test" in k)
+    def scalars(value):
+        """Los valores sueltos de un argumento, también si es una lista o un diccionario."""
+        if isinstance(value, dict):
+            return [s for v in value.values() for s in scalars(v)]
+        if isinstance(value, list):
+            return [s for v in value for s in scalars(v)]
+        return [value]
+
     for scenario in labels["existing_scenarios"]:
+        assert scenario["expected"], "cada escenario existente dice lo que espera (la clave de un escenario lo incluye)"
         for value in scenario["args"].values():
-            assert str(value) in text
+            assert all(str(s) in text for s in scalars(value))
+
+
+def test_commit_1_config_defines_each_name_once_so_the_second_block_does_not_override_the_first():
+    """`TIMEOUT` se definía dos veces (30 y 60) y la segunda pisaba la del cliente de la API: el fallo sembrado es solo el comentario."""
+    names = [line.split("=")[0].strip() for line in change()["commit_1"]["config.py"].splitlines() if re.match(r"^[A-Z_]+ = ", line)]
+    assert len(names) == len(set(names)), names
+    assert "NOTIF_TIMEOUT" in names and "TIMEOUT" in names
 
 
 def test_the_change_never_carries_label_text():

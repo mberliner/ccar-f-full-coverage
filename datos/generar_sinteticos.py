@@ -1052,7 +1052,7 @@ REINTENTOS = 5  # el proveedor corta las conexiones inactivas cada pocos segundo
 NOTIF_URL = "https://notif.mesa-ejemplo.test/avisos"
 REMITENTE = "mesa@mesa-ejemplo.test"
 ASUNTO = "Aviso de plazo"
-TIMEOUT = 60  # segundos; el contrato con el proveedor fija un máximo de 30
+NOTIF_TIMEOUT = 60  # segundos; el contrato con el proveedor fija un máximo de 30
 CANAL = "correo"
 ''',
     "tickets/escalado.py": '''"""Decide si un ticket hay que escalarlo."""
@@ -1146,12 +1146,15 @@ def promedio_restante(tickets):
     return sum(restantes.values()) / len(restantes)
 ''',
 }
-# Escenarios que ya cubren los tests de `repo_mesa` (función y argumentos), para medir los duplicados de la generación de tests.
+# Escenarios que ya cubren los tests de `repo_mesa` (función, argumentos y lo que esperan), para medir los duplicados de la
+# generación de tests. Un test que cambia lo que espera (horas a minutos) no repite el escenario: por eso `expected`.
+# Los de `calcular_sla` (alta, 3) y `horas_restantes` esperan horas y el cambio los rompe; son los que un test actualizado reescribiría.
 REVIEW_EXISTING_SCENARIOS = [
-    {"function": "calcular_sla", "args": {"prioridad": "alta", "horas_abiertas": 3}},
-    {"function": "calcular_sla", "args": {"prioridad": "alta", "horas_abiertas": 9}},
-    {"function": "debe_escalar", "args": {"prioridad": "urgente", "horas_abiertas": 5}},
-    {"function": "debe_escalar", "args": {"prioridad": "urgente", "horas_abiertas": 1}},
+    {"function": "calcular_sla", "args": {"prioridad": "alta", "horas_abiertas": 3}, "expected": "restante_horas 5"},
+    {"function": "calcular_sla", "args": {"prioridad": "alta", "horas_abiertas": 9}, "expected": "ValueError"},
+    {"function": "debe_escalar", "args": {"prioridad": "urgente", "horas_abiertas": 5}, "expected": "True"},
+    {"function": "debe_escalar", "args": {"prioridad": "urgente", "horas_abiertas": 1}, "expected": "False"},
+    {"function": "horas_restantes", "args": {"tickets": [{"ticket_id": "T1", "prioridad": "normal", "horas": 4}]}, "expected": "{'T1': 20}"},
 ]
 REVIEW_CALLERS = ["informes/resumen.py", "notificaciones/avisos.py", "tests/test_sla.py"]
 
@@ -1183,7 +1186,7 @@ def build_review_change() -> tuple[dict, dict]:
                  summary="argumentos intercambiados: debe_escalar espera (prioridad, horas_abiertas)"),
             item("B", 1, "notificaciones/avisos.py", "os.system(", category="security", symbols=["enviar_aviso", "os.system"],
                  summary="el mensaje y el id llegan sin validar a una orden de shell"),
-            item("C", 1, "config.py", "TIMEOUT = 60", category="comment", symbols=["TIMEOUT"],
+            item("C", 1, "config.py", "NOTIF_TIMEOUT = 60", category="comment", symbols=["NOTIF_TIMEOUT"],
                  summary="el comentario dice que el máximo es 30 y el valor es 60"),
             item("D", 1, "core/sla.py", '"restante_minutos"', category="cross_file", callers=REVIEW_CALLERS,
                  keywords=["restante_horas", "restante_minutos", "minutos", "unidad", "clave"], symbols=["calcular_sla", "restante_minutos"],

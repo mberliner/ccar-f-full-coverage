@@ -67,10 +67,15 @@ INTRODUCE: TS 3.6-K1, TS 3.6-K2, TS 3.6-K3, TS 3.6-S1, TS 3.6-S2, TS 3.6-S3, TS 
 Uso: `uv run python app3_sistema_multiagente/11_criterios_y_ci.py [--parte orden|revision|rerevision|tests] [--anti conservador|sin_ejemplos|sin_previos|sin_tests_existentes|sin_estandares] [--sin-categoria comment] [--repeat N]`
 """
 
+import atexit
+import io
 import json
 import re
+import shutil
 import subprocess
 import sys
+import tarfile
+import tempfile
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -129,7 +134,7 @@ def ci_claude_md(*, standards: bool) -> str:
 # --- Criterios, severidades y ejemplos (4.1, 4.2) -----------------------------------------------------------------------------------
 
 CATEGORY_LINES = {
-    "bug": "- bug: el código nuevo hace algo distinto de lo que esperan su nombre, su docstring o quien lo llama (por ejemplo, argumentos en el orden equivocado, o una clave o una unidad que cambia sin que cambien sus llamadores).",
+    "bug": "- bug: el código nuevo hace algo distinto de lo que esperan su nombre o quien lo llama (por ejemplo, argumentos en el orden equivocado, o una clave o una unidad que cambia sin que cambien sus llamadores).",
     "comment": "- comment: un comentario o docstring cuya afirmación contradice el código que describe (por ejemplo, el comentario dice un valor y el código usa otro).",
     "security": "- security: entrada externa que llega sin validar a una shell, una consulta o una ruta.",
 }
@@ -156,9 +161,10 @@ subprocess.run(f"convert {nombre_subido}", shell=True)
 def total(precio, unidades):
     return precio + unidades
 ```
-- minor: el comportamiento es correcto, pero un comentario engaña. Ejemplo:
+- minor: el código es correcto con entradas normales y falla solo en un caso límite poco habitual. Ejemplo:
 ```python
-LIMITE = 10  # máximo 5 elementos
+def primero(elementos):
+    return elementos[0]
 ```
 """
 )
@@ -329,6 +335,22 @@ def diff_of(repo: ReviewRepo, start: str, end: str, context: int = 3) -> str:
     return _git(repo.path, "diff", "--no-color", f"-U{context}", start, end)
 
 
+def tree_at(repo: ReviewRepo, commit: str) -> Path:
+    """Directorio temporal nuevo con el árbol de `commit` y sin `.git`: el `cwd` de una revisión de ese commit.
+
+    `build_review_repo` termina en el segundo commit. Si el revisor del primero leyera ese árbol, vería ya corregido
+    el fallo que debe encontrar (y el bug nuevo del segundo). Sin `.git`, ni `Grep` ni `Read` alcanzan el reflog ni
+    los mensajes de los commits posteriores. Cada llamada hace una copia propia: no toca el repositorio ni la de otra rama.
+    """
+    raw = subprocess.run(["git", "archive", "--format=tar", commit], cwd=repo.path, capture_output=True, check=True).stdout
+    # `resolve()`: en Windows `mkdtemp` devuelve una ruta corta que la CLI no reconoce como el directorio de trabajo.
+    target = Path(tempfile.mkdtemp(prefix="ccarf-")).resolve()
+    atexit.register(shutil.rmtree, target, ignore_errors=True)
+    with tarfile.open(fileobj=io.BytesIO(raw)) as archive:
+        archive.extractall(target, filter="data")
+    return target
+
+
 def review_command(
     cwd: Path, *, model: str, budget: float, schema: dict[str, Any], tools: tuple[str, ...] = headless.READ_ONLY_TOOLS, resume: str | None = None, persist: bool = False
 ) -> list[str]:
@@ -345,28 +367,63 @@ def normalize_pattern(value: Any) -> str:
     return text or "sin_patron"
 
 
-def _matches(f: dict, item: dict) -> bool:
-    """Un hallazgo cuenta como el de un elemento etiquetado si cae en su archivo y en su ventana de líneas, o nombra su símbolo.
-
-    Un fallo entre archivos también se encuentra en un llamador, en cualquier línea, si el hallazgo habla de la clave o la unidad
-    que cambió: sin eso, cualquier comentario sobre un archivo que casualmente lo llama contaría como acierto.
-    """
+def _located(f: dict) -> tuple[str, int, str] | None:
+    """(archivo, línea, texto) de un hallazgo bien formado; None si no se puede ubicar."""
     file, line = f.get("file"), f.get("line")
     if not isinstance(file, str) or isinstance(line, bool) or not isinstance(line, int):
-        return False
-    if file == item["file"]:
-        # El modelo cita las líneas de forma aproximada: en el mismo archivo basta la línea cercana o nombrar el símbolo del fallo.
-        text = f"{f.get('problem', '')} {f.get('suggested_fix', '')}"
-        return abs(line - item["line"]) <= LINE_WINDOW or any(symbol in text for symbol in item.get("symbols", []))
-    if file in item.get("callers", []):
-        text = f"{f.get('problem', '')} {f.get('suggested_fix', '')}".casefold()
-        return any(word in text for word in item.get("keywords", []))
-    return False
+        return None
+    return file, line, f"{f.get('problem', '')} {f.get('suggested_fix', '')}"
 
 
-def _find_flaw(f: dict, flaws: list[dict]) -> dict | None:
-    """Primero por ubicación exacta; el fallo entre archivos, por sus llamadores, solo si nada más lo reclama."""
-    return next((x for x in flaws if x["file"] == f.get("file") and _matches(f, x)), None) or next((x for x in flaws if _matches(f, x)), None)
+def _mention(symbol: str, text: str) -> int | None:
+    """Posición de `symbol` como nombre completo en `text` (no dentro de otro: `TIMEOUT` no está en `NOTIF_TIMEOUT`)."""
+    found = re.search(rf"(?<![\w.]){re.escape(symbol)}(?![\w])", text)
+    return found.start() if found else None
+
+
+def _owner(f: dict, items: list[dict]) -> dict | None:
+    """El elemento etiquetado del mismo archivo al que pertenece el hallazgo: primero por la línea, después por su símbolo.
+
+    El modelo cita las líneas de forma aproximada, así que si no hay ninguno en la ventana, el hallazgo es del elemento
+    cuyo símbolo nombra antes. Una línea sobre un señuelo es del señuelo aunque el texto nombre el símbolo de un fallo del
+    mismo archivo: el símbolo solo decide cuando la línea no ubica el hallazgo.
+    """
+    located = _located(f)
+    if located is None:
+        return None
+    file, line, text = located
+    same_file = [x for x in items if x["file"] == file]
+    near = [x for x in same_file if abs(line - x["line"]) <= LINE_WINDOW]
+    if near:
+        return min(near, key=lambda x: abs(line - x["line"]))
+    named = [(position, x) for x in same_file for symbol in x.get("symbols", []) if (position := _mention(symbol, text)) is not None]
+    return min(named, key=lambda pair: pair[0])[1] if named else None
+
+
+def _via_caller(f: dict, flaws: list[dict]) -> dict | None:
+    """Un fallo entre archivos también se encuentra en un llamador, en cualquier línea, si el hallazgo habla de la clave o la unidad.
+
+    Sin la palabra clave, cualquier comentario sobre un archivo que casualmente lo llama contaría como acierto.
+    """
+    located = _located(f)
+    if located is None:
+        return None
+    file, _, text = located
+    text = text.casefold()
+    return next((x for x in flaws if file in x.get("callers", []) and any(word in text for word in x.get("keywords", []))), None)
+
+
+def _matches(f: dict, item: dict) -> bool:
+    """¿Es el hallazgo el de este elemento etiquetado? (para un elemento suelto; la puntuación decide entre todos con `_attribute`)"""
+    return _owner(f, [item]) is item or _via_caller(f, [item]) is item
+
+
+def _attribute(f: dict, flaws: list[dict], decoys: list[dict]) -> tuple[dict | None, dict | None]:
+    """(fallo, señuelo) del hallazgo. Si se ubica en el mismo archivo manda esa ubicación; si no, los llamadores de un fallo."""
+    owner = _owner(f, [*flaws, *decoys])
+    if owner is not None:
+        return (owner, None) if owner in flaws else (None, owner)
+    return _via_caller(f, flaws), None
 
 
 @dataclass
@@ -396,9 +453,8 @@ def score_findings(findings: list[dict], labels: dict, *, scope: int) -> Score:
         category = str(f.get("category"))
         tally = result.by_category.setdefault(category, [0, 0])
         tally[1] += 1
-        claimed = any(_matches(f, d) for d in decoys)
-        flaw = _find_flaw(f, flaws)
-        if flaw and not (claimed and flaw["file"] != f.get("file")):
+        flaw, claimed = _attribute(f, flaws, decoys)
+        if flaw:
             tally[0] += 1
             result.true_findings += 1
             if flaw["id"] in result.found:
@@ -495,13 +551,34 @@ def _norm_value(value: Any) -> Any:
         return value
     if isinstance(value, (int, float)):
         return float(value)
+    if isinstance(value, dict):
+        return tuple(sorted((str(k).casefold(), _norm_value(v)) for k, v in value.items()))
+    if isinstance(value, (list, tuple)):
+        return tuple(_norm_value(v) for v in value)
     return str(value).strip().casefold()
 
 
-def scenario_key(function: Any, args: Any) -> tuple:
-    """Un escenario de test: la función y sus argumentos, sin distinguir mayúsculas, orden ni 3 de 3.0."""
+def _norm_expected(expected: Any) -> tuple:
+    """Lo que un test espera, sin la redacción: sus números, la unidad (horas o minutos), la excepción y True/False/None.
+
+    «restante_horas 5» y «restante_horas: 5» son el mismo resultado; «restante_minutos 300» no. Si falta, la clave no lo distingue.
+    """
+    text = str(expected if expected is not None else "").casefold()
+    return (
+        tuple(sorted(float(n) for n in re.findall(r"-?\d+(?:\.\d+)?", text))),
+        tuple(sorted(set(re.findall(r"minut|hor", text)))),
+        tuple(sorted(set(re.findall(r"[a-z_]*error", text)))),
+        tuple(re.findall(r"\b(?:true|false|none|null)\b", text)),
+    )
+
+
+def scenario_key(function: Any, args: Any, expected: Any = None) -> tuple:
+    """Un escenario de test: la función, sus argumentos y lo que espera, sin distinguir mayúsculas, orden ni 3 de 3.0.
+
+    Un test que cambia lo que espera (de horas a minutos) es otro escenario: actualizar un test roto no es repetirlo.
+    """
     items = tuple(sorted((str(k).casefold(), _norm_value(v)) for k, v in args.items())) if isinstance(args, dict) else ()
-    return (str(function).casefold(), items)
+    return (str(function).casefold(), items, _norm_expected(expected))
 
 
 @dataclass
@@ -515,12 +592,12 @@ class TestsScore:
 
 def score_tests(tests: list, labels: dict) -> TestsScore:
     """Escenarios propuestos que ya cubren los tests del repositorio y los nuevos que tocan lo que cambió."""
-    existing = {scenario_key(s["function"], s["args"]) for s in labels["existing_scenarios"]}
+    existing = {scenario_key(s["function"], s["args"], s.get("expected")) for s in labels["existing_scenarios"]}
     result = TestsScore(total=len(tests))
     for t in tests:
         if not isinstance(t, dict) or not isinstance(t.get("function"), str) or not isinstance(t.get("args"), dict):
             continue
-        if scenario_key(t["function"], t["args"]) in existing:
+        if scenario_key(t["function"], t["args"], t.get("expected")) in existing:
             result.duplicates += 1
             result.duplicated.append((t["function"], t["args"]))
             continue
@@ -557,8 +634,9 @@ def build_tests_prompt(diff: str, *, existing: str | None) -> str:
 
 def print_context(repo: ReviewRepo, model: str, budget: float) -> None:
     """`[contexto]` de la orden (§11.6): qué ve el proceso y que no hay capa meta, skills ni servidores MCP."""
-    cmd = headless.build_command(cwd=repo.path, model=model, max_budget_usd=min(budget, 0.05), stream=True)
-    init = headless.probe_context(cmd, cwd=repo.path)
+    work = tree_at(repo, repo.commit_1)
+    cmd = headless.build_command(cwd=work, model=model, max_budget_usd=min(budget, 0.05), stream=True)
+    init = headless.probe_context(cmd, cwd=work)
     if not init:
         print("[contexto] no se pudo leer la línea init")
         return
@@ -585,29 +663,30 @@ def show_review(label: str, result: headless.HeadlessResult, score: Score, ledge
 
 
 def run_orden(repo: ReviewRepo, args: Any, model: str, budget: float) -> None:
+    work = tree_at(repo, repo.commit_1)
     diff = diff_of(repo, repo.base, repo.commit_1)
     prompt = build_review_prompt(diff, message=load("cambio_revision.json")["message_1"])
     print(f"\n=== la orden · diff del primer commit: {len(diff.splitlines())} líneas, prompt {len(prompt)} caracteres ===")
-    cmd = review_command(repo.path, model=model, budget=budget, schema=review_schema())
+    cmd = review_command(work, model=model, budget=budget, schema=review_schema())
     headless.print_command(cmd, stdin_chars=len(prompt))
-    print(f"[cwd] {repo.path} · CLAUDE.md de CI: {len((repo.path / 'CLAUDE.md').read_text(encoding='utf-8'))} caracteres")
+    print(f"[cwd] árbol en el primer commit, sin .git: {work} · CLAUDE.md de CI: {len((work / 'CLAUDE.md').read_text(encoding='utf-8'))} caracteres")
     print("[no se ejecuta nada: `--parte revision` la lanza con el prompt por stdin]")
 
 
-def run_revision(repo: ReviewRepo, args: Any, model: str, budget: float) -> None:
+def run_revision(repo: ReviewRepo, args: Any, model: str, budget: float, ledger: headless.Ledger) -> None:
     labels = load("cambio_revision_etiquetas.json")
     change = load("cambio_revision.json")
     disabled = (args.sin_categoria,) if args.sin_categoria else ()
     schema = review_schema(disabled)
     diff = diff_of(repo, repo.base, repo.commit_1)
     prompt = build_review_prompt(diff, message=change["message_1"], anti=args.anti, disabled=disabled)
-    ledger = headless.Ledger(budget)
+    work = tree_at(repo, repo.commit_1)  # el revisor ve el árbol del commit que revisa, no el final de la rama
     print(f"\n=== revisión del primer commit · variante {args.anti or 'correcta'}{' · sin ' + args.sin_categoria if disabled else ''} · {args.repeat} ejecuciones ===")
     print("[esperado] encuentra los fallos sembrados, no marca el cambio correcto ni el patrón aceptable, y cada hallazgo trae `detected_pattern`")
     pooled = Score()
     for run in range(1, args.repeat + 1):
-        cmd = review_command(repo.path, model=model, budget=min(ledger.remaining(), budget / args.repeat), schema=schema)
-        result = headless.run(cmd, prompt, cwd=repo.path, schema=schema)
+        cmd = review_command(work, model=model, budget=min(ledger.remaining(), budget / args.repeat), schema=schema)
+        result = headless.run(cmd, prompt, cwd=work, schema=schema)
         ledger.add(result)
         findings = result.structured["findings"] if result.ok else []
         score = score_findings(findings, labels, scope=1)
@@ -619,18 +698,18 @@ def run_revision(repo: ReviewRepo, args: Any, model: str, budget: float) -> None
     print(f"\n[fin] coste=${ledger.spent:.4f} de ${budget}")
 
 
-def run_rerevision(repo: ReviewRepo, args: Any, model: str, budget: float) -> None:
+def run_rerevision(repo: ReviewRepo, args: Any, model: str, budget: float, ledger: headless.Ledger) -> None:
     labels = load("cambio_revision_etiquetas.json")
     change = load("cambio_revision.json")
     diff = diff_of(repo, repo.base, repo.commit_2)
     prior = prior_findings(labels)
     prompt = build_rereview_prompt(diff, message=change["message_2"], prior=None if args.anti == "sin_previos" else prior)
     schema = review_schema()
-    ledger = headless.Ledger(budget)
+    work = tree_at(repo, repo.commit_2)  # la segunda revisión sí revisa el estado final de la rama
     print(f"\n=== segunda revisión (diff completo de la rama) · {'sin hallazgos previos' if args.anti else 'con hallazgos previos'} · {args.repeat} ejecuciones ===")
     for run in range(1, args.repeat + 1):
-        cmd = review_command(repo.path, model=model, budget=min(ledger.remaining(), budget / args.repeat), schema=schema)
-        result = headless.run(cmd, prompt, cwd=repo.path, schema=schema)
+        cmd = review_command(work, model=model, budget=min(ledger.remaining(), budget / args.repeat), schema=schema)
+        result = headless.run(cmd, prompt, cwd=work, schema=schema)
         ledger.add(result)
         if not result.ok:
             print(f"[{run}/{args.repeat}] estado={result.status} {result.detail}")
@@ -643,20 +722,20 @@ def run_rerevision(repo: ReviewRepo, args: Any, model: str, budget: float) -> No
     print(f"\n[fin] coste=${ledger.spent:.4f} de ${budget}")
 
 
-def run_tests(repo: ReviewRepo, args: Any, model: str, budget: float) -> None:
+def run_tests(repo: ReviewRepo, args: Any, model: str, budget: float, ledger: headless.Ledger) -> None:
     labels = load("cambio_revision_etiquetas.json")
     arm = tests_arm(args.anti)
     # El CLAUDE.md de la rama sin estándares es otro repositorio temporal: solo cambia esa sección.
-    work = repo if arm["standards"] else build_review_repo(standards=False)
-    diff = diff_of(work, work.base, work.commit_1)
-    prompt = build_tests_prompt(diff, existing=existing_tests_text(work.path / "") if arm["existing"] else None)
+    source = repo if arm["standards"] else build_review_repo(standards=False)
+    diff = diff_of(source, source.base, source.commit_1)
+    work = tree_at(source, source.commit_1)
+    prompt = build_tests_prompt(diff, existing=existing_tests_text(work) if arm["existing"] else None)
     schema = tests_schema()
-    ledger = headless.Ledger(budget)
     print(f"\n=== generación de tests · {'con' if arm['existing'] else 'sin'} tests existentes · {'con' if arm['standards'] else 'sin'} estándares en CLAUDE.md · {args.repeat} ejecuciones ===")
     for run in range(1, args.repeat + 1):
         # Sin tools: así el modelo no puede descubrir por su cuenta los tests que se le quitan del contexto.
-        cmd = review_command(work.path, model=model, budget=min(ledger.remaining(), budget / args.repeat), schema=schema, tools=())
-        result = headless.run(cmd, prompt, cwd=work.path, schema=schema)
+        cmd = review_command(work, model=model, budget=min(ledger.remaining(), budget / args.repeat), schema=schema, tools=())
+        result = headless.run(cmd, prompt, cwd=work, schema=schema)
         ledger.add(result)
         if not result.ok:
             print(f"[{run}/{args.repeat}] estado={result.status} {result.detail}")
@@ -684,9 +763,10 @@ def main() -> int:
     if args.parte == "orden":
         run_orden(repo, args, model, budget)
         return 0
+    ledger = headless.Ledger(budget)
     print_context(repo, model, budget)
     try:
-        {"revision": run_revision, "rerevision": run_rerevision, "tests": run_tests}[args.parte](repo, args, model, budget)
+        {"revision": run_revision, "rerevision": run_rerevision, "tests": run_tests}[args.parte](repo, args, model, budget, ledger)
     except headless.BudgetExhausted as exc:
         print(f"[corte] {exc}")
         return 1

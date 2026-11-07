@@ -46,7 +46,7 @@ def test_ci_claude_md_is_in_the_cwd_and_committed_in_the_base_so_it_is_not_in_th
 @pytestmark_git
 def test_first_diff_contains_the_four_seeded_flaws_and_the_two_decoys(repo):
     diff = mod.diff_of(repo, repo.base, repo.commit_1)
-    for marker in ('debe_escalar(t["horas"], t["prioridad"])', "os.system(", "TIMEOUT = 60", '"restante_minutos"', "REINTENTOS = 5", "except ValueError as exc:", "% del plazo consumido"):
+    for marker in ('debe_escalar(t["horas"], t["prioridad"])', "os.system(", "NOTIF_TIMEOUT = 60", '"restante_minutos"', "REINTENTOS = 5", "except ValueError as exc:", "% del plazo consumido"):
         assert marker in diff, marker
     assert "len(restantes)" not in diff, "el segundo commit aún no existe"
 
@@ -62,7 +62,7 @@ def test_cross_file_callers_are_not_visible_in_the_first_diff(repo):
 def test_pr_diff_after_the_second_commit_has_the_fix_the_new_bug_and_the_old_flaws(repo):
     diff = mod.diff_of(repo, repo.base, repo.commit_2)
     assert 'debe_escalar(t["prioridad"], t["horas"])' in diff and 'debe_escalar(t["horas"], t["prioridad"])' not in diff
-    assert "/ len(restantes)" in diff and "os.system(" in diff and "TIMEOUT = 60" in diff
+    assert "/ len(restantes)" in diff and "os.system(" in diff and "NOTIF_TIMEOUT = 60" in diff
 
 
 @pytestmark_git
@@ -153,6 +153,16 @@ def test_disabled_category_leaves_the_prompt_and_the_schema_without_it_and_nothi
     enum = mod.review_schema(disabled=("comment",))["properties"]["findings"]["items"]["properties"]["category"]["enum"]
     assert "comment" not in enum and {"bug", "security"} <= set(enum)
     assert "comment" in mod.review_schema()["properties"]["findings"]["items"]["properties"]["category"]["enum"]
+
+
+def test_comment_category_leaves_no_trace_outside_its_own_line():
+    """4.1-S2 cambia una sola cosa: sin `comment`, ni la severidad `minor` ni el criterio de `bug` siguen hablando de comentarios o docstrings."""
+    base = mod.build_review_prompt(DIFF, message="m")
+    off = mod.build_review_prompt(DIFF, message="m", disabled=("comment",))
+    assert "comentario" in base and "comentario" not in off.lower()
+    assert "docstring" not in mod.criteria_line("bug") and "docstring" not in mod.CRITERIA.split("Severidades")[1]
+    # Control: quitar otra categoría no toca la de `comment`.
+    assert mod.criteria_line("comment") in mod.build_review_prompt(DIFF, message="m", disabled=("security",))
 
 
 def test_disabling_a_category_removes_only_its_line():
