@@ -30,16 +30,26 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
   - Vigilar lo automatizado con una muestra que no está estratificada.
 - Inferencias propias:
   - Una sola confianza por documento esconde el campo dudoso detrás de los buenos
-    (`--anti confianza_global`). La guía habla de confianza por campo; que la media por
-    documento sea el error concreto es la lectura de este módulo.
+    (`--anti confianza_global`, que solo cambia eso: el umbral sigue siendo por segmento). La guía
+    habla de confianza por campo; que la media por documento sea el error concreto es la lectura
+    de este módulo. Con la población simulada la diferencia es pequeña (8 errores automatizados
+    frente a 6, ninguno del tipo raro). Una versión anterior de la variante usaba además un umbral
+    único y dejaba pasar 8 errores del tipo raro: eso lo causaba el umbral, no la confianza por
+    documento.
   - Un segmento con pocos ejemplos etiquetados no se puede validar, así que no se automatiza:
     «sin evidencia suficiente» no es lo mismo que «por debajo del objetivo».
   - La confianza mide la extracción, no la coherencia del documento: los que traen
     `conflict_detected` (`app3/08`) o son ambiguos van a revisión aunque su confianza sea alta.
-  - Con poca capacidad, ordenar la cola por confianza y ordenarla por conflictos ven errores
-    distintos; ninguno de los dos órdenes lo ve todo.
-  - La parte `poblacion` simula la confianza; la única confianza declarada de verdad es la de
-    `--parte confianza_modelo`, y lo que enseña es que hay que medir si está calibrada.
+  - Una muestra estratificada con un mínimo por estrato sobrerrepresenta los estratos pequeños:
+    para estimar la tasa de error de todo lo aceptado hay que ponderar cada estrato por su tamaño
+    (`weighted_error_rate`). Sin ponderar, la muestra de este módulo la sobreestima unas 5 veces.
+  - La parte `poblacion` simula la confianza: los umbrales por segmento (5.5-S3) solo se fijan
+    sobre esa confianza simulada. La única confianza declarada de verdad es la de
+    `--parte confianza_modelo`, que mide si está calibrada y no fija umbrales.
+- Propiedad de los datos, no lección: en la cola de revisión, ordenar por confianza y ordenar por
+  conflictos ven problemas distintos porque el generador sortea los conflictos y los errores de
+  extracción por separado (en producción no hay ningún error en un documento marcado). Con otros
+  datos los dos órdenes podrían solaparse.
 
 Pregunta tipo examen: ver `app3_sistema_multiagente/README.md`, módulo 10.
 

@@ -1082,9 +1082,9 @@ La parte `poblacion` calcula, con reglas de código y sin modelo: la exactitud g
 
 - **Correcta:** un umbral por tipo y campo, calibrado en el conjunto de calibración.
 - **`--anti precision_agregada`:** un único umbral para todos los segmentos, el que cumple el objetivo mirando solo la exactitud global. Todo lo demás es igual.
-- **`--anti confianza_global`:** se decide con una sola confianza por documento (la media de las de sus campos), con un único umbral. Todo lo demás es igual.
+- **`--anti confianza_global`:** se decide con una sola confianza por documento (la media de las de sus campos) en lugar de una por campo. El umbral sigue siendo por segmento, como en la correcta; solo cambia la confianza.
 
-La parte `confianza_modelo` pide a un modelo que extraiga los 12 documentos con la confianza de cada campo, y compara lo que dice con lo que acierta. `--sin-reglas-de-formato` quita de las descripciones del esquema las reglas de formato (como en el módulo 08) para que un modelo capaz cometa errores que calibrar.
+La parte `confianza_modelo` pide a un modelo que extraiga los 12 documentos con la confianza de cada campo, y compara lo que dice con lo que acierta. Mide si la confianza declarada está calibrada; los umbrales de revisión solo se fijan en la parte `poblacion`, sobre la confianza simulada. `--sin-reglas-de-formato` quita de las descripciones del esquema las reglas de formato (como en el módulo 08) para que un modelo capaz cometa errores que calibrar.
 
 ### Predice antes de ejecutar
 
@@ -1122,16 +1122,20 @@ En `poblacion`: la exactitud global frente a la del peor tipo de documento y del
 | :--- | :--- | :--- |
 | correcta | global 97,7 % de 1752 valores; `other`: 62,5 % (72 valores, 27 errores) frente a 99,0 % de las facturas; facturas en prosa, `issue_date`: 86,0 %. Se automatizan 765 valores con **6 errores (0,8 %)** y **0 del tipo raro**: sus 6 campos son `insufficient_data` | el titular esconde el tipo raro; con 6 documentos por conjunto no hay evidencia para automatizarlo |
 | `precision_agregada` | automático 805 valores con **17 errores (2,1 %)**; **34 valores del tipo raro aceptados, 11 con error** | un umbral para todos hereda la confianza de los segmentos grandes |
-| `confianza_global` | umbral 0,92; automático 780 valores con **14 errores (1,8 %)**; 24 del tipo raro aceptados, 8 con error | la media del documento esconde el campo dudoso |
+| `confianza_global` | umbral por segmento sobre la confianza del documento; automático **768 valores con 8 errores (1,0 %)** y **0 del tipo raro** | la media del documento deja pasar 2 errores más que la confianza por campo: una diferencia pequeña, en el límite de lo que muestra una sola población simulada |
 
-Calibración (conjunto de calibración): la banda 0,95–1,00 acierta el 98,7 % (declara 96,9 %) y la 0,85–0,95, el 97,2 % (declara 92,2 %); hueco ponderado 0,034. **Aun así hay 34 errores con confianza ≥ 0,85 de 41**, la mayoría en el tipo raro: que el hueco sea pequeño en conjunto no quiere decir que la confianza sirva sola.
+Una versión anterior de `confianza_global` cambiaba dos cosas, la confianza por documento y un umbral único (0,92), y daba 780 valores con 14 errores (1,8 %), 8 del tipo raro. Al dejar el umbral por segmento, el tipo raro deja de colarse: lo que lo dejaba pasar era el umbral único, no la confianza por documento.
+
+Calibración (conjunto de calibración): la banda 0,95–1,00 acierta el 98,7 % (declara 96,9 %) y la 0,85–0,95, el 97,2 % (declara 92,2 %); hueco ponderado 0,034. **Aun así, la mayoría de los errores llegan con confianza ≥ 0,85:** 17 de los 19 errores del conjunto de calibración y 17 de los 22 de producción (los 41 errores de la población; 27 de ellos están en el tipo raro). Que el hueco sea pequeño en conjunto no quiere decir que la confianza sirva sola.
 
 Muestra de 60 de las 871 extracciones de confianza alta de producción, 500 repeticiones:
 
-| Muestreo | Ve algún error del tipo raro | Patrones de error por muestra (de 8) |
-| :--- | :--- | :--- |
-| aleatorio simple | 53,4 % de las muestras | 1,0 |
-| estratificado (tipo y campo, mínimo 3) | 100 % de las muestras | 3,7 |
+| Muestreo | Ve algún error del tipo raro | Patrones de error por muestra (de 8) | Tasa de error estimada (real: 2,0 %) |
+| :--- | :--- | :--- | :--- |
+| aleatorio simple | 53,4 % de las muestras | 1,0 | 1,8 % (sin ponderada: un estrato puede quedar sin muestra) |
+| estratificado (tipo y campo, mínimo 3) | 100 % de las muestras | 3,7 | 10,8 % cruda; **2,0 % ponderada** por el tamaño de cada estrato |
+
+La muestra estratificada ve el tipo raro porque lo sobrerrepresenta: el mínimo de 3 por estrato le da 18 de los 60 valores, cuando el tipo raro es el 4 % de la población. Eso es lo que la hace útil para encontrar patrones de error y lo que la vuelve engañosa para estimar la tasa: la cruda la multiplica por cinco. Para vigilar la tasa de lo aceptado, cada estrato se pondera por su tamaño.
 
 Cola de revisión (25 documentos con algo que revisar, capacidad 6, variante correcta):
 
@@ -1141,21 +1145,21 @@ Cola de revisión (25 documentos con algo que revisar, capacidad 6, variante cor
 | confianza (la más baja primero) | 8 | 1 |
 | prioridad (conflictos primero) | 0 | 6 |
 
-Los conflictos y los errores de extracción son cosas distintas: con poca capacidad, un orden ve unos y deja los otros. Ninguno gana en todo.
+Con poca capacidad, un orden ve unos y deja los otros. **Esto es una propiedad de los datos, no una lección:** el generador sortea los conflictos y los errores de extracción por separado (en producción no hay ningún error en un documento marcado), así que los dos órdenes no pueden solaparse. Con datos reales, conflicto y error podrían ir juntos. Lo que sí sostiene la guía es que la cola se prioriza (5.5-S4), no qué orden gana.
 
 **Parte `confianza_modelo`** (Messages API, 12 documentos × 3 repeticiones):
 
 | Modelo de la medida | Descripciones | Señal observada |
 | :--- | :--- | :--- |
 | Haiku 5.5 (rol `agent`, ~0,014 $) | con reglas de formato | **0 errores en 153 valores extraídos**: no hay nada que calibrar. Confianza media 0,95 cuando acierta; el hueco de calibración es 0,046 por declarar menos de lo que acierta. En los campos que deja en `null` la confianza media es 0,64–0,65 |
-| Haiku 4.5 (rol `enforcement`, ~0,13 $) | sin reglas de formato | **6, 7 y 8 errores por repetición, casi todos de formato de fecha, con confianza ≥ 0,85 en 5, 7 y 7**; banda 0,97–1,00: **acierta el 85,5 %** y declara 99,5 %; banda 0,90–0,97: 90,8 % frente a 95,0 %. En los `null`, confianza media 0,32 y 0 campos que debían tener valor |
+| Haiku 4.5 (rol `enforcement`, ~0,13 $) | sin reglas de formato | **6, 7 y 7 errores por repetición, casi todos de formato de fecha, con confianza ≥ 0,85 en 5, 7 y 5**; banda 0,97–1,00: **acierta el 82,9 %** y declara el 100 %; hueco de calibración 0,076. En los `null`, confianza media 0,21–0,33. Medida de la segunda ejecución (2026-11-07); la primera dio 6, 7 y 8 errores, con confianza ≥ 0,85 en 5, 7 y 7, y la banda alta acertaba el 85,5 % declarando 99,5 %: la señal se mantiene |
 
 Notas:
 
 - **El modelo está más seguro donde falla:** los errores de fecha de Haiku 4.5 llegan con 0,95–1,0, porque el modelo lee bien la fecha y se equivoca en la forma. La confianza declarada no los distingue de los aciertos. Una medida que dé cero no demuestra que detecte el fallo, por eso `tests/test_app3_10_confianza_y_revision.py` incluye un control positivo sintético (un conjunto mal calibrado da un hueco de ~0,45 y uno calibrado, ~0).
 - **La confianza de un campo en `null` habla de la ausencia:** con Haiku 4.5 ronda 0,32 aunque el `null` sea correcto, y mezclarla con los valores extraídos daba un hueco de calibración de 0,137 con Haiku 5.5 que era un artefacto. El módulo la mide aparte.
 - **Segmentos pequeños:** con 6 documentos por conjunto, el tipo raro no llega a los 20 ejemplos de confianza alta que se piden. No se puede validar, así que no se automatiza (`insufficient_data` no es lo mismo que `below_target`).
-- La población es simulada (la genera `datos/generar_sinteticos.py`): la confianza de sus valores no es la de un modelo real. La parte con modelo es la única que mide una confianza declarada de verdad.
+- La población es simulada (la genera `datos/generar_sinteticos.py`): la confianza de sus valores no es la de un modelo real. **Los umbrales por segmento (5.5-S3) solo se fijan sobre esa confianza simulada.** La parte con modelo es la única que mide una confianza declarada de verdad, y lo que mide es su calibración: no fija umbrales con ella.
 - Lo que no depende del modelo se prueba en `tests/test_app3_10_confianza_y_revision.py` y `tests/test_datos_entrega3c.py`.
 </details>
 
@@ -1165,17 +1169,17 @@ Un sistema extrae campos de facturas, albaranes y un tipo de documento de compra
 
 - A. Elegir un único umbral de confianza con el que la exactitud global de lo aceptado llegue al 99 % y no revisar lo que lo supere.
 - B. Pedir al modelo una confianza por documento, la media de las de sus campos, y no revisar los documentos que superen un umbral.
-- C. Mantener el 97 % como criterio de aceptación y revisar cada mes una muestra aleatoria simple de lo que se acepta sin revisión.
-- D. Medir la exactitud por tipo de documento y por campo contra datos etiquetados, fijar ahí umbrales por segmento y muestrear lo aceptado por estratos.
+- C. Medir con documentos etiquetados cuánto acierta cada tipo y campo, fijar un umbral para cada uno y vigilar lo aceptado tipo a tipo.
+- D. Mantener el 97 % como criterio de aceptación y revisar cada mes una muestra aleatoria simple de lo que se acepta sin revisión.
 
 <details>
 <summary>Paso 4 · Respuesta</summary>
 
-**D.** Una exactitud agregada alta puede esconder un tipo de documento o un campo que rinde mal (TS 5.5-K1), así que antes de automatizar se comprueba la exactitud por tipo y por campo (K4, S2). La confianza por campo solo sirve para enrutar después de calibrarla con un conjunto etiquetado, que fija los umbrales (K3, S3), y lo aceptado se sigue vigilando con una muestra aleatoria estratificada (K2, S1).
+**C.** Una exactitud agregada alta puede esconder un tipo de documento o un campo que rinde mal (TS 5.5-K1), así que antes de automatizar se comprueba la exactitud por tipo y por campo (K4, S2). La confianza por campo solo sirve para enrutar después de calibrarla con un conjunto etiquetado, que fija los umbrales (K3, S3), y lo aceptado se sigue vigilando con una muestra aleatoria estratificada (K2, S1).
 
 - **A** elige el umbral mirando la cifra global, que es justo la que puede esconder el segmento malo (K1, K4).
 - **B** junta los campos de un documento en una sola cifra: la guía habla de confianza por campo (K3), y la media esconde el campo dudoso detrás de los buenos (inferencia propia).
-- **C** decide por el titular y vigila con una muestra simple, que apenas toca un tipo poco frecuente; la guía pide estratificarla (K2, S1).
+- **D** decide por el titular y vigila con una muestra simple, que apenas toca un tipo poco frecuente; la guía pide estratificarla (K2, S1).
 </details>
 
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
