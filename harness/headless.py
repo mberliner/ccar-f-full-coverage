@@ -111,6 +111,22 @@ def build_env() -> dict[str, str]:
     return {**os.environ, **ISOLATION_ENV}
 
 
+def require_budget(cmd: list[str]) -> None:
+    """Una orden sin `--max-budget-usd` positivo no se ejecuta (roadmap §3, regla 7): el tope se comprueba en código, no se presume.
+
+    `build_command` ya lo exige al construir, pero `run` y `probe_context` aceptan cualquier lista: una orden armada a mano
+    podría gastar sin límite.
+    """
+    if "--max-budget-usd" not in cmd or cmd.index("--max-budget-usd") + 1 >= len(cmd):
+        raise ValueError("la orden no lleva --max-budget-usd: no se ejecuta (roadmap §3, regla 7)")
+    try:
+        value = float(cmd[cmd.index("--max-budget-usd") + 1])
+    except ValueError:
+        value = float("nan")
+    if not math.isfinite(value) or value <= 0:
+        raise ValueError("--max-budget-usd debe ser un importe positivo: no se ejecuta (roadmap §3, regla 7)")
+
+
 def format_command(cmd: list[str]) -> str:
     return shlex.join(cmd)
 
@@ -202,9 +218,29 @@ def isolation_problems(init: dict[str, Any]) -> list[str]:
     return problems
 
 
-def probe_context(cmd: list[str], *, cwd: Path, runner: Callable[..., Any] = subprocess.run, timeout: int = 120) -> dict[str, Any] | None:
-    """Ejecuta una vez la misma orden (en `stream-json`) con un prompt mínimo y devuelve su línea `init`."""
-    proc = runner(cmd, input="Responde solo: ok.", cwd=str(cwd), env=build_env(), capture_output=True, text=True, encoding="utf-8", timeout=timeout)
+def parse_stream_cost(stdout: str) -> float:
+    """`total_cost_usd` de la línea `result` de una salida `stream-json`; 0 si no hay."""
+    for line in reversed((stdout or "").splitlines()):
+        try:
+            message = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(message, dict) and message.get("type") == "result":
+            return float(message.get("total_cost_usd") or 0.0)
+    return 0.0
+
+
+def probe_context(cmd: list[str], *, cwd: Path, ledger: "Ledger", runner: Callable[..., Any] = subprocess.run, timeout: int = 120) -> dict[str, Any] | None:
+    """Ejecuta una vez la misma orden (en `stream-json`) con un prompt mínimo y devuelve su línea `init`.
+
+    Es una invocación con modelo como las demás: se imprime la orden entera antes de ejecutarla y su coste entra en el
+    `Ledger` de la rama, para que `--budget` cuente también la sonda.
+    """
+    require_budget(cmd)
+    prompt = "Responde solo: ok."
+    print_command(cmd, stdin_chars=len(prompt))
+    proc = runner(cmd, input=prompt, cwd=str(cwd), env=build_env(), capture_output=True, text=True, encoding="utf-8", timeout=timeout)
+    ledger.add(HeadlessResult("ok", cost_usd=parse_stream_cost(proc.stdout)))
     return parse_init(proc.stdout)
 
 
@@ -248,7 +284,8 @@ def run(
     runner: Callable[..., Any] = subprocess.run,
     timeout: int = 600,
 ) -> HeadlessResult:
-    """Imprime la orden, la ejecuta con el prompt por stdin y devuelve el resultado leído."""
+    """Imprime la orden, la ejecuta con el prompt por stdin y devuelve el resultado leído. Rechaza una orden sin tope de coste."""
+    require_budget(cmd)
     print_command(cmd, stdin_chars=len(prompt))
     proc = runner(
         cmd,

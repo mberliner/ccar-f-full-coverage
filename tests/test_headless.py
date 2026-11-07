@@ -337,3 +337,76 @@ def test_fork_creates_a_new_session_from_the_resumed_one(tmp_path):
 def test_fork_without_resume_is_rejected(tmp_path):
     with pytest.raises(ValueError):
         build(tmp_path, fork=True)
+
+
+# --- (9) `run` y `probe_context`: la orden sin tope no se ejecuta, y la sonda imprime su orden y cuenta su coste -----------------
+
+
+def stream_with_cost(cost: float) -> str:
+    return "\n".join([init_line(), json.dumps({"type": "result", "subtype": "success", "total_cost_usd": cost})])
+
+
+def test_run_rejects_a_command_without_the_budget_flag_and_never_calls_the_runner(tmp_path):
+    fake = FakeRun(raw())
+    no_cap = [part for i, part in enumerate(build(tmp_path)) if part != "--max-budget-usd" and build(tmp_path)[i - 1] != "--max-budget-usd"]
+    assert "--max-budget-usd" not in no_cap
+    with pytest.raises(ValueError, match="max-budget-usd"):
+        headless.run(no_cap, "p", cwd=tmp_path, schema=None, runner=fake)
+    assert fake.calls == [], "una orden sin tope no llega a ejecutarse"
+
+
+@pytest.mark.parametrize("value", ["0", "-1", "nan", "inf", "mucho"])
+def test_run_rejects_a_budget_flag_that_is_not_a_positive_amount(tmp_path, value):
+    cmd = build(tmp_path)
+    cmd[cmd.index("--max-budget-usd") + 1] = value
+    fake = FakeRun(raw())
+    with pytest.raises(ValueError):
+        headless.run(cmd, "p", cwd=tmp_path, schema=None, runner=fake)
+    assert fake.calls == []
+
+
+def test_run_accepts_a_command_with_a_positive_budget(tmp_path):
+    """Control: la orden que construye `build_command` sigue ejecutándose."""
+    fake = FakeRun(raw())
+    assert headless.run(build(tmp_path), "p", cwd=tmp_path, schema=None, runner=fake).ok and len(fake.calls) == 1
+
+
+def test_probe_context_prints_the_whole_command_before_running_it(tmp_path, capsys):
+    fake = FakeRun(stream_with_cost(0.01))
+    cmd = build(tmp_path, stream=True)
+    headless.probe_context(cmd, cwd=tmp_path, ledger=headless.Ledger(1.0), runner=fake)
+    out = capsys.readouterr().out
+    assert out.startswith("[orden] ") and headless.format_command(cmd) in out and "--max-budget-usd" in out
+    assert len(fake.calls) == 1
+
+
+def test_probe_context_adds_its_cost_to_the_ledger_and_returns_the_init_line(tmp_path):
+    ledger = headless.Ledger(1.0)
+    init = headless.probe_context(build(tmp_path, stream=True), cwd=tmp_path, ledger=ledger, runner=FakeRun(stream_with_cost(0.0425)))
+    assert init["model"] == "claude-sonnet-5-5"
+    assert ledger.spent == pytest.approx(0.0425)
+
+
+def test_the_probe_cost_can_exhaust_the_ledger_so_the_next_run_is_refused(tmp_path):
+    """Falso negativo de antes: la sonda gastaba fuera del tope y `11` podía pasar de `--budget`."""
+    ledger = headless.Ledger(0.05)
+    headless.probe_context(build(tmp_path, stream=True), cwd=tmp_path, ledger=ledger, runner=FakeRun(stream_with_cost(0.06)))
+    with pytest.raises(headless.BudgetExhausted):
+        ledger.remaining()
+
+
+def test_a_probe_without_a_cost_line_adds_nothing_and_a_probe_without_cap_is_rejected(tmp_path):
+    ledger = headless.Ledger(1.0)
+    assert headless.probe_context(build(tmp_path, stream=True), cwd=tmp_path, ledger=ledger, runner=FakeRun(init_line())) is not None
+    assert ledger.spent == 0.0
+    cmd = build(tmp_path, stream=True)
+    i = cmd.index("--max-budget-usd")
+    fake = FakeRun(init_line())
+    with pytest.raises(ValueError):
+        headless.probe_context(cmd[:i] + cmd[i + 2:], cwd=tmp_path, ledger=ledger, runner=fake)
+    assert fake.calls == []
+
+
+def test_parse_stream_cost_reads_the_result_line_among_other_messages():
+    assert headless.parse_stream_cost(stream_with_cost(0.02)) == pytest.approx(0.02)
+    assert headless.parse_stream_cost('{"type":"assistant"}\nno es json') == 0.0

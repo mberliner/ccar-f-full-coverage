@@ -632,11 +632,11 @@ def build_tests_prompt(diff: str, *, existing: str | None) -> str:
 # --- Ejecución ---------------------------------------------------------------------------------------------------------------------------------
 
 
-def print_context(repo: ReviewRepo, model: str, budget: float) -> None:
+def print_context(repo: ReviewRepo, model: str, budget: float, ledger: headless.Ledger) -> None:
     """`[contexto]` de la orden (§11.6): qué ve el proceso y que no hay capa meta, skills ni servidores MCP."""
     work = tree_at(repo, repo.commit_1)
     cmd = headless.build_command(cwd=work, model=model, max_budget_usd=min(budget, 0.05), stream=True)
-    init = headless.probe_context(cmd, cwd=work)
+    init = headless.probe_context(cmd, cwd=work, ledger=ledger)
     if not init:
         print("[contexto] no se pudo leer la línea init")
         return
@@ -764,7 +764,7 @@ def main() -> int:
         run_orden(repo, args, model, budget)
         return 0
     ledger = headless.Ledger(budget)
-    print_context(repo, model, budget)
+    print_context(repo, model, budget, ledger)
     try:
         {"revision": run_revision, "rerevision": run_rerevision, "tests": run_tests}[args.parte](repo, args, model, budget, ledger)
     except headless.BudgetExhausted as exc:
