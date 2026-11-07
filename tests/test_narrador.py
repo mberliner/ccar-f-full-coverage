@@ -118,14 +118,14 @@ def delivered():
 
 def test_route_lists_the_delivered_modules():
     ids = [module.id for module in delivered()]
-    assert len(ids) == 21
+    assert len(ids) == 24
     assert ids[0] == "app1/01" and "app2/07" in ids and "app3/03" in ids and "app3/04" in ids and "app3/05" in ids and "app3/06" in ids and "app3/07" in ids
     assert all(module.script.is_file() for module in delivered())
 
 
 def test_route_marks_pending_modules():
     pending = {module.id for module in route() if not module.delivered}
-    assert {"app1/07", "app2/04", "app3/10"} <= pending and "app3/06" not in pending
+    assert {"app1/07", "app2/04"} <= pending and not ({"app3/10", "app3/11", "app3/12"} & pending) and "app3/06" not in pending
 
 
 @pytest.mark.parametrize("text", ["app1/05", "app1/05_scoping_y_tool_choice", "app1 05", "APP1/05", "app1/5"])

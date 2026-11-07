@@ -19,7 +19,9 @@ Cada módulo se hace en 5 pasos: orientarte con su ficha, predecir, ejecutar o n
 | [`07_extraccion_schema.py`](07_extraccion_schema.py) | TS 4.2-K4, S4, S5 · TS 4.3-K1…K4, S1…S6 | 3 |
 | [`08_validacion_reintento.py`](08_validacion_reintento.py) | TS 4.4-K1, K2, K4, S1, S2, S4 (K3 y S3 en `app3/11`) | 3 |
 | [`09_batches.py`](09_batches.py) | TS 4.5-K1…K4, S1…S4 | 3 |
-| `10_confianza_y_revision.py` … `12_revision_independiente.py` | D3, D4 y D5 | 3 |
+| [`10_confianza_y_revision.py`](10_confianza_y_revision.py) | TS 5.5-K1…K4, S1…S4 | 3 |
+| [`11_criterios_y_ci.py`](11_criterios_y_ci.py) | TS 3.6-K1…K3, S1…S5 · TS 4.1-K1…K3, S1…S3 · TS 4.2-S2, S3 · TS 4.4-K3, S3 | 3 |
+| [`12_revision_independiente.py`](12_revision_independiente.py) | TS 4.6-K1…K3, S1…S3 · TS 1.6-K2, S2 · TS 3.6-K4 | 3 |
 
 ---
 
@@ -1048,6 +1050,429 @@ Un equipo usa Claude para dos trabajos. El primero revisa cada *pull request* an
 - **B** deja a quien quiere fusionar esperando hasta 24 h y paga otra vez las 20 000 facturas por unas decenas.
 - **C** renuncia al 50 % en un trabajo que nadie espera.
 - **D** invierte el reparto. Además, dentro de una petición del lote no hay tool calling de varios turnos (TS 4.5-K3).
+</details>
+
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
+---
+
+## 10 · Confianza y revisión humana
+
+> **Qué vas a hacer:** Medir la exactitud de 292 extracciones con confianza por campo, en conjunto y por tipo de documento y campo; comprobar si la confianza está calibrada, fijar umbrales de revisión por segmento, comparar dos formas de muestrear lo automatizado y decidir qué se revisa cuando la capacidad de revisión es limitada.
+>
+> **Necesitas antes:** El [módulo 07](#07--extracción-estructurada-con-schema) (el esquema y las etiquetas de la parte con modelo) y el [08](#08--validación-y-reintento-con-error-concreto) (de ahí viene `conflict_detected`).
+>
+> **Modo:** Ejecución ligera (la parte `poblacion` no usa modelo y sale igual cada vez; la parte con modelo cuesta unos 0,01–0,13 $ y es opcional).
+
+### Antes de empezar
+
+Los términos comunes (confianza por campo, calibración, muestreo estratificado, cola de revisión, etiqueta) están en el [glosario](../docs/glosario.md). La parte `poblacion` trabaja con datos sintéticos que genera `datos/generar_sinteticos.py` (`poblacion_extracciones.json` y sus etiquetas, que el módulo solo usa para puntuar): 292 documentos de compra, 6 campos cada uno, la mitad de cada tipo como conjunto de calibración y la otra mitad como producción. La parte `confianza_modelo` usa los 12 documentos del módulo 07 con la Messages API (necesita una API key).
+
+- **Términos propios:**
+  - **`field_confidence`:** el campo del esquema de la tool donde el modelo escribe la confianza de cada valor. En la parte `poblacion` la confianza no la da un modelo: la simula el generador.
+  - **Banda de confianza:** un intervalo de confianza declarada («0,95–1,00»). La calibración se mide banda a banda: acierto real frente a confianza media declarada.
+  - **Segmento:** un tipo de documento, un campo o la combinación de ambos. La exactitud se calcula por segmento, no solo en conjunto.
+  - **Umbral de revisión:** la confianza por encima de la cual una extracción se acepta sin revisión. Se fija con el conjunto de calibración, por segmento, y es `None` (todo a revisión) si no hay evidencia suficiente.
+  - **Estrato:** aquí, la combinación de tipo de documento y campo. La muestra estratificada toma un mínimo de cada uno; la simple sortea sobre toda la población.
+  - **Cupo de revisión:** cuántos documentos puede mirar el equipo en el periodo. El módulo compara tres órdenes de la cola con el mismo cupo.
+
+### El ejercicio
+
+La parte `poblacion` calcula, con reglas de código y sin modelo: la exactitud global y por segmento, las bandas de calibración, el estado de cada segmento (`ready`, `below_target` o `insufficient_data` con un objetivo del 98 % y al menos 20 ejemplos), el enrutado de producción, un experimento de muestreo (500 repeticiones de una muestra de 60) y tres órdenes de la cola de revisión. Los documentos con `conflict_detected` o ambiguos van a revisión aunque su confianza sea alta.
+
+- **Correcta:** un umbral por tipo y campo, calibrado en el conjunto de calibración.
+- **`--anti precision_agregada`:** un único umbral para todos los segmentos, el que cumple el objetivo mirando solo la exactitud global. Todo lo demás es igual.
+- **`--anti confianza_global`:** se decide con una sola confianza por documento (la media de las de sus campos) en lugar de una por campo. El umbral sigue siendo por segmento, como en la correcta; solo cambia la confianza.
+
+La parte `confianza_modelo` pide a un modelo que extraiga los 12 documentos con la confianza de cada campo, y compara lo que dice con lo que acierta. Mide si la confianza declarada está calibrada; los umbrales de revisión solo se fijan en la parte `poblacion`, sobre la confianza simulada. `--sin-reglas-de-formato` quita de las descripciones del esquema las reglas de formato (como en el módulo 08) para que un modelo capaz cometa errores que calibrar.
+
+### Predice antes de ejecutar
+
+Con tus palabras; no hay un número que acertar:
+
+1. Una extracción acierta el 97 % de los valores. ¿Qué tendría que pasar con los demás segmentos para que un tipo de documento rinda mucho peor sin que el titular lo muestre? ¿De qué depende cuánto puede esconder?
+2. Para vigilar lo que se acepta con confianza alta, ¿qué muestra esperas que vea más a menudo los errores de un tipo de documento poco frecuente, una aleatoria simple o una estratificada? ¿Qué cambiaría si ese tipo pesara aún menos?
+3. Si el modelo declara 0,99 en un campo, ¿qué más necesitas saber para decidir si basta para no revisarlo? ¿Y si el segmento tiene muy pocos ejemplos etiquetados?
+4. Un documento tiene una confianza media alta, pero uno de sus campos es dudoso. ¿Qué decide una sola confianza por documento y qué decidiría una por campo?
+5. Con poca capacidad de revisión, ¿pesan igual un documento con conflicto y uno con un campo de baja confianza? ¿Qué tipo de problema dejará sin ver cada orden de la cola?
+6. En la parte con modelo, ¿qué tiene que haber en las extracciones para que se pueda medir si la confianza declarada está calibrada? ¿Dónde esperas que el modelo esté más seguro de lo que debería?
+
+### Ejecutar
+
+```bash
+uv run python app3_sistema_multiagente/10_confianza_y_revision.py                                  # población, correcta (sin modelo)
+uv run python app3_sistema_multiagente/10_confianza_y_revision.py --anti precision_agregada        # un umbral para todos
+uv run python app3_sistema_multiagente/10_confianza_y_revision.py --anti confianza_global          # una confianza por documento
+uv run python app3_sistema_multiagente/10_confianza_y_revision.py --parte confianza_modelo --repeat 3
+uv run python app3_sistema_multiagente/10_confianza_y_revision.py --parte confianza_modelo --rol-modelo enforcement --sin-reglas-de-formato --repeat 3
+```
+
+**Si ejecutas:** `poblacion` es gratis y sale igual cada vez. La parte con modelo gasta ~0,014 $ con Haiku 5.5 y ~0,13 $ con Haiku 4.5 (3 repeticiones; el tope es `--budget`).
+
+### Qué observar
+
+En `poblacion`: la exactitud global frente a la del peor tipo de documento y del peor formato y campo; las bandas de calibración; qué segmentos no se automatizan y por qué; los errores que quedan entre lo automatizado según la variante; la muestra simple frente a la estratificada; y los errores de extracción y los documentos con conflicto que ve cada orden de la cola. En `confianza_modelo`: la confianza media cuando acierta y cuando falla, los errores con confianza alta y las bandas.
+
+<details>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+**Parte `poblacion`** (sin modelo; mismos números en cada ejecución):
+
+| Variante | Señal observada | Qué dice |
+| :--- | :--- | :--- |
+| correcta | global 97,7 % de 1752 valores; `other`: 62,5 % (72 valores, 27 errores) frente a 99,0 % de las facturas; facturas en prosa, `issue_date`: 86,0 %. Se automatizan 765 valores con **6 errores (0,8 %)** y **0 del tipo raro**: sus 6 campos son `insufficient_data` | el titular esconde el tipo raro; con 6 documentos por conjunto no hay evidencia para automatizarlo |
+| `precision_agregada` | automático 805 valores con **17 errores (2,1 %)**; **34 valores del tipo raro aceptados, 11 con error** | un umbral para todos hereda la confianza de los segmentos grandes |
+| `confianza_global` | umbral por segmento sobre la confianza del documento; automático **768 valores con 8 errores (1,0 %)** y **0 del tipo raro** | la media del documento deja pasar 2 errores más que la confianza por campo: una diferencia pequeña, en el límite de lo que muestra una sola población simulada |
+
+Una versión anterior de `confianza_global` cambiaba dos cosas, la confianza por documento y un umbral único (0,92), y daba 780 valores con 14 errores (1,8 %), 8 del tipo raro. Al dejar el umbral por segmento, el tipo raro deja de colarse: lo que lo dejaba pasar era el umbral único, no la confianza por documento.
+
+Calibración (conjunto de calibración): la banda 0,95–1,00 acierta el 98,7 % (declara 96,9 %) y la 0,85–0,95, el 97,2 % (declara 92,2 %); hueco ponderado 0,034. **Aun así, la mayoría de los errores llegan con confianza ≥ 0,85:** 17 de los 19 errores del conjunto de calibración y 17 de los 22 de producción (los 41 errores de la población; 27 de ellos están en el tipo raro). Que el hueco sea pequeño en conjunto no quiere decir que la confianza sirva sola.
+
+Muestra de 60 de las 871 extracciones de confianza alta de producción, 500 repeticiones:
+
+| Muestreo | Ve algún error del tipo raro | Patrones de error por muestra (de 8) | Tasa de error estimada (real: 2,0 %) |
+| :--- | :--- | :--- | :--- |
+| aleatorio simple | 53,4 % de las muestras | 1,0 | 1,8 % (sin ponderada: un estrato puede quedar sin muestra) |
+| estratificado (tipo y campo, mínimo 3) | 100 % de las muestras | 3,7 | 10,8 % cruda; **2,0 % ponderada** por el tamaño de cada estrato |
+
+La muestra estratificada ve el tipo raro porque lo sobrerrepresenta: el mínimo de 3 por estrato le da 18 de los 60 valores, cuando el tipo raro es el 4 % de la población. Eso es lo que la hace útil para encontrar patrones de error y lo que la vuelve engañosa para estimar la tasa: la cruda la multiplica por cinco. Para vigilar la tasa de lo aceptado, cada estrato se pondera por su tamaño.
+
+Cola de revisión (25 documentos con algo que revisar, capacidad 6, variante correcta):
+
+| Orden | Errores de extracción vistos (de 16) | Documentos con conflicto o ambiguos vistos (de 11) |
+| :--- | :--- | :--- |
+| llegada | 4 | 4 |
+| confianza (la más baja primero) | 8 | 1 |
+| prioridad (conflictos primero) | 0 | 6 |
+
+Con poca capacidad, un orden ve unos y deja los otros. **Esto es una propiedad de los datos, no una lección:** el generador sortea los conflictos y los errores de extracción por separado (en producción no hay ningún error en un documento marcado), así que los dos órdenes no pueden solaparse. Con datos reales, conflicto y error podrían ir juntos. Lo que sí sostiene la guía es que la cola se prioriza (5.5-S4), no qué orden gana.
+
+**Parte `confianza_modelo`** (Messages API, 12 documentos × 3 repeticiones):
+
+| Modelo de la medida | Descripciones | Señal observada |
+| :--- | :--- | :--- |
+| Haiku 5.5 (rol `agent`, ~0,014 $) | con reglas de formato | **0 errores en 153 valores extraídos**: no hay nada que calibrar. Confianza media 0,95 cuando acierta; el hueco de calibración es 0,046 por declarar menos de lo que acierta. En los campos que deja en `null` la confianza media es 0,64–0,65 |
+| Haiku 4.5 (rol `enforcement`, ~0,13 $) | sin reglas de formato | **6, 7 y 7 errores por repetición, casi todos de formato de fecha, con confianza ≥ 0,85 en 5, 7 y 5**; banda 0,97–1,00: **acierta el 82,9 %** y declara el 100 %; hueco de calibración 0,076. En los `null`, confianza media 0,21–0,33. Medida de la segunda ejecución (2026-11-07); la primera dio 6, 7 y 8 errores, con confianza ≥ 0,85 en 5, 7 y 7, y la banda alta acertaba el 85,5 % declarando 99,5 %: la señal se mantiene |
+
+Notas:
+
+- **El modelo está más seguro donde falla:** los errores de fecha de Haiku 4.5 llegan con 0,95–1,0, porque el modelo lee bien la fecha y se equivoca en la forma. La confianza declarada no los distingue de los aciertos. Una medida que dé cero no demuestra que detecte el fallo, por eso `tests/test_app3_10_confianza_y_revision.py` incluye un control positivo sintético (un conjunto mal calibrado da un hueco de ~0,45 y uno calibrado, ~0).
+- **La confianza de un campo en `null` habla de la ausencia:** con Haiku 4.5 ronda 0,32 aunque el `null` sea correcto, y mezclarla con los valores extraídos daba un hueco de calibración de 0,137 con Haiku 5.5 que era un artefacto. El módulo la mide aparte.
+- **Segmentos pequeños:** con 6 documentos por conjunto, el tipo raro no llega a los 20 ejemplos de confianza alta que se piden. No se puede validar, así que no se automatiza (`insufficient_data` no es lo mismo que `below_target`).
+- La población es simulada (la genera `datos/generar_sinteticos.py`): la confianza de sus valores no es la de un modelo real. **Los umbrales por segmento (5.5-S3) solo se fijan sobre esa confianza simulada.** La parte con modelo es la única que mide una confianza declarada de verdad, y lo que mide es su calibración: no fija umbrales con ella.
+- Lo que no depende del modelo se prueba en `tests/test_app3_10_confianza_y_revision.py` y `tests/test_datos_entrega3c.py`.
+</details>
+
+### Pregunta tipo examen
+
+Un sistema extrae campos de facturas, albaranes y un tipo de documento de compra poco frecuente. Su exactitud global medida es del 97 %, y el equipo propone dejar de revisar todo lo que el modelo marque con confianza alta. ¿Qué debe hacerse antes de reducir la revisión humana?
+
+- A. Elegir un único umbral de confianza con el que la exactitud global de lo aceptado llegue al 99 % y no revisar lo que lo supere.
+- B. Pedir al modelo una confianza por documento, la media de las de sus campos, y no revisar los documentos que superen un umbral.
+- C. Medir con documentos etiquetados cuánto acierta cada tipo y campo, fijar un umbral para cada uno y vigilar lo aceptado tipo a tipo.
+- D. Mantener el 97 % como criterio de aceptación y revisar cada mes una muestra aleatoria simple de lo que se acepta sin revisión.
+
+<details>
+<summary>Paso 4 · Respuesta</summary>
+
+**C.** Una exactitud agregada alta puede esconder un tipo de documento o un campo que rinde mal (TS 5.5-K1), así que antes de automatizar se comprueba la exactitud por tipo y por campo (K4, S2). La confianza por campo solo sirve para enrutar después de calibrarla con un conjunto etiquetado, que fija los umbrales (K3, S3), y lo aceptado se sigue vigilando con una muestra aleatoria estratificada (K2, S1).
+
+- **A** elige el umbral mirando la cifra global, que es justo la que puede esconder el segmento malo (K1, K4).
+- **B** junta los campos de un documento en una sola cifra: la guía habla de confianza por campo (K3), y la media esconde el campo dudoso detrás de los buenos (inferencia propia).
+- **D** decide por el titular y vigila con una muestra simple, que apenas toca un tipo poco frecuente; la guía pide estratificarla (K2, S1).
+</details>
+
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
+---
+
+## 11 · Criterios y revisión en CI
+
+> **Qué vas a hacer:** Revisar con `claude -p` un cambio de dos commits sobre una copia temporal de `repo_mesa` que lleva fallos sembrados, un cambio correcto y un patrón aceptable: con criterios categóricos o con «sé conservador», con y sin ejemplos, con y sin los hallazgos de la revisión anterior, y pedir también los tests que faltan.
+>
+> **Necesitas antes:** Nada. Si vienes del [módulo 08](#08--validación-y-reintento-con-error-concreto), su patrón de fallo agrupa las causas de una extracción que falla; el `detected_pattern` de aquí es otra cosa: agrupa los hallazgos de revisión que se descartan.
+>
+> **Modo:** Ejecución ligera (`--parte orden` no usa modelo y enseña la orden entera; cada ejecución con modelo cuesta unos 0,02 $).
+
+### Antes de empezar
+
+Los términos comunes (`detected_pattern`, *few-shot*, sesión, JSON Schema) están en el [glosario](../docs/glosario.md). Este módulo no usa la Messages API ni el Agent SDK: lanza la CLI `claude -p` con la orden que construye [`harness/headless.py`](../harness/headless.py) y que imprime entera antes de ejecutarla. Hereda la credencial del entorno (se probó con una API key). El cambio y sus etiquetas (que el revisor nunca ve) los genera `datos/generar_sinteticos.py` (`cambio_revision.json` y `cambio_revision_etiquetas.json`) y se aplica sobre una copia temporal de `repo_mesa` con `git`, así que `datos/sinteticos/` no se toca.
+
+- **El sistema:** una copia temporal de `repo_mesa` con su propio `CLAUDE.md` (el contexto de CI: convenciones y estándares de tests), un commit base y dos commits de cambio. El primero siembra cinco fallos de categorías distintas (`bug`, `security`, `comment` y dos entre archivos) y lleva además un cambio correcto que parece un fallo y un patrón aceptable que parece un problema. El segundo arregla uno y añade otro nuevo.
+- **La orden:** `claude -p --output-format json --json-schema …`, con la configuración de usuario y los servidores MCP fuera, solo el `CLAUDE.md` del directorio de trabajo, solo las tools `Read`, `Grep` y `Glob`, un tope de coste y el prompt por la entrada estándar. La sonda C1 (`docs/hallazgos.md`) explica cada flag.
+- **Términos propios:**
+  - **Hallazgo:** un elemento de la salida estructurada, con archivo, línea, categoría, severidad, problema, arreglo propuesto y `detected_pattern`.
+  - **Criterios categóricos:** lista de lo que se informa (`bug`, `comment`, `security`), de lo que no (estilo menor, patrones locales) y de qué es cada severidad con un ejemplo de código.
+  - **`detected_pattern` aquí:** un nombre corto en `snake_case` que escribe el propio modelo en cada hallazgo. El registro de descartados agrupa por ese nombre tras igualar mayúsculas y separadores (`normalize_pattern`).
+  - **Descartado:** un hallazgo que no coincide con ningún fallo sembrado: un falso positivo, o una marca del cambio correcto o del patrón aceptable.
+  - **Segunda revisión:** la revisión del diff completo de la rama tras un commit nuevo. Con hallazgos previos, el prompt los lista y pide informar solo de lo nuevo o de lo no resuelto.
+  - **Coincide con un fallo sembrado:** el hallazgo cae en su archivo, a dos líneas o menos, o nombra su función o símbolo con el nombre completo; si la línea es la de otro elemento etiquetado (por ejemplo, el cambio correcto), manda la línea. Un fallo entre archivos también se encuentra en sus llamadores si el hallazgo habla de la clave o de la unidad.
+
+### El ejercicio
+
+`--parte orden` construye el repositorio temporal y muestra la orden y el tamaño del prompt, sin ejecutar nada. `--parte revision` revisa el diff del primer commit; `--parte rerevision`, el diff completo de la rama tras el segundo; `--parte tests` pide los tests que faltan para el primer commit. Cada variante cambia una sola cosa respecto a la correcta:
+
+- **Correcta (`revision`):** criterios categóricos con severidades y un ejemplo de código por severidad, y *few-shot* con el formato de salida y un patrón aceptable que no se informa.
+- **`--anti conservador`:** los criterios y las severidades se sustituyen por «Sé conservador: informa solo de los problemas de los que estés muy seguro». El *few-shot* y el schema son los mismos.
+- **`--anti sin_ejemplos`:** sin el bloque *few-shot*; los criterios siguen.
+- **`--sin-categoria comment`:** la categoría `comment` desaparece de los criterios y del schema. Las definiciones de las demás no se tocan: ninguna se apoya ya en un comentario (en una versión anterior, el ejemplo de `minor` era un comentario y el de `bug` citaba un docstring, así que quitar la categoría cambiaba también esas dos).
+- **Correcta (`rerevision`):** la segunda revisión lleva la lista de los hallazgos previos (construida desde las etiquetas) y la orden de informar solo de lo nuevo o de lo no resuelto. **`--anti sin_previos`:** el mismo prompt, sin esa lista.
+- **Correcta (`tests`):** el prompt lleva los tests existentes y el `CLAUDE.md` tiene los estándares de tests. **`--anti sin_tests_existentes`:** sin los tests existentes. **`--anti sin_estandares`:** un `CLAUDE.md` sin esa sección. En esta parte la orden va sin tools, para que el modelo no pueda descubrir por su cuenta lo que se le quita del contexto.
+
+Los fallos sembrados se nombran con una letra en la salida y en el Paso 3:
+
+- **A** (`bug`, `tickets/escalado.py`): argumentos intercambiados al llamar a `debe_escalar`. El segundo commit lo arregla.
+- **B** (`security`, `notificaciones/avisos.py`): el mensaje y el id llegan sin validar a `os.system`.
+- **C** (`comment`, `config.py`): el comentario dice que el máximo es 30 y `NOTIF_TIMEOUT` vale 60.
+- **D** (entre archivos): `calcular_sla` devuelve minutos y sus llamadores siguen leyendo horas.
+- **E** (`bug`, del segundo commit, `informes/resumen.py`): división por cero con una lista vacía. Solo entra en la segunda revisión.
+- **F** (entre archivos): `avance_plazo` devuelve una fracción de 0 a 1 y `texto_progreso` la imprime como porcentaje.
+
+Además, el **cambio correcto** (el comentario que justifica `REINTENTOS`) y el **patrón aceptable** parecen fallos y no lo son.
+
+### Predice antes de ejecutar
+
+Con tus palabras; no hay un número que acertar:
+
+1. Dos variantes tocan el prompt de la revisión: una sustituye los criterios por «sé conservador» y otra quita los ejemplos. ¿Dónde podría notarse cada cambio, en lo que el revisor encuentra o en lo que marca de más? ¿Cuántas ejecuciones necesitarías para distinguir un efecto de la variación de una ejecución a otra?
+2. Una categoría genera falsos positivos y la quitas del prompt y del schema. ¿Qué puede pasar con el hallazgo que antes caía en esa categoría? ¿Qué te diría cada posibilidad sobre el criterio?
+3. Revisas una segunda vez, tras un commit nuevo, el diff completo de la rama. ¿Qué repetirá un revisor que no sabe lo que ya se publicó, y qué cambia si le das la lista?
+4. Pides los tests que faltan con y sin los tests existentes en el contexto, y con y sin los estándares de tests en el `CLAUDE.md`. ¿Qué podría cambiar en los escenarios que repiten lo ya cubierto? ¿Qué harías si el resultado no fuera el que esperas?
+5. El modelo escribe el `detected_pattern` del mismo falso positivo de varias formas. ¿Qué se pierde al agrupar los descartados, y qué parte de eso arregla el código y qué parte no?
+
+### Ejecutar
+
+```bash
+uv run python app3_sistema_multiagente/11_criterios_y_ci.py                                       # la orden, sin ejecutar nada
+uv run python app3_sistema_multiagente/11_criterios_y_ci.py --parte revision --repeat 3
+uv run python app3_sistema_multiagente/11_criterios_y_ci.py --parte revision --anti conservador --repeat 3
+uv run python app3_sistema_multiagente/11_criterios_y_ci.py --parte revision --anti sin_ejemplos --repeat 3
+uv run python app3_sistema_multiagente/11_criterios_y_ci.py --parte revision --sin-categoria comment --repeat 3
+uv run python app3_sistema_multiagente/11_criterios_y_ci.py --parte rerevision --repeat 3                    # con los hallazgos previos
+uv run python app3_sistema_multiagente/11_criterios_y_ci.py --parte rerevision --anti sin_previos --repeat 3
+uv run python app3_sistema_multiagente/11_criterios_y_ci.py --parte tests --repeat 3                         # y --anti sin_tests_existentes | sin_estandares
+```
+
+**Si ejecutas:** la construcción del repositorio, de los prompts, del schema, la puntuación contra lo sembrado y el registro de descartados se prueban sin modelo. Cada ejecución con modelo (rol `reviewer`, Sonnet 5.5) cuesta unos 0,015–0,03 $; el tope es `--budget` y se reparte entre las repeticiones. La salida empieza con la línea `[contexto]` de una ejecución mínima de la misma orden: debe decir 0 servidores MCP y 0 skills.
+
+### Qué observar
+
+En `revision`: qué fallos sembrados encuentra (A a F, el segundo commit añade E), cuáles faltan, cuántos hallazgos no coinciden con ninguno, si marca el cambio correcto o el patrón aceptable, la precisión por categoría y el registro de descartados por `detected_pattern`, con la ubicación de cada uno. En `rerevision`: lo nuevo frente a lo que repite de la primera revisión. En `tests`: los escenarios repetidos y cuáles.
+
+<details>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+Sonnet 5.5 (rol `reviewer`), `claude -p` aislado. **Las cifras de referencia son las de después de las correcciones C4** (2026-11-07, 5 ejecuciones por variante, la misma puntuación en toda la batería): cada revisión corre sobre el árbol del commit que revisa, un escenario de test se compara con lo que espera y el símbolo se compara por nombre completo. Las cifras anteriores están más abajo, rotuladas «antes», y **no son comparables**: el revisor del primer commit leía el árbol del segundo, donde A ya estaba arreglado, la puntuación era otra, el prompt de todas las variantes era otro (la línea de `bug` citaba el docstring y el ejemplo de `minor` era otro) y los datos tenían `TIMEOUT` duplicado (ahora `NOTIF_TIMEOUT`).
+
+| Variante | Señal observada | Qué dice |
+| :--- | :--- | :--- |
+| correcta | las cinco (A, B, C, D y F) en 5 de 5; 0 falsos positivos; la puntuación da «marca el cambio correcto» en 5 de 5, pero 2 son el renombrado a `NOTIF_TIMEOUT` (un artefacto, ver la nota): **la marca del comentario de `REINTENTOS` sale en 3 de 5**; ~0,019 $ por ejecución | los criterios encuentran todo, pero no evitan la marca del comentario que justifica un valor |
+| `conservador` | las cinco en 5 de 5; 0 falsos positivos; **0 marcas del cambio correcto** | al revés de lo que dice la guía (4.1-K2): «sé conservador» no perdió nada y marcó menos. Ver «Lo que no coincide con la guía» |
+| `sin_ejemplos` | 24 de 25 (B falta en una ejecución); 0 falsos positivos; marca el cambio correcto en 4 de 5 | **sin diferencia** con la correcta |
+| `--sin-categoria comment` | 24 de 25 (C falta en una: el modelo marcó el renombrado como `bug` y no el comentario); 0 falsos positivos; la puntuación da 1 de 5, y esa marca es el renombrado: **la del comentario de `REINTENTOS`, 0 de 5** | quitar la categoría quita la marca del comentario (3 de 5 frente a 0 de 5), y a veces también el fallo C, que esa categoría acertaba |
+| `rerevision` correcta (antes, 3 ejecuciones) | hallazgos 0, 1 y 0: **0 repetidos** de la primera revisión; E, el bug nuevo, sale en 1 de 3 | con la lista y la orden, no repite lo ya publicado |
+| `rerevision --anti sin_previos` (antes, 3 ejecuciones) | hallazgos 4, 4 y 5: **repite B, C y D en 3 de 3**; E sale en 1 de 3 | sin la lista, publica otra vez lo ya publicado; encontrar lo nuevo no mejora |
+| `tests` correcta | 7–8 tests por ejecución; **0 escenarios repetidos** en 5 de 5; 31 de 38 sobre lo que cambió | — |
+| `tests --anti sin_tests_existentes` | 8–9 tests; **0 repetidos** en 5 de 5; 25 de 41 sobre lo que cambió (en una ejecución, 0 de 8, sin explicar) | **sin diferencia** en los repetidos: ver la nota |
+| `tests --anti sin_estandares` | **9–12 tests** por ejecución; 0 repetidos; 36 de 51 sobre lo que cambió | más tests en 5 de 5, sin solapamiento con la correcta (7–8): una diferencia de cantidad, en el sentido de 3.6-S5 |
+
+La segunda revisión (`rerevision`) **no se volvió a medir** tras las correcciones: sus cifras son de antes. Su árbol, el del estado final, ya era el correcto; la puntuación de entonces era la anterior.
+
+Notas:
+
+- **Los criterios categóricos no resuelven el comentario del cambio correcto:** es la marca más estable. El registro de descartados la agrupa por `detected_pattern`, pero el modelo escribe un nombre distinto casi cada vez (`misleading_comment`, `dubious_comment`, `comment_does_not_match_code`, `comentario_justificacion_dudosa`…): agrupar por ese campo sin normalizarlo lo dispersa. `normalize_pattern` solo iguala mayúsculas y separadores.
+- **Lo que la puntuación por símbolo no distingue:** en 4 de las 20 revisiones el modelo avisa de que renombrar a `NOTIF_TIMEOUT` rompería a quien lo importara (nadie lo importa). Como cita la línea del cambio correcto, cuenta como marca del cambio correcto: la puntuación no separa dos quejas distintas sobre la misma línea. Sube «marca el cambio correcto» y no cambia los fallos encontrados. Si cada ejecución marcó una sola cosa (los recuentos lo permiten, pero es una lectura y no una medida directa), la correcta marca el comentario de `REINTENTOS` en 3 de 5 (5 marcas menos las 2 del renombrado) y la variante sin `comment`, en 0 de 5 (su única marca es el renombrado). Esa es la cifra que separa las dos variantes.
+- **`--parte tests` y los tests existentes:** con ellos y sin ellos salen 0 escenarios repetidos, y ese 0 **no es una señal ni a favor ni en contra de 3.6-S4**. De los 5 escenarios existentes, solo 2 (`calcular_sla(alta, 3)` y `horas_restantes`) son los que el cambio rompe al pasar las horas a minutos, y quien los reescribe ya no repite el escenario; los otros 3 (`calcular_sla(alta, 9)` con `ValueError` y los dos de `debe_escalar`) no cambian con el commit, y proponerlos otra vez sería un duplicado real. **Limitación de la medida:** la clave de un escenario exige que coincidan todos los números del texto de `expected`, así que un duplicado real escrito con un número de más («lanza ValueError: 9 h de 8 h») deja de contarse. El 0 frente a 0 puede ser en parte un artefacto de la clave y no demuestra que no hubiera duplicados reales. Ningún test cubre ese caso, y las propuestas no se guardaron (el módulo solo imprime los recuentos y los repetidos), así que no se revisaron a mano.
+
+**Lo que no coincide con la guía.** **Producto observado (no evaluable):** dos medidas de este módulo no muestran lo que dice la guía. Ninguna cambia la respuesta de examen, que es siempre la de la guía.
+
+- **`--anti conservador` (4.1-K2): marcó menos, no más.** Con «sé conservador» en lugar de los criterios, el modelo encontró los cinco fallos y no marcó nunca el cambio correcto (0 de 5, frente a 3 de 5 marcas del comentario de `REINTENTOS` con los criterios; la puntuación da 5 de 5 contando el renombrado). Hipótesis **sin comprobar**: la variante sustituye todos los criterios, también el de comentarios, que es el que invita a revisar la justificación de `REINTENTOS`; lo que desaparece sería ese criterio, no la prudencia. Para separarlo haría falta una variante con «sé conservador» y el criterio de comentarios. Con 5 ejecuciones es una pista, no una prueba. En el examen, las instrucciones generales de prudencia no mejoran la precisión como los criterios categóricos.
+- **Tests existentes en el contexto (3.6-S4): sin señal.** 0 repetidos con ellos y sin ellos, y la medida no permite leer ese 0 ni a favor ni en contra (ver la nota). En el examen, los tests existentes van en el contexto para no proponer escenarios ya cubiertos.
+
+`--anti sin_ejemplos` tampoco da señal (B falta en 1 de 25): no contradice 4.2-S2 y S3, pero no la demuestra.
+
+**Antes de las correcciones C4** (no comparable: árbol contaminado, otra puntuación, otro prompt en todas las variantes —la línea de `bug` citaba el docstring y el ejemplo de `minor` era otro—, `TIMEOUT` duplicado en los datos y la versión anterior de `--sin-categoria comment`; detalle en `docs/hallazgos.md`):
+
+- **Correcta:** A a D en 7 de 8 (A se pierde en 1) y marca el cambio correcto en 3 de 8; después, con F, 2 de 2.
+- **`conservador`:** A se pierde en 2 de 8 y nunca marca el cambio correcto. Con tres ejecuciones parecía que «sé conservador» perdía A, y con cinco más no. El árbol contaminado es una explicación posible de esas pérdidas de A (el revisor podía leer `tickets/escalado.py` ya arreglado), junto a los cambios de prompt y de datos; no se aisló. Tras la corrección, A sale en 5 de 5 con todas las variantes.
+- **`sin_ejemplos`:** 10 ejecuciones en tres momentos y **con dos puntuaciones distintas**: 3 con cuatro fallos sembrados (A se pierde en 1), 5 con la puntuación por línea (B no sale en 3 de 5) y 2 con la puntuación por símbolo (las cinco en 2 de 2). No se pueden sumar. Para la pérdida de B había dos lecturas, ninguna comprobada: el ejemplo que se quita (una inyección en la shell) se parece a B, o el modelo encontró B y lo citó con la línea desplazada, y la puntuación por línea lo contó como falso positivo.
+- **`--sin-categoria comment`** (con la versión anterior de la variante, que cambiaba también `minor` y `bug`): C en 3 de 3, ahora como `bug`, y marca el cambio correcto en 2 de 3. Lo que parecía comportamiento del modelo («reclasifica en vez de quitar») era en parte la variante, que cambiaba más de una cosa.
+- **`tests`:** 1 escenario repetido por ejecución con los tests existentes (siempre `calcular_sla(alta, 3)`) y 0 sin ellos; con y sin los estándares, igual. Ese «al revés de lo esperado» era un artefacto: el escenario se comparaba sin lo que esperaba, y el test que el cambio rompe, actualizado a minutos, contaba como repetido.
+
+Avisos sobre las cifras y la ejecución:
+
+- **El tope de coste** es `--max-budget-usd` de cada `claude -p`: el módulo le pasa a cada repetición lo menor entre lo que queda de `--budget` y `--budget` dividido entre las repeticiones, así que una repetición no puede gastarse el tope de las siguientes. La sonda de contexto del principio cuenta en el mismo tope.
+- Lo que no depende del modelo se prueba en `tests/test_app3_11_criterios_y_ci.py`, `tests/test_headless.py` y `tests/test_datos_entrega3c.py`. Coste de las ejecuciones con modelo de este módulo: ~1,0 $ antes de las correcciones y 0,63 $ en la medida después (0,37 $ la revisión y 0,26 $ los tests).
+</details>
+
+### Pregunta tipo examen
+
+**Pregunta 1 (una respuesta).** Un equipo ejecuta Claude Code en CI para revisar cada *pull request* y publica los hallazgos como comentarios en línea. La categoría «comentario inexacto» marca a menudo comentarios del código que son correctos, y los desarrolladores han empezado a ignorar también los hallazgos de seguridad. ¿Qué debe hacer el equipo?
+
+- A. Añadir al prompt que informe solo de lo que tenga alta confianza y mantener activas todas las categorías mientras tanto.
+- B. Apagar esa categoría por ahora, reescribir su criterio para marcar solo un comentario que contradiga al código y añadir `detected_pattern`.
+- C. Pedir una puntuación de confianza por hallazgo y publicar solo los que pasen de un umbral, sin tocar el criterio de ninguna categoría.
+- D. Mantener todas las categorías y juntar los hallazgos en un único comentario de resumen al final del PR, para que molesten menos.
+
+<details>
+<summary>Paso 4 · Respuesta</summary>
+
+**B.** Una categoría con muchos falsos positivos hace desconfiar también de las que aciertan (TS 4.1-K3), así que se desactiva temporalmente mientras se mejora su prompt (4.1-S2). El arreglo es un criterio explícito, que marque un comentario solo cuando lo que dice no coincide con lo que hace el código (4.1-K1, S1), y el campo `detected_pattern` permite analizar qué patrones se descartan (4.4-K3, S3).
+
+- **A** es la instrucción general que la guía descarta: «solo alta confianza» no mejora la precisión frente a criterios categóricos (4.1-K2), y la categoría que resta confianza sigue publicando.
+- **C** filtra por la confianza en vez de definir qué se informa y qué no (4.1-S1); el criterio vago sigue igual.
+- **D** no reduce los falsos positivos (4.1-K3) y renuncia a los comentarios en línea, que es para lo que sirve la salida estructurada en CI (3.6-S2).
+
+**Producto observado (no evaluable):** en este módulo, quitar solo la categoría `comment` hizo desaparecer la marca del comentario de `REINTENTOS` (3 de 5 con la correcta, 0 de 5 sin la categoría, leyendo una marca por ejecución), y en 1 de 5 se perdió también el fallo C, un comentario que sí contradecía al código (Paso 3). No cambia la respuesta de examen: apagar la categoría es la medida temporal, y por eso mismo pierde lo que la categoría acertaba; el arreglo es el criterio.
+</details>
+
+**Pregunta 2 (multiple-response).** Un equipo usa `claude -p --output-format json --json-schema` para revisar los commits de una rama y para pedir los tests que faltan. Tras cada commit nuevo, la revisión vuelve a publicar comentarios que ya estaban, y los tests propuestos repiten escenarios ya cubiertos o aportan poco. **Selecciona dos** cambios que sigan la guía. Evalúa cada opción por separado.
+
+- A. Generar los tests sin mostrar al modelo los que ya existen, para que proponga casos sin dejarse llevar por ellos.
+- B. Pasar a cada revisión nueva lo que ya se comentó en las anteriores, para que solo publique lo que falta o sigue abierto.
+- C. Revisar cada commit con una instancia nueva y sin nada de las revisiones anteriores, para que mire el diff sin sesgos.
+- D. Explicar en el `CLAUDE.md` del repositorio cómo se escriben los tests del proyecto y con qué utilidades de prueba cuenta.
+
+<details>
+<summary>Paso 4 · Respuesta (pregunta 2)</summary>
+
+**B y D.** La primera evita los comentarios duplicados (TS 3.6-S3) y la segunda da a Claude Code en CI el contexto del proyecto (3.6-K3) para que los tests generados sean mejores y aporten más (3.6-S5).
+
+- **A** invierte lo que dice la guía: los tests existentes van en el contexto para no proponer escenarios que la suite ya cubre (3.6-S4).
+- **B** da al revisor lo que ya se publicó y le pide solo lo nuevo o lo no resuelto: así no repite comentarios tras un commit nuevo (3.6-S3).
+- **C** mezcla dos ideas: la instancia independiente es buena para no heredar el razonamiento de quien generó el código (4.6-K2), pero sin los hallazgos previos la revisión vuelve a publicar lo que ya estaba, que es justo el problema (3.6-S3).
+- **D** es el uso de `CLAUDE.md` que la guía asigna al contexto de Claude Code en CI: estándares de tests y *fixtures* disponibles (3.6-K3, S5).
+
+**Producto observado (no evaluable):** en este módulo, con los tests existentes en el contexto y sin ellos salieron 0 escenarios repetidos, pero ese 0 no es una señal ni a favor ni en contra de 3.6-S4: solo 2 de los 5 existentes son los que el cambio rompe, y la clave puede dejar de contar un duplicado real (Paso 3). Sin los estándares en el `CLAUDE.md` salieron más tests (9–12 frente a 7–8). No cambia la respuesta de examen: A sigue siendo incorrecta.
+</details>
+
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
+---
+
+## 12 · Revisión independiente
+
+> **Qué vas a hacer:** Hacer que una sesión de `claude -p` escriba un cambio y revisarlo después de varias maneras: con una instancia nueva en pasadas por archivo y de integración, reanudando la sesión que lo escribió (con y sin la orden explícita de revisar su propio cambio) y con una instancia nueva en una sola pasada larga, con la confianza de cada hallazgo.
+>
+> **Necesitas antes:** El [módulo 11](#11--criterios-y-revisión-en-ci), cuyo cambio de prueba, schema de hallazgos, letras de los fallos y puntuación reutiliza, y el [10](#10--confianza-y-revisión-humana), cuya calibración aplica a la confianza de cada hallazgo.
+>
+> **Modo:** Ejecución ligera (`--parte plan` no usa modelo; cada revisión con modelo cuesta entre 0,04 $, en una sola pasada, y unos 0,13 $, en la autorrevisión, más la sesión generadora una vez).
+
+### Antes de empezar
+
+Los términos comunes (autorrevisión, instancia independiente, pasada por archivo y de integración, sesión, reanudar, bifurcar, `claude -p`) están en el [glosario](../docs/glosario.md). Como el módulo 11, lanza `claude -p` con la orden de [`harness/headless.py`](../harness/headless.py): aislada, de solo lectura en la revisión y con tope de coste.
+
+- **El sistema:** una sesión generadora, con `Write`, parte de un repositorio con un solo commit, el estado base, y recibe el mensaje y el contenido exacto de cada archivo del primer commit del módulo 11, con la orden de escribirlos (y ningún otro archivo) y explicar por qué tomó cada decisión. El cambio no queda en el historial de ese repositorio: lo que se revisa es el diff que la sesión deja en el árbol de trabajo, archivos nuevos incluidos. Después, las pasadas: una por archivo (sin tools, con solo el diff de ese archivo), una de integración (con el diff completo, los hallazgos locales y `Read`, `Grep` y `Glob`) y una de verificación que da la confianza de cada hallazgo fusionado.
+- **Términos propios:**
+  - **Instancia nueva:** la instancia independiente de este módulo, una ejecución de `claude -p` sin sesión previa: solo ve el diff y lo que lea del repositorio.
+  - **Autorrevisión aquí:** las mismas pasadas, cada una como `--resume` de la sesión que escribió el cambio. Cada pasada la **bifurca** (`--fork-session`) para que las repeticiones no se contaminen entre sí.
+  - **Pasadas encadenadas:** la pasada por archivo va sin tools y con solo el diff de ese archivo; la de integración recibe el diff completo y los hallazgos locales, puede leer el repositorio y no debe repetir lo que ya salió.
+  - **Una pasada:** la revisión de todo el diff de una vez, con lectura del repositorio y los mismos criterios, sin pasadas por archivo ni de integración.
+  - **Fusión:** dos hallazgos de pasadas distintas se cuentan como uno si caen en el mismo sitio y describen el mismo problema (mismo `detected_pattern` o palabras en común). El mismo problema dicho con otras palabras cuenta dos veces.
+  - **Verificación:** una pasada que da, con el diff delante, una confianza de 0 a 1 a cada hallazgo. La que cuenta para enrutar es esta, no la que el hallazgo trae al nacer.
+  - **Enrutar:** los hallazgos con confianza desde 0,8 se publican; el resto y los que no tienen confianza van a una persona. El umbral es una elección propia.
+  - **Coste acumulado:** el `total_cost_usd` de una sesión reanudada incluye el de la sesión de origen; el coste de cada revisión es la diferencia, y el tope de la rama lo lleva `headless.Ledger`.
+
+### El ejercicio
+
+`--parte plan` muestra las pasadas, las tools de cada una y la orden de la autorrevisión (o la de la pasada única, con `--anti una_pasada`), sin ejecutar nada. `--parte revision` genera el cambio y lo revisa. Las ramas usan los mismos criterios y ejemplos; cada una cambia una sola cosa respecto a la correcta:
+
+- **Correcta:** las pasadas son instancias nuevas, sin sesión.
+- **`--anti autorrevision`:** cada pasada es un `--resume --fork-session` de la sesión generadora.
+- **`--anti autorrevision_explicita`:** igual que la anterior, con una frase delante de cada prompt: «Revisa críticamente tu propio cambio: busca los fallos que hayas podido pasar por alto al escribirlo».
+- **`--anti una_pasada`:** una instancia nueva, como la correcta, pero en una única pasada con lectura sobre todo el diff, seguida de la misma verificación.
+
+El cambio lleva los fallos A, B, C, D y F del módulo 11 (E es del segundo commit y no entra aquí). Dos son entre archivos: `D`, `calcular_sla` devuelve minutos y sus llamadores leen horas, y `F`, `avance_plazo` devuelve una fracción de 0 a 1 y `texto_progreso` la imprime como porcentaje. Ninguno de los dos archivos lo delata del todo por sí solo.
+
+### Predice antes de ejecutar
+
+Con tus palabras; no hay un número que acertar:
+
+1. La sesión que escribió un cambio lo revisa en la misma sesión. ¿Qué sabe que no sabe una instancia nueva, y en qué sentido puede jugarle a favor y en contra? ¿Qué tendría que tener el cambio para que esa diferencia se notara?
+2. ¿Qué fallos puede ver, en principio, una pasada por archivo sin acceso al resto del repositorio, y cuáles necesitan ver dos archivos a la vez? ¿Esperas que eso se cumpla igual en cada ejecución?
+3. ¿Por qué se pide a la pasada de integración que no repita lo que ya salió por archivo? ¿Qué pasaría si dos pasadas se contradijeran?
+4. La verificación da una confianza de 0,6 a un hallazgo. ¿Qué decides con eso y cómo comprobarías que esa confianza vale algo? ¿Qué necesitas en los hallazgos para poder comprobarlo?
+5. A la autorrevisión le añades una frase que le pide revisar críticamente su propio cambio. ¿Qué cambia en lo que la sesión sabe, y qué no cambia?
+6. Una sola pasada sobre todo el diff frente al reparto en pasadas: ¿qué podría perder, qué podría ganar, y de qué depende que la diferencia se note?
+
+### Ejecutar
+
+```bash
+uv run python app3_sistema_multiagente/12_revision_independiente.py                                              # el plan de pasadas y la orden, sin modelo
+uv run python app3_sistema_multiagente/12_revision_independiente.py --parte revision --repeat 2                  # instancia nueva
+uv run python app3_sistema_multiagente/12_revision_independiente.py --parte revision --anti autorrevision --repeat 2
+uv run python app3_sistema_multiagente/12_revision_independiente.py --parte revision --anti autorrevision_explicita --repeat 2
+uv run python app3_sistema_multiagente/12_revision_independiente.py --parte revision --anti una_pasada --repeat 2
+```
+
+**Si ejecutas:** el reparto en pasadas, los prompts, la fusión, el enrutado por confianza, la calibración y el coste de la sesión reanudada se prueban sin modelo. Cada ejecución completa (la sesión generadora, una vez, y cada revisión: cuatro pasadas por archivo, una de integración y una de verificación) cuesta entre 0,15 y 0,25 $ con `--repeat 1`. **El tope por defecto del repositorio (1,00 $) es el de toda la ejecución:** la sesión generadora recibe como mucho 0,30 $ y cada pasada, lo menor entre lo que queda y 0,20 $. No se reparte por repeticiones, así que con `--repeat 5` en la autorrevisión se acerca al tope, y una pasada con poco margen puede quedar sin presupuesto y sin confianza; el módulo lo dice.
+
+### Qué observar
+
+Por repetición: qué fallos sembrados encontró cada pasada, cuáles faltan, falsos positivos, si marcó el cambio correcto, cuántos hallazgos se publican y cuántos van a una persona, la calibración de la verificación y el coste acumulado. Antes, si el diff que escribió la sesión generadora coincide con el cambio que se le dio.
+
+<details>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+Sonnet 5.5 (rol `reviewer`), `claude -p` aislado. Hay tres mediciones, cada una con su versión del código; **la de referencia es la última**, después de las correcciones C4 (2026-11-07). En ella la sesión generadora escribió exactamente el cambio dado (93 líneas, cuatro archivos) en las dos ramas.
+
+**Después de las correcciones C4** (5 ejecuciones por rama):
+
+| Variante | Señal observada | Qué dice |
+| :--- | :--- | :--- |
+| correcta: instancia nueva | las cinco en 5 de 5, 0 falsos positivos; A, B y C por archivo en 5 de 5; **D por archivo en 3 de 5 y F en 1 de 5**, y la integración completa el resto (D 2 de 5, F 4 de 5); marca el cambio correcto 1 vez. ~0,090 $ por revisión | con la pasada por archivo sin tools, los fallos entre archivos salen sobre todo por integración |
+| `--anti una_pasada` | 24 de 25 (C falta en una), 0 falsos positivos; marca el cambio correcto 6 veces en 5 ejecuciones. ~0,042 $ por revisión | **sin diferencia** en lo encontrado: una pasada larga no pierde D ni F con este diff y cuesta unas 2 veces menos |
+
+Calibración de la verificación: con `una_pasada`, los 5 hallazgos de la banda 0,00–0,50 son marcas del cambio correcto (la verificación decía 23 %) y las demás bandas aciertan el 94–100 %; hueco 0,129. Con la instancia nueva, hueco 0,215, por quedarse corta (banda 0,00–0,50 con todos los hallazgos reales). Con más marcas del cambio correcto, la confianza sí separa algo.
+
+**Batería de la autorrevisión** (antes de las correcciones C4, 2026-11-06; 5 ejecuciones por rama, la misma versión del código y de la puntuación en las tres):
+
+| Variante | Señal observada | Qué dice |
+| :--- | :--- | :--- |
+| correcta: instancia nueva | las cinco en 5 de 5, 0 falsos positivos; por archivo A, B y C en 5 de 5, D en 1 de 5 y F en 0 de 5; por integración D 4 de 5 y F 5 de 5. ~0,091 $ por revisión. Su generador añadió un archivo de tests (125 líneas en lugar de 93) | misma pauta de dónde salen D y F, sobre un diff distinto del de las otras dos ramas |
+| `--anti autorrevision` | las cinco en 5 de 5, todas por la pasada por archivo; 0 falsos positivos. ~0,127 $ por revisión | **sin diferencia** con la instancia nueva: la sesión bifurcada recuerda lo que escribió y sus pasadas «locales» no son locales |
+| `--anti autorrevision_explicita` | las cinco en 5 de 5, todas por archivo; 0 falsos positivos; 1 marca del cambio correcto. ~0,123 $ por revisión | **sin diferencia**: la frase no cambió lo encontrado |
+
+Que la instancia nueva lo encontrara todo **no es un control positivo**: no prueba que la medida pueda registrar una pérdida. Lo que sí lo prueba es la pasada por archivo de la instancia nueva, que pierde F en 5 de 5 y la medida lo registra. Con el techo al 100 % en las tres ramas, falta señal, no muestra: para ver un efecto haría falta un fallo más sutil. Las 25 oportunidades por rama son 5 ejecuciones sobre el mismo diff y no son independientes, así que no dan una cota de la tasa de pérdida.
+
+**Antes, tanda C** (2 a 3 ejecuciones; la sesión generadora conservaba el cambio en su historial, el diff no veía los archivos nuevos y la fusión podía perder un hallazgo distinto):
+
+- La generadora escribió exactamente el cambio dado en 3 de 5 sesiones; en otra añadió archivos de tests.
+- Instancia nueva (3 ejecuciones): cada fallo en alguna pasada, 0 falsos positivos; D y F por integración en 2 de 3 y por archivo en 1 de 3. ~0,10 $ por revisión.
+- Autorrevisión (2 ejecuciones): A, B, C, D y F por archivo en las 2, ~0,19 $ por revisión. `autorrevision_explicita` no se midió entonces (se midió en la batería).
+- Calibración de la verificación (17 hallazgos, todos reales): 0,61, 0,89 y 0,95 de media por banda, hueco 0,20 por quedarse corta. El registro de entonces la da sobre 2 ejecuciones y la tabla de la instancia nueva tiene 3; no dice por qué, y no se ha podido reconstruir.
+- En la segunda autorrevisión, la pasada de verificación se quedó sin presupuesto (tope de 0,40 $) y sus hallazgos quedaron sin confianza.
+
+Notas:
+
+- **Lo que no coincide con la guía.** **Producto observado (no evaluable):** ni la autorrevisión encontró menos que la instancia nueva ni la pasada única encontró menos que el reparto. La guía dice que la sesión que generó el código lo revisa peor que una instancia independiente (TS 4.6-K1, K2; 3.6-K4) y que una revisión de varios archivos se parte en pasadas para no diluir la atención (4.6-K3, S2); con este cambio no se vio ninguna de las dos cosas. No cambia la respuesta de examen, que es la de la guía; las dos lecciones quedan como conceptuales.
+- **Por qué puede no verse, sin comprobar:** el «razonamiento de generación» de esta sesión es el de copiar un cambio que se le dio, no el de diseñarlo; los fallos sembrados son claros para cualquiera que mire el código; y un diff de 93 líneas cabe entero en la atención de una sola pasada.
+- **El reparto de dónde sale cada fallo es en parte del diseño:** la pasada por archivo de la instancia nueva no tiene tools ni ve a los llamadores, así que D y F solo pueden completarse en la de integración. Muestra para qué sirve la pasada de integración, pero no que el reparto encuentre más que una pasada única.
+- **La sesión bifurcada no es una pasada local:** como la sesión generadora escribió los cuatro archivos, ve a los llamadores en su historial. Una instancia nueva sin tools es la única pasada local de verdad.
+- **El coste de la sesión reanudada es acumulado:** cada revisión bifurcada informa del coste de la generadora más el suyo. El módulo cuenta cada revisión por la diferencia y suma la generadora una vez.
+- **La orden «no crees ningún otro archivo»** se añadió tras la medida en que la generadora añadió un archivo de tests. En la última medida copió el cambio exacto, pero no se probó sin la orden: no se sabe si es ella la que lo evita.
+- Lo que no depende del modelo se prueba en `tests/test_app3_12_revision_independiente.py` y `tests/test_headless.py`. Coste de las ejecuciones con modelo de este módulo: ~1,3 $ en la tanda C (incluidas las de prueba), 1,90 $ en la batería de la autorrevisión y 0,76 $ en la medida tras las correcciones.
+</details>
+
+### Pregunta tipo examen
+
+Un equipo hace que Claude Code genere un cambio de varios archivos y, en la misma sesión, le pide que lo revise. La revisión encuentra poco, y después una persona detecta un fallo en cómo un archivo usa el valor que devuelve otro. ¿Qué debe cambiar el equipo?
+
+- A. Pedir a la misma sesión que revise de nuevo el cambio, con una instrucción explícita de cuestionar cada decisión que tomó.
+- B. Activar el razonamiento extendido en la sesión que generó el código, para que piense más a fondo antes de dar su veredicto.
+- C. Revisar con una instancia nueva todos los archivos a la vez en una sola pasada larga, para que tenga el cambio completo delante.
+- D. Revisar con una instancia nueva sin el contexto de la generación, con una pasada por archivo y otra de integración entre archivos.
+
+<details>
+<summary>Paso 4 · Respuesta</summary>
+
+**D.** La sesión que generó el código conserva su razonamiento y cuestiona menos sus decisiones (TS 4.6-K1, 3.6-K4); una instancia independiente encuentra mejor los problemas sutiles (4.6-K2, S1). Una revisión de varios archivos se encadena en pasadas por archivo y una de integración para el flujo de datos entre archivos, que evita diluir la atención y los hallazgos contradictorios (4.6-K3, S2; 1.6-K2, S2).
+
+- **A** deja la revisión en la misma sesión: la guía pone las instrucciones de autorrevisión por debajo de una instancia independiente (4.6-K2).
+- **B** es el razonamiento extendido de la misma sesión, que la guía tampoco da por mejor que una instancia independiente (4.6-K2).
+- **C** acierta con la instancia nueva, pero una sola pasada sobre muchos archivos diluye la atención; el fallo entre archivos pide su propia pasada de integración (4.6-K3, S2).
+
+**Producto observado (no evaluable):** en este módulo, ni la autorrevisión encontró menos que la instancia nueva ni la pasada única (la opción C, medida como `--anti una_pasada`) encontró menos que el reparto en pasadas, con un diff de 93 líneas (Paso 3). No cambia la respuesta de examen.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).

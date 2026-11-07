@@ -8,6 +8,8 @@ dependencies = [
     "claude-agent-sdk==0.2.173",
     "anthropic",
     "pyyaml",
+    # Lo usa harness/headless.py para validar la salida estructurada de `claude -p`.
+    "jsonschema",
 ]
 
 [dependency-groups]

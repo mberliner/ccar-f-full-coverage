@@ -1,0 +1,4966 @@
+[
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.94,
+      "issue_date": 0.92,
+      "po_number": 0.96,
+      "stated_total": 0.92,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-001",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.93,
+      "issue_date": 0.95,
+      "po_number": 0.92,
+      "stated_total": 0.96,
+      "vendor": 0.93
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-002",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.92,
+      "document_number": 0.93,
+      "issue_date": 0.95,
+      "po_number": 0.93,
+      "stated_total": 0.94,
+      "vendor": 0.93
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.93,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-003",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.93,
+      "issue_date": 0.95,
+      "po_number": 0.87,
+      "stated_total": 0.99,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-004",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.98,
+      "issue_date": 0.98,
+      "po_number": 0.97,
+      "stated_total": 0.95,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-005",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.94,
+      "issue_date": 0.95,
+      "po_number": 0.98,
+      "stated_total": 0.96,
+      "vendor": 0.93
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-006",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.94,
+      "issue_date": 0.96,
+      "po_number": 0.96,
+      "stated_total": 0.93,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-007",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.91,
+      "document_number": 0.94,
+      "issue_date": 0.91,
+      "po_number": 0.95,
+      "stated_total": 0.99,
+      "vendor": 0.92
+    },
+    "conflict_detected": true,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-008",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.92,
+      "issue_date": 0.9,
+      "po_number": 0.98,
+      "stated_total": 0.93,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "prosa",
+    "doc_type": "other",
+    "record_id": "X-009",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.93,
+      "issue_date": 0.96,
+      "po_number": 0.9,
+      "stated_total": 0.94,
+      "vendor": 0.95
+    },
+    "conflict_detected": true,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-010",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.94,
+      "issue_date": 0.96,
+      "po_number": 0.94,
+      "stated_total": 0.93,
+      "vendor": 0.98
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-011",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.95,
+      "issue_date": 0.97,
+      "po_number": 0.9,
+      "stated_total": 0.93,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-012",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.98,
+      "document_number": 0.93,
+      "issue_date": 0.92,
+      "po_number": 0.97,
+      "stated_total": 0.96,
+      "vendor": 0.98
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-013",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.95,
+      "issue_date": 0.98,
+      "po_number": 0.97,
+      "stated_total": 0.99,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-014",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.93,
+      "issue_date": 0.9,
+      "po_number": 0.91,
+      "stated_total": 0.97,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-015",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.92,
+      "document_number": 0.99,
+      "issue_date": 0.96,
+      "po_number": 0.99,
+      "stated_total": 0.91,
+      "vendor": 0.98
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-016",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.96,
+      "issue_date": 0.94,
+      "po_number": 0.95,
+      "stated_total": 0.93,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-017",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.93,
+      "issue_date": 0.89,
+      "po_number": 0.96,
+      "stated_total": 0.99,
+      "vendor": 0.93
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-018",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.94,
+      "issue_date": 0.92,
+      "po_number": 0.92,
+      "stated_total": 0.99,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-019",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.99,
+      "issue_date": 0.93,
+      "po_number": 0.97,
+      "stated_total": 0.93,
+      "vendor": 0.98
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-020",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.92,
+      "issue_date": 0.96,
+      "po_number": 0.95,
+      "stated_total": 0.92,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-021",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.98,
+      "document_number": 0.95,
+      "issue_date": 0.91,
+      "po_number": 0.99,
+      "stated_total": 0.98,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.97,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-022",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.94,
+      "issue_date": 0.97,
+      "po_number": 0.99,
+      "stated_total": 0.95,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-023",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.95,
+      "issue_date": 0.99,
+      "po_number": 0.94,
+      "stated_total": 0.96,
+      "vendor": 0.92
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-024",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.97,
+      "issue_date": 0.91,
+      "po_number": 0.98,
+      "stated_total": 0.93,
+      "vendor": 0.9
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-025",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.94,
+      "issue_date": 0.95,
+      "po_number": 0.88,
+      "stated_total": 0.95,
+      "vendor": 0.9
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.92,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-026",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.97,
+      "issue_date": 0.97,
+      "po_number": 0.98,
+      "stated_total": 0.9,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "prosa",
+    "doc_type": "other",
+    "record_id": "X-027",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.96,
+      "issue_date": 0.98,
+      "po_number": 0.99,
+      "stated_total": 0.91,
+      "vendor": 0.91
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-028",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.92,
+      "document_number": 0.99,
+      "issue_date": 0.97,
+      "po_number": 0.91,
+      "stated_total": 0.98,
+      "vendor": 0.92
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-029",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.98,
+      "issue_date": 0.91,
+      "po_number": 0.92,
+      "stated_total": 0.95,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-030",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.94,
+      "issue_date": 0.93,
+      "po_number": 0.91,
+      "stated_total": 0.95,
+      "vendor": 0.98
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-031",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.91,
+      "issue_date": 0.99,
+      "po_number": 0.99,
+      "stated_total": 0.95,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-032",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.9,
+      "document_number": 0.99,
+      "issue_date": 0.94,
+      "po_number": 0.96,
+      "stated_total": 0.92,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-033",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.95,
+      "issue_date": 0.94,
+      "po_number": 0.94,
+      "stated_total": 0.98,
+      "vendor": 0.89
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-034",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.94,
+      "issue_date": 0.94,
+      "po_number": 0.91,
+      "stated_total": 0.94,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-035",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.92,
+      "document_number": 0.98,
+      "issue_date": 0.94,
+      "po_number": 0.91,
+      "stated_total": 0.94,
+      "vendor": 0.92
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-036",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.97,
+      "issue_date": 0.99,
+      "po_number": 0.99,
+      "stated_total": 0.99,
+      "vendor": 0.93
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.97,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-037",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.94,
+      "issue_date": 0.94,
+      "po_number": 0.96,
+      "stated_total": 0.95,
+      "vendor": 0.91
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-038",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.9,
+      "issue_date": 0.91,
+      "po_number": 0.95,
+      "stated_total": 0.94,
+      "vendor": 0.89
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.92,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-039",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.91,
+      "issue_date": 0.97,
+      "po_number": 0.87,
+      "stated_total": 0.95,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.93,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-040",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.98,
+      "document_number": 0.99,
+      "issue_date": 0.98,
+      "po_number": 0.9,
+      "stated_total": 0.98,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.97,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-041",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.99,
+      "issue_date": 0.91,
+      "po_number": 0.87,
+      "stated_total": 0.97,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-042",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.98,
+      "issue_date": 0.96,
+      "po_number": 0.94,
+      "stated_total": 0.98,
+      "vendor": 0.93
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-043",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.95,
+      "issue_date": 0.92,
+      "po_number": 0.92,
+      "stated_total": 0.95,
+      "vendor": 0.91
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-044",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.95,
+      "issue_date": 0.97,
+      "po_number": 0.94,
+      "stated_total": 0.96,
+      "vendor": 0.9
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-045",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.91,
+      "issue_date": 0.96,
+      "po_number": 0.96,
+      "stated_total": 0.96,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-046",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.95,
+      "issue_date": 0.91,
+      "po_number": 0.96,
+      "stated_total": 0.96,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-047",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": true,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.92,
+      "issue_date": 0.93,
+      "po_number": 0.93,
+      "stated_total": 0.92,
+      "vendor": 0.93
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.93,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-048",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.97,
+      "issue_date": 0.93,
+      "po_number": 0.94,
+      "stated_total": 0.95,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-049",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.98,
+      "issue_date": 0.95,
+      "po_number": 0.91,
+      "stated_total": 0.99,
+      "vendor": 0.91
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-050",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.94,
+      "issue_date": 0.99,
+      "po_number": 0.93,
+      "stated_total": 0.94,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-051",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.95,
+      "issue_date": 0.95,
+      "po_number": 0.96,
+      "stated_total": 0.92,
+      "vendor": 0.93
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-052",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.96,
+      "issue_date": 0.92,
+      "po_number": 0.93,
+      "stated_total": 0.97,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-053",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.94,
+      "issue_date": 0.94,
+      "po_number": 0.98,
+      "stated_total": 0.99,
+      "vendor": 0.9
+    },
+    "conflict_detected": true,
+    "doc_confidence": 0.95,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-054",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.94,
+      "issue_date": 0.96,
+      "po_number": 0.95,
+      "stated_total": 0.95,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-055",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.9,
+      "document_number": 0.94,
+      "issue_date": 0.96,
+      "po_number": 0.93,
+      "stated_total": 0.93,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-056",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.96,
+      "issue_date": 0.97,
+      "po_number": 0.95,
+      "stated_total": 0.96,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-057",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": true,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.97,
+      "issue_date": 0.93,
+      "po_number": 0.97,
+      "stated_total": 0.9,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-058",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.99,
+      "issue_date": 0.97,
+      "po_number": 0.94,
+      "stated_total": 0.97,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.97,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-059",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.99,
+      "issue_date": 0.91,
+      "po_number": 0.9,
+      "stated_total": 0.93,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-060",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.95,
+      "issue_date": 0.99,
+      "po_number": 0.96,
+      "stated_total": 0.97,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-061",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.99,
+      "issue_date": 0.99,
+      "po_number": 0.98,
+      "stated_total": 0.94,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-062",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.92,
+      "issue_date": 0.96,
+      "po_number": 0.96,
+      "stated_total": 0.88,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-063",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.94,
+      "issue_date": 0.96,
+      "po_number": 0.99,
+      "stated_total": 0.93,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-064",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.94,
+      "issue_date": 0.98,
+      "po_number": 0.96,
+      "stated_total": 0.96,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-065",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.94,
+      "issue_date": 0.99,
+      "po_number": 0.97,
+      "stated_total": 0.92,
+      "vendor": 0.98
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-066",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.95,
+      "issue_date": 0.99,
+      "po_number": 0.93,
+      "stated_total": 0.94,
+      "vendor": 0.92
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-067",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.97,
+      "issue_date": 0.98,
+      "po_number": 0.96,
+      "stated_total": 0.89,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-068",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.94,
+      "issue_date": 0.94,
+      "po_number": 0.94,
+      "stated_total": 0.95,
+      "vendor": 0.93
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-069",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.92,
+      "document_number": 0.94,
+      "issue_date": 0.96,
+      "po_number": 0.93,
+      "stated_total": 0.99,
+      "vendor": 0.98
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-070",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.95,
+      "issue_date": 0.91,
+      "po_number": 0.93,
+      "stated_total": 0.97,
+      "vendor": 0.92
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-071",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.96,
+      "issue_date": 0.98,
+      "po_number": 0.95,
+      "stated_total": 0.94,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-072",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.88,
+      "document_number": 0.89,
+      "issue_date": 0.92,
+      "po_number": 0.93,
+      "stated_total": 0.96,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.92,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-073",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.95,
+      "issue_date": 0.89,
+      "po_number": 0.98,
+      "stated_total": 0.99,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-074",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.95,
+      "issue_date": 0.97,
+      "po_number": 0.95,
+      "stated_total": 0.97,
+      "vendor": 0.91
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-075",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": true,
+    "confidences": {
+      "currency": 0.92,
+      "document_number": 0.91,
+      "issue_date": 0.99,
+      "po_number": 0.96,
+      "stated_total": 0.94,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-076",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.94,
+      "issue_date": 0.93,
+      "po_number": 0.95,
+      "stated_total": 0.96,
+      "vendor": 0.92
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-077",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.94,
+      "issue_date": 0.98,
+      "po_number": 0.99,
+      "stated_total": 0.94,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-078",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": true,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.96,
+      "issue_date": 0.95,
+      "po_number": 0.97,
+      "stated_total": 0.92,
+      "vendor": 0.9
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-079",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.95,
+      "issue_date": 0.99,
+      "po_number": 0.93,
+      "stated_total": 0.94,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-080",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.93,
+      "issue_date": 0.91,
+      "po_number": 0.9,
+      "stated_total": 0.93,
+      "vendor": 0.92
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.92,
+    "doc_format": "prosa",
+    "doc_type": "other",
+    "record_id": "X-081",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.96,
+      "issue_date": 0.99,
+      "po_number": 0.95,
+      "stated_total": 0.95,
+      "vendor": 0.92
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-082",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.9,
+      "document_number": 0.96,
+      "issue_date": 0.94,
+      "po_number": 0.9,
+      "stated_total": 0.96,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-083",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.99,
+      "issue_date": 0.91,
+      "po_number": 0.96,
+      "stated_total": 0.97,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-084",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.89,
+      "issue_date": 0.94,
+      "po_number": 0.93,
+      "stated_total": 0.98,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-085",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.93,
+      "issue_date": 0.96,
+      "po_number": 0.93,
+      "stated_total": 0.98,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-086",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.9,
+      "document_number": 0.97,
+      "issue_date": 0.96,
+      "po_number": 0.95,
+      "stated_total": 0.99,
+      "vendor": 0.88
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-087",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.91,
+      "document_number": 0.96,
+      "issue_date": 0.93,
+      "po_number": 0.93,
+      "stated_total": 0.99,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-088",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.92,
+      "document_number": 0.92,
+      "issue_date": 0.92,
+      "po_number": 0.99,
+      "stated_total": 0.99,
+      "vendor": 0.9
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-089",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.99,
+      "issue_date": 0.97,
+      "po_number": 0.93,
+      "stated_total": 0.92,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "prosa",
+    "doc_type": "other",
+    "record_id": "X-090",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.98,
+      "issue_date": 0.93,
+      "po_number": 0.93,
+      "stated_total": 0.96,
+      "vendor": 0.93
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-091",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.94,
+      "issue_date": 0.97,
+      "po_number": 0.94,
+      "stated_total": 0.97,
+      "vendor": 0.93
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-092",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.98,
+      "issue_date": 0.93,
+      "po_number": 0.91,
+      "stated_total": 0.96,
+      "vendor": 0.92
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-093",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.91,
+      "issue_date": 0.99,
+      "po_number": 0.89,
+      "stated_total": 0.92,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-094",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.95,
+      "issue_date": 0.99,
+      "po_number": 0.95,
+      "stated_total": 0.93,
+      "vendor": 0.98
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-095",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.98,
+      "issue_date": 0.93,
+      "po_number": 0.97,
+      "stated_total": 0.96,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-096",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.94,
+      "issue_date": 0.99,
+      "po_number": 0.99,
+      "stated_total": 0.94,
+      "vendor": 0.98
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.97,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-097",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.95,
+      "issue_date": 0.94,
+      "po_number": 0.96,
+      "stated_total": 0.94,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "prosa",
+    "doc_type": "other",
+    "record_id": "X-098",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.94,
+      "issue_date": 0.94,
+      "po_number": 0.99,
+      "stated_total": 0.96,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-099",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.99,
+      "issue_date": 0.98,
+      "po_number": 0.97,
+      "stated_total": 0.92,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-100",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.89,
+      "document_number": 0.89,
+      "issue_date": 0.94,
+      "po_number": 0.99,
+      "stated_total": 0.96,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-101",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.96,
+      "issue_date": 0.99,
+      "po_number": 0.97,
+      "stated_total": 0.95,
+      "vendor": 0.98
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-102",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.92,
+      "issue_date": 0.93,
+      "po_number": 0.96,
+      "stated_total": 0.88,
+      "vendor": 0.98
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-103",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.93,
+      "issue_date": 0.91,
+      "po_number": 0.91,
+      "stated_total": 0.97,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-104",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": true,
+    "confidences": {
+      "currency": 0.98,
+      "document_number": 0.98,
+      "issue_date": 0.91,
+      "po_number": 0.95,
+      "stated_total": 0.96,
+      "vendor": 0.93
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-105",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": true,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.95,
+      "issue_date": 0.96,
+      "po_number": 0.95,
+      "stated_total": 0.86,
+      "vendor": 0.93
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-106",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.93,
+      "issue_date": 0.93,
+      "po_number": 0.94,
+      "stated_total": 0.94,
+      "vendor": 0.93
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-107",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.99,
+      "issue_date": 0.94,
+      "po_number": 0.95,
+      "stated_total": 0.93,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-108",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.97,
+      "issue_date": 0.92,
+      "po_number": 0.97,
+      "stated_total": 0.9,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-109",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.91,
+      "document_number": 0.95,
+      "issue_date": 0.97,
+      "po_number": 0.99,
+      "stated_total": 0.95,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-110",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.98,
+      "issue_date": 0.95,
+      "po_number": 0.97,
+      "stated_total": 0.91,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-111",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.91,
+      "issue_date": 0.94,
+      "po_number": 0.97,
+      "stated_total": 0.95,
+      "vendor": 0.98
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-112",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.96,
+      "issue_date": 0.99,
+      "po_number": 0.95,
+      "stated_total": 0.91,
+      "vendor": 0.89
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-113",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.93,
+      "issue_date": 0.93,
+      "po_number": 0.98,
+      "stated_total": 0.99,
+      "vendor": 0.92
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-114",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.95,
+      "issue_date": 0.98,
+      "po_number": 0.97,
+      "stated_total": 0.96,
+      "vendor": 0.9
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-115",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.92,
+      "document_number": 0.97,
+      "issue_date": 0.98,
+      "po_number": 0.97,
+      "stated_total": 0.99,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-116",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.95,
+      "issue_date": 0.96,
+      "po_number": 0.92,
+      "stated_total": 0.99,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-117",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.95,
+      "issue_date": 0.98,
+      "po_number": 0.94,
+      "stated_total": 0.93,
+      "vendor": 0.98
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-118",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.98,
+      "document_number": 0.98,
+      "issue_date": 0.97,
+      "po_number": 0.96,
+      "stated_total": 0.96,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.97,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-119",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.89,
+      "issue_date": 0.4,
+      "po_number": 0.87,
+      "stated_total": 0.93,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.84,
+    "doc_format": "prosa",
+    "doc_type": "other",
+    "record_id": "X-120",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.95,
+      "issue_date": 0.97,
+      "po_number": 0.97,
+      "stated_total": 0.96,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-121",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.95,
+      "issue_date": 0.97,
+      "po_number": 0.98,
+      "stated_total": 0.94,
+      "vendor": 0.92
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-122",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.99,
+      "issue_date": 0.99,
+      "po_number": 0.95,
+      "stated_total": 0.97,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.97,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-123",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.94,
+      "issue_date": 0.94,
+      "po_number": 0.96,
+      "stated_total": 0.91,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-124",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.96,
+      "issue_date": 0.95,
+      "po_number": 0.49,
+      "stated_total": 0.93,
+      "vendor": 0.92
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.86,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-125",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.9,
+      "issue_date": 0.91,
+      "po_number": 0.95,
+      "stated_total": 0.97,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-126",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.9,
+      "document_number": 0.95,
+      "issue_date": 0.95,
+      "po_number": 0.9,
+      "stated_total": 0.94,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.93,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-127",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.89,
+      "document_number": 0.92,
+      "issue_date": 0.94,
+      "po_number": 0.94,
+      "stated_total": 0.99,
+      "vendor": 0.87
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.92,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-128",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.98,
+      "document_number": 0.96,
+      "issue_date": 0.97,
+      "po_number": 0.98,
+      "stated_total": 0.92,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.97,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-129",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.92,
+      "issue_date": 0.98,
+      "po_number": 0.92,
+      "stated_total": 0.97,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-130",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.93,
+      "issue_date": 0.93,
+      "po_number": 0.91,
+      "stated_total": 0.95,
+      "vendor": 0.63
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.88,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-131",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.97,
+      "issue_date": 0.41,
+      "po_number": 0.95,
+      "stated_total": 0.98,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.88,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-132",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.93,
+      "issue_date": 0.95,
+      "po_number": 0.92,
+      "stated_total": 0.93,
+      "vendor": 0.98
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-133",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.9,
+      "document_number": 0.94,
+      "issue_date": 0.93,
+      "po_number": 0.93,
+      "stated_total": 0.97,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-134",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.92,
+      "document_number": 0.96,
+      "issue_date": 0.89,
+      "po_number": 0.95,
+      "stated_total": 0.99,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-135",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.91,
+      "document_number": 0.92,
+      "issue_date": 0.94,
+      "po_number": 0.97,
+      "stated_total": 0.99,
+      "vendor": 0.93
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-136",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.93,
+      "issue_date": 0.97,
+      "po_number": 0.89,
+      "stated_total": 0.94,
+      "vendor": 0.91
+    },
+    "conflict_detected": true,
+    "doc_confidence": 0.93,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-137",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.93,
+      "issue_date": 0.9,
+      "po_number": 0.97,
+      "stated_total": 0.89,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.93,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-138",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": true,
+    "confidences": {
+      "currency": 0.92,
+      "document_number": 0.95,
+      "issue_date": 0.96,
+      "po_number": 0.97,
+      "stated_total": 0.94,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-139",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.98,
+      "document_number": 0.93,
+      "issue_date": 0.96,
+      "po_number": 0.9,
+      "stated_total": 0.9,
+      "vendor": 0.98
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-140",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.92,
+      "document_number": 0.95,
+      "issue_date": 0.96,
+      "po_number": 0.96,
+      "stated_total": 0.94,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-141",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.98,
+      "document_number": 0.95,
+      "issue_date": 0.97,
+      "po_number": 0.99,
+      "stated_total": 0.93,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-142",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.95,
+      "issue_date": 0.96,
+      "po_number": 0.95,
+      "stated_total": 0.93,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-143",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.95,
+      "issue_date": 0.89,
+      "po_number": 0.94,
+      "stated_total": 0.93,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.93,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-144",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.92,
+      "issue_date": 0.9,
+      "po_number": 0.99,
+      "stated_total": 0.96,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-145",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.96,
+      "issue_date": 0.93,
+      "po_number": 0.87,
+      "stated_total": 0.96,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "prosa",
+    "doc_type": "other",
+    "record_id": "X-146",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.86,
+      "document_number": 0.92,
+      "issue_date": 0.98,
+      "po_number": 0.95,
+      "stated_total": 0.93,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.93,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-147",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.91,
+      "issue_date": 0.94,
+      "po_number": 0.94,
+      "stated_total": 0.92,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-148",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.89,
+      "document_number": 0.91,
+      "issue_date": 0.94,
+      "po_number": 0.98,
+      "stated_total": 0.92,
+      "vendor": 0.9
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.92,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-149",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.95,
+      "issue_date": 0.98,
+      "po_number": 0.93,
+      "stated_total": 0.96,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-150",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.95,
+      "issue_date": 0.94,
+      "po_number": 0.97,
+      "stated_total": 0.92,
+      "vendor": 0.91
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-151",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.95,
+      "issue_date": 0.97,
+      "po_number": 0.95,
+      "stated_total": 0.98,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-152",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.99,
+      "issue_date": 0.96,
+      "po_number": 0.97,
+      "stated_total": 0.97,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.97,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-153",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.96,
+      "issue_date": 0.91,
+      "po_number": 0.94,
+      "stated_total": 0.98,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-154",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.98,
+      "issue_date": 0.95,
+      "po_number": 0.88,
+      "stated_total": 0.95,
+      "vendor": 0.92
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-155",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.95,
+      "issue_date": 0.96,
+      "po_number": 0.96,
+      "stated_total": 0.89,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-156",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.35,
+      "document_number": 0.96,
+      "issue_date": 0.98,
+      "po_number": 0.93,
+      "stated_total": 0.97,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.85,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-157",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.96,
+      "issue_date": 0.99,
+      "po_number": 0.95,
+      "stated_total": 0.92,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-158",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.95,
+      "issue_date": 0.95,
+      "po_number": 0.96,
+      "stated_total": 0.93,
+      "vendor": 0.92
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-159",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.91,
+      "issue_date": 0.97,
+      "po_number": 0.93,
+      "stated_total": 0.96,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-160",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.92,
+      "document_number": 0.99,
+      "issue_date": 0.92,
+      "po_number": 0.91,
+      "stated_total": 0.95,
+      "vendor": 0.98
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-161",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.98,
+      "document_number": 0.95,
+      "issue_date": 0.98,
+      "po_number": 0.93,
+      "stated_total": 0.94,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-162",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.89,
+      "document_number": 0.94,
+      "issue_date": 0.97,
+      "po_number": 0.93,
+      "stated_total": 0.98,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-163",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.92,
+      "document_number": 0.96,
+      "issue_date": 0.93,
+      "po_number": 0.97,
+      "stated_total": 0.94,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-164",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.94,
+      "issue_date": 0.99,
+      "po_number": 0.99,
+      "stated_total": 0.97,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.97,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-165",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.9,
+      "issue_date": 0.92,
+      "po_number": 0.96,
+      "stated_total": 0.94,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-166",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.94,
+      "issue_date": 0.95,
+      "po_number": 0.97,
+      "stated_total": 0.93,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-167",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.96,
+      "issue_date": 0.95,
+      "po_number": 0.97,
+      "stated_total": 0.95,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-168",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.92,
+      "issue_date": 0.9,
+      "po_number": 0.96,
+      "stated_total": 0.95,
+      "vendor": 0.98
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-169",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.99,
+      "issue_date": 0.98,
+      "po_number": 0.98,
+      "stated_total": 0.94,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.97,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-170",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.98,
+      "issue_date": 0.93,
+      "po_number": 0.93,
+      "stated_total": 0.94,
+      "vendor": 0.92
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-171",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.98,
+      "issue_date": 0.98,
+      "po_number": 0.94,
+      "stated_total": 0.95,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-172",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.92,
+      "issue_date": 0.95,
+      "po_number": 0.93,
+      "stated_total": 0.93,
+      "vendor": 0.89
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-173",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.98,
+      "document_number": 0.97,
+      "issue_date": 0.97,
+      "po_number": 0.99,
+      "stated_total": 0.94,
+      "vendor": 0.91
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-174",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.91,
+      "issue_date": 0.91,
+      "po_number": 0.94,
+      "stated_total": 0.94,
+      "vendor": 0.93
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.93,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-175",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.96,
+      "issue_date": 0.96,
+      "po_number": 0.96,
+      "stated_total": 0.98,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-176",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.92,
+      "issue_date": 0.93,
+      "po_number": 0.95,
+      "stated_total": 0.91,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-177",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.91,
+      "document_number": 0.96,
+      "issue_date": 0.95,
+      "po_number": 0.96,
+      "stated_total": 0.93,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-178",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.94,
+      "issue_date": 0.95,
+      "po_number": 0.99,
+      "stated_total": 0.93,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-179",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.92,
+      "issue_date": 0.96,
+      "po_number": 0.93,
+      "stated_total": 0.95,
+      "vendor": 0.92
+    },
+    "conflict_detected": true,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-180",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.89,
+      "issue_date": 0.96,
+      "po_number": 0.94,
+      "stated_total": 0.91,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.93,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-181",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.92,
+      "issue_date": 0.95,
+      "po_number": 0.98,
+      "stated_total": 0.95,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-182",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.92,
+      "document_number": 0.92,
+      "issue_date": 0.94,
+      "po_number": 0.99,
+      "stated_total": 0.98,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-183",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.89,
+      "document_number": 0.93,
+      "issue_date": 0.94,
+      "po_number": 0.93,
+      "stated_total": 0.93,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-184",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.98,
+      "document_number": 0.99,
+      "issue_date": 0.99,
+      "po_number": 0.97,
+      "stated_total": 0.94,
+      "vendor": 0.91
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-185",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.91,
+      "issue_date": 0.97,
+      "po_number": 0.96,
+      "stated_total": 0.93,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-186",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.94,
+      "issue_date": 0.98,
+      "po_number": 0.91,
+      "stated_total": 0.9,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-187",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.9,
+      "document_number": 0.97,
+      "issue_date": 0.94,
+      "po_number": 0.99,
+      "stated_total": 0.97,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-188",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.96,
+      "issue_date": 0.95,
+      "po_number": 0.94,
+      "stated_total": 0.99,
+      "vendor": 0.98
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-189",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.92,
+      "issue_date": 0.94,
+      "po_number": 0.92,
+      "stated_total": 0.93,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-190",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.98,
+      "document_number": 0.91,
+      "issue_date": 0.91,
+      "po_number": 0.98,
+      "stated_total": 0.99,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-191",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.9,
+      "document_number": 0.96,
+      "issue_date": 0.91,
+      "po_number": 0.99,
+      "stated_total": 0.92,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-192",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.92,
+      "document_number": 0.95,
+      "issue_date": 0.95,
+      "po_number": 0.94,
+      "stated_total": 0.97,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-193",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.91,
+      "issue_date": 0.95,
+      "po_number": 0.94,
+      "stated_total": 0.95,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-194",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.97,
+      "issue_date": 0.94,
+      "po_number": 0.9,
+      "stated_total": 0.9,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-195",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.91,
+      "document_number": 0.9,
+      "issue_date": 0.94,
+      "po_number": 0.94,
+      "stated_total": 0.97,
+      "vendor": 0.91
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.93,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-196",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.93,
+      "issue_date": 0.95,
+      "po_number": 0.91,
+      "stated_total": 0.94,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-197",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.95,
+      "issue_date": 0.92,
+      "po_number": 0.97,
+      "stated_total": 0.96,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-198",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.97,
+      "issue_date": 0.96,
+      "po_number": 0.97,
+      "stated_total": 0.9,
+      "vendor": 0.91
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-199",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.89,
+      "issue_date": 0.92,
+      "po_number": 0.93,
+      "stated_total": 0.94,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "prosa",
+    "doc_type": "other",
+    "record_id": "X-200",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.96,
+      "issue_date": 0.92,
+      "po_number": 0.9,
+      "stated_total": 0.94,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-201",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.92,
+      "issue_date": 0.93,
+      "po_number": 0.92,
+      "stated_total": 0.94,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-202",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.89,
+      "issue_date": 0.95,
+      "po_number": 0.96,
+      "stated_total": 0.96,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-203",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.92,
+      "document_number": 0.93,
+      "issue_date": 0.95,
+      "po_number": 0.94,
+      "stated_total": 0.99,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-204",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": true,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.96,
+      "issue_date": 0.92,
+      "po_number": 0.99,
+      "stated_total": 0.9,
+      "vendor": 0.91
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-205",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.94,
+      "issue_date": 0.94,
+      "po_number": 0.95,
+      "stated_total": 0.99,
+      "vendor": 0.93
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-206",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.88,
+      "issue_date": 0.95,
+      "po_number": 0.93,
+      "stated_total": 0.97,
+      "vendor": 0.93
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-207",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.94,
+      "issue_date": 0.93,
+      "po_number": 0.95,
+      "stated_total": 0.96,
+      "vendor": 0.94
+    },
+    "conflict_detected": true,
+    "doc_confidence": 0.95,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-208",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.91,
+      "document_number": 0.98,
+      "issue_date": 0.97,
+      "po_number": 0.98,
+      "stated_total": 0.98,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-209",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.92,
+      "document_number": 0.87,
+      "issue_date": 0.99,
+      "po_number": 0.97,
+      "stated_total": 0.99,
+      "vendor": 0.93
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-210",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.95,
+      "issue_date": 0.94,
+      "po_number": 0.98,
+      "stated_total": 0.98,
+      "vendor": 0.98
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-211",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.96,
+      "issue_date": 0.88,
+      "po_number": 0.94,
+      "stated_total": 0.94,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-212",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.99,
+      "issue_date": 0.96,
+      "po_number": 0.94,
+      "stated_total": 0.93,
+      "vendor": 0.92
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-213",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.93,
+      "issue_date": 0.94,
+      "po_number": 0.96,
+      "stated_total": 0.95,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-214",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.92,
+      "document_number": 0.96,
+      "issue_date": 0.98,
+      "po_number": 0.93,
+      "stated_total": 0.91,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-215",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.92,
+      "document_number": 0.92,
+      "issue_date": 0.91,
+      "po_number": 0.93,
+      "stated_total": 0.97,
+      "vendor": 0.98
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-216",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.99,
+      "issue_date": 0.95,
+      "po_number": 0.96,
+      "stated_total": 0.98,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-217",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.91,
+      "document_number": 0.96,
+      "issue_date": 0.92,
+      "po_number": 0.94,
+      "stated_total": 0.96,
+      "vendor": 0.98
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-218",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.93,
+      "issue_date": 0.92,
+      "po_number": 0.96,
+      "stated_total": 0.91,
+      "vendor": 0.91
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-219",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.94,
+      "issue_date": 0.99,
+      "po_number": 0.96,
+      "stated_total": 0.95,
+      "vendor": 0.9
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-220",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.94,
+      "issue_date": 0.96,
+      "po_number": 0.9,
+      "stated_total": 0.99,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-221",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.99,
+      "issue_date": 0.93,
+      "po_number": 0.95,
+      "stated_total": 0.92,
+      "vendor": 0.93
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-222",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.94,
+      "issue_date": 0.98,
+      "po_number": 0.92,
+      "stated_total": 0.93,
+      "vendor": 0.91
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-223",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.91,
+      "issue_date": 0.91,
+      "po_number": 0.95,
+      "stated_total": 0.92,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-224",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.91,
+      "document_number": 0.99,
+      "issue_date": 0.99,
+      "po_number": 0.94,
+      "stated_total": 0.96,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-225",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.91,
+      "document_number": 0.97,
+      "issue_date": 0.98,
+      "po_number": 0.94,
+      "stated_total": 0.99,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-226",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.96,
+      "issue_date": 0.98,
+      "po_number": 0.93,
+      "stated_total": 0.93,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-227",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.95,
+      "issue_date": 0.97,
+      "po_number": 0.98,
+      "stated_total": 0.99,
+      "vendor": 0.92
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-228",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.91,
+      "document_number": 0.94,
+      "issue_date": 0.96,
+      "po_number": 0.96,
+      "stated_total": 0.94,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "prosa",
+    "doc_type": "other",
+    "record_id": "X-229",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.91,
+      "document_number": 0.94,
+      "issue_date": 0.99,
+      "po_number": 0.96,
+      "stated_total": 0.92,
+      "vendor": 0.93
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-230",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.96,
+      "issue_date": 0.91,
+      "po_number": 0.93,
+      "stated_total": 0.92,
+      "vendor": 0.93
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.93,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-231",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.96,
+      "issue_date": 0.93,
+      "po_number": 0.94,
+      "stated_total": 0.98,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-232",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.93,
+      "issue_date": 0.98,
+      "po_number": 0.92,
+      "stated_total": 0.93,
+      "vendor": 0.89
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.93,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-233",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.96,
+      "issue_date": 0.95,
+      "po_number": 0.92,
+      "stated_total": 0.92,
+      "vendor": 0.97
+    },
+    "conflict_detected": true,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-234",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.94,
+      "issue_date": 0.94,
+      "po_number": 0.97,
+      "stated_total": 0.91,
+      "vendor": 0.93
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-235",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.9,
+      "document_number": 0.95,
+      "issue_date": 0.95,
+      "po_number": 0.97,
+      "stated_total": 0.95,
+      "vendor": 0.92
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-236",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.89,
+      "document_number": 0.93,
+      "issue_date": 0.96,
+      "po_number": 0.97,
+      "stated_total": 0.92,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-237",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.95,
+      "issue_date": 0.93,
+      "po_number": 0.99,
+      "stated_total": 0.97,
+      "vendor": 0.91
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-238",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.95,
+      "issue_date": 0.93,
+      "po_number": 0.91,
+      "stated_total": 0.99,
+      "vendor": 0.92
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-239",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.92,
+      "document_number": 0.91,
+      "issue_date": 0.68,
+      "po_number": 0.95,
+      "stated_total": 0.96,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.9,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-240",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.91,
+      "document_number": 0.97,
+      "issue_date": 0.98,
+      "po_number": 0.94,
+      "stated_total": 0.96,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-241",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.93,
+      "issue_date": 0.88,
+      "po_number": 0.93,
+      "stated_total": 0.93,
+      "vendor": 0.98
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.93,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-242",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": true,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.94,
+      "issue_date": 0.89,
+      "po_number": 0.97,
+      "stated_total": 0.95,
+      "vendor": 0.91
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-243",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.99,
+      "issue_date": 0.91,
+      "po_number": 0.93,
+      "stated_total": 0.99,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-244",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.93,
+      "issue_date": 0.93,
+      "po_number": 0.98,
+      "stated_total": 0.94,
+      "vendor": 0.9
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-245",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.89,
+      "issue_date": 0.99,
+      "po_number": 0.91,
+      "stated_total": 0.92,
+      "vendor": 0.92
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-246",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.92,
+      "issue_date": 0.93,
+      "po_number": 0.95,
+      "stated_total": 0.99,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-247",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.97,
+      "issue_date": 0.91,
+      "po_number": 0.98,
+      "stated_total": 0.94,
+      "vendor": 0.93
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "prosa",
+    "doc_type": "other",
+    "record_id": "X-248",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.9,
+      "issue_date": 0.98,
+      "po_number": 0.89,
+      "stated_total": 0.9,
+      "vendor": 0.98
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.93,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-249",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.97,
+      "issue_date": 0.91,
+      "po_number": 0.95,
+      "stated_total": 0.92,
+      "vendor": 0.98
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-250",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.93,
+      "issue_date": 0.92,
+      "po_number": 0.98,
+      "stated_total": 0.95,
+      "vendor": 0.91
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-251",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.95,
+      "issue_date": 0.99,
+      "po_number": 0.92,
+      "stated_total": 0.97,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-252",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.87,
+      "issue_date": 0.98,
+      "po_number": 0.93,
+      "stated_total": 0.96,
+      "vendor": 0.91
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.93,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-253",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.93,
+      "issue_date": 0.87,
+      "po_number": 0.89,
+      "stated_total": 0.94,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.93,
+    "doc_format": "prosa",
+    "doc_type": "other",
+    "record_id": "X-254",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.97,
+      "issue_date": 0.96,
+      "po_number": 0.9,
+      "stated_total": 0.98,
+      "vendor": 0.93
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-255",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.96,
+      "issue_date": 0.93,
+      "po_number": 0.95,
+      "stated_total": 0.96,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-256",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.96,
+      "issue_date": 0.9,
+      "po_number": 0.91,
+      "stated_total": 0.98,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-257",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.98,
+      "document_number": 0.91,
+      "issue_date": 0.99,
+      "po_number": 0.95,
+      "stated_total": 0.95,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-258",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.99,
+      "issue_date": 0.95,
+      "po_number": 0.93,
+      "stated_total": 0.98,
+      "vendor": 0.98
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-259",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": true,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.92,
+      "issue_date": 0.92,
+      "po_number": 0.93,
+      "stated_total": 0.89,
+      "vendor": 0.91
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.92,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-260",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.99,
+      "issue_date": 0.96,
+      "po_number": 0.99,
+      "stated_total": 0.95,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.97,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-261",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.91,
+      "document_number": 0.99,
+      "issue_date": 0.92,
+      "po_number": 0.97,
+      "stated_total": 0.91,
+      "vendor": 0.93
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-262",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.91,
+      "document_number": 0.94,
+      "issue_date": 0.94,
+      "po_number": 0.95,
+      "stated_total": 0.92,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.93,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-263",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.95,
+      "document_number": 0.92,
+      "issue_date": 0.91,
+      "po_number": 0.94,
+      "stated_total": 0.89,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.93,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-264",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.91,
+      "document_number": 0.98,
+      "issue_date": 0.96,
+      "po_number": 0.94,
+      "stated_total": 0.95,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-265",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.93,
+      "issue_date": 0.94,
+      "po_number": 0.87,
+      "stated_total": 0.96,
+      "vendor": 0.89
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.92,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-266",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.93,
+      "issue_date": 0.96,
+      "po_number": 0.93,
+      "stated_total": 0.97,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-267",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.99,
+      "issue_date": 0.99,
+      "po_number": 0.97,
+      "stated_total": 0.96,
+      "vendor": 0.91
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-268",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.91,
+      "issue_date": 0.89,
+      "po_number": 0.98,
+      "stated_total": 0.94,
+      "vendor": 0.92
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-269",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.99,
+      "issue_date": 0.99,
+      "po_number": 0.92,
+      "stated_total": 0.94,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-270",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.98,
+      "issue_date": 0.95,
+      "po_number": 0.96,
+      "stated_total": 0.95,
+      "vendor": 0.91
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-271",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.98,
+      "document_number": 0.97,
+      "issue_date": 0.98,
+      "po_number": 0.99,
+      "stated_total": 0.93,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.97,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-272",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.93,
+      "issue_date": 0.98,
+      "po_number": 0.94,
+      "stated_total": 0.93,
+      "vendor": 0.92
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-273",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.91,
+      "issue_date": 0.96,
+      "po_number": 0.93,
+      "stated_total": 0.99,
+      "vendor": 0.96
+    },
+    "conflict_detected": true,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-274",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.98,
+      "document_number": 0.96,
+      "issue_date": 0.92,
+      "po_number": 0.93,
+      "stated_total": 0.97,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-275",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": true,
+    "confidences": {
+      "currency": 0.98,
+      "document_number": 0.91,
+      "issue_date": 0.94,
+      "po_number": 0.97,
+      "stated_total": 0.97,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-276",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.99,
+      "issue_date": 0.99,
+      "po_number": 0.95,
+      "stated_total": 0.99,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.97,
+    "doc_format": "lineas",
+    "doc_type": "delivery_note",
+    "record_id": "X-277",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.91,
+      "document_number": 0.97,
+      "issue_date": 0.94,
+      "po_number": 0.97,
+      "stated_total": 0.94,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-278",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": true,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.92,
+      "issue_date": 0.93,
+      "po_number": 0.95,
+      "stated_total": 0.94,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-279",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.96,
+      "document_number": 0.99,
+      "issue_date": 0.96,
+      "po_number": 0.98,
+      "stated_total": 0.96,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.97,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-280",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.93,
+      "document_number": 0.92,
+      "issue_date": 0.96,
+      "po_number": 0.99,
+      "stated_total": 0.94,
+      "vendor": 0.98
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "tabla",
+    "doc_type": "delivery_note",
+    "record_id": "X-281",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.96,
+      "issue_date": 0.95,
+      "po_number": 0.99,
+      "stated_total": 0.95,
+      "vendor": 0.99
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.96,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-282",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.97,
+      "issue_date": 0.94,
+      "po_number": 0.95,
+      "stated_total": 0.93,
+      "vendor": 0.97
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-283",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.96,
+      "issue_date": 0.94,
+      "po_number": 0.92,
+      "stated_total": 0.94,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-284",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.88,
+      "document_number": 0.93,
+      "issue_date": 0.99,
+      "po_number": 0.92,
+      "stated_total": 0.93,
+      "vendor": 0.88
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.92,
+    "doc_format": "tabla",
+    "doc_type": "invoice",
+    "record_id": "X-285",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.97,
+      "issue_date": 0.96,
+      "po_number": 0.92,
+      "stated_total": 0.92,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.95,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-286",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.99,
+      "document_number": 0.9,
+      "issue_date": 0.91,
+      "po_number": 0.94,
+      "stated_total": 0.52,
+      "vendor": 0.92
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.86,
+    "doc_format": "prosa",
+    "doc_type": "other",
+    "record_id": "X-287",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.98,
+      "issue_date": 0.93,
+      "po_number": 0.91,
+      "stated_total": 0.93,
+      "vendor": 0.95
+    },
+    "conflict_detected": true,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-288",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.94,
+      "document_number": 0.95,
+      "issue_date": 0.94,
+      "po_number": 0.96,
+      "stated_total": 0.92,
+      "vendor": 0.95
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-289",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.92,
+      "document_number": 0.96,
+      "issue_date": 0.95,
+      "po_number": 0.94,
+      "stated_total": 0.91,
+      "vendor": 0.94
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.94,
+    "doc_format": "prosa",
+    "doc_type": "invoice",
+    "record_id": "X-290",
+    "split": "produccion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.97,
+      "document_number": 0.95,
+      "issue_date": 0.94,
+      "po_number": 0.88,
+      "stated_total": 0.92,
+      "vendor": 0.92
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.93,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-291",
+    "split": "calibracion"
+  },
+  {
+    "ambiguous": false,
+    "confidences": {
+      "currency": 0.98,
+      "document_number": 0.91,
+      "issue_date": 0.99,
+      "po_number": 0.99,
+      "stated_total": 0.98,
+      "vendor": 0.96
+    },
+    "conflict_detected": false,
+    "doc_confidence": 0.97,
+    "doc_format": "lineas",
+    "doc_type": "invoice",
+    "record_id": "X-292",
+    "split": "produccion"
+  }
+]

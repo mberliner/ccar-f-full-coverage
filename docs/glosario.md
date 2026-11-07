@@ -84,3 +84,17 @@ Términos que usan los módulos de las tres apps y el arnés, para quien llega d
 - **`required`:** la lista de propiedades obligatorias de un JSON Schema. Una propiedad que no está en esa lista puede faltar.
 - **`max_tokens`:** el tope de tokens de salida de una petición. Si el modelo lo alcanza, la respuesta se corta, y su `stop_reason` lo indica.
 - **Etiqueta:** en los módulos de extracción, el valor correcto de cada campo de un documento. Está en un archivo aparte que el modelo no ve, y el código la usa para puntuar.
+
+## Confianza, revisión y CI
+
+- **Confianza por campo:** un número de 0 a 1 que el modelo declara junto a cada valor que extrae. La escribe el propio modelo, así que no sirve para decidir hasta que se calibra.
+- **Calibración:** comprobar, contra un conjunto etiquetado, si la confianza declarada se parece al acierto real (de los valores que dicen 0,95, ¿cuántos son correctos?). Los umbrales de revisión salen de esa comprobación, no de la confianza tal cual.
+- **Muestreo estratificado:** sortear la muestra dentro de cada grupo (por ejemplo, tipo de documento y campo) con un mínimo por grupo, en vez de sobre toda la población. Así un grupo pequeño entra siempre en la muestra.
+- **Cola de revisión:** lo que espera a que una persona lo mire. Si hay más de lo que se puede revisar, el orden de la cola decide qué se ve y qué no.
+- **`claude -p` (modo no interactivo):** lanzar Claude Code con un prompt y que termine solo, sin esperar a que nadie escriba. Es como se usa en un pipeline de CI; con `--output-format json` y `--json-schema` devuelve un JSON que otro programa puede leer.
+- **`detected_pattern`:** un campo de cada hallazgo de una revisión con el nombre de la construcción de código que lo provocó. Sirve para agrupar los hallazgos que los desarrolladores descartan y ver qué patrones dan falsos positivos. No confundir con el patrón de fallo de una extracción (`app3/08`).
+- **Autorrevisión:** pedir a la misma sesión que generó un código que lo revise. Conserva el razonamiento con el que lo escribió, y por eso cuestiona menos sus propias decisiones.
+- **Instancia independiente:** otra ejecución del modelo, sin el historial ni el razonamiento de la sesión que generó el código; solo ve lo que se le da (el diff) y lo que lea.
+- **Pasada por archivo / pasada de integración:** una revisión grande se parte en pasos encadenados. Las pasadas por archivo miran cada archivo por separado (lo local); la de integración mira los archivos juntos y busca lo que se rompe entre ellos (llamadas, unidades, flujo de datos).
+- **Una pasada (revisión en una sola pasada):** revisar todos los archivos del cambio de una vez, con un único prompt, en lugar de partirlo en pasadas por archivo y de integración. Es lo que la guía desaconseja para una revisión grande, porque diluye la atención; en `app3/12` es la variante `--anti una_pasada`.
+- **Pasada de verificación:** un paso final en el que el modelo da una confianza a cada hallazgo, para decidir cuáles se publican y cuáles mira una persona.

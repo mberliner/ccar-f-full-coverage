@@ -1,0 +1,2922 @@
+{
+  "X-001": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-002": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-003": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-004": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-005": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-006": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-007": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-008": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-009": {
+    "correct": {
+      "currency": true,
+      "document_number": false,
+      "issue_date": false,
+      "po_number": false,
+      "stated_total": false,
+      "vendor": true
+    }
+  },
+  "X-010": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-011": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-012": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-013": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-014": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-015": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-016": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-017": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-018": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-019": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-020": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-021": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-022": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-023": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-024": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-025": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-026": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-027": {
+    "correct": {
+      "currency": true,
+      "document_number": false,
+      "issue_date": true,
+      "po_number": false,
+      "stated_total": false,
+      "vendor": true
+    }
+  },
+  "X-028": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-029": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-030": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-031": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-032": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-033": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-034": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-035": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-036": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-037": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-038": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-039": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-040": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": false,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-041": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-042": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-043": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-044": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-045": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-046": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-047": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-048": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-049": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-050": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": false,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": false
+    }
+  },
+  "X-051": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-052": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-053": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-054": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-055": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-056": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-057": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-058": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-059": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-060": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-061": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-062": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-063": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-064": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-065": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-066": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-067": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": false,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-068": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-069": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-070": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-071": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-072": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-073": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-074": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-075": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-076": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-077": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-078": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-079": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-080": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-081": {
+    "correct": {
+      "currency": true,
+      "document_number": false,
+      "issue_date": false,
+      "po_number": false,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-082": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-083": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-084": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-085": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-086": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": false,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-087": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-088": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-089": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-090": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": false,
+      "vendor": true
+    }
+  },
+  "X-091": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-092": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-093": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-094": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-095": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-096": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-097": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-098": {
+    "correct": {
+      "currency": true,
+      "document_number": false,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-099": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-100": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-101": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-102": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-103": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-104": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-105": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-106": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-107": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-108": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-109": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-110": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-111": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-112": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-113": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-114": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-115": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-116": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-117": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-118": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-119": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-120": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": false,
+      "po_number": false,
+      "stated_total": false,
+      "vendor": true
+    }
+  },
+  "X-121": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-122": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-123": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-124": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-125": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": false,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-126": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-127": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-128": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-129": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": false,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-130": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-131": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": false
+    }
+  },
+  "X-132": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": false,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-133": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": false,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-134": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-135": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-136": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-137": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-138": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-139": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-140": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-141": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-142": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-143": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-144": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-145": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-146": {
+    "correct": {
+      "currency": false,
+      "document_number": false,
+      "issue_date": true,
+      "po_number": false,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-147": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-148": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-149": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-150": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-151": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-152": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-153": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-154": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-155": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-156": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-157": {
+    "correct": {
+      "currency": false,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-158": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-159": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-160": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-161": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-162": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-163": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-164": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-165": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-166": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-167": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-168": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": false,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-169": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-170": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-171": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-172": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-173": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-174": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": false,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-175": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-176": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-177": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-178": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-179": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-180": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-181": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-182": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-183": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-184": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-185": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-186": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-187": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-188": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-189": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-190": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-191": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-192": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-193": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-194": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-195": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-196": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-197": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-198": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-199": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-200": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": false,
+      "po_number": true,
+      "stated_total": false,
+      "vendor": true
+    }
+  },
+  "X-201": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-202": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-203": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-204": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-205": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-206": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-207": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-208": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-209": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-210": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-211": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-212": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-213": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-214": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-215": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-216": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-217": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-218": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-219": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-220": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-221": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-222": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-223": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-224": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-225": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-226": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-227": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-228": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-229": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": false,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-230": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-231": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-232": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-233": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-234": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-235": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-236": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-237": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-238": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-239": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-240": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": false,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-241": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-242": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-243": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-244": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-245": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-246": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-247": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-248": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": false,
+      "po_number": false,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-249": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-250": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-251": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-252": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-253": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-254": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": false,
+      "po_number": false,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-255": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-256": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-257": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-258": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-259": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-260": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-261": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-262": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-263": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-264": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-265": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-266": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-267": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-268": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-269": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-270": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-271": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-272": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-273": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-274": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-275": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-276": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-277": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-278": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-279": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-280": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-281": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-282": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-283": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-284": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-285": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-286": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-287": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": false,
+      "po_number": true,
+      "stated_total": false,
+      "vendor": true
+    }
+  },
+  "X-288": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-289": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-290": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-291": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  },
+  "X-292": {
+    "correct": {
+      "currency": true,
+      "document_number": true,
+      "issue_date": true,
+      "po_number": true,
+      "stated_total": true,
+      "vendor": true
+    }
+  }
+}

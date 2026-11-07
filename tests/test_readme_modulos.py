@@ -247,9 +247,9 @@ def dense_modules() -> list[str]:
 
 
 def test_dense_modules_are_found():
-    """Con el umbral actual, los tres módulos que la auditoría llama densos (D-01); si cambia, cambia esto."""
+    """Con el umbral actual, los tres módulos que la auditoría llama densos (D-01) y `app3/11`, que nace denso en la tanda C; si cambia, cambia esto."""
     assert dense_modules() == [
-        "app3_sistema_multiagente 01", "app3_sistema_multiagente 05", "app3_sistema_multiagente 07",
+        "app3_sistema_multiagente 01", "app3_sistema_multiagente 05", "app3_sistema_multiagente 07", "app3_sistema_multiagente 11",
     ]
 
 
