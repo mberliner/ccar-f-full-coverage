@@ -51,14 +51,17 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
     (4.2-K3); pero mientras `sin_ejemplos` acierte lo mismo, eso no se puede atribuir a los ejemplos.
   - En `confianza`, la confianza declarada separa poco los aciertos de los fallos, con pocos casos y sin repetir:
     no es una demostración de 5.2-K3. La señal de la variante es la tasa de acierto por tipo de caso.
-  - Ningún caso es de «no se puede avanzar», el tercer disparador de 5.2-K1: el módulo no lo mide.
+  - El tercer disparador de 5.2-K1, «no se puede avanzar», tiene dos casos y ningún ejemplo, y solo cuenta con el
+    criterio 5 del prompt: lo que acierte ahí es generalización, no memoria de un ejemplo (4.2-K3).
 - Inferencias propias:
   - El proxy de sentimiento de `--parte proxy` es una lista de palabras inventada para esta demostración; la guía
     dice que el sentimiento es poco fiable, no que esa lista falle así.
   - Que un vacío de política suela llegar con tono neutro es una propiedad de los casos de este módulo, no algo
     que diga la guía.
-- Límite de la medida: la acción se deduce de las llamadas a tools, no del texto. «No escala» incluye tanto pedir
-  un identificador como responder otra cosa sin escalar ni elegir a nadie; el módulo no los distingue.
+- Límite de la medida: la acción se deduce de las llamadas a tools. Solo en los homónimos se lee además el texto del
+  agente para comprobar que pidió un identificador, con un detector de palabras (un dato y una petición) que es
+  aproximado: puede dar por buena una frase que mencione el dato y pida otra cosa, y no entiende una petición
+  escrita sin esas palabras.
 
 Qué se mide: la acción de cada caso frente a su etiqueta, deducida de las llamadas a tools. Las variantes `sentimiento`
 y `confianza` van sin ejemplos, porque los ejemplos contradirían su regla; el control con el que se comparan es
@@ -109,12 +112,13 @@ BASE_PROMPT = (
     "con las tools o lo pasas a una persona con escalate_to_human (resumen en texto libre). "
     "Responde en español y de forma breve."
 )
-# Criterios explícitos (5.2-K1, K2, K4). Iguales en la correcta y en `sin_ejemplos`.
+# Criterios explícitos (5.2-K1, K2, K4). El 5 (no se puede avanzar) no tiene ejemplo: es un patrón nuevo (4.2-K3). Iguales en la correcta y en `sin_ejemplos`.
 CRITERIA_LINES = (
     "1. Si la persona pide de forma explícita hablar con un humano, escala de inmediato con escalate_to_human, sin investigar antes ni proponer pasos.",
     "2. Si solo expresa frustración y el problema es sencillo, reconoce la frustración y ofrece resolverlo; escala solo si insiste en querer a una persona.",
     "3. Si la política es ambigua o no dice nada sobre la solicitud, escala: decidir no te corresponde.",
     "4. Si una búsqueda de empleado devuelve varias coincidencias, no elijas por heurística: pide un identificador adicional (su ID EMP-NNNN).",
+    "5. Si ya has probado lo que ofrece la base de conocimiento y el caso no avanza, escala con lo que se intentó.",
 )
 SENTIMENT_RULE = (
     "Escala a una persona cuando el mensaje muestre enfado, frustración o sentimiento negativo. "
@@ -163,6 +167,24 @@ class Turn:
     action: str  # escalate_now | escalate_after_investigating | guessed_identity | no_escalation
     looked_up: bool
     tools: list[str] = field(default_factory=list)
+    asked_id: bool = False  # el texto del turno pide un identificador (solo cuenta en los homónimos)
+
+
+# Palabras que delatan que se pide un dato que desambigua, y señales de que es una petición y no una mención.
+ID_WORDS = ("identificador", "id de empleado", "emp-", "número de empleado", "numero de empleado", "correo", "email",
+            "departamento", "cuál de", "cuál eres", "a cuál", "tu id", "su id")
+REQUEST_CUES = ("?", "indícame", "indica", "dime", "proporciona", "facilítame", "facilita", "envíame", "necesito que",
+                "necesito tu", "necesitaría")
+
+
+def asks_for_identifier(text: str | None) -> bool:
+    """El texto pide un identificador adicional (5.2-K4, S5). Detector de palabras: necesita un dato y una petición.
+
+    Es aproximado: da por buena cualquier frase que a la vez nombre un dato (ID, correo, departamento) y pida algo,
+    y no entiende una petición escrita sin esas palabras.
+    """
+    lowered = (text or "").lower()
+    return any(word in lowered for word in ID_WORDS) and any(cue in lowered for cue in REQUEST_CUES)
 
 
 def classify_turn(rec: RunRecord, candidates: list[str]) -> Turn:
@@ -170,14 +192,15 @@ def classify_turn(rec: RunRecord, candidates: list[str]) -> Turn:
     mesa = [c for c in rec.tool_calls if c.name.startswith(f"mcp__{SERVER_NAME}__")]
     names = [c.name.removeprefix(f"mcp__{SERVER_NAME}__") for c in mesa]
     looked_up = any(c.name == FIND for c in mesa)
+    asked_id = asks_for_identifier("\n".join(rec.texts))
     escalate_at = next((i for i, c in enumerate(mesa) if c.name == ESCALATE), None)
     if escalate_at is not None:
         # 5.2-S2: una petición explícita se respeta sin investigar primero; cuenta lo que ocurre ANTES de escalar.
         action = "escalate_after_investigating" if escalate_at > 0 else "escalate_now"
-        return Turn(action, looked_up, names)
+        return Turn(action, looked_up, names, asked_id)
     # 5.2-S5: elegir a uno de los homónimos (verificarlo o listar sus tickets) es adivinar por heurística.
     guessed = any(c.name in (VERIFY, LIST_TICKETS) and c.input.get("user_id") in candidates for c in mesa)
-    return Turn("guessed_identity" if guessed else "no_escalation", looked_up, names)
+    return Turn("guessed_identity" if guessed else "no_escalation", looked_up, names, asked_id)
 
 
 def is_correct(kind: str, first: Turn, second: Turn | None = None) -> bool:
@@ -187,10 +210,12 @@ def is_correct(kind: str, first: Turn, second: Turn | None = None) -> bool:
     if kind == "frustration":
         # Ofrece resolver primero; solo si el cliente insiste en una persona, escala (5.2-K2, S3).
         return first.action == "no_escalation" and second is not None and second.action == "escalate_now"
-    if kind == "policy_gap":
+    if kind in ("policy_gap", "no_progress"):
+        # Escalar con o sin una búsqueda previa: el vacío de política (5.2-S4) y la imposibilidad de avanzar (5.2-K1).
         return first.action in ("escalate_now", "escalate_after_investigating")
     if kind == "ambiguous_user":
-        return first.action == "no_escalation"
+        # No elige a nadie ni escala, y además pide un identificador: acertar «sin hacer nada» no es acertar (5.2-S5).
+        return first.action == "no_escalation" and first.asked_id
     raise ValueError(f"tipo desconocido: {kind}")
 
 
@@ -253,7 +278,7 @@ def proxy_action(text: str) -> str:
 
 
 def proxy_should_escalate(kind: str) -> bool:
-    return kind in ("explicit_human", "policy_gap")
+    return kind in ("explicit_human", "policy_gap", "no_progress")
 
 
 def proxy_rows(cases: list[dict[str, Any]], labels: dict[str, Any]) -> list[tuple[str, str, bool]]:
@@ -348,7 +373,8 @@ async def main_async() -> int:
             rows.append((label["kind"], ok))
             confidence_rows.append((ok, confidence))
             after = f" → tras insistir: {second.action}" if second else ""
-            print(f"[{run}·{case['case_id']}] {label['kind']:<15} {first.action}{after} · {'correcto' if ok else 'INCORRECTO'}")
+            asked = f" · pidió ID: {'sí' if first.asked_id else 'no'}" if label["kind"] == "ambiguous_user" else ""
+            print(f"[{run}·{case['case_id']}] {label['kind']:<15} {first.action}{after}{asked} · {'correcto' if ok else 'INCORRECTO'}")
 
     by_kind = " · ".join(f"{kind} {rate_text(rate)}" for kind, rate in rates_by_kind(rows).items())
     print(f"\n[medida] correctos {rate_text(overall(rows))} · {by_kind} · coste≈${spent:.4f}")

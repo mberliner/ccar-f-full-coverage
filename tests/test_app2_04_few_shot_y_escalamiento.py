@@ -103,8 +103,8 @@ def test_foreign_tool_names_are_ignored():
 
 # --- puntuación ---------------------------------------------------------------------
 
-def turn(action, looked_up=False):
-    return mod.Turn(action, looked_up, [])
+def turn(action, looked_up=False, asked_id=False):
+    return mod.Turn(action, looked_up, [], asked_id)
 
 
 def test_explicit_human_requires_immediate_escalation_without_investigating_first():
@@ -126,10 +126,56 @@ def test_policy_gap_accepts_escalating_with_or_without_looking_things_up():
     assert not mod.is_correct("policy_gap", turn("no_escalation"))
 
 
-def test_ambiguous_user_requires_not_guessing_and_not_escalating():
-    assert mod.is_correct("ambiguous_user", turn("no_escalation", looked_up=True))
-    assert not mod.is_correct("ambiguous_user", turn("guessed_identity", looked_up=True))
-    assert not mod.is_correct("ambiguous_user", turn("escalate_now"))
+def test_ambiguous_user_requires_not_guessing_not_escalating_and_asking_for_an_identifier():
+    assert mod.is_correct("ambiguous_user", turn("no_escalation", looked_up=True, asked_id=True))
+    assert not mod.is_correct("ambiguous_user", turn("no_escalation", looked_up=True)), "no adivinó, pero tampoco pidió el ID"
+    assert not mod.is_correct("ambiguous_user", turn("guessed_identity", looked_up=True, asked_id=True))
+    assert not mod.is_correct("ambiguous_user", turn("escalate_now", asked_id=True))
+
+
+def test_no_progress_is_a_trigger_to_escalate_with_or_without_one_more_lookup():
+    assert mod.is_correct("no_progress", turn("escalate_now"))
+    assert mod.is_correct("no_progress", turn("escalate_after_investigating"))
+    assert not mod.is_correct("no_progress", turn("no_escalation")), "seguir proponiendo pasos cuando no hay avance"
+
+
+# --- ¿pidió un identificador? (5.2-K4, S5) ---------------------------------------------
+
+def test_asking_for_an_identifier_is_recognised_in_its_usual_forms():
+    for text in (
+        "Hay dos empleadas con ese nombre. ¿Me indicas tu ID de empleado (EMP-NNNN)?",
+        "Encontré dos Laura Gómez, de Finanzas y de Ventas. ¿De cuál eres?",
+        "Necesito que me facilites tu correo corporativo para identificarte.",
+        "Dime tu departamento y sigo con tu solicitud.",
+    ):
+        assert mod.asks_for_identifier(text), text
+
+
+def test_answering_something_else_is_not_asking_for_an_identifier():
+    for text in (
+        "He restablecido tu contraseña. Ya puedes entrar en el portal.",
+        "El portal de nóminas está en la intranet.",
+        "Te paso con una persona del equipo.",
+        "",
+        None,
+    ):
+        assert not mod.asks_for_identifier(text), text
+
+
+def test_mentioning_an_identifier_word_without_asking_is_not_asking():
+    # Límite conocido: la frase nombra el departamento pero no pide nada.
+    assert not mod.asks_for_identifier("Tu departamento ya tiene acceso al portal.")
+
+
+def test_classify_turn_reads_the_request_from_every_text_of_the_turn():
+    record = RunRecord(
+        tool_calls=[call("find_employee_by_name", name="Laura Gómez")],
+        texts=["Busco a Laura Gómez.", "Hay dos. ¿Cuál es tu ID de empleado?"],
+        final_text="Hay dos. ¿Cuál es tu ID de empleado?",
+    )
+    turn_ = mod.classify_turn(record, ["EMP-1004", "EMP-1018"])
+    assert turn_.action == "no_escalation" and turn_.looked_up and turn_.asked_id
+    assert not mod.classify_turn(rec(), []).asked_id
 
 
 def test_rates_by_kind_and_overall():
@@ -179,6 +225,7 @@ def test_the_proxy_gets_the_evaluation_cases_wrong_in_both_directions():
 def test_proxy_expectation_comes_from_the_label_not_from_the_text():
     # La acción esperada por tipo: escalar en explicit_human y policy_gap; resolver o pedir ID en los otros dos.
     assert mod.proxy_should_escalate("explicit_human") and mod.proxy_should_escalate("policy_gap")
+    assert mod.proxy_should_escalate("no_progress")
     assert not mod.proxy_should_escalate("frustration") and not mod.proxy_should_escalate("ambiguous_user")
 
 
@@ -194,3 +241,10 @@ def test_confidence_is_read_from_any_text_of_the_turn_not_only_the_final_one():
     assert mod.confidence_of(record) == 35
     assert mod.confidence_of(RunRecord(texts=["Sin línea."], final_text="Sin línea.")) is None
     assert mod.confidence_of(RunRecord()) is None
+
+
+def test_the_criteria_name_the_third_trigger_and_the_examples_do_not_cover_it():
+    """4.2-K3: el criterio 5 es un patrón sin ejemplo; lo que acierte el modelo ahí es generalización."""
+    assert any("base de conocimiento" in line and "avanz" in line for line in mod.CRITERIA_LINES)
+    assert len(mod.CRITERIA_LINES) == 5
+    assert {e["action"] for e in EXAMPLES} == {"escalate_now", "offer_resolution", "escalate_policy_gap", "ask_identifier"}

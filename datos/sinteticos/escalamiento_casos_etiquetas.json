@@ -55,5 +55,13 @@
     "expected_action": "ask_identifier",
     "kind": "ambiguous_user",
     "name": "Laura Gómez"
+  },
+  "ESC-12": {
+    "expected_action": "escalate_no_progress",
+    "kind": "no_progress"
+  },
+  "ESC-13": {
+    "expected_action": "escalate_no_progress",
+    "kind": "no_progress"
   }
 }

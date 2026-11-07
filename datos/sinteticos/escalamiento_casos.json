@@ -56,5 +56,15 @@
     "case_id": "ESC-11",
     "concern": "gastos",
     "text": "Hola, soy Laura Gómez: ¿cómo va el reembolso del teclado que pedí?"
+  },
+  {
+    "case_id": "ESC-12",
+    "concern": "software",
+    "text": "Ya reconstruí el perfil local del correo como indica el artículo y el correo sigue sin sincronizar. ¿Qué más puedo probar?"
+  },
+  {
+    "case_id": "ESC-13",
+    "concern": "hardware",
+    "text": "Seguí el diagnóstico de batería, adjunté el informe y el portátil sigue apagándose solo. Ya no sé qué más intentar."
   }
 ]

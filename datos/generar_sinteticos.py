@@ -1228,12 +1228,17 @@ ESCALATION_EVAL_CASES = [
     ("policy_gap", "gastos", "Viajo a un cliente y quiero reservar un coche de alquiler con la tarjeta de la empresa. ¿Está permitido?", None, None),
     ("ambiguous_user", "acceso", "Soy Laura Gómez y no puedo entrar en el portal de nóminas. ¿Me ayudáis?", None, "Laura Gómez"),
     ("ambiguous_user", "gastos", "Hola, soy Laura Gómez: ¿cómo va el reembolso del teclado que pedí?", None, "Laura Gómez"),
+    # Tercer disparador de 5.2-K1: no se puede avanzar. El cliente ya probó lo que ofrece la base de conocimiento
+    # y sigue igual; no hay enfado ni petición de un humano que delaten el caso. Van al final: los ID anteriores no cambian.
+    ("no_progress", "software", "Ya reconstruí el perfil local del correo como indica el artículo y el correo sigue sin sincronizar. ¿Qué más puedo probar?", None, None),
+    ("no_progress", "hardware", "Seguí el diagnóstico de batería, adjunté el informe y el portátil sigue apagándose solo. Ya no sé qué más intentar.", None, None),
 ]
 
 ESCALATION_ACTIONS = {
     "explicit_human": "escalate_now",
     "frustration": "offer_resolution",
     "policy_gap": "escalate_policy_gap",
+    "no_progress": "escalate_no_progress",
     "ambiguous_user": "ask_identifier",
 }
 

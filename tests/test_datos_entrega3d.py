@@ -10,8 +10,10 @@ import json
 
 from datos.generar_sinteticos import build_all
 
-KINDS = {"explicit_human", "frustration", "policy_gap", "ambiguous_user"}
-ACTIONS = {"escalate_now", "offer_resolution", "escalate_policy_gap", "ask_identifier"}
+KINDS = {"explicit_human", "frustration", "policy_gap", "no_progress", "ambiguous_user"}
+ACTIONS = {"escalate_now", "offer_resolution", "escalate_policy_gap", "escalate_no_progress", "ask_identifier"}
+# 4.2-S1: de 2 a 4 ejemplos. El de «no se puede avanzar» falta a propósito: es un patrón sin ejemplo (4.2-K3).
+EXAMPLE_ACTIONS = ACTIONS - {"escalate_no_progress"}
 
 
 def cases() -> list[dict]:
@@ -56,6 +58,7 @@ def test_the_action_follows_the_kind():
         "explicit_human": "escalate_now",
         "frustration": "offer_resolution",
         "policy_gap": "escalate_policy_gap",
+        "no_progress": "escalate_no_progress",
         "ambiguous_user": "ask_identifier",
     }
     for label in case_labels().values():
@@ -96,12 +99,12 @@ def test_few_shot_examples_are_disjoint_from_the_evaluation_cases():
     assert 2 <= len(examples()) <= 4  # 4.2-S1: de 2 a 4 ejemplos
 
 
-def test_examples_show_the_reasoning_and_cover_the_four_actions():
+def test_examples_show_the_reasoning_and_cover_four_of_the_five_actions():
     for example in examples():
         assert example["action"] in ACTIONS
         assert len(example["reasoning"].split()) >= 12, "el razonamiento es lo que se enseña (4.2-S1)"
         assert example["rejected_alternative"].strip()
-    assert {e["action"] for e in examples()} == ACTIONS
+    assert {e["action"] for e in examples()} == EXAMPLE_ACTIONS
 
 
 def test_inventory_has_forty_fields_per_team_and_five_relevant():
@@ -136,3 +139,16 @@ def test_inventory_noise_is_bulky():
 def test_is_deterministic():
     for name in ("escalamiento_casos.json", "escalamiento_ejemplos.json", "inventario_equipos.json"):
         assert build_all()[name] == build_all()[name]
+
+
+def test_no_progress_cases_say_the_user_already_tried_what_the_knowledge_base_offers():
+    """5.2-K1, tercer disparador: la imposibilidad de avanzar. El caso lo hace evidente sin tono de enfado."""
+    labels = case_labels()
+    stuck = [c for c in cases() if labels[c["case_id"]]["kind"] == "no_progress"]
+    assert len(stuck) >= 2
+    kb_titles = " ".join(a["title"].lower() for a in json.loads(build_all()["articulos_kb.json"]))
+    for case in stuck:
+        text = case["text"].lower()
+        assert any(w in text for w in ("ya ", "seguí", "probé")), "el cliente ya intentó lo que ofrece la base"
+        assert "followup" not in case
+    assert "sincronización" in kb_titles and "batería" in kb_titles, "los dos casos se apoyan en artículos que existen"
