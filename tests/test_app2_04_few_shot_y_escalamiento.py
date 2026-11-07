@@ -186,3 +186,11 @@ def test_variants_and_parts():
     assert mod.ANTI_VARIANTS == ["sin_ejemplos", "sentimiento", "confianza"]
     assert mod.MODEL_ROLES == ["agent", "enforcement"]
     assert mod.PARTS == ["agente", "proxy"]
+
+
+def test_confidence_is_read_from_any_text_of_the_turn_not_only_the_final_one():
+    # Medido con modelo: el agente escribe «CONFIANZA: N» antes de escalar y el texto final ya no la trae.
+    record = RunRecord(texts=["CONFIANZA: 35", "Te paso con una persona."], final_text="Te paso con una persona.")
+    assert mod.confidence_of(record) == 35
+    assert mod.confidence_of(RunRecord(texts=["Sin línea."], final_text="Sin línea.")) is None
+    assert mod.confidence_of(RunRecord()) is None

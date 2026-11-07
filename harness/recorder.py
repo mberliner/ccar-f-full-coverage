@@ -60,6 +60,8 @@ class RunRecord:
     tool_calls: list[ToolCall] = field(default_factory=list)
     tool_search_loads: int = 0
     final_text: str | None = None
+    # Todos los bloques de texto del asistente, en orden: el texto final solo trae el último mensaje.
+    texts: list[str] = field(default_factory=list)
     num_turns: int | None = None
     cost_usd: float | None = None
     denials: list[Any] = field(default_factory=list)
@@ -151,6 +153,7 @@ class Recorder:
         agent = self.agent_of(message.parent_tool_use_id)
         for block in message.content:
             if isinstance(block, TextBlock) and block.text.strip():
+                self.record.texts.append(block.text)
                 self.out(f"[texto {label} · {agent}] {short(block.text)}")
             elif isinstance(block, ToolUseBlock):
                 if block.name == TOOL_SEARCH:

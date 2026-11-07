@@ -196,6 +196,11 @@ def declared_confidence(text: str | None) -> int | None:
     return value if value is not None and value <= 100 else None
 
 
+def confidence_of(rec: RunRecord) -> int | None:
+    """La confianza que el agente declaró en el turno: la línea suele ir antes de la tool, no en el texto final."""
+    return declared_confidence("\n".join(rec.texts))
+
+
 def mean_confidence(rows: list[tuple[bool, int | None]]) -> dict[str, float | None]:
     """Confianza media declarada en los aciertos y en los fallos: si no los separa, no sirve de criterio (5.2-K3)."""
 
@@ -283,7 +288,7 @@ async def run_case(case: dict, label: dict, args: Any, model: str, system_prompt
             # El SDK da el coste acumulado de la sesión: la segunda consulta ya incluye la primera.
             cost = second_rec.cost_usd or cost
     ok = is_correct(label["kind"], first, second)
-    return ok, first, second, cost, declared_confidence(first_rec.final_text)
+    return ok, first, second, cost, confidence_of(first_rec)
 
 
 async def main_async() -> int:

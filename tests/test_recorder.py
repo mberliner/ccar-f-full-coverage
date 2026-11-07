@@ -151,3 +151,15 @@ def test_no_split_responses_omits_partidas(capsys):
     asyncio.run(record(stream([assistant([ToolUseBlock("a", "Read", {"file_path": "a"})], "m1"), result_message()]), echo=True))
     out = capsys.readouterr().out
     assert "mensajes=1 respuestas=1" in out and "partidas" not in out
+
+
+def test_every_text_block_is_kept_not_only_the_final_result():
+    # app2/04 lee la «CONFIANZA: N» que el agente escribe ANTES de llamar a una tool: el texto final no la lleva.
+    rec = run([
+        assistant([TextBlock("CONFIANZA: 40"), ToolUseBlock("e1", "escalate_to_human", {"summary": "x"})], "m1"),
+        results(("e1", False)),
+        assistant([TextBlock("Te paso con una persona.")], "m2"),
+        result_message(),
+    ])
+    assert rec.texts == ["CONFIANZA: 40", "Te paso con una persona."]
+    assert run([assistant([TextBlock("   ")], "m1"), result_message()]).texts == [], "un bloque en blanco no cuenta"
