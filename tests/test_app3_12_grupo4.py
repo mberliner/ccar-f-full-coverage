@@ -174,6 +174,12 @@ def test_found_by_pass_of_a_single_pass_attributes_everything_to_it():
     assert mod.found_by_pass(merged, LABELS, scope=1) == {"single": {"B", "D"}}
 
 
+def test_found_by_pass_of_a_single_pass_without_findings_is_still_the_single_pass():
+    # Antes se deducía la variante de los hallazgos: con la lista vacía caía en «por archivo / integración».
+    assert mod.found_by_pass([], LABELS, scope=1, single=True) == {"single": set()}
+    assert mod.found_by_pass([], LABELS, scope=1) == {"file": set(), "integration": set()}
+
+
 def test_the_default_still_splits_found_by_pass_into_file_and_integration():
     merged = [f("notificaciones/avisos.py", 20, category="security", source="file"), f("core/sla.py", 12, source="integration")]
     assert mod.found_by_pass(merged, LABELS, scope=1) == {"file": {"B"}, "integration": {"D"}}

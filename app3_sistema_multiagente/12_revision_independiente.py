@@ -282,9 +282,12 @@ def finding_cells(findings: list[dict], labels: dict, *, scope: int) -> list[Any
     return cells
 
 
-def found_by_pass(merged: list[dict], labels: dict, *, scope: int) -> dict[str, set[str]]:
-    """Qué fallos sembrados encontró cada pasada. Uno que salió en las dos cuenta para la local. Con `una_pasada`, todo es de la única."""
-    if merged and all(f.get("source") == "single" for f in merged):
+def found_by_pass(merged: list[dict], labels: dict, *, scope: int, single: bool = False) -> dict[str, set[str]]:
+    """Qué fallos sembrados encontró cada pasada. Uno que salió en las dos cuenta para la local. Con `una_pasada`, todo es de la única.
+
+    `single` lo dice la variante, no los hallazgos: con la lista vacía no hay forma de deducirla.
+    """
+    if single or (merged and all(f.get("source") == "single" for f in merged)):
         return {"single": m11.score_findings(merged, labels, scope=scope).found}
     local = m11.score_findings([f for f in merged if f.get("source") == "file"], labels, scope=scope).found
     both = m11.score_findings(merged, labels, scope=scope).found
@@ -432,7 +435,7 @@ def run_revision(args: Any, model: str, budget: float) -> None:
             verdicts = v.structured["verdicts"] if v.ok else []
         verified = apply_verdicts(merged, verdicts)
         score = m11.score_findings(verified, labels, scope=1)
-        by_pass = found_by_pass(verified, labels, scope=1)
+        by_pass = found_by_pass(verified, labels, scope=1, single=arm == "una_pasada")
         publish, human = route_by_confidence(verified, threshold=PUBLISH_THRESHOLD)
         cells = finding_cells(verified, labels, scope=1)
         pooled_cells += cells
