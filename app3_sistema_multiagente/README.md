@@ -1206,7 +1206,7 @@ Los términos comunes (`detected_pattern`, *few-shot*, sesión, JSON Schema) est
   - **`detected_pattern` aquí:** un nombre corto en `snake_case` que escribe el propio modelo en cada hallazgo. El registro de descartados agrupa por ese nombre tras igualar mayúsculas y separadores (`normalize_pattern`).
   - **Descartado:** un hallazgo que no coincide con ningún fallo sembrado: un falso positivo, o una marca del cambio correcto o del patrón aceptable.
   - **Segunda revisión:** la revisión del diff completo de la rama tras un commit nuevo. Con hallazgos previos, el prompt los lista y pide informar solo de lo nuevo o de lo no resuelto.
-  - **Coincide con un fallo sembrado:** el hallazgo cae en su archivo, a dos líneas o menos, o nombra su función o símbolo; un fallo entre archivos también se encuentra en sus llamadores si el hallazgo habla de la clave o de la unidad.
+  - **Coincide con un fallo sembrado:** el hallazgo cae en su archivo, a dos líneas o menos, o nombra su función o símbolo con el nombre completo; si la línea es la de otro elemento etiquetado (por ejemplo, el cambio correcto), manda la línea. Un fallo entre archivos también se encuentra en sus llamadores si el hallazgo habla de la clave o de la unidad.
 
 ### El ejercicio
 
@@ -1215,9 +1215,20 @@ Los términos comunes (`detected_pattern`, *few-shot*, sesión, JSON Schema) est
 - **Correcta (`revision`):** criterios categóricos con severidades y un ejemplo de código por severidad, y *few-shot* con el formato de salida y un patrón aceptable que no se informa.
 - **`--anti conservador`:** los criterios y las severidades se sustituyen por «Sé conservador: informa solo de los problemas de los que estés muy seguro». El *few-shot* y el schema son los mismos.
 - **`--anti sin_ejemplos`:** sin el bloque *few-shot*; los criterios siguen.
-- **`--sin-categoria comment`:** la categoría `comment` desaparece de los criterios y del schema, y nada más cambia.
+- **`--sin-categoria comment`:** la categoría `comment` desaparece de los criterios y del schema. Las definiciones de las demás no se tocan: ninguna se apoya ya en un comentario (en una versión anterior, el ejemplo de `minor` era un comentario y el de `bug` citaba un docstring, así que quitar la categoría cambiaba también esas dos).
 - **Correcta (`rerevision`):** la segunda revisión lleva la lista de los hallazgos previos (construida desde las etiquetas) y la orden de informar solo de lo nuevo o de lo no resuelto. **`--anti sin_previos`:** el mismo prompt, sin esa lista.
 - **Correcta (`tests`):** el prompt lleva los tests existentes y el `CLAUDE.md` tiene los estándares de tests. **`--anti sin_tests_existentes`:** sin los tests existentes. **`--anti sin_estandares`:** un `CLAUDE.md` sin esa sección. En esta parte la orden va sin tools, para que el modelo no pueda descubrir por su cuenta lo que se le quita del contexto.
+
+Los fallos sembrados se nombran con una letra en la salida y en el Paso 3:
+
+- **A** (`bug`, `tickets/escalado.py`): argumentos intercambiados al llamar a `debe_escalar`. El segundo commit lo arregla.
+- **B** (`security`, `notificaciones/avisos.py`): el mensaje y el id llegan sin validar a `os.system`.
+- **C** (`comment`, `config.py`): el comentario dice que el máximo es 30 y `NOTIF_TIMEOUT` vale 60.
+- **D** (entre archivos): `calcular_sla` devuelve minutos y sus llamadores siguen leyendo horas.
+- **E** (`bug`, del segundo commit, `informes/resumen.py`): división por cero con una lista vacía. Solo entra en la segunda revisión.
+- **F** (entre archivos): `avance_plazo` devuelve una fracción de 0 a 1 y `texto_progreso` la imprime como porcentaje.
+
+Además, el **cambio correcto** (el comentario que justifica `REINTENTOS`) y el **patrón aceptable** parecen fallos y no lo son.
 
 ### Predice antes de ejecutar
 
@@ -1251,38 +1262,47 @@ En `revision`: qué fallos sembrados encuentra (A a F, el segundo commit añade 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
-Sonnet 5.5 (rol `reviewer`), `claude -p` aislado. Hubo **dos cambios de lo medido** durante la construcción, y las cifras van marcadas: **antes**, cuatro fallos sembrados (A a D) y una puntuación por línea (a dos líneas o menos); **después**, un quinto fallo entre archivos (F) y una puntuación que también reconoce el símbolo, porque el modelo cita las líneas de forma aproximada (con la ventana de líneas, un acierto con la línea desplazada contaba como falso positivo).
+Sonnet 5.5 (rol `reviewer`), `claude -p` aislado. **Las cifras de referencia son las de después de las correcciones C4** (2026-11-07, 5 ejecuciones por variante, la misma puntuación en toda la batería): cada revisión corre sobre el árbol del commit que revisa, un escenario de test se compara con lo que espera y el símbolo se compara por nombre completo. Las cifras anteriores están más abajo, rotuladas «antes», y **no son comparables**: el revisor del primer commit leía el árbol del segundo, donde A ya estaba arreglado, y la puntuación era otra.
 
 | Variante | Señal observada | Qué dice |
 | :--- | :--- | :--- |
-| correcta, antes (8 ejecuciones) | encuentra A a D en 7 de 8 (A, los argumentos intercambiados, se pierde en 1); **marca el cambio correcto** (el comentario de `REINTENTOS`, patrón `misleading_comment`) en 3 de 8; 0 falsos positivos | el criterio de `comment` dice «contradice el código» y aun así el modelo marca un comentario que justifica un valor |
-| correcta, después (2 ejecuciones) | A a D y F en 2 de 2; marca el cambio correcto en 2 de 2 | igual que antes; F, el fallo entre archivos, también sale |
-| `conservador`, antes (8 ejecuciones) | A se pierde en 2 de 8 (en 2 de las 3 primeras y en ninguna de las 5 siguientes); B, C y D en 8 de 8; ninguna marca del cambio correcto ni falsos positivos | **sin diferencia estable** con la correcta (A se pierde en 1 de 8 con ella): con tres ejecuciones parecía que «sé conservador» perdía A, y con cinco más no. La medida no separa las dos variantes |
-| `sin_ejemplos` (10 ejecuciones en tres momentos) | antes (3): A se pierde en 1 de 3 y marca el cambio correcto en 2 de 3. Después, con la puntuación por línea (5): **B (`os.system`) no sale en 3 de 5** y marca el cambio correcto en 5 de 5. Después, con la puntuación por símbolo (2): A a D y F en 2 de 2 y ninguna marca del cambio correcto | **sin señal estable**: la pérdida de B no se repite en las dos últimas. Una lectura posible, sin comprobar: el ejemplo que se quita (una inyección en la shell) se parece al fallo B |
-| `--sin-categoria comment`, antes (3 ejecuciones) | C (el comentario que contradice el código) se encuentra en 3 de 3, ahora como `bug`; sigue marcándose el cambio correcto en 2 de 3 | **sin efecto visible** sobre el falso positivo: el modelo reclasificó el hallazgo como `bug` |
-| rerevision correcta (antes, 3 ejecuciones) | hallazgos 0, 1 y 0: **0 repetidos** de la primera revisión; E, el bug nuevo, sale en 1 de 3 | con la lista y la orden, no repite lo ya publicado |
+| correcta | las cinco (A, B, C, D y F) en 5 de 5; 0 falsos positivos; **marca el cambio correcto en 5 de 5** (3 veces el comentario de `REINTENTOS`, 2 el renombrado a `NOTIF_TIMEOUT`); ~0,019 $ por ejecución | los criterios encuentran todo, pero no evitan la marca del comentario que justifica un valor |
+| `conservador` | las cinco en 5 de 5; 0 falsos positivos; **0 marcas del cambio correcto** | al revés de lo que dice la guía (4.1-K2): «sé conservador» no perdió nada y marcó menos. Ver «Lo que no coincide con la guía» |
+| `sin_ejemplos` | 24 de 25 (B falta en una ejecución); 0 falsos positivos; marca el cambio correcto en 4 de 5 | **sin diferencia** con la correcta |
+| `--sin-categoria comment` | 24 de 25 (C falta en una: el modelo marcó el renombrado como `bug` y no el comentario); 0 falsos positivos; **marca el cambio correcto en 1 de 5** | quitar la categoría quita casi siempre la marca del cambio correcto, y a veces también el fallo C, que esa categoría acertaba |
+| `rerevision` correcta (antes, 3 ejecuciones) | hallazgos 0, 1 y 0: **0 repetidos** de la primera revisión; E, el bug nuevo, sale en 1 de 3 | con la lista y la orden, no repite lo ya publicado |
 | `rerevision --anti sin_previos` (antes, 3 ejecuciones) | hallazgos 4, 4 y 5: **repite B, C y D en 3 de 3**; E sale en 1 de 3 | sin la lista, publica otra vez lo ya publicado; encontrar lo nuevo no mejora |
-| `tests` correcta (antes y después, 3 + 3) | **1 escenario repetido por ejecución** (siempre `calcular_sla(alta, 3)`); 6–7 y 7–10 escenarios nuevos | ver la nota |
-| `tests --anti sin_tests_existentes` (antes, 3) | **0 repetidos**; 6–11 nuevos | **al revés de lo esperado**: 1 escenario repetido por ejecución con los tests existentes en el contexto y 0 sin ellos |
-| `tests --anti sin_estandares` (antes, 3) | 1 repetido por ejecución; 7–9 nuevos | **sin diferencia** con los estándares en el `CLAUDE.md` |
+| `tests` correcta | 7–8 tests por ejecución; **0 escenarios repetidos** en 5 de 5; 31 de 38 sobre lo que cambió | — |
+| `tests --anti sin_tests_existentes` | 8–9 tests; **0 repetidos** en 5 de 5; 25 de 41 sobre lo que cambió (en una ejecución, 0 de 8, sin explicar) | **sin diferencia** en los repetidos: ver la nota |
+| `tests --anti sin_estandares` | **9–12 tests** por ejecución; 0 repetidos; 36 de 51 sobre lo que cambió | más tests en 5 de 5, sin solapamiento con la correcta (7–8): una diferencia de cantidad, en el sentido de 3.6-S5 |
+
+La segunda revisión (`rerevision`) **no se volvió a medir** tras las correcciones: sus cifras son de antes. Su árbol, el del estado final, ya era el correcto; la puntuación de entonces era la anterior.
 
 Notas:
 
-- **Los criterios categóricos no resuelven el comentario del cambio correcto:** el falso positivo más estable es el comentario de `REINTENTOS`. El registro de descartados lo agrupa por `detected_pattern`, pero el modelo escribe un nombre distinto casi cada vez (`misleading_comment`, `comentario_sin_respaldo_en_codigo`, `comentario_poco_relacionado`, `comentario_justificacion_dudosa`…): agrupar por ese campo sin normalizarlo lo dispersa. `normalize_pattern` solo iguala mayúsculas y separadores.
-- **`--parte tests` y los estándares:** el `CLAUDE.md` de CI con los estándares llega a la sesión (la sonda C1 lo comprueba), pero no cambió nada de lo medido.
+- **Los criterios categóricos no resuelven el comentario del cambio correcto:** es la marca más estable. El registro de descartados la agrupa por `detected_pattern`, pero el modelo escribe un nombre distinto casi cada vez (`misleading_comment`, `dubious_comment`, `comment_does_not_match_code`, `comentario_justificacion_dudosa`…): agrupar por ese campo sin normalizarlo lo dispersa. `normalize_pattern` solo iguala mayúsculas y separadores.
+- **Lo que la puntuación por símbolo no distingue:** en 4 de las 20 revisiones el modelo avisa de que renombrar a `NOTIF_TIMEOUT` rompería a quien lo importara (nadie lo importa). Como cita la línea del cambio correcto, cuenta como marca del cambio correcto: la puntuación no separa dos quejas distintas sobre la misma línea. Sube un poco «marca el cambio correcto» y no cambia los fallos encontrados.
+- **`--parte tests` y los tests existentes:** con ellos y sin ellos salen 0 escenarios repetidos. La métrica no puede mostrar 3.6-S4 en este cambio: el cambio pasa las horas a minutos, así que los tests existentes son justo los que rompe, y quien los actualiza ya no repite un escenario.
 
-**Lo que no coincide con la guía.** **Producto observado (no evaluable):** tres medidas de este módulo no muestran lo que dice la guía. Ninguna cambia la respuesta de examen, que es siempre la de la guía.
+**Lo que no coincide con la guía.** **Producto observado (no evaluable):** dos medidas de este módulo no muestran lo que dice la guía. Ninguna cambia la respuesta de examen, que es siempre la de la guía.
 
-- **Tests existentes en el contexto (3.6-S4): al revés de lo esperado.** Con ellos salió 1 escenario repetido por ejecución (siempre `calcular_sla(alta, 3)`) y sin ellos, 0. Hipótesis sin comprobar: ver los tests ancla al modelo en los escenarios que ya existen, y sin verlos propone solo lo que toca el cambio. En el examen, los tests existentes van en el contexto para no proponer escenarios ya cubiertos.
-- **`--anti conservador` (4.1-K2): la medida no respalda ni contradice la viñeta.** Con tres ejecuciones parecía perder el fallo A y con cinco más no; con 8 ejecuciones de cada una, no se separa de la correcta. La lección de 4.1-K2 es conceptual y no se apoya en esta medida.
-- **`--anti sin_ejemplos` y `--sin-categoria comment`: sin señal estable.** No contradicen la guía (4.2-S2, S3 y 4.1-S2), pero tampoco la demuestran. Desactivar `comment` no quitó el falso positivo, lo reclasificó como `bug`. Inferencia propia: 4.1-S2 es una medida para recuperar la confianza mientras se arregla el criterio, no el arreglo.
+- **`--anti conservador` (4.1-K2): marcó menos, no más.** Con «sé conservador» en lugar de los criterios, el modelo encontró los cinco fallos y no marcó nunca el cambio correcto (0 de 5, frente a 5 de 5 con los criterios). Hipótesis **sin comprobar**: la variante sustituye todos los criterios, también el de comentarios, que es el que invita a revisar la justificación de `REINTENTOS`; lo que desaparece sería ese criterio, no la prudencia. Para separarlo haría falta una variante con «sé conservador» y el criterio de comentarios. Con 5 ejecuciones es una pista, no una prueba. En el examen, las instrucciones generales de prudencia no mejoran la precisión como los criterios categóricos.
+- **Tests existentes en el contexto (3.6-S4): sin señal.** 0 repetidos con ellos y sin ellos (ver la nota). En el examen, los tests existentes van en el contexto para no proponer escenarios ya cubiertos.
+
+`--anti sin_ejemplos` tampoco da señal (B falta en 1 de 25): no contradice 4.2-S2 y S3, pero no la demuestra.
+
+**Antes de las correcciones C4** (no comparable: árbol contaminado y otra puntuación; detalle en `docs/hallazgos.md`):
+
+- **Correcta:** A a D en 7 de 8 (A se pierde en 1) y marca el cambio correcto en 3 de 8; después, con F, 2 de 2.
+- **`conservador`:** A se pierde en 2 de 8 y nunca marca el cambio correcto. Con tres ejecuciones parecía que «sé conservador» perdía A, y con cinco más no. Esas pérdidas de A son, con mucha probabilidad, del árbol contaminado: el revisor podía leer `tickets/escalado.py` ya arreglado. Tras la corrección, A sale en 5 de 5 con todas las variantes.
+- **`sin_ejemplos`:** 10 ejecuciones en tres momentos y **con dos puntuaciones distintas**: 3 con cuatro fallos sembrados (A se pierde en 1), 5 con la puntuación por línea (B no sale en 3 de 5) y 2 con la puntuación por símbolo (las cinco en 2 de 2). No se pueden sumar. Para la pérdida de B había dos lecturas, ninguna comprobada: el ejemplo que se quita (una inyección en la shell) se parece a B, o el modelo encontró B y lo citó con la línea desplazada, y la puntuación por línea lo contó como falso positivo.
+- **`--sin-categoria comment`** (con la versión anterior de la variante, que cambiaba también `minor` y `bug`): C en 3 de 3, ahora como `bug`, y marca el cambio correcto en 2 de 3. Lo que parecía comportamiento del modelo («reclasifica en vez de quitar») era en parte la variante, que cambiaba más de una cosa.
+- **`tests`:** 1 escenario repetido por ejecución con los tests existentes (siempre `calcular_sla(alta, 3)`) y 0 sin ellos; con y sin los estándares, igual. Ese «al revés de lo esperado» era un artefacto: el escenario se comparaba sin lo que esperaba, y el test que el cambio rompe, actualizado a minutos, contaba como repetido.
 
 Avisos sobre las cifras y la ejecución:
 
-- **Antes y después del fallo F:** las cifras «antes» se midieron con cuatro fallos sembrados (A a D); las «después», con el quinto, F, el segundo fallo entre archivos, que se añadió para el módulo 12.
-- **La puntuación por símbolo no recalculó las cifras anteriores:** el modelo cita las líneas de forma aproximada, hasta 3–5 líneas de más, y por eso la puntuación reconoce ahora también el símbolo del fallo. Las cifras «antes» se midieron con la ventana de líneas y no se recalcularon.
-- **El tope de coste** es `--max-budget-usd` de cada `claude -p`: el módulo reparte `--budget` entre las repeticiones y le pasa a cada una lo que queda.
-- Lo que no depende del modelo se prueba en `tests/test_app3_11_criterios_y_ci.py`, `tests/test_headless.py` y `tests/test_datos_entrega3c.py`. Coste de las ejecuciones con modelo de este módulo: ~1,0 $.
+- **El tope de coste** es `--max-budget-usd` de cada `claude -p`: el módulo le pasa a cada repetición lo menor entre lo que queda de `--budget` y `--budget` dividido entre las repeticiones, así que una repetición no puede gastarse el tope de las siguientes. La sonda de contexto del principio cuenta en el mismo tope.
+- Lo que no depende del modelo se prueba en `tests/test_app3_11_criterios_y_ci.py`, `tests/test_headless.py` y `tests/test_datos_entrega3c.py`. Coste de las ejecuciones con modelo de este módulo: ~1,0 $ antes de las correcciones y 0,63 $ en la medida después (0,37 $ la revisión y 0,26 $ los tests).
 </details>
 
 ### Pregunta tipo examen
@@ -1303,15 +1323,15 @@ Avisos sobre las cifras y la ejecución:
 - **C** filtra por la confianza en vez de definir qué se informa y qué no (4.1-S1); el criterio vago sigue igual.
 - **D** no reduce los falsos positivos (4.1-K3) y renuncia a los comentarios en línea, que es para lo que sirve la salida estructurada en CI (3.6-S2).
 
-**Producto observado (no evaluable):** en este módulo, quitar la categoría `comment` no hizo desaparecer el falso positivo, que el modelo reclasificó como `bug` (Paso 3). No cambia la respuesta de examen: apagar la categoría es la medida temporal y el arreglo es el criterio.
+**Producto observado (no evaluable):** en este módulo, quitar solo la categoría `comment` hizo desaparecer la marca del comentario correcto en 4 de 5 ejecuciones, y en 1 de 5 se perdió también el fallo C, un comentario que sí contradecía al código (Paso 3). No cambia la respuesta de examen: apagar la categoría es la medida temporal, y por eso mismo pierde lo que la categoría acertaba; el arreglo es el criterio.
 </details>
 
 **Pregunta 2 (multiple-response).** Un equipo usa `claude -p --output-format json --json-schema` para revisar los commits de una rama y para pedir los tests que faltan. Tras cada commit nuevo, la revisión vuelve a publicar comentarios que ya estaban, y los tests propuestos repiten escenarios ya cubiertos o aportan poco. **Selecciona dos** cambios que sigan la guía. Evalúa cada opción por separado.
 
-- A. Pedir los tests sin darle al modelo los tests existentes, para que no se ancle en lo que ya está escrito.
-- B. En la segunda revisión, incluir los hallazgos previos y ordenar que informe solo de lo nuevo o de lo no resuelto.
-- C. Quitar `--json-schema` y extraer los hallazgos del texto de la respuesta para publicarlos como comentarios.
-- D. Documentar en el `CLAUDE.md` del proyecto los estándares de tests, qué hace valioso un test y las *fixtures* disponibles.
+- A. Generar los tests sin mostrar al modelo los que ya existen, para que proponga casos sin dejarse llevar por ellos.
+- B. Pasar a cada revisión nueva lo que ya se comentó en las anteriores, para que solo publique lo que falta o sigue abierto.
+- C. Revisar cada commit con una instancia nueva y sin nada de las revisiones anteriores, para que mire el diff sin sesgos.
+- D. Explicar en el `CLAUDE.md` del repositorio cómo se escriben los tests del proyecto y con qué utilidades de prueba cuenta.
 
 <details>
 <summary>Paso 4 · Respuesta (pregunta 2)</summary>
@@ -1319,11 +1339,11 @@ Avisos sobre las cifras y la ejecución:
 **B y D.** La primera evita los comentarios duplicados (TS 3.6-S3) y la segunda da a Claude Code en CI el contexto del proyecto (3.6-K3) para que los tests generados sean mejores y aporten más (3.6-S5).
 
 - **A** invierte lo que dice la guía: los tests existentes van en el contexto para no proponer escenarios que la suite ya cubre (3.6-S4).
-- **B** es la práctica de la guía para no repetir comentarios al revisar de nuevo tras commits nuevos.
-- **C** pierde la salida estructurada que una máquina necesita para publicar comentarios en línea (3.6-K2, S2).
-- **D** es el uso de `CLAUDE.md` que la guía asigna al contexto de Claude Code en CI.
+- **B** da al revisor lo que ya se publicó y le pide solo lo nuevo o lo no resuelto: así no repite comentarios tras un commit nuevo (3.6-S3).
+- **C** mezcla dos ideas: la instancia independiente es buena para no heredar el razonamiento de quien generó el código (4.6-K2), pero sin los hallazgos previos la revisión vuelve a publicar lo que ya estaba, que es justo el problema (3.6-S3).
+- **D** es el uso de `CLAUDE.md` que la guía asigna al contexto de Claude Code en CI: estándares de tests y *fixtures* disponibles (3.6-K3, S5).
 
-**Producto observado (no evaluable):** en este módulo, con los tests existentes en el contexto salió 1 escenario repetido por ejecución y sin ellos 0, al revés de lo esperado (Paso 3). No cambia la respuesta de examen: A sigue siendo incorrecta.
+**Producto observado (no evaluable):** en este módulo, con los tests existentes en el contexto y sin ellos salieron 0 escenarios repetidos: la métrica no muestra 3.6-S4 porque los tests existentes son justo los que el cambio rompe (Paso 3). Sin los estándares en el `CLAUDE.md` salieron más tests (9–12 frente a 7–8). No cambia la respuesta de examen: A sigue siendo incorrecta.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).

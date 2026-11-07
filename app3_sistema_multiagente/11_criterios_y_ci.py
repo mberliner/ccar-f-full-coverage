@@ -43,19 +43,32 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
   - Revisar de nuevo sin los hallazgos previos (`--anti sin_previos`, 3.6-S3); generar tests sin los existentes
     (`--anti sin_tests_existentes`, 3.6-S4) o sin los estándares en `CLAUDE.md` (`--anti sin_estandares`, 3.6-S5).
   - Lanzar Claude Code en CI sin `-p`, o leer los hallazgos del texto libre en vez de una salida con schema.
-- Lo medido aquí no respalda todas las viñetas (cifras, con «antes» y «después», en el README y en `docs/hallazgos.md`):
-  - `conservador`, `sin_ejemplos` y `--sin-categoria comment` no dieron una señal estable. Con tres ejecuciones,
-    `conservador` parecía perder un fallo; con cinco más, no. La medida no separa las variantes, así que ni respalda ni
-    contradice 4.1-K2: esa lección es conceptual.
-  - Con los tests existentes en el contexto salió 1 escenario repetido por ejecución y sin ellos 0, al revés de lo
-    esperado. En el examen manda 3.6-S4.
+- Lo medido aquí no respalda todas las viñetas (cifras «después de las correcciones C4», 5 ejecuciones por variante, en
+  el README; las anteriores, en `docs/hallazgos.md`). Las cifras anteriores están contaminadas: el revisor del primer
+  commit leía el árbol del segundo, donde A ya estaba arreglado, y un escenario de test se puntuaba sin lo que esperaba.
+  - `conservador` encuentra los cinco fallos y **no marca nunca el cambio correcto** (0 de 5, frente a 5 de 5 con los
+    criterios): al revés de lo que dice 4.1-K2. Hipótesis sin comprobar: la variante sustituye todos los criterios,
+    también el de comentarios, que es el que invita a revisar el comentario del cambio correcto. Las pérdidas de A que
+    se veían antes con `conservador` se explican, con mucha probabilidad, por el árbol contaminado. En el examen manda
+    4.1-K2.
+  - `sin_ejemplos` no se separa de la correcta (B falta en 1 de 25 oportunidades).
+  - Con los tests existentes en el contexto y sin ellos sale 0 escenarios repetidos: 3.6-S4 no se ve con esta métrica,
+    porque los tests existentes son justo los que el cambio rompe. El «al revés de lo esperado» de antes (1 repetido
+    con ellos y 0 sin ellos) era un artefacto de la medida: el test que el cambio rompe se puntuaba como repetido. En el
+    examen manda 3.6-S4.
+  - Sin los estándares en el `CLAUDE.md`, el modelo propone más tests (9–12 frente a 7–8, en 5 de 5): una diferencia de
+    cantidad en el sentido de 3.6-S5; no se midió si los de más aportan menos.
 - Inferencias propias:
-  - Desactivar una categoría no quita el falso positivo si el modelo puede reclasificarlo en otra; 4.1-S2 es una medida
-    temporal mientras se arregla el criterio, no el arreglo.
+  - Desactivar una categoría es una medida temporal mientras se arregla el criterio, no el arreglo (4.1-S2). Con la
+    variante que quita solo la categoría `comment`, la marca del cambio correcto baja a 1 de 5, pero el fallo C (un
+    comentario que sí contradice el código) se pierde en 1 de 5: apagar la categoría quita también lo que acertaba.
   - La confianza declarada y el `detected_pattern` los rellena el propio modelo: sirven para agrupar los descartes, y
     agrupar sin normalizar el nombre los dispersa.
   - Los hallazgos previos de la segunda revisión son una lista fija construida desde las etiquetas, para que las dos
-    ramas partan de lo mismo.
+    ramas partan de lo mismo. La segunda revisión no se volvió a medir tras las correcciones C4: sus cifras son de antes.
+  - La puntuación reconoce el fallo por la línea o por el símbolo, pero no distingue dos quejas distintas sobre la misma
+    línea: que el renombrado a `NOTIF_TIMEOUT` rompería a quien lo importara cita la línea del cambio correcto y cuenta
+    como marca del cambio correcto.
 - Producto observado (no evaluable): `--setting-sources project` no basta para que a `claude -p` le llegue solo el
   `CLAUDE.md` del directorio de CI; hace falta además `claudeMdExcludes` (sonda C1 en `docs/hallazgos.md`,
   `harness/headless.py`). Con un schema imposible, la CLI responde `success` sin objeto, así que el módulo valida otra vez.
