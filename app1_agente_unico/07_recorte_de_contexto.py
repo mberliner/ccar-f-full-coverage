@@ -5,28 +5,42 @@ contexto y consumen tokens de forma desproporcionada a lo que importan; se
 recortan a los campos relevantes antes de que entren en el historial.
 
 QUÉ DICE LA GUÍA:
-- Los resultados de las tools se acumulan en el contexto y gastan tokens en
-  proporción a su tamaño, no a su utilidad. El ejemplo de la guía es una
-  consulta de pedido que devuelve más de 40 campos cuando solo hacen falta
-  unos 5 (5.1-K3).
-- La habilidad es recortar (*trimming*) las salidas verbosas de las tools,
-  dejando solo los campos relevantes, antes de que se acumulen (5.1-S3). El
-  momento importa: después de añadirlas al historial ya se han pagado.
-- Como la API no guarda estado, cada petición reenvía el historial completo
-  (5.1-K4, introducido en `01`): lo que entra una vez se paga en todas las
-  peticiones siguientes.
+- Los resultados de las tools se van acumulando en el contexto y consumen
+  tokens de forma desproporcionada a lo que aportan. El ejemplo de la guía es
+  una consulta de pedido que devuelve más de 40 campos cuando la tarea solo
+  necesita 5 (5.1-K3).
+- La destreza es recortar las salidas verbosas de las tools a los campos
+  relevantes antes de que se acumulen en el contexto; en el ejemplo de la
+  guía, quedarse solo con los campos de la consulta que sirven para una
+  devolución (5.1-S3).
+- Cada petición siguiente lleva el historial completo de la conversación
+  (5.1-K4, introducido en `01`; aquí solo se usa).
 
-POR QUÉ IMPORTA: en una conversación larga el coste y la atención del modelo
-se van en campos que nadie necesita. Un resultado de 40 campos consultado ocho
-veces son 320 campos que viajan en cada petición posterior.
+POR QUÉ IMPORTA (inferencia propia, a partir de 5.1-K3 y K4): lo que entra en
+el historial viaja en todas las peticiones siguientes, así que un campo que
+nadie usa se vuelve a leer y a facturar cada vez. Ocho consultas de 40 campos
+son 320 campos que acompañan a cada petición posterior.
 
-ANTI-PATRÓN / TRAMPA DEL EXAMEN: «dejar que el modelo ignore lo que sobra».
-El modelo lo lee igual y lo paga el cliente: ignorar no libera contexto. Otra
-trampa es recortar tarde (resumir el historial después) o recortar tanto que
-falte un campo que la pregunta necesita; el recorte se decide por lo que la
-tarea usa. Inferencia propia: en esta demostración la lista de campos que se
-conservan es fija y está en el código; en un sistema real la fija quien conoce
-las preguntas que se van a hacer.
+ANTI-PATRÓN / TRAMPA DEL EXAMEN:
+- Hechos de la guía:
+  - Dejar los resultados enteros en el contexto (`--anti sin_recorte`): es el
+    consumo desproporcionado de 5.1-K3.
+  - Recortar tarde. La guía pide recortar antes de que el resultado se acumule
+    (5.1-S3); resumir el historial después, además, arriesga condensar cifras,
+    fechas y estados en frases vagas (5.1-K1, de `app2/05`).
+- Inferencias propias:
+  - «Pedir al modelo que ignore lo que sobra» no libera contexto: los campos
+    siguen en el historial y se leen en cada petición.
+  - Recortar tanto que falte un campo que la tarea necesita rompe la respuesta:
+    el recorte se decide por lo que la tarea usa. En esta demostración la lista
+    de campos es fija y está en el código; en un sistema real la fija quien
+    conoce las preguntas que se van a hacer.
+- Lo que la medida no respalda: que los campos sobrantes empeoren la respuesta.
+  Sin recorte el modelo también acierta; la señal de este módulo es de tokens,
+  no de calidad.
+- Límite de la comprobación: la respuesta se da por correcta si el primer
+  equipo que nombra es el esperado; no distingue «es X, no Y» de «es Y, no X»
+  (las dos correcciones que tuvo están en `docs/hallazgos.md`).
 
 Qué se mide: los tokens de entrada de cada petición, que salen del `usage` de
 la respuesta de la API, y si la respuesta sigue siendo correcta con 5 campos. El

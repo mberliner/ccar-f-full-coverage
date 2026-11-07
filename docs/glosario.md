@@ -20,8 +20,6 @@ Términos que usan los módulos de las tres apps y el arnés, para quien llega d
 
 ## El agente y su bucle
 
-- **Recorte (*trimming*):** quitar de un resultado de tool los campos que la tarea no usa antes de que entre en el historial (`app1/07`). Es distinto de resumir el historial después.
-- **Tokens de entrada:** los que el modelo lee en una petición. La API los informa en el `usage` de la respuesta; como cada petición reenvía el historial, lo que entra una vez se paga en todas las siguientes.
 - **Agente:** un programa en el que un modelo decide qué pasos dar (qué tools pedir y cuándo terminar) para cumplir una tarea, en lugar de seguir una secuencia fijada por el código.
 - **Messages API:** la API de Claude a bajo nivel: una petición con mensajes y una respuesta. El bucle lo escribe tu código (`app1/01`).
 - **Agent SDK (`claude-agent-sdk`):** una biblioteca que trae el bucle hecho, tools integradas, hooks, permisos, sesiones y subagentes. La usan casi todos los módulos.
@@ -34,6 +32,9 @@ Términos que usan los módulos de las tres apps y el arnés, para quien llega d
 - **`stop_reason`:** campo de cada respuesta que dice por qué se detuvo el modelo. Puede tener varios valores, y el bucle lo consulta para decidir qué hacer a continuación.
 - **Historial:** la lista de mensajes que se reenvía completa en cada petición, con las peticiones de tools y sus resultados. El modelo no recuerda nada entre peticiones si no está en el historial.
 - **Contexto:** todo lo que el modelo tiene delante en una petición (*system prompt*, historial, definiciones de tools). Tiene un tamaño limitado y cada parte cuesta.
+- **`usage`:** el campo de cada respuesta de la Messages API con los tokens que ha consumido esa petición: los de entrada (`input_tokens`, y aparte los de caché) y los de salida (`output_tokens`). El arnés calcula el coste a partir de él.
+- **Tokens de entrada:** los que el modelo lee en una petición: el *system prompt*, las definiciones de las tools y el historial que se reenvía. La API los informa en el `usage` de la respuesta.
+- **Recorte (*trimming*):** quitar de un resultado de tool los campos que la tarea no usa antes de que entre en el historial (`app1/07`). Es distinto de resumir el historial después.
 - **`max_turns`:** número máximo de turnos de una ejecución del SDK. En este proyecto es una red de seguridad, no la forma de decidir cuándo parar.
 - **`tool_choice`:** parámetro de la petición que controla cuánta libertad tiene el modelo para decidir si llama a una tool y a cuál. Admite varios modos (`auto`, `any` o una tool concreta); qué garantiza cada uno se practica en `app1/05`.
 - **Scoping (acotar tools):** decidir qué tools ve cada agente según su tarea, en lugar de darle todas las disponibles.

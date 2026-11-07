@@ -707,7 +707,8 @@ Términos comunes en el [glosario](../docs/glosario.md): tool, historial, `usage
 - **El sistema:** un agente de inventario de TI de una empresa ficticia, con un bucle escrito a mano sobre la Messages API (como en `01`). Los datos son ocho equipos sintéticos con 40 campos cada uno (`inventario_equipos.json`); solo cinco responden a las preguntas del módulo.
 - **Recorte (*trimming*):** quitar de un resultado de tool los campos que no hacen falta antes de que entre en el historial. Aquí lo hace el propio código de la tool.
 - **Campo relevante:** el que la tarea usa para responder. Lo fija el código (`KEEP_FIELDS`), no el modelo.
-- **Tokens de entrada:** los que el modelo lee en una petición, que la API informa en el `usage` de la respuesta. Como cada petición reenvía el historial completo, lo que entra una vez se paga en todas las siguientes.
+- **Tokens de entrada:** los que el modelo lee en una petición (el *system prompt*, las definiciones de las tools y el historial), que la API informa en el `usage` de la respuesta. El módulo suma también los de caché.
+- **Comprobación de la respuesta:** el código da por correcta la primera respuesta si el primer equipo que nombra (por ID o por nombre) es el esperado, y la segunda si contiene el número de solicitudes abiertas de ese equipo. Límite: no distingue «es X, no Y» de «es Y, no X».
 
 ### Las tools del ejercicio
 
@@ -727,9 +728,10 @@ Se hacen dos preguntas en la misma conversación. La primera pide el equipo con 
 
 Con tus palabras; no hay un número que acertar:
 
-1. Petición a petición, ¿cómo crecen los tokens de entrada en cada variante? ¿Qué le pasa a la petición de la segunda pregunta, que no llama a ninguna tool?
-2. ¿Puede cambiar la respuesta correcta al recortar a cinco campos? ¿De qué depende que no cambie?
-3. De lo que mide el módulo, ¿qué esperas que salga casi igual en cada ejecución y qué puede variar? Piensa en quién decide cuántas peticiones se hacen.
+1. Petición a petición, ¿qué forma tiene la curva de tokens de entrada en cada variante? ¿Dónde esperas el máximo de una conversación, y por qué ahí?
+2. Cada resultado recortado tiene 8 veces menos campos. ¿Esperas que el total de tokens baje en esa misma proporción, en más o en menos? ¿Qué partes de cada petición no cambian al recortar?
+3. Sin recorte, el modelo tiene delante 35 campos que la pregunta no usa. ¿Crees que eso cambia si acierta? ¿Qué tendría que pasar para que fuera el recorte el que rompiera la respuesta?
+4. De lo que mide el módulo, ¿qué esperas que salga casi igual en cada ejecución y qué puede variar? Piensa en quién decide cuántas peticiones se hacen.
 
 ### Ejecutar
 
@@ -757,11 +759,12 @@ Haiku 5.5 (2026-11-07, 5 ejecuciones por variante). En todas hubo 11 peticiones:
 | correcta | 5 | 14 741 – 15 073 | 2 036 – 2 106 | 5/5 y 5/5 |
 | `sin_recorte` | 40 | 52 788 – 55 849 | 9 046 – 9 536 | 5/5 y 5/5 |
 
-- **Estable:** el recorte es determinista y la diferencia de tokens es de unas 3,6 veces en el total y de unas 4,4 en el máximo. La petición de la segunda pregunta paga todo lo acumulado en la primera.
-- **Sin pérdida de acierto:** con cinco campos ambas respuestas son correctas en 5/5, porque la pregunta solo usa esos campos. Recortar un campo que la pregunta necesita sí lo rompería (es la prueba del modo normal).
-- **Lo que decide el modelo:** cuántas peticiones hace. Se le pidió una consulta por turno y lo cumplió en las 10 ejecuciones; si hubiera pedido varias a la vez, la curva por petición sería más corta pero el total seguiría creciendo igual.
+- **Estable:** el recorte es determinista y la diferencia de tokens es de unas 3,6 veces en el total y de unas 4,4 en el máximo, menos que la proporción de campos porque (lectura propia) el *system prompt*, las tools, las preguntas y las respuestas pesan igual en las dos variantes. El máximo llega al final: la petición de la segunda pregunta, que no llama a ninguna tool, lleva todo lo acumulado en la primera.
+- **Sin pérdida de acierto, en ninguna de las dos:** con cinco campos ambas respuestas son correctas en 5/5, porque la pregunta solo usa esos campos. Sin recorte también lo son, así que la medida no muestra que los campos sobrantes empeoren la respuesta: la señal del módulo es de tokens, no de calidad. Que recortar un campo necesario la rompa es lo previsible, pero no se ha medido (es la prueba del modo normal).
+- **Lo que decide el modelo:** cuántas peticiones hace. Con menos peticiones (varias consultas en una), el total bajaría en las dos variantes; lo que el recorte cambia es cuánto pesa cada resultado en todas las peticiones que vienen detrás.
+- **Límite de la comprobación:** cuenta el primer equipo que se nombra, porque la respuesta correcta suele añadir «le siguen…» con otros equipos. Las dos correcciones que tuvo (la primera medida daba 0/10 con respuestas correctas) están en [`docs/hallazgos.md`](../docs/hallazgos.md), tanda D.
 
-Producto observado (no evaluable): la comprobación de la respuesta mira qué equipo se nombra primero, porque la respuesta correcta suele añadir «le siguen…» con otros equipos.
+Producto observado (no evaluable): se le pidió una consulta por turno y Haiku 5.5 lo cumplió en las 10 ejecuciones (11 peticiones en todas).
 
 Clasificación por tipo de señal en [`docs/tipos-de-senal.md`](../docs/tipos-de-senal.md): el recorte es determinista y los tokens medidos son probabilísticos con control positivo.
 </details>
@@ -773,12 +776,17 @@ Un agente de pedidos consulta una tool que devuelve más de 40 campos por pedido
 - A. Indicar en el *system prompt* que el agente ignore los campos que no necesita y que no los mencione en sus respuestas a los clientes.
 - B. Resumir el historial completo cada cinco peticiones, sustituyendo los resultados de tools antiguos por una frase corta de lo que contenían.
 - C. Cambiar a un modelo con una ventana de contexto mayor, para que quepan los resultados completos de todos los pedidos consultados.
-- D. Recortar la salida de la tool a los campos relevantes antes de que el resultado se añada al historial de la conversación.
+- D. Recortar en el código la salida de la tool a los campos relevantes antes de que el resultado se añada al historial de la conversación.
 
 <details>
 <summary>Paso 4 · Respuesta</summary>
 
-**D.** Los resultados de las tools se acumulan en el contexto y gastan tokens en proporción a su tamaño y no a su utilidad; la solución es recortarlos a los campos relevantes antes de que se acumulen (TS 5.1-K3, TS 5.1-S3). A no libera nada: el modelo lee igualmente esos campos y el cliente los paga en cada petición. B actúa después de que los tokens ya se hayan gastado y la sumarización progresiva puede condensar valores numéricos en frases vagas (TS 5.1-K1). C no corrige el consumo desproporcionado, solo retrasa el límite.
+**D.** Los resultados de las tools se acumulan en el contexto y consumen tokens de forma desproporcionada a lo que aportan (TS 5.1-K3); la destreza es recortarlos a los campos relevantes antes de que se acumulen (TS 5.1-S3).
+
+- **A** deja los 40 campos en el historial: el modelo los sigue leyendo en cada petición, así que no reduce el consumo (inferencia a partir de 5.1-K3).
+- **B** actúa cuando los resultados ya se han acumulado, y resumir arriesga condensar cifras, fechas y estados en frases vagas (TS 5.1-K1).
+- **C** no corrige el consumo desproporcionado: solo retrasa el momento de llegar al límite.
+- **D** recorta en el punto que pide la guía, antes de que el resultado entre en el contexto.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
