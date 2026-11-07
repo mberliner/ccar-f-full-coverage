@@ -4,6 +4,7 @@ import json
 
 import pytest
 
+from datos.generar_sinteticos import build_all
 from app2_agente_con_control.servers.helpdesk import (
     HelpdeskState,
     SERVER_NAME,
@@ -110,3 +111,40 @@ def test_server_config():
 @pytest.mark.parametrize("amount", [120.0, 500.0, 500.01])
 def test_reimbursement_tickets_exist(amount):
     assert reimbursement_ticket(amount)["amount_eur"] == amount
+
+
+def test_name_lookup_is_opt_in_so_the_other_modules_keep_their_tools():
+    # `app2/04` la activa; el resto de módulos de app2 no debe ver una tool más.
+    _, default = tools()
+    _, with_lookup = tools(lookup=True)
+    assert "find_employee_by_name" not in default
+    assert set(with_lookup) - set(default) == {"find_employee_by_name"}
+
+
+def test_name_lookup_returns_every_homonym_and_never_picks_one():
+    # TS 5.2-K4: una búsqueda con varias coincidencias las devuelve todas, para que el agente pida un identificador.
+    _, t = tools(lookup=True)
+    outcome = call_tool(t["find_employee_by_name"], {"name": "Laura Gómez"})
+    data = payload(outcome)
+    assert not outcome.is_error
+    assert data["match_count"] == 2
+    assert {m["user_id"] for m in data["matches"]} == {"EMP-1004", "EMP-1018"}
+    assert {m["department"] for m in data["matches"]} == {"Finanzas", "Ventas"}
+    assert "user_id" not in data, "el servidor no elige por el agente"
+
+
+def test_name_lookup_with_a_single_match_and_with_none():
+    _, t = tools(lookup=True)
+    users = json.loads(build_all()["usuarios.json"])
+    unique = next(u for u in users if sum(v["name"] == u["name"] for v in users) == 1)
+    one = payload(call_tool(t["find_employee_by_name"], {"name": unique["name"].upper()}))  # sin distinguir mayúsculas
+    assert one["match_count"] == 1 and one["matches"][0]["user_id"] == unique["user_id"]
+    none = call_tool(t["find_employee_by_name"], {"name": "Nadie Inexistente"})
+    assert not none.is_error, "sin coincidencias es un resultado vacío válido, no un fallo (TS 2.2)"
+    assert payload(none)["match_count"] == 0
+
+
+def test_name_lookup_does_not_verify_the_employee():
+    state, t = tools(lookup=True)
+    call_tool(t["find_employee_by_name"], {"name": "Laura Gómez"})
+    assert state.verified == set()

@@ -68,9 +68,12 @@ def reimbursement_ticket(amount: float) -> dict[str, Any]:
     return next(t for t in load("tickets.json") if t["amount_eur"] == amount)
 
 
-def make_tools(state: HelpdeskState, *, gate: bool = True, handoff: str = "structured") -> list[SdkMcpTool[Any]]:
+def make_tools(
+    state: HelpdeskState, *, gate: bool = True, handoff: str = "structured", lookup: bool = False
+) -> list[SdkMcpTool[Any]]:
     """Tools del servidor. `gate=False` quita la puerta programática (anti de app2/01);
-    `handoff="free_text"` cambia el escalamiento a texto libre (anti de app2/05)."""
+    `handoff="free_text"` cambia el escalamiento a texto libre (anti de app2/05);
+    `lookup=True` añade la búsqueda por nombre que usa `app2/04` (el resto de módulos no la ve)."""
 
     @tool(
         "verify_employee",
@@ -188,7 +191,28 @@ def make_tools(state: HelpdeskState, *, gate: bool = True, handoff: str = "struc
             state.escalations.append(dict(args))
             return ok({"escalated": True, "ticket_id": args["ticket_id"]})
 
-    return [verify_employee, get_ticket, list_employee_tickets, search_kb, process_reimbursement, escalate_to_human]
+    tools_list = [verify_employee, get_ticket, list_employee_tickets, search_kb, process_reimbursement, escalate_to_human]
+    if not lookup:
+        return tools_list
+
+    @tool(
+        "find_employee_by_name",
+        "Busca empleados por nombre completo (sin distinguir mayúsculas). Devuelve todas las coincidencias con "
+        "ID, nombre y departamento; no verifica a nadie. Si hay más de una, no hay forma de saber cuál es.",
+        {"type": "object", "properties": {"name": {"type": "string"}}, "required": ["name"]},
+    )
+    async def find_employee_by_name(args: dict[str, Any]) -> dict[str, Any]:
+        wanted = args["name"].strip().lower()
+        matches = [
+            {"user_id": u["user_id"], "name": u["name"], "department": u["department"]}
+            for u in load("usuarios.json")
+            if u["name"].lower() == wanted
+        ]
+        # Sin coincidencias es un resultado vacío válido, no un fallo (TS 2.2); el
+        # servidor nunca elige entre varias: eso es lo que enseña 5.2-K4.
+        return ok({"match_count": len(matches), "matches": matches})
+
+    return [*tools_list, find_employee_by_name]
 
 
 def build_server(state: HelpdeskState, **kwargs: Any) -> Any:
