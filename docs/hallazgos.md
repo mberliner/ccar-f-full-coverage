@@ -192,16 +192,18 @@ CLI instalada 2.1.319 y CLI incluida en el SDK fijado (`claude-agent-sdk` 0.2.17
   - **El `total_cost_usd` es acumulado**, como en el SDK (✓ roadmap §4.3): generador 0,001186 $, primer `resume` 0,001464 $ (propio 0,000278 $, recalculado desde `usage`), segundo `resume` 0,001528 $ (se suma al anterior, porque `resume` sin `--fork-session` modifica la sesión). Con la CLI del SDK, igual (0,001032 → 0,001272 → 0,001334).
   - **`--max-budget-usd` no cuenta ese histórico:** con 0,0013 $ de tope y 0,0018 $ ya acumulados, un `resume` de dos turnos terminó con `success` (0,0022 $ acumulados, 0,0005 $ propios). El tope de una rama con `--resume` lo tiene que llevar el arnés: coste de cada invocación = diferencia de acumulados, y el flag de la siguiente = tope de la rama − gastado (`headless.Ledger`). → roadmap §4.3 y §5
 
-### `app3/10`, confianza y revisión (tanda C, 2026-11-06)
+### `app3/10`, confianza y revisión (tanda C, 2026-11-06) · antes de las correcciones C4
 
 - **Parte `poblacion` (sin modelo, simulada):** exactitud global 97,7 % de 1752 valores y 62,5 % en el tipo raro (72 valores, 27 errores de 41); facturas en prosa, `issue_date`, 86,0 %. Un umbral por tipo y campo automatiza 765 valores con 6 errores (0,8 %) y ninguno del tipo raro (6 documentos por conjunto: `insufficient_data`); `--anti precision_agregada`: 805 con 17 errores (11 del tipo raro); `--anti confianza_global`: 780 con 14 errores (8 del tipo raro). Muestra de 60: error del tipo raro visto en el 53,4 % de las simples y el 100 % de las estratificadas (500 repeticiones). Cola con capacidad 6 de 25: por confianza 8 de 16 errores de extracción y 1 de 11 conflictos; por prioridad, 0 y 6.
 - **Parte `confianza_modelo` (Messages API, 12 documentos × 3):** Haiku 5.5 (~0,014 $) 0 errores en 153 valores extraídos, nada que calibrar. Haiku 4.5 sin reglas de formato (~0,13 $): 6, 7 y 8 errores por repetición, casi todos de fecha, con confianza ≥ 0,85 en 5, 7 y 7; la banda 0,97–1,00 acierta el 85,5 % y declara 99,5 %.
 - **La confianza de un campo que el modelo deja en `null` habla de la ausencia, no del valor:** 0,64–0,65 de media con Haiku 5.5 y 0,32 con Haiku 4.5, aunque el `null` fuera correcto. Mezclada con los valores extraídos daba un hueco de calibración de 0,137 con Haiku 5.5 que era un artefacto de la medida; se mide aparte (`Cell.value_present`).
 - **Haiku 5.5 sin errores:** la señal solo existe con el rol `enforcement` y quitando las reglas de formato (protocolo de las tandas A y B). Coste de las ejecuciones con modelo de `10`: ~0,16 $.
 
-### `app3/11`, criterios y revisión en CI (tanda C, 2026-11-06)
+### `app3/11`, criterios y revisión en CI (tanda C, 2026-11-06) · antes de las correcciones C4
 
-Sonnet 5.5 (rol `reviewer`), `claude -p` aislado con `harness/headless.py`; ~0,02 $ por ejecución y ~1,1 $ en total, con las ejecuciones de prueba. Hubo dos cambios de lo medido, y las cifras van marcadas: **antes**, cuatro fallos sembrados (A a D) y una puntuación por línea (±2); **después**, un quinto fallo entre archivos (F, añadido para `app3/12`) y una puntuación que también reconoce el símbolo del fallo.
+> Todas las cifras de esta sección y de la siguiente son **antes de las correcciones C4**: el revisor leía el árbol del segundo commit, la clave de un escenario de test no incluía lo que espera, la coincidencia por símbolo era laxa y `TIMEOUT` estaba duplicado en los datos. Las cifras «después» están en «tanda C4».
+
+Sonnet 5.5 (rol `reviewer`), `claude -p` aislado con `harness/headless.py`; ~0,02 $ por ejecución y ~1,0 $ en total (corregido en C4: ver «Costes reconciliados»; antes decía ~1,1 $). Hubo dos cambios de lo medido, y las cifras van marcadas: **antes**, cuatro fallos sembrados (A a D) y una puntuación por línea (±2); **después**, un quinto fallo entre archivos (F, añadido para `app3/12`) y una puntuación que también reconoce el símbolo del fallo.
 
 - **Revisión del primer commit.**
   - Correcta, antes (8 ejecuciones): A a D en 7 de 8 (A, los argumentos intercambiados, se pierde en 1), 0 falsos positivos y el cambio correcto (el comentario de `REINTENTOS`) marcado en 3 de 8. Después (2): A a D y F en 2 de 2, cambio correcto marcado en 2 de 2.
@@ -214,7 +216,9 @@ Sonnet 5.5 (rol `reviewer`), `claude -p` aislado con `harness/headless.py`; ~0,0
 - **El modelo cita las líneas de forma aproximada (3–5 de más):** con una ventana de ±2 líneas, un acierto con la línea desplazada contaba como falso positivo (se vio con `sin_ejemplos`, donde el «falso positivo» era F). La puntuación reconoce ahora también el símbolo, con un test de cada caso. Las cifras «antes» no se recalcularon. → roadmap §4.3
 - Medida por caso y no por texto: cada hallazgo se puntúa contra un fallo etiquetado; una marca del cambio correcto no se cuenta como falso positivo, sino aparte.
 
-### `app3/12`, revisión independiente: batería de la autorrevisión (tanda C, 2026-11-06)
+### `app3/12`, revisión independiente: batería de la autorrevisión (tanda C, 2026-11-06) · antes de las correcciones C4
+
+> Las dos mediciones de esta sección («Antes» y «Después» de la batería) son **antes de las correcciones C4**. En ellas la sesión generadora conservaba el cambio en el historial de su repositorio, el diff generado no veía archivos nuevos y la fusión de pasadas podía perder un hallazgo distinto. Las cifras de `una_pasada` y de la instancia nueva tras C4 están en «tanda C4».
 
 Dos mediciones del mismo módulo. **Antes:** la de la tanda C, con 3 ejecuciones de instancia nueva y 2 de autorrevisión, y `autorrevision_explicita` sin medir. **Después:** la batería de esta tarea, 5 + 5 + 5, con la misma versión del código y de la puntuación en las tres ramas. Son cifras de producto observado (no evaluable); la respuesta de examen es la de la guía.
 
@@ -259,3 +263,80 @@ Total de la batería: **1,90 $**. Una pasada cuenta para «archivo» si salió e
 | `--anti autorrevision_explicita` | `Sin señal estable` (hoy `Sin medir`) | Se midió: 5/5 ejecuciones, las mismas cifras. La frase añadida no cambió lo encontrado. Ya no es `Sin medir`. |
 
 Lo que queda sin señal: la tesis central de la viñeta (4.6-K1/K2, 3.6-K4): que quien generó el código lo revise peor. Con estos fallos y este montaje no se ve, y la respuesta de examen sigue siendo la de la guía.
+
+
+## Entrega 3 · tanda C4, medición tras las correcciones de código (2026-11-07)
+
+Sonnet 5.5 (rol `reviewer`) con `claude -p` aislado y CLI 2.1.309 del SDK; Haiku 4.5 (rol `enforcement`) para la parte con modelo de `app3/10`. Mismo commit y **misma puntuación en toda la batería** (el código no se tocó mientras corrían). Correcciones medidas: cada revisión corre sobre un árbol en el commit que revisa y sin `.git` (antes, el del segundo commit); la clave de un escenario de test incluye lo que espera; el símbolo se compara como nombre completo y la línea manda sobre él; `TIMEOUT` ya no está duplicado (`NOTIF_TIMEOUT`); `--sin-categoria comment` quita solo esa categoría; `confianza_global` usa un umbral por segmento; el diff generado de `12` incluye los archivos nuevos y su repositorio no guarda el cambio. Cada cifra «antes» está en las secciones de arriba (marcadas «antes de las correcciones C4»).
+
+**Coste real de esta batería: 1,52 $** (tope de la tarea, 4 $): `11` revisión 0,369 $, `11` tests 0,258 $, `10` con modelo 0,129 $, `12` 0,761 $. Una primera tanda de `11` no llegó a ejecutarse (el proceso murió al lanzarla; 0 $).
+
+### `app3/11 --parte revision` (5 ejecuciones por variante, fallos sembrados A, B, C, D y F)
+
+| Variante | Fallos encontrados | Falsos positivos | Marcó lo correcto | Coste | Antes (C4) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| correcta | las 5 en **5/5** (25/25) | 0 | **5/5 ejecuciones** (3 veces el comentario de `REINTENTOS`, 2 el renombrado a `NOTIF_TIMEOUT`) | 0,096 $ | A a D en 7 de 8; marca 3 de 8 (8 ejecuciones) |
+| `--anti conservador` | las 5 en **5/5** | 0 | **0/5** | 0,085 $ | A se pierde 2 de 8; sin diferencia |
+| `--anti sin_ejemplos` | **24/25** (B falta en 1) | 0 | 4/5 (1 duplicado) | 0,098 $ | B falta 3 de 5; inestable |
+| `--sin-categoria comment` | **24/25** (C falta en 1) | 0 | **1/5** | 0,090 $ | C 3 de 3 como `bug`; seguía marcando |
+
+- **Qué cambió.** (a) «Marcó lo correcto» **sí separa variantes ahora**: 5/5 en la correcta y en `sin_ejemplos` (4/5), 0/5 con `conservador` y 1/5 sin la categoría `comment`. Antes `--sin-categoria comment` «solo reclasificaba» el hallazgo; ahora lo quita en 4 de 5 ejecuciones. (b) `conservador` ya no pierde A: encuentra todo y no marca el cambio correcto, al revés de lo que dice la guía sobre «sé conservador» (4.1-K2). Hipótesis **sin comprobar**: esa variante sustituye todos los criterios, también el de comentarios, que es el que invita a revisar la justificación de `REINTENTOS`; lo que desaparece sería el criterio, no la prudencia. Con n = 5 es una pista, no una prueba, y la respuesta de examen sigue siendo la de la guía. (c) La variante `comment` pierde C en 1 de 5: el modelo marcó el renombrado como `bug` y no el comentario.
+- **Efecto no previsto del arreglo de `TIMEOUT`:** 4 de las 20 ejecuciones (2 de la correcta, 1 de `sin_ejemplos` y 1 de `comment`) señalan que renombrar a `NOTIF_TIMEOUT` rompería a quien lo importara. No es un fallo (no hay nadie que lo importe). Se puntúa como marca del cambio correcto porque cita la línea 6, la del señuelo; sube un poco la cifra de «marcó lo correcto» y no cambia los fallos encontrados.
+- **`detected_pattern`:** sigue cambiando casi cada vez para la misma marca (`misleading_comment`, `dubious_comment`, `comment_does_not_match_code`…); no se normalizó.
+- **Sin rehacer:** la segunda revisión (`--parte rerevision`) no está en este alcance y queda con las cifras de «antes»; su árbol (el estado final) ya era el correcto, pero la puntuación por símbolo es la nueva.
+
+### `app3/11 --parte tests` (5 ejecuciones por variante, puntuando `expected`)
+
+| Variante | Tests propuestos por ejecución | Escenarios repetidos | Sobre lo que cambió | Coste |
+| :--- | :--- | :--- | :--- | :--- |
+| correcta | 8, 8, 8, 7, 7 | **0** en 5/5 | 6, 7, 6, 6, 6 (31 de 38) | 0,095 $ |
+| `--anti sin_tests_existentes` | 8, 8, 8, 9, 8 | **0** en 5/5 | 0, 6, 6, 7, 6 (25 de 41) | 0,077 $ |
+| `--anti sin_estandares` | 12, 9, 10, 10, 10 | **0** en 5/5 | 8, 7, 7, 7, 7 (36 de 51) | 0,087 $ |
+
+- **«Al revés de lo esperado» desapareció, y no por una señal a favor de la guía:** con los tests existentes en el contexto 0 repetidos y sin ellos 0 (antes 1 y 0). Puntuar lo que espera lo explica: el cambio pasa las horas a minutos, así que quien actualiza un test roto ya no repite el escenario. Los existentes son justo los que el cambio rompe, de modo que la métrica no puede mostrar 3.6-S4. Queda sin señal (0 frente a 0), no a favor.
+- **Señal nueva y en el sentido de la guía (3.6-S5):** sin los estándares en el `CLAUDE.md` el modelo propone **más tests** en 5 de 5 ejecuciones (9–12 frente a 7–8 de la correcta, sin solapamiento) y una proporción algo menor sobre lo que cambió (71 % frente a 82 %). Es una diferencia de cantidad, no de duplicados; los estándares piden un test por escenario y `parametrize`, que es coherente con menos tests. No se midió si los tests extra aportan menos.
+- `sin_tests_existentes`, ejecución 1: 8 tests y 0 sobre lo que cambió (en las otras cuatro, 6 o 7). Sin explicar.
+
+### `app3/10` (sin modelo, con el umbral por segmento) y parte con modelo
+
+| Variante (`--parte poblacion`) | Automatizado | Errores entre lo automatizado | Del tipo raro | Antes (C4) |
+| :--- | :--- | :--- | :--- | :--- |
+| correcta | 765 valores | 6 (0,8 %) | 0 | igual |
+| `--anti precision_agregada` | 805 | 17 (2,1 %) | 11 (34 valores raros aceptados) | igual |
+| `--anti confianza_global` | **768** | **8 (1,0 %)** | **0** | 780, 14 (1,8 %), 8 raros |
+
+- **Cambia una señal:** con un umbral por segmento, la confianza por documento **ya no deja pasar el tipo raro** (0 frente a 8) y solo añade 2 errores a los 6 de la correcta. Lo que dejaba pasar al tipo raro era el **umbral global único**, no la confianza por documento. La lección de `confianza_global` (la media por documento esconde el campo dudoso) queda con una diferencia pequeña (8 frente a 6 errores, 768 frente a 765 automatizados), en el límite de lo que muestra una sola población simulada.
+- **Muestreo (sin cambios):** error del tipo raro visto en el 53,4 % de las muestras simples y el 100 % de las estratificadas (500 repeticiones, muestra de 60 de 871). Nuevo: la **tasa de error real** del conjunto de confianza alta es 2,0 %; la de la muestra simple, 1,8 %; la de la estratificada, **10,8 %** (sobre-representa el tipo raro, que tiene un mínimo por estrato), y **ponderada por el tamaño de cada estrato, 2,0 %**. Sin la ponderación, vigilar con una muestra estratificada sobreestima la tasa de error en 5 veces. La ponderada solo se define si todos los estratos tienen muestra, y la simple no lo garantiza (queda sin cifra).
+- **Parte con modelo (Haiku 4.5, `--sin-reglas-de-formato`, 3 × 12 documentos, 0,129 $):** 6, 7 y 7 errores por repetición, con confianza ≥ 0,85 en 5, 7 y 5 (antes 6, 7 y 8 y 5, 7 y 7). Banda 0,97–1,00: acierta el **82,9 %** y declara el 100 % (antes 85,5 % frente a 99,5 %); hueco de calibración 0,076. La confianza de los campos en `null` (0,21–0,33) sigue siendo la de la ausencia. Se mantiene la señal.
+
+### `app3/12 --parte revision` (5 ejecuciones por rama; fallos A, B, C, D y F)
+
+En las dos ramas la sesión generadora **escribió exactamente el cambio dado** (93 líneas, 4 archivos; la nueva línea «no crees ningún otro archivo» del prompt generador no se probó sin ella, así que no se sabe si evitó que añadiera uno como en la medida anterior).
+
+| Rama | Fallos encontrados | Por archivo / solo por integración | Falsos positivos | Marcó lo correcto | Coste |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| instancia nueva | las 5 en **5/5** (25/25) | A, B, C 5/5; D 3/5 y F 1/5 por archivo; solo por integración D 2/5, F 4/5 | 0 | 1 en 5 ejecuciones | **0,498 $** (generador 0,047 $ + ~0,090 $ por revisión) |
+| `--anti una_pasada` | **24/25** (C falta en 1) | una única pasada | 0 | 6 en 5 ejecuciones | **0,263 $** (generador 0,050 $ + ~0,042 $ por revisión) |
+
+- **El contraste que faltaba a 4.6-K3/S2 no aparece con este diff:** una única pasada larga sobre todo el diff encuentra D y F en 5/5 (la instancia nueva por pasadas, 5/5 también), y cuesta **2,1 veces menos** por revisión (0,042 $ frente a 0,090 $). A 93 líneas y cinco fallos no se ve la atención diluida que describe la guía; el reparto en pasadas cuesta el doble. Lo que sí se mantiene es la pauta de dónde salen D y F con la instancia nueva: la pasada por archivo ve D en 3 de 5 y F en 1 de 5, y la de integración completa D (2 de 5) y F (4 de 5); es la misma pauta que antes (D 1/5 y 4/5; F 0/5 y 5/5), con la misma explicación (la pasada de archivo no ve a los llamadores). Respuesta de examen: manda la guía (4.6-K3, S2), el reparto es lo que prescribe y esto **no lo respalda como mejora medida** en un diff tan pequeño.
+- **`una_pasada` marca más el cambio correcto** (6 marcas frente a 1), y la verificación lo distingue: en la banda de confianza 0,00–0,50 hay 5 hallazgos y ninguno coincide con un fallo sembrado (la verificación decía 23 %); en las otras bandas acierta el 94–100 %. Hueco de calibración 0,129 (frente a 0,215 de la instancia nueva, que se queda corta: 0,00–0,50 y 100 % de aciertos). Aquí la confianza sí separa algo.
+- **La instancia nueva con el diff exacto** (la medida anterior la había hecho sobre un diff de 125 líneas con un archivo de tests añadido por el generador): ya hay una rama sobre el mismo diff. D y F por integración, 2/5 y 4/5, es consistente con «antes» (4/5 y 5/5).
+
+### Costes reconciliados
+
+- **Sonda C1: ~0,4 $ (`hallazgos.md`) o ~0,3 $ (`NOTAS.md`).** No se puede sumar: la sonda no dejó un registro por ejecución, solo los costes de las pruebas de coste y de `--resume` (centésimas de céntimo cada una) y la matriz de aislamiento, cuyo coste no se anotó. Se deja **~0,4 $**, la cifra del registro detallado, y se anota que ~0,3 $ en `NOTAS.md` era una estimación anterior. Es la menos segura de las dos reconciliaciones.
+- **`app3/11`: ~1,0 $ (README) o ~1,1 $ (`hallazgos.md`, `NOTAS.md`).** Sumando las ejecuciones registradas en `hallazgos.md` hay 49 revisiones (10 de la correcta, 8 de `conservador`, 10 de `sin_ejemplos`, 3 de `comment`, 6 de la segunda revisión y 12 de tests). A ~0,02 $ cada una (0,017–0,022 $ medidas ahora, más ~0,01 $ de la sonda de contexto por invocación) salen **~1,0 $**; el ~1,1 $ incluía las ejecuciones de prueba que no están registradas. Se deja ~1,0 $.
+- **Coste real total de la tanda C:** C (sonda ~0,4 $, `10` ~0,16 $, `11` ~1,0 $, `12` ~1,3 $) ≈ **2,9 $**, más la batería de `autorrevision` (1,90 $), más esta batería C4 (1,52 $): **≈ 6,3 $ en total.**
+
+### Filas propuestas para `docs/tipos-de-senal.md` (sin aplicar; las aplica Opus)
+
+| Parte | Tipo propuesto | Por qué |
+| :--- | :--- | :--- |
+| `app3/10` `--parte poblacion` | `Determinista` (cambian las cifras de `confianza_global`) | Ahora 768 valores y 8 errores (0 del tipo raro) en lugar de 780 y 14 (8 raros); el resto, igual; la cifra nueva de la tasa de error estimada con la muestra estratificada (10,8 % cruda y 2,0 % ponderada). |
+| `app3/11` `--parte revision` (correcta) | `Probabilística con control positivo` | Encuentra las cinco en 5/5 y marca el cambio correcto en 5/5 ejecuciones (0,019 $ por ejecución); el control positivo es la correcta. |
+| `app3/11` `--anti conservador` | `Probabilística con control positivo` **o** `Sin señal estable` (decide el pase de textos) | Con n = 5: 0 marcas del cambio correcto frente a 5/5 y sin perder fallos. Va contra la guía; la hipótesis (desaparece el criterio de comentarios, no la prudencia) no está comprobada. La clasificación prudente es `Sin señal estable` mientras no se separe el criterio de la instrucción. |
+| `app3/11` `--anti sin_ejemplos` | `Sin señal estable` | B falta en 1 de 5; marca 4/5; no se separa de la correcta. |
+| `app3/11` `--sin-categoria comment` | `Probabilística con control positivo` | Cambia lo que antes no cambiaba: 1/5 marcas frente a 5/5 de la correcta, con C perdido en 1/5 (el modelo lo marcó como `bug`). Cambia el texto de la fila: «Sin efecto» deja de ser verdad. |
+| `app3/11` `--parte tests` | `Sin señal estable` | 0 repetidos en las tres ramas, también sin los tests existentes: 3.6-S4 no se ve con esta métrica. Sí hay una señal de 3.6-S5: sin estándares, 9–12 tests por ejecución frente a 7–8, 5/5. |
+| `app3/12` `--parte revision` (instancia nueva) | `Probabilística con control positivo` | Cinco fallos en 5/5; D y F salen por integración (2/5 y 4/5) y rara vez por archivo (3/5 y 1/5). |
+| `app3/12` `--anti una_pasada` (nueva) | `Sin señal estable` | 24/25: una pasada larga no encuentra menos y cuesta 2,1 veces menos. El efecto de 4.6-K3/S2 no se ve a este tamaño de diff. |
