@@ -174,8 +174,9 @@ def test_auto_error_rate_with_segmented_vs_aggregate_gate_on_production():
 def test_document_level_confidence_lets_through_a_bad_field_that_field_level_catches():
     # Un documento con un campo dudoso (0.4) y cinco seguros: la media sigue alta.
     cells = [cell(0.4, False, field="issue_date", record="D", doc_conf=0.86)] + [cell(0.97, True, field=f, record="D", doc_conf=0.86) for f in FIELDS[:5] if f != "issue_date"]
-    by_field, review_field = mod.auto_accept(cells, {(c.doc_type, c.field): 0.85 for c in cells}, level="campo")
-    by_doc, review_doc = mod.auto_accept(cells, 0.85, level="documento")
+    thresholds = {(c.doc_type, c.field): 0.85 for c in cells}
+    by_field, review_field = mod.auto_accept(cells, thresholds, level="campo")
+    by_doc, review_doc = mod.auto_accept(cells, thresholds, level="documento")
     assert [c.field for c in review_field] == ["issue_date"]
     assert review_doc == [] and len(by_doc) == len(cells), "el campo malo pasa porque el documento, en conjunto, parece seguro"
 
@@ -185,8 +186,8 @@ def test_field_level_routing_on_the_population_reduces_auto_errors():
     production = mod.build_cells(POP, LABELS, split="produccion")
     plan = mod.automation_plan(calibration, key=lambda c: (c.doc_type, c.field), target=0.98, min_n=20, aggregate=False)
     field_auto, _ = mod.auto_accept(production, plan, level="campo")
-    doc_threshold = mod.pick_threshold(calibration, target=0.98, min_n=20, by="doc_confidence")
-    doc_auto, _ = mod.auto_accept(production, doc_threshold, level="documento")
+    doc_plan = mod.automation_plan(calibration, key=lambda c: (c.doc_type, c.field), target=0.98, min_n=20, aggregate=False, by="doc_confidence")
+    doc_auto, _ = mod.auto_accept(production, doc_plan, level="documento")
     assert mod.error_count(field_auto) < mod.error_count(doc_auto)
 
 
@@ -451,3 +452,93 @@ def test_confidence_tool_can_drop_the_format_rules_without_touching_the_confiden
     ruled = mod.confidence_tool()["input_schema"]["properties"]
     assert "ISO" not in plain["issue_date"]["description"] and "ISO" in ruled["issue_date"]["description"]
     assert plain["field_confidence"] == ruled["field_confidence"]
+
+
+# --- (5) `confianza_global` cambia una sola cosa: la confianza es la del documento; el umbral sigue siendo por segmento ---------------
+
+def test_document_level_still_uses_one_threshold_per_segment():
+    """Antes el modo documento usaba además un único umbral global: eran dos cambios a la vez."""
+    cells = [cell(0.5, True, doc="invoice", field="vendor", doc_conf=0.90), cell(0.5, True, doc="other", field="vendor", doc_conf=0.90)]
+    plan = {("invoice", "vendor"): 0.85, ("other", "vendor"): 0.95}
+    auto, review = mod.auto_accept(cells, plan, level="documento")
+    assert [c.doc_type for c in auto] == ["invoice"] and [c.doc_type for c in review] == ["other"], "mismo 0,90 de documento, umbrales distintos por segmento"
+
+
+def test_document_level_sends_a_segment_without_threshold_to_review_and_ignores_the_field_confidence():
+    cells = [cell(0.1, True, doc="other", doc_conf=0.99), cell(0.99, True, doc="invoice", doc_conf=0.10)]
+    auto, review = mod.auto_accept(cells, {("invoice", "vendor"): 0.85}, level="documento")
+    assert auto == [] and len(review) == 2, "sin umbral para `other`; y la confianza de campo (0,99) no cuenta en el nivel documento"
+
+
+def test_field_and_document_plans_differ_only_in_which_confidence_they_read():
+    calibration = mod.build_cells(POP, LABELS, split="calibracion")
+    key = lambda c: (c.doc_type, c.field)
+    by_field = mod.automation_plan(calibration, key=key, target=0.98, min_n=20, aggregate=False)
+    by_doc = mod.automation_plan(calibration, key=key, target=0.98, min_n=20, aggregate=False, by="doc_confidence")
+    assert set(by_field) == set(by_doc), "los mismos segmentos"
+    assert by_field == mod.automation_plan(calibration, key=key, target=0.98, min_n=20, aggregate=False, by="confidence")
+    assert by_doc == mod.thresholds_by(calibration, key, 0.98, 20, by="doc_confidence")
+
+
+def test_the_aggregate_plan_still_uses_a_single_shared_threshold_with_either_confidence():
+    calibration = mod.build_cells(POP, LABELS, split="calibracion")
+    plan = mod.automation_plan(calibration, key=lambda c: (c.doc_type, c.field), target=0.98, min_n=20, aggregate=True, by="doc_confidence")
+    assert len(set(plan.values())) == 1
+
+
+# --- (12) el muestreo estratificado no devuelve más de n ------------------------------------------------------------------
+
+def test_stratified_sample_rejects_a_minimum_that_does_not_fit_in_n():
+    """Falso negativo de antes: 10 estratos con mínimo 3 y n = 12 devolvía 30."""
+    items = [(f"s{k}", i) for k in range(10) for i in range(20)]
+    with pytest.raises(ValueError, match="no caben"):
+        mod.stratified_sample(items, 12, key=lambda x: x[0], min_per_stratum=3, rng=random.Random(1))
+
+
+def test_stratified_sample_never_returns_more_than_n_when_the_minimums_fit():
+    """Control: con n justo la suma de mínimos (30) la muestra tiene exactamente n."""
+    items = [(f"s{k}", i) for k in range(10) for i in range(20)]
+    assert len(mod.stratified_sample(items, 30, key=lambda x: x[0], min_per_stratum=3, rng=random.Random(1))) == 30
+    assert len(mod.stratified_sample(items, 50, key=lambda x: x[0], min_per_stratum=3, rng=random.Random(1))) == 50
+
+
+def test_a_small_stratum_counts_only_its_size_towards_the_minimums():
+    items = [("big", i) for i in range(100)] + [("rare", 1)]
+    assert len(mod.stratified_sample(items, 4, key=lambda x: x[0], min_per_stratum=3, rng=random.Random(2))) == 4
+
+
+# --- (12) tasa de error ponderada por el tamaño de cada estrato ------------------------------------------------------------
+
+def stratum_cells(n, errors, doc):
+    return [cell(0.95, i >= errors, doc=doc) for i in range(n)]
+
+
+def test_weighted_error_rate_weights_each_stratum_by_its_population_share():
+    population = stratum_cells(900, 9, "invoice") + stratum_cells(100, 50, "other")  # 1 % y 50 %: real 5,9 %
+    sample = stratum_cells(10, 0, "invoice") + stratum_cells(10, 5, "other")  # la muestra sobre-representa lo raro
+    assert mod.error_rate(sample) == pytest.approx(0.25), "la tasa de la muestra se infla"
+    assert mod.weighted_error_rate(sample, population, key=lambda c: c.doc_type) == pytest.approx(0.9 * 0.0 + 0.1 * 0.5)
+
+
+def test_weighted_error_rate_recovers_the_population_rate_when_each_stratum_is_sampled_exactly():
+    population = stratum_cells(900, 9, "invoice") + stratum_cells(100, 50, "other")
+    sample = stratum_cells(100, 1, "invoice") + stratum_cells(100, 50, "other")
+    assert mod.weighted_error_rate(sample, population, key=lambda c: c.doc_type) == pytest.approx(mod.error_rate(population), abs=0.001)
+
+
+def test_weighted_error_rate_is_undefined_when_a_stratum_has_no_sample():
+    """Sin muestra de un estrato no hay forma honesta de estimarlo: se devuelve None, no una cifra sesgada."""
+    population = stratum_cells(50, 1, "invoice") + stratum_cells(50, 5, "other")
+    assert mod.weighted_error_rate(stratum_cells(10, 0, "invoice"), population, key=lambda c: c.doc_type) is None
+    assert mod.weighted_error_rate([], population, key=lambda c: c.doc_type) is None
+    assert mod.weighted_error_rate(population, [], key=lambda c: c.doc_type) is None
+
+
+def test_sampling_experiment_reports_the_sample_rate_and_the_weighted_rate_of_each_scheme():
+    pool = auto_pool()
+    result = mod.sampling_experiment(pool, n=60, key=lambda c: (c.doc_type, c.field), min_per_stratum=3, trials=100, seed=7)
+    real = mod.error_rate(pool)
+    strat = result["estratificado"]
+    assert strat["tasa_muestra"] > real, "la estratificada sobre-representa lo raro: su tasa cruda sobrestima"
+    assert abs(strat["tasa_ponderada"] - real) < abs(strat["tasa_muestra"] - real), "ponderada, se acerca a la real"
+    assert result["simple"]["tasa_muestra"] == pytest.approx(real, abs=0.01)

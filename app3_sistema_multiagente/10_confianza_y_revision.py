@@ -216,11 +216,12 @@ def pick_threshold(cells: list[Cell], target: float, min_n: int, *, by: str = "c
     return None
 
 
-def thresholds_by(cells: list[Cell], key: Callable[[Cell], Any], target: float, min_n: int) -> dict[Any, float | None]:
+def thresholds_by(cells: list[Cell], key: Callable[[Cell], Any], target: float, min_n: int, *, by: str = "confidence") -> dict[Any, float | None]:
+    """Un umbral por segmento sobre la confianza `by` (`confidence`: la del campo; `doc_confidence`: la del documento)."""
     groups: dict[Any, list[Cell]] = defaultdict(list)
     for c in cells:
         groups[key(c)].append(c)
-    return {k: pick_threshold(group, target, min_n) for k, group in groups.items()}
+    return {k: pick_threshold(group, target, min_n, by=by) for k, group in groups.items()}
 
 
 # --- 5.5-K4, S2: validar por segmento antes de automatizar ------------------------------------------------------------
@@ -241,19 +242,21 @@ def segment_status(cells: list[Cell], key: Callable[[Cell], Any], *, target: flo
 
 
 def automation_plan(
-    calibration: list[Cell], *, key: Callable[[Cell], Any], target: float, min_n: int, aggregate: bool
+    calibration: list[Cell], *, key: Callable[[Cell], Any], target: float, min_n: int, aggregate: bool, by: str = "confidence"
 ) -> dict[Any, float | None]:
     """Umbral de automatización por segmento.
 
     Correcta (`aggregate=False`): uno por segmento, y `None` (todo a revisión) si no hay evidencia
     suficiente. `--anti precision_agregada` (`aggregate=True`): se mira solo la exactitud global y
     el mismo umbral vale para todos los segmentos, también para los que no se han validado.
+    `by` elige qué confianza se calibra: la de cada campo (`--anti confianza_global` usa la del documento,
+    y es lo único que cambia: los segmentos y el umbral por segmento son los mismos).
     """
     keys = {key(c) for c in calibration}
     if aggregate:
-        shared = pick_threshold(calibration, target, min_n)
+        shared = pick_threshold(calibration, target, min_n, by=by)
         return {k: shared for k in keys}
-    return thresholds_by(calibration, key, target, min_n)
+    return thresholds_by(calibration, key, target, min_n, by=by)
 
 
 # --- Enrutado: automático o a revisión -----------------------------------------------------------------------------
@@ -265,19 +268,17 @@ def auto_accept(
     """Reparte las celdas en (aceptadas sin revisión, a revisión).
 
     `level="campo"`: la confianza de cada campo contra el umbral de su segmento `(tipo, campo)`; un
-    segmento sin umbral va entero a revisión. `level="documento"` (`--anti confianza_global`): una
-    sola confianza por documento contra un único umbral. Con `force_review`, los documentos con
-    `conflict_detected` o ambiguos van a revisión aunque su confianza sea alta (5.5-S4).
+    segmento sin umbral va entero a revisión. `level="documento"` (`--anti confianza_global`): lo mismo,
+    pero con una sola confianza por documento (la media de sus campos) en lugar de la de cada campo; el
+    umbral sigue siendo el de cada segmento. Con `force_review`, los documentos con `conflict_detected`
+    o ambiguos van a revisión aunque su confianza sea alta (5.5-S4).
     """
     if level not in ("campo", "documento"):
         raise ValueError(f"nivel desconocido: {level}")
     auto, review = [], []
     for c in cells:
-        if level == "campo":
-            threshold = thresholds.get((c.doc_type, c.field))
-            confidence = c.confidence
-        else:
-            threshold, confidence = thresholds, c.doc_confidence
+        threshold = thresholds.get((c.doc_type, c.field))
+        confidence = c.confidence if level == "campo" else c.doc_confidence
         sure = threshold is not None and confidence is not None and confidence >= threshold
         if force_review and (c.conflict or c.ambiguous):
             sure = False
@@ -293,13 +294,19 @@ def simple_sample(items: list, n: int, rng: random.Random) -> list:
 
 
 def stratified_sample(items: list, n: int, *, key: Callable[[Any], Any], min_per_stratum: int, rng: random.Random) -> list:
-    """Un mínimo por estrato (o el estrato entero si es menor) y el resto en proporción a su tamaño."""
+    """Un mínimo por estrato (o el estrato entero si es menor) y el resto en proporción a su tamaño.
+
+    Si los mínimos suman más que `n`, se rechaza con `ValueError`: devolver más de lo pedido (10 estratos con mínimo 3 y
+    n = 12 daban 30) cambia el coste de la revisión sin avisar.
+    """
     strata: dict[Any, list] = defaultdict(list)
     for item in items:
         strata[key(item)].append(item)
     names = sorted(strata, key=str)
     n = min(n, len(items))
     floor = {name: min(min_per_stratum, len(strata[name])) for name in names}
+    if sum(floor.values()) > n:
+        raise ValueError(f"los mínimos por estrato no caben en la muestra: {len(names)} estratos suman {sum(floor.values())} y n = {n}")
     # Reparto proporcional al tamaño (mayor resto), con el mínimo como suelo y el tamaño como techo.
     raw = {name: n * len(strata[name]) / len(items) for name in names}
     quota = {name: min(len(strata[name]), max(floor[name], int(raw[name]))) for name in names}
@@ -320,20 +327,52 @@ def stratified_sample(items: list, n: int, *, key: Callable[[Any], Any], min_per
     return sample
 
 
+def weighted_error_rate(sample: list[Cell], population: list[Cell], *, key: Callable[[Cell], Any]) -> float | None:
+    """Tasa de error de la población estimada con una muestra estratificada: la de cada estrato, ponderada por su tamaño.
+
+    Un muestreo estratificado sobre-representa los estratos pequeños (el tipo raro tiene un mínimo garantizado), así que la tasa
+    cruda de la muestra no es la de la población. Cada estrato pesa `N_h / N`. Sin muestra de algún estrato no hay estimación
+    honesta y devuelve `None`.
+    """
+    if not population:
+        return None
+    sizes = Counter(key(c) for c in population)
+    drawn: dict[Any, list[Cell]] = defaultdict(list)
+    for c in sample:
+        drawn[key(c)].append(c)
+    if any(name not in drawn for name in sizes):
+        return None
+    total = len(population)
+    return sum(size / total * error_count(drawn[name]) / len(drawn[name]) for name, size in sizes.items())
+
+
 def sampling_experiment(
     pool: list[Cell], *, n: int, key: Callable[[Cell], Any], min_per_stratum: int, trials: int, seed: int
-) -> dict[str, dict[str, float]]:
-    """Repite el muestreo `trials` veces y cuenta cuántas ve el error del tipo raro y cuántos patrones de error."""
+) -> dict[str, dict[str, float | None]]:
+    """Repite el muestreo `trials` veces: cuántas ve el error del tipo raro, cuántos patrones de error y qué tasa de error estima.
+
+    `tasa_muestra` es la de la propia muestra; `tasa_ponderada`, la ponderada por el tamaño de cada estrato (media de las
+    repeticiones en que todos los estratos tenían muestra; `None` si ninguna).
+    """
     out = {}
     for name in ("simple", "estratificado"):
         rng = random.Random(f"{seed}-{name}")
-        sees_rare, patterns = 0, 0
+        sees_rare, patterns, raw_rates, weighted_rates = 0, 0, [], []
         for _ in range(trials):
             sample = simple_sample(pool, n, rng) if name == "simple" else stratified_sample(pool, n, key=key, min_per_stratum=min_per_stratum, rng=rng)
             found = error_patterns(sample)
             sees_rare += any(kind == RARE_TYPE for kind, _ in found)
             patterns += len(found)
-        out[name] = {"ve_error_del_tipo_raro": sees_rare / trials, "patrones": patterns / trials}
+            raw_rates.append(error_rate(sample))
+            weighted = weighted_error_rate(sample, pool, key=key)
+            if weighted is not None:
+                weighted_rates.append(weighted)
+        out[name] = {
+            "ve_error_del_tipo_raro": sees_rare / trials,
+            "patrones": patterns / trials,
+            "tasa_muestra": sum(raw_rates) / trials,
+            "tasa_ponderada": sum(weighted_rates) / len(weighted_rates) if weighted_rates else None,
+        }
     return out
 
 
@@ -498,10 +537,11 @@ def run_poblacion(anti: str | None) -> None:
         print(f"  no se automatiza: {name} → {status[name]}")
 
     if anti == "confianza_global":
-        threshold = pick_threshold(calibration, TARGET_ACCURACY, MIN_EXAMPLES, by="doc_confidence")
-        auto, review = auto_accept(production, threshold, level="documento")
-        plan, level = threshold, "documento"
-        how = f"una confianza por documento, umbral {threshold}"
+        # Una sola cosa cambia: la confianza es la del documento (la media de sus campos); el umbral sigue siendo uno por tipo y campo.
+        plan = automation_plan(calibration, key=key, target=TARGET_ACCURACY, min_n=MIN_EXAMPLES, aggregate=False, by="doc_confidence")
+        level = "documento"
+        auto, review = auto_accept(production, plan, level="documento")
+        how = "una confianza por documento y un umbral por tipo y campo"
     else:
         plan = automation_plan(calibration, key=key, target=TARGET_ACCURACY, min_n=MIN_EXAMPLES, aggregate=anti == "precision_agregada")
         level = "campo"
@@ -517,6 +557,10 @@ def run_poblacion(anti: str | None) -> None:
     print(f"\n[5 · muestra de 60 de las {len(pool)} extracciones de confianza alta, 500 repeticiones] (TS 5.5-K2, S1)")
     for name, row in result.items():
         print(f"  {name}: ve algún error del tipo raro en {pct(row['ve_error_del_tipo_raro'])} de las muestras · patrones de error distintos por muestra {row['patrones']:.1f} (hay {len(error_patterns(pool))})")
+    # La muestra estratificada sobre-representa el tipo raro: su tasa cruda no es la de la población; la ponderada por el tamaño de cada estrato, sí.
+    print(f"  tasa de error real del conjunto de confianza alta: {pct(error_rate(pool))}")
+    for name, row in result.items():
+        print(f"  {name}: tasa de error de la muestra {pct(row['tasa_muestra'])} · ponderada por estrato {pct(row['tasa_ponderada'])}")
 
     items = review_items(production, plan, level=level)
     capacity = max(1, round(len(items) * REVIEW_CAPACITY_SHARE))
