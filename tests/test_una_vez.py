@@ -143,8 +143,8 @@ def test_once_per_bullet():
     assert check(ROOT, ROWS) == []
 
 
-@pytest.mark.xfail(strict=True, reason="cobertura completa hasta la entrega 3 (roadmap §10)")
 def test_full_coverage():
+    # Cobertura completa (240/240) tras la entrega 3: ya no es un fallo esperado (roadmap §10).
     assert all(state == "☑" for _, state in ROWS.values())
 
 
