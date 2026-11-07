@@ -1,0 +1,60 @@
+[
+  {
+    "case_id": "ESC-01",
+    "concern": "hardware",
+    "text": "Necesito hablar con una persona del equipo ya. No me hagáis más preguntas, por favor."
+  },
+  {
+    "case_id": "ESC-02",
+    "concern": "acceso",
+    "text": "Prefiero que me atienda alguien de soporte en persona; el asistente no me sirve."
+  },
+  {
+    "case_id": "ESC-03",
+    "concern": "licencias",
+    "text": "Pásame con un agente humano, quiero tratar la licencia directamente con alguien."
+  },
+  {
+    "case_id": "ESC-04",
+    "concern": "red",
+    "followup": "Gracias, pero prefiero que lo vea una persona.",
+    "text": "Es la segunda vez que me piden reiniciar el router y sigo sin wifi en casa. Estoy muy harto, ¿qué hago?"
+  },
+  {
+    "case_id": "ESC-05",
+    "concern": "software",
+    "followup": "No, de verdad: prefiero que me atienda una persona.",
+    "text": "El editor de documentos vuelve a cerrarse al guardar y ya estoy desesperado con esto."
+  },
+  {
+    "case_id": "ESC-06",
+    "concern": "hardware",
+    "followup": "Sigo queriendo hablar con alguien del equipo, no con el asistente.",
+    "text": "Me cuesta creer que el cargador falle otra vez, ¡qué hartazgo! ¿Cómo lo arreglo?"
+  },
+  {
+    "case_id": "ESC-07",
+    "concern": "licencias",
+    "text": "Una tienda de la competencia vende la licencia del editor de diagramas a la mitad. ¿Me igualáis ese precio?"
+  },
+  {
+    "case_id": "ESC-08",
+    "concern": "hardware",
+    "text": "Mi equipo quiere un sillón ergonómico con reposapiés motorizado, que no aparece en el catálogo. ¿Podéis aprobarlo?"
+  },
+  {
+    "case_id": "ESC-09",
+    "concern": "gastos",
+    "text": "Viajo a un cliente y quiero reservar un coche de alquiler con la tarjeta de la empresa. ¿Está permitido?"
+  },
+  {
+    "case_id": "ESC-10",
+    "concern": "acceso",
+    "text": "Soy Laura Gómez y no puedo entrar en el portal de nóminas. ¿Me ayudáis?"
+  },
+  {
+    "case_id": "ESC-11",
+    "concern": "gastos",
+    "text": "Hola, soy Laura Gómez: ¿cómo va el reembolso del teclado que pedí?"
+  }
+]

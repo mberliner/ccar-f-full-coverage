@@ -1209,6 +1209,156 @@ def build_review_change() -> tuple[dict, dict]:
     return change, labels
 
 
+# Conjuntos de la tanda D (`app2/04` y `app1/07`). Van en archivos aparte: los
+# 7 casos de ESCALATION_CASES ya están repartidos entre los tickets, que se
+# numeran tras barajarse, y moverlos cambiaría los IDs de otros módulos.
+ESCALATION_EVAL_CASES = [
+    # (kind, concern, texto, seguimiento si el cliente insiste, nombre si es ambiguo)
+    ("explicit_human", "hardware", "Necesito hablar con una persona del equipo ya. No me hagáis más preguntas, por favor.", None, None),
+    ("explicit_human", "acceso", "Prefiero que me atienda alguien de soporte en persona; el asistente no me sirve.", None, None),
+    ("explicit_human", "licencias", "Pásame con un agente humano, quiero tratar la licencia directamente con alguien.", None, None),
+    ("frustration", "red", "Es la segunda vez que me piden reiniciar el router y sigo sin wifi en casa. Estoy muy harto, ¿qué hago?",
+     "Gracias, pero prefiero que lo vea una persona.", None),
+    ("frustration", "software", "El editor de documentos vuelve a cerrarse al guardar y ya estoy desesperado con esto.",
+     "No, de verdad: prefiero que me atienda una persona.", None),
+    ("frustration", "hardware", "Me cuesta creer que el cargador falle otra vez, ¡qué hartazgo! ¿Cómo lo arreglo?",
+     "Sigo queriendo hablar con alguien del equipo, no con el asistente.", None),
+    ("policy_gap", "licencias", "Una tienda de la competencia vende la licencia del editor de diagramas a la mitad. ¿Me igualáis ese precio?", None, None),
+    ("policy_gap", "hardware", "Mi equipo quiere un sillón ergonómico con reposapiés motorizado, que no aparece en el catálogo. ¿Podéis aprobarlo?", None, None),
+    ("policy_gap", "gastos", "Viajo a un cliente y quiero reservar un coche de alquiler con la tarjeta de la empresa. ¿Está permitido?", None, None),
+    ("ambiguous_user", "acceso", "Soy Laura Gómez y no puedo entrar en el portal de nóminas. ¿Me ayudáis?", None, "Laura Gómez"),
+    ("ambiguous_user", "gastos", "Hola, soy Laura Gómez: ¿cómo va el reembolso del teclado que pedí?", None, "Laura Gómez"),
+]
+
+ESCALATION_ACTIONS = {
+    "explicit_human": "escalate_now",
+    "frustration": "offer_resolution",
+    "policy_gap": "escalate_policy_gap",
+    "ambiguous_user": "ask_identifier",
+}
+
+# Ejemplos few-shot (TS 4.2-S1): de 2 a 4, sobre escenarios ambiguos, con el
+# razonamiento y la alternativa plausible descartada. Ninguno es un caso evaluado.
+ESCALATION_EXAMPLES = [
+    {
+        "text": "Quiero que me llame alguien de soporte, el chat no me convence.",
+        "action": "escalate_now",
+        "reasoning": "La persona pide un humano de forma explícita: se respeta de inmediato, sin investigar ni proponer pasos antes. Insistir en resolverlo uno mismo ignora lo que pidió.",
+        "rejected_alternative": "Buscar en la base de conocimiento por si se puede resolver antes de escalar.",
+    },
+    {
+        "text": "Se me bloquea la pantalla otra vez, estoy hasta las narices de esto.",
+        "action": "offer_resolution",
+        "reasoning": "Hay enfado pero el problema es sencillo y está dentro de lo que el agente resuelve. Se reconoce la frustración y se ofrece la solución; solo se escala si la persona reitera que prefiere un humano.",
+        "rejected_alternative": "Escalar de inmediato porque el tono es negativo: el tono no mide la complejidad del caso.",
+    },
+    {
+        "text": "¿Podéis pagarme la suscripción de un servicio de música para la oficina?",
+        "action": "escalate_policy_gap",
+        "reasoning": "La política habla de licencias de software del catálogo y no dice nada sobre este gasto. Cuando la política calla o es ambigua, decidir no le corresponde al agente: se escala con el caso resumido.",
+        "rejected_alternative": "Responder que no se puede por analogía con las licencias fuera de catálogo: es inventar una regla.",
+    },
+    {
+        "text": "Soy Marta Ruiz y necesito cambiar el correo de mi cuenta.",
+        "action": "ask_identifier",
+        "reasoning": "La búsqueda por nombre devolvió dos empleadas llamadas Marta Ruiz. Elegir una por departamento o por antigüedad es una heurística que puede tocar la cuenta equivocada: se pide un identificador adicional.",
+        "rejected_alternative": "Quedarse con la coincidencia más reciente y continuar con el cambio.",
+    },
+]
+
+INVENTORY_RELEVANT_FIELDS = ["team_id", "team_name", "laptops_total", "laptops_assigned", "open_requests"]
+INVENTORY_TEAM_NAMES = ["Redes", "Soporte N1", "Soporte N2", "Datos", "Finanzas TI", "Seguridad", "Plataforma", "Ventas TI"]
+
+
+def build_escalation_cases() -> tuple[list[dict], dict, list[dict]]:
+    cases, labels = [], {}
+    for number, (kind, concern, text, followup, name) in enumerate(ESCALATION_EVAL_CASES, start=1):
+        case_id = f"ESC-{number:02d}"
+        case = {"case_id": case_id, "concern": concern, "text": text}
+        label = {"kind": kind, "expected_action": ESCALATION_ACTIONS[kind]}
+        if followup:
+            case["followup"] = followup
+            label["after_followup"] = "escalate_now"
+        if name:
+            label["name"] = name
+        cases.append(case)
+        labels[case_id] = label
+    return cases, labels, ESCALATION_EXAMPLES
+
+
+def link_ambiguous_candidates(labels: dict, users: list[dict]) -> None:
+    """Los candidatos salen de los usuarios generados: si cambian los homónimos, la etiqueta los sigue."""
+    for label in labels.values():
+        if "name" in label:
+            label["candidates"] = sorted(u["user_id"] for u in users if u["name"] == label["name"])
+
+
+def build_inventory(rng: random.Random) -> tuple[dict, dict]:
+    """Un inventario de 40 campos por equipo, de los que solo 5 responden a la pregunta (TS 5.1-K3)."""
+    unassigned = rng.sample(range(2, 24), len(INVENTORY_TEAM_NAMES))  # distintos: la respuesta no empata
+    prose = [
+        "Revisión pendiente de la cadena de custodia; ver acta del trimestre anterior y adjuntos en el gestor documental.",
+        "Equipos en préstamo temporal para el proyecto de migración; devolución prevista según el plan del área y su calendario.",
+        "Incidencias recurrentes con el cargador de la serie anterior; el proveedor ha enviado un lote de sustitución.",
+        "Auditoría interna sin hallazgos críticos; observaciones menores sobre el etiquetado de activos en la planta baja.",
+    ]
+    teams = []
+    for index, name in enumerate(INVENTORY_TEAM_NAMES):
+        total = rng.randint(24, 60)
+        team = {
+            "team_id": f"EQ-{index + 1:02d}",
+            "team_name": name,
+            "laptops_total": total,
+            "laptops_assigned": total - unassigned[index],
+            "open_requests": rng.randint(0, 14),
+        }
+        noise = {
+            "cost_center": f"CC-{rng.randint(1000, 9999)}",
+            "manager_name": f"{rng.choice(FIRST_NAMES)} {rng.choice(LAST_NAMES)}",
+            "manager_email": f"responsable{index + 1}@{EMAIL_DOMAIN}",
+            "location_building": rng.choice(["Torre A", "Torre B", "Anexo"]),
+            "location_floor": rng.randint(0, 9),
+            "location_notes": rng.choice(prose),
+            "created_at": (REFERENCE_DATE - timedelta(days=rng.randint(400, 2000))).isoformat(),
+            "updated_at": (REFERENCE_DATE - timedelta(days=rng.randint(1, 60))).isoformat(),
+            "last_audit_date": (REFERENCE_DATE - timedelta(days=rng.randint(30, 300))).isoformat(),
+            "last_audit_notes": rng.choice(prose),
+            "budget_year": 2026,
+            "budget_eur": rng.randint(20, 90) * 1000,
+            "budget_notes": rng.choice(prose),
+            "vendor_primary": rng.choice(["Proveedor Norte", "Proveedor Sur", "Proveedor Este"]),
+            "vendor_secondary": rng.choice(["Proveedor Oeste", "Proveedor Centro"]),
+            "contract_ref": f"CTR-{rng.randint(10000, 99999)}",
+            "contract_end": (REFERENCE_DATE + timedelta(days=rng.randint(90, 900))).isoformat(),
+            "warranty_notes": rng.choice(prose),
+            "monitors_total": rng.randint(10, 70),
+            "monitors_assigned": rng.randint(5, 60),
+            "phones_total": rng.randint(8, 50),
+            "phones_assigned": rng.randint(4, 45),
+            "docks_total": rng.randint(5, 40),
+            "peripherals_total": rng.randint(30, 200),
+            "licenses_editor": rng.randint(0, 40),
+            "licenses_analytics": rng.randint(0, 25),
+            "licenses_notes": rng.choice(prose),
+            "network_vlan": f"VLAN-{rng.randint(10, 99)}",
+            "network_notes": rng.choice(prose),
+            "onboarding_notes": rng.choice(prose),
+            "offboarding_notes": rng.choice(prose),
+            "security_level": rng.choice(["bajo", "medio", "alto"]),
+            "compliance_notes": rng.choice(prose),
+            "tags": rng.sample(["críticos", "remoto", "planta", "laboratorio", "turno-noche", "externo"], 3),
+            "comments": rng.choice(prose),
+        }
+        team.update(noise)
+        teams.append(team)
+    best = max(teams, key=lambda t: t["laptops_total"] - t["laptops_assigned"])
+    labels = {
+        "relevant_fields": INVENTORY_RELEVANT_FIELDS,
+        "expected": {"team_with_most_unassigned_laptops": best["team_id"], "unassigned": best["laptops_total"] - best["laptops_assigned"]},
+    }
+    return {"teams": teams}, labels
+
+
 def build_all() -> dict[str, str]:
     """Genera todos los archivos en memoria: nombre → contenido serializado."""
     # Un generador por conjunto: añadir un conjunto nuevo no altera los existentes.
@@ -1219,6 +1369,9 @@ def build_all() -> dict[str, str]:
     research_sources, research_labels = build_research_sources()
     population, population_labels = build_confidence_population(random.Random(f"{SEED}-confianza"))
     review_change, review_labels = build_review_change()
+    escalation_cases, escalation_labels, escalation_examples = build_escalation_cases()
+    link_ambiguous_candidates(escalation_labels, users)
+    inventory, inventory_labels = build_inventory(random.Random(f"{SEED}-inventario"))
     datasets = {
         "usuarios.json": users,
         "tickets.json": tickets,
@@ -1234,6 +1387,11 @@ def build_all() -> dict[str, str]:
         "poblacion_extracciones_etiquetas.json": population_labels,
         "cambio_revision.json": review_change,
         "cambio_revision_etiquetas.json": review_labels,
+        "escalamiento_casos.json": escalation_cases,
+        "escalamiento_casos_etiquetas.json": escalation_labels,
+        "escalamiento_ejemplos.json": escalation_examples,
+        "inventario_equipos.json": inventory,
+        "inventario_equipos_etiquetas.json": inventory_labels,
     }
     files = {name: json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True) + "\n" for name, data in datasets.items()}
     # Las rutas con subcarpeta usan «/»: mismo nombre en Windows y en Linux.

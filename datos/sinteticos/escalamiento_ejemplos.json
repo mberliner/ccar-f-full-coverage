@@ -1,0 +1,26 @@
+[
+  {
+    "action": "escalate_now",
+    "reasoning": "La persona pide un humano de forma explícita: se respeta de inmediato, sin investigar ni proponer pasos antes. Insistir en resolverlo uno mismo ignora lo que pidió.",
+    "rejected_alternative": "Buscar en la base de conocimiento por si se puede resolver antes de escalar.",
+    "text": "Quiero que me llame alguien de soporte, el chat no me convence."
+  },
+  {
+    "action": "offer_resolution",
+    "reasoning": "Hay enfado pero el problema es sencillo y está dentro de lo que el agente resuelve. Se reconoce la frustración y se ofrece la solución; solo se escala si la persona reitera que prefiere un humano.",
+    "rejected_alternative": "Escalar de inmediato porque el tono es negativo: el tono no mide la complejidad del caso.",
+    "text": "Se me bloquea la pantalla otra vez, estoy hasta las narices de esto."
+  },
+  {
+    "action": "escalate_policy_gap",
+    "reasoning": "La política habla de licencias de software del catálogo y no dice nada sobre este gasto. Cuando la política calla o es ambigua, decidir no le corresponde al agente: se escala con el caso resumido.",
+    "rejected_alternative": "Responder que no se puede por analogía con las licencias fuera de catálogo: es inventar una regla.",
+    "text": "¿Podéis pagarme la suscripción de un servicio de música para la oficina?"
+  },
+  {
+    "action": "ask_identifier",
+    "reasoning": "La búsqueda por nombre devolvió dos empleadas llamadas Marta Ruiz. Elegir una por departamento o por antigüedad es una heurística que puede tocar la cuenta equivocada: se pide un identificador adicional.",
+    "rejected_alternative": "Quedarse con la coincidencia más reciente y continuar con el cambio.",
+    "text": "Soy Marta Ruiz y necesito cambiar el correo de mi cuenta."
+  }
+]

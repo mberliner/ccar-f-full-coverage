@@ -1,0 +1,13 @@
+{
+  "expected": {
+    "team_with_most_unassigned_laptops": "EQ-06",
+    "unassigned": 21
+  },
+  "relevant_fields": [
+    "team_id",
+    "team_name",
+    "laptops_total",
+    "laptops_assigned",
+    "open_requests"
+  ]
+}

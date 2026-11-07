@@ -1,0 +1,59 @@
+{
+  "ESC-01": {
+    "expected_action": "escalate_now",
+    "kind": "explicit_human"
+  },
+  "ESC-02": {
+    "expected_action": "escalate_now",
+    "kind": "explicit_human"
+  },
+  "ESC-03": {
+    "expected_action": "escalate_now",
+    "kind": "explicit_human"
+  },
+  "ESC-04": {
+    "after_followup": "escalate_now",
+    "expected_action": "offer_resolution",
+    "kind": "frustration"
+  },
+  "ESC-05": {
+    "after_followup": "escalate_now",
+    "expected_action": "offer_resolution",
+    "kind": "frustration"
+  },
+  "ESC-06": {
+    "after_followup": "escalate_now",
+    "expected_action": "offer_resolution",
+    "kind": "frustration"
+  },
+  "ESC-07": {
+    "expected_action": "escalate_policy_gap",
+    "kind": "policy_gap"
+  },
+  "ESC-08": {
+    "expected_action": "escalate_policy_gap",
+    "kind": "policy_gap"
+  },
+  "ESC-09": {
+    "expected_action": "escalate_policy_gap",
+    "kind": "policy_gap"
+  },
+  "ESC-10": {
+    "candidates": [
+      "EMP-1004",
+      "EMP-1018"
+    ],
+    "expected_action": "ask_identifier",
+    "kind": "ambiguous_user",
+    "name": "Laura Gómez"
+  },
+  "ESC-11": {
+    "candidates": [
+      "EMP-1004",
+      "EMP-1018"
+    ],
+    "expected_action": "ask_identifier",
+    "kind": "ambiguous_user",
+    "name": "Laura Gómez"
+  }
+}
