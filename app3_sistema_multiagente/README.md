@@ -1352,34 +1352,37 @@ Avisos sobre las cifras y la ejecución:
 
 ## 12 · Revisión independiente
 
-> **Qué vas a hacer:** Hacer que una sesión de `claude -p` escriba un cambio y revisarlo después de tres maneras: con una instancia nueva, reanudando la sesión que lo escribió y reanudándola con la orden explícita de revisar su propio cambio, en pasadas por archivo y de integración, con la confianza de cada hallazgo.
+> **Qué vas a hacer:** Hacer que una sesión de `claude -p` escriba un cambio y revisarlo después de varias maneras: con una instancia nueva en pasadas por archivo y de integración, reanudando la sesión que lo escribió (con y sin la orden explícita de revisar su propio cambio) y con una instancia nueva en una sola pasada larga, con la confianza de cada hallazgo.
 >
-> **Necesitas antes:** El [módulo 11](#11--criterios-y-revisión-en-ci), cuyo cambio de prueba, schema de hallazgos y puntuación reutiliza, y el [10](#10--confianza-y-revisión-humana), cuya calibración aplica a la confianza de cada hallazgo.
+> **Necesitas antes:** El [módulo 11](#11--criterios-y-revisión-en-ci), cuyo cambio de prueba, schema de hallazgos, letras de los fallos y puntuación reutiliza, y el [10](#10--confianza-y-revisión-humana), cuya calibración aplica a la confianza de cada hallazgo.
 >
-> **Modo:** Ejecución ligera (`--parte plan` no usa modelo; cada revisión con modelo cuesta entre 0,10 y 0,20 $).
+> **Modo:** Ejecución ligera (`--parte plan` no usa modelo; cada revisión con modelo cuesta entre 0,04 $, en una sola pasada, y unos 0,13 $, en la autorrevisión, más la sesión generadora una vez).
 
 ### Antes de empezar
 
 Los términos comunes (autorrevisión, instancia independiente, pasada por archivo y de integración, sesión, reanudar, bifurcar, `claude -p`) están en el [glosario](../docs/glosario.md). Como el módulo 11, lanza `claude -p` con la orden de [`harness/headless.py`](../harness/headless.py): aislada, de solo lectura en la revisión y con tope de coste.
 
-- **El sistema:** una sesión generadora, con `Write`, parte del repositorio en el estado base y recibe el mensaje y el contenido exacto de cada archivo del primer commit del módulo 11, con la orden de escribirlos y explicar por qué tomó cada decisión. El diff que deja en el árbol de trabajo es lo que se revisa. Después, las pasadas: una por archivo (sin tools, con solo el diff de ese archivo), una de integración (con el diff completo, los hallazgos locales y `Read`, `Grep` y `Glob`) y una de verificación que da la confianza de cada hallazgo fusionado.
+- **El sistema:** una sesión generadora, con `Write`, parte de un repositorio con un solo commit, el estado base, y recibe el mensaje y el contenido exacto de cada archivo del primer commit del módulo 11, con la orden de escribirlos (y ningún otro archivo) y explicar por qué tomó cada decisión. El cambio no queda en el historial de ese repositorio: lo que se revisa es el diff que la sesión deja en el árbol de trabajo, archivos nuevos incluidos. Después, las pasadas: una por archivo (sin tools, con solo el diff de ese archivo), una de integración (con el diff completo, los hallazgos locales y `Read`, `Grep` y `Glob`) y una de verificación que da la confianza de cada hallazgo fusionado.
 - **Términos propios:**
   - **Instancia nueva:** la instancia independiente de este módulo, una ejecución de `claude -p` sin sesión previa: solo ve el diff y lo que lea del repositorio.
   - **Autorrevisión aquí:** las mismas pasadas, cada una como `--resume` de la sesión que escribió el cambio. Cada pasada la **bifurca** (`--fork-session`) para que las repeticiones no se contaminen entre sí.
   - **Pasadas encadenadas:** la pasada por archivo va sin tools y con solo el diff de ese archivo; la de integración recibe el diff completo y los hallazgos locales, puede leer el repositorio y no debe repetir lo que ya salió.
+  - **Una pasada:** la revisión de todo el diff de una vez, con lectura del repositorio y los mismos criterios, sin pasadas por archivo ni de integración.
+  - **Fusión:** dos hallazgos de pasadas distintas se cuentan como uno si caen en el mismo sitio y describen el mismo problema (mismo `detected_pattern` o palabras en común). El mismo problema dicho con otras palabras cuenta dos veces.
   - **Verificación:** una pasada que da, con el diff delante, una confianza de 0 a 1 a cada hallazgo. La que cuenta para enrutar es esta, no la que el hallazgo trae al nacer.
   - **Enrutar:** los hallazgos con confianza desde 0,8 se publican; el resto y los que no tienen confianza van a una persona. El umbral es una elección propia.
   - **Coste acumulado:** el `total_cost_usd` de una sesión reanudada incluye el de la sesión de origen; el coste de cada revisión es la diferencia, y el tope de la rama lo lleva `headless.Ledger`.
 
 ### El ejercicio
 
-`--parte plan` muestra las pasadas, las tools de cada una y la orden de la autorrevisión, sin ejecutar nada. `--parte revision` genera el cambio y lo revisa. Las tres ramas usan los mismos prompts; cada una cambia una sola cosa:
+`--parte plan` muestra las pasadas, las tools de cada una y la orden de la autorrevisión (o la de la pasada única, con `--anti una_pasada`), sin ejecutar nada. `--parte revision` genera el cambio y lo revisa. Las ramas usan los mismos criterios y ejemplos; cada una cambia una sola cosa respecto a la correcta:
 
 - **Correcta:** las pasadas son instancias nuevas, sin sesión.
 - **`--anti autorrevision`:** cada pasada es un `--resume --fork-session` de la sesión generadora.
 - **`--anti autorrevision_explicita`:** igual que la anterior, con una frase delante de cada prompt: «Revisa críticamente tu propio cambio: busca los fallos que hayas podido pasar por alto al escribirlo».
+- **`--anti una_pasada`:** una instancia nueva, como la correcta, pero en una única pasada con lectura sobre todo el diff, seguida de la misma verificación.
 
-El cambio lleva dos fallos entre archivos (`D`: `calcular_sla` devuelve minutos y sus llamadores leen horas, y `F`: `avance_plazo` devuelve una fracción de 0 a 1 y `texto_progreso` la imprime como porcentaje). Ninguno de los dos archivos lo delata del todo por sí solo.
+El cambio lleva los fallos A, B, C, D y F del módulo 11 (E es del segundo commit y no entra aquí). Dos son entre archivos: `D`, `calcular_sla` devuelve minutos y sus llamadores leen horas, y `F`, `avance_plazo` devuelve una fracción de 0 a 1 y `texto_progreso` la imprime como porcentaje. Ninguno de los dos archivos lo delata del todo por sí solo.
 
 ### Predice antes de ejecutar
 
@@ -1390,6 +1393,7 @@ Con tus palabras; no hay un número que acertar:
 3. ¿Por qué se pide a la pasada de integración que no repita lo que ya salió por archivo? ¿Qué pasaría si dos pasadas se contradijeran?
 4. La verificación da una confianza de 0,6 a un hallazgo. ¿Qué decides con eso y cómo comprobarías que esa confianza vale algo? ¿Qué necesitas en los hallazgos para poder comprobarlo?
 5. A la autorrevisión le añades una frase que le pide revisar críticamente su propio cambio. ¿Qué cambia en lo que la sesión sabe, y qué no cambia?
+6. Una sola pasada sobre todo el diff frente al reparto en pasadas: ¿qué podría perder, qué podría ganar, y de qué depende que la diferencia se note?
 
 ### Ejecutar
 
@@ -1398,9 +1402,10 @@ uv run python app3_sistema_multiagente/12_revision_independiente.py             
 uv run python app3_sistema_multiagente/12_revision_independiente.py --parte revision --repeat 2                  # instancia nueva
 uv run python app3_sistema_multiagente/12_revision_independiente.py --parte revision --anti autorrevision --repeat 2
 uv run python app3_sistema_multiagente/12_revision_independiente.py --parte revision --anti autorrevision_explicita --repeat 2
+uv run python app3_sistema_multiagente/12_revision_independiente.py --parte revision --anti una_pasada --repeat 2
 ```
 
-**Si ejecutas:** el reparto en pasadas, los prompts, la fusión, el enrutado por confianza, la calibración y el coste de la sesión reanudada se prueban sin modelo. Cada ejecución completa (la sesión generadora, una vez, y cada revisión: cuatro pasadas por archivo, una de integración y una de verificación) cuesta entre 0,15 y 0,25 $ con `--repeat 1`. **El tope por defecto del repositorio (1,00 $) se reparte entre la generadora y las repeticiones; con `--repeat 3` en la autorrevisión se acerca a él.** Una pasada puede quedar sin presupuesto y sin confianza, y el módulo lo dice.
+**Si ejecutas:** el reparto en pasadas, los prompts, la fusión, el enrutado por confianza, la calibración y el coste de la sesión reanudada se prueban sin modelo. Cada ejecución completa (la sesión generadora, una vez, y cada revisión: cuatro pasadas por archivo, una de integración y una de verificación) cuesta entre 0,15 y 0,25 $ con `--repeat 1`. **El tope por defecto del repositorio (1,00 $) es el de toda la ejecución:** la sesión generadora recibe como mucho 0,30 $ y cada pasada, lo menor entre lo que queda y 0,20 $. No se reparte por repeticiones, así que con `--repeat 5` en la autorrevisión se acerca al tope, y una pasada con poco margen puede quedar sin presupuesto y sin confianza; el módulo lo dice.
 
 ### Qué observar
 
@@ -1409,25 +1414,44 @@ Por repetición: qué fallos sembrados encontró cada pasada, cuáles faltan, fa
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
-Sonnet 5.5 (rol `reviewer`), `claude -p` aislado. La sesión generadora escribió exactamente el cambio dado en 3 de 5 sesiones; en las otras dos escribió otra cosa (en una añadió archivos de tests) y se puntuó el diff que escribió.
+Sonnet 5.5 (rol `reviewer`), `claude -p` aislado. Hay tres mediciones, cada una con su versión del código; **la de referencia es la última**, después de las correcciones C4 (2026-11-07). En ella la sesión generadora escribió exactamente el cambio dado (93 líneas, cuatro archivos) en las dos ramas.
+
+**Después de las correcciones C4** (5 ejecuciones por rama):
 
 | Variante | Señal observada | Qué dice |
 | :--- | :--- | :--- |
-| correcta: instancia nueva (3 ejecuciones con el fallo F) | cada fallo sembrado sale en alguna pasada, con 0 falsos positivos y sin marcar el cambio correcto. Por archivo: A, B y C en 3 de 3; los entre archivos salen **por la pasada de integración en 2 de 3 ejecuciones y por la de archivo en 1 de 3**, tanto D como F, en ejecuciones distintas. Coste ~0,10 $ por revisión | la pasada de integración da una cobertura distinta a la local: los fallos entre archivos salen en una u otra, y ninguna sola los garantiza |
-| `--anti autorrevision` (2 ejecuciones) | **A, B, C, D y F por la pasada por archivo en las 2**, sin falsos positivos ni marcas del cambio correcto. Coste ~0,19 $ por revisión | **sin señal de que se revise peor**: la sesión bifurcada recuerda todo lo que escribió y sus pasadas «locales» no son locales. Costó cerca del doble |
-| `--anti autorrevision_explicita` | **sin medir**: no cupo en el tope de coste de la tarea | implementada y probada sin modelo |
+| correcta: instancia nueva | las cinco en 5 de 5, 0 falsos positivos; A, B y C por archivo en 5 de 5; **D por archivo en 3 de 5 y F en 1 de 5**, y la integración completa el resto (D 2 de 5, F 4 de 5); marca el cambio correcto 1 vez. ~0,090 $ por revisión | con la pasada por archivo sin tools, los fallos entre archivos salen sobre todo por integración |
+| `--anti una_pasada` | 24 de 25 (C falta en una), 0 falsos positivos; marca el cambio correcto 6 veces en 5 ejecuciones. ~0,042 $ por revisión | **sin diferencia** en lo encontrado: una pasada larga no pierde D ni F con este diff y cuesta unas 2 veces menos |
 
-Calibración de la verificación (instancia nueva, 2 ejecuciones, 17 hallazgos): todos coinciden con un fallo sembrado, y la verificación les da 0,61 de media en la banda 0,50–0,80, 0,89 en la 0,80–0,95 y 0,95 en la más alta; hueco de calibración 0,20 por quedarse corta. Con todos los hallazgos reales, la confianza no tiene nada que separar. En la segunda autorrevisión hubo hallazgos sin confianza (ver las notas).
+Calibración de la verificación: con `una_pasada`, los 5 hallazgos de la banda 0,00–0,50 son marcas del cambio correcto (la verificación decía 23 %) y las demás bandas aciertan el 94–100 %; hueco 0,129. Con la instancia nueva, hueco 0,215, por quedarse corta (banda 0,00–0,50 con todos los hallazgos reales). Con más marcas del cambio correcto, la confianza sí separa algo.
+
+**Batería de la autorrevisión** (antes de las correcciones C4, 2026-11-06; 5 ejecuciones por rama, la misma versión del código y de la puntuación en las tres):
+
+| Variante | Señal observada | Qué dice |
+| :--- | :--- | :--- |
+| correcta: instancia nueva | las cinco en 5 de 5, 0 falsos positivos; por archivo A, B y C en 5 de 5, D en 1 de 5 y F en 0 de 5; por integración D 4 de 5 y F 5 de 5. ~0,091 $ por revisión. Su generador añadió un archivo de tests (125 líneas en lugar de 93) | misma pauta de dónde salen D y F, sobre un diff distinto del de las otras dos ramas |
+| `--anti autorrevision` | las cinco en 5 de 5, todas por la pasada por archivo; 0 falsos positivos. ~0,127 $ por revisión | **sin diferencia** con la instancia nueva: la sesión bifurcada recuerda lo que escribió y sus pasadas «locales» no son locales |
+| `--anti autorrevision_explicita` | las cinco en 5 de 5, todas por archivo; 0 falsos positivos; 1 marca del cambio correcto. ~0,123 $ por revisión | **sin diferencia**: la frase no cambió lo encontrado |
+
+Que la instancia nueva lo encontrara todo **no es un control positivo**: no prueba que la medida pueda registrar una pérdida. Lo que sí lo prueba es la pasada por archivo de la instancia nueva, que pierde F en 5 de 5 y la medida lo registra. Con el techo al 100 % en las tres ramas, falta señal, no muestra: para ver un efecto haría falta un fallo más sutil. Las 25 oportunidades por rama son 5 ejecuciones sobre el mismo diff y no son independientes, así que no dan una cota de la tasa de pérdida.
+
+**Antes, tanda C** (2 a 3 ejecuciones; la sesión generadora conservaba el cambio en su historial, el diff no veía los archivos nuevos y la fusión podía perder un hallazgo distinto):
+
+- La generadora escribió exactamente el cambio dado en 3 de 5 sesiones; en otra añadió archivos de tests.
+- Instancia nueva (3 ejecuciones): cada fallo en alguna pasada, 0 falsos positivos; D y F por integración en 2 de 3 y por archivo en 1 de 3. ~0,10 $ por revisión.
+- Autorrevisión (2 ejecuciones): A, B, C, D y F por archivo en las 2, ~0,19 $ por revisión. `autorrevision_explicita` no se midió entonces (se midió en la batería).
+- Calibración de la verificación (17 hallazgos, todos reales): 0,61, 0,89 y 0,95 de media por banda, hueco 0,20 por quedarse corta. El registro de entonces la da sobre 2 ejecuciones y la tabla de la instancia nueva tiene 3; no dice por qué, y no se ha podido reconstruir.
+- En la segunda autorrevisión, la pasada de verificación se quedó sin presupuesto (tope de 0,40 $) y sus hallazgos quedaron sin confianza.
 
 Notas:
 
-- **Lo que no coincide con la guía.** **Producto observado (no evaluable):** la autorrevisión no encontró menos que la instancia nueva (2 ejecuciones). La guía dice que la sesión que generó el código lo revisa peor que una instancia independiente (TS 4.6-K1, K2; 3.6-K4), y aquí no se vio. No cambia la respuesta de examen, que es la de la guía; la lección de K1 y K2 queda como conceptual y sin señal estable. Inferencia propia, con dos razones posibles y ninguna comprobada: el «razonamiento de generación» de esta sesión es el de copiar un cambio que se le dio, no el de diseñarlo (una adaptación que no reproduce del todo la situación de la guía); y los fallos sembrados son claros para cualquiera que mire el código (por ejemplo, una inyección en la shell).
-- **`autorrevision_explicita` sin medir:** está implementada y se prueba sin modelo, pero no hay ninguna ejecución con modelo; no cupo en el tope de coste de la tarea. Ejecutarla es explorar.
+- **Lo que no coincide con la guía.** **Producto observado (no evaluable):** ni la autorrevisión encontró menos que la instancia nueva ni la pasada única encontró menos que el reparto. La guía dice que la sesión que generó el código lo revisa peor que una instancia independiente (TS 4.6-K1, K2; 3.6-K4) y que una revisión de varios archivos se parte en pasadas para no diluir la atención (4.6-K3, S2); con este cambio no se vio ninguna de las dos cosas. No cambia la respuesta de examen, que es la de la guía; las dos lecciones quedan como conceptuales.
+- **Por qué puede no verse, sin comprobar:** el «razonamiento de generación» de esta sesión es el de copiar un cambio que se le dio, no el de diseñarlo; los fallos sembrados son claros para cualquiera que mire el código; y un diff de 93 líneas cabe entero en la atención de una sola pasada.
+- **El reparto de dónde sale cada fallo es en parte del diseño:** la pasada por archivo de la instancia nueva no tiene tools ni ve a los llamadores, así que D y F solo pueden completarse en la de integración. Muestra para qué sirve la pasada de integración, pero no que el reparto encuentre más que una pasada única.
 - **La sesión bifurcada no es una pasada local:** como la sesión generadora escribió los cuatro archivos, ve a los llamadores en su historial. Una instancia nueva sin tools es la única pasada local de verdad.
-- **El coste de la sesión reanudada es acumulado:** cada revisión bifurcada informa del coste de la generadora más el suyo (0,05 $ + ~0,03 $ por pasada). El módulo cuenta cada revisión por la diferencia y suma la generadora una vez.
-- **Hallazgos sin confianza por falta de presupuesto:** en la segunda autorrevisión, la pasada de verificación se quedó sin presupuesto (tope de 0,40 $ para la generadora y seis pasadas con contexto acumulado) y sus hallazgos no tienen confianza; van a una persona.
-- Tamaño de muestra pequeño (2 a 3 ejecuciones): el tope de coste de la tarea no dejó más.
-- Lo que no depende del modelo se prueba en `tests/test_app3_12_revision_independiente.py` y `tests/test_headless.py`. Coste de las ejecuciones con modelo de este módulo, incluidas las de prueba: ~1,3 $.
+- **El coste de la sesión reanudada es acumulado:** cada revisión bifurcada informa del coste de la generadora más el suyo. El módulo cuenta cada revisión por la diferencia y suma la generadora una vez.
+- **La orden «no crees ningún otro archivo»** se añadió tras la medida en que la generadora añadió un archivo de tests. En la última medida copió el cambio exacto, pero no se probó sin la orden: no se sabe si es ella la que lo evita.
+- Lo que no depende del modelo se prueba en `tests/test_app3_12_revision_independiente.py` y `tests/test_headless.py`. Coste de las ejecuciones con modelo de este módulo: ~1,3 $ en la tanda C (incluidas las de prueba), 1,90 $ en la batería de la autorrevisión y 0,76 $ en la medida tras las correcciones.
 </details>
 
 ### Pregunta tipo examen
@@ -1448,7 +1472,7 @@ Un equipo hace que Claude Code genere un cambio de varios archivos y, en la mism
 - **B** es el razonamiento extendido de la misma sesión, que la guía tampoco da por mejor que una instancia independiente (4.6-K2).
 - **C** acierta con la instancia nueva, pero una sola pasada sobre muchos archivos diluye la atención; el fallo entre archivos pide su propia pasada de integración (4.6-K3, S2).
 
-**Producto observado (no evaluable):** en este módulo la autorrevisión no encontró menos que la instancia nueva (Paso 3). No cambia la respuesta de examen.
+**Producto observado (no evaluable):** en este módulo, ni la autorrevisión encontró menos que la instancia nueva ni la pasada única (la opción C, medida como `--anti una_pasada`) encontró menos que el reparto en pasadas, con un diff de 93 líneas (Paso 3). No cambia la respuesta de examen.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).

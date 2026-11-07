@@ -14,9 +14,10 @@ QUÉ DICE LA GUÍA:
 - Una revisión grande de varios archivos se parte en pasadas: una por archivo para lo local y otra aparte de
   integración para el flujo de datos entre archivos, lo que evita diluir la atención y obtener hallazgos contradictorios
   (4.6-K3, S2).
-- Es un encadenamiento de prompts fijo: analizar cada archivo y después hacer una pasada de integración entre archivos
-  (1.6-K2), el patrón adecuado para una revisión predecible de varios aspectos, frente a la descomposición dinámica de
-  una investigación abierta (1.6-S2).
+- Una cadena de prompts fija, paso a paso, sirve para tareas predecibles de varios aspectos (1.6-K2), y el ejemplo que da
+  la guía es justo este: partir la revisión de un código en una pasada por archivo para lo local y otra de integración
+  entre archivos (1.6-S2). Elegir esa cadena fija frente a la descomposición dinámica de una investigación abierta es
+  TS 1.6-S1, que se introduce en `app3/02` y aquí solo se usa.
 - Una pasada de verificación, en la que el modelo informa de su confianza junto a cada hallazgo, permite enrutar la
   revisión de forma calibrada (4.6-S3).
 
@@ -29,13 +30,19 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
   - Revisar en la misma sesión que generó el código (`--anti autorrevision`).
   - Creer que una instrucción de autorrevisión lo arregla (`--anti autorrevision_explicita`) o que lo arregla más
     razonamiento extendido (no se ejecuta aquí): la guía pone a los dos por debajo de la instancia independiente.
-  - Revisar muchos archivos en una sola pasada larga, que diluye la atención.
-- Lo medido aquí no respalda la viñeta central (cifras en el README y en `docs/hallazgos.md`):
-  - La autorrevisión con `--resume --fork-session` no encontró menos que la instancia nueva (2 ejecuciones) y costó cerca
-    del doble. En el examen manda la guía (4.6-K1, K2; 3.6-K4); la lección queda como conceptual.
-  - `autorrevision_explicita` está implementada y probada sin modelo, pero no se midió: no hay cifra.
-  - Los fallos entre archivos salieron por la pasada de integración en unas ejecuciones y por la de archivo en otras:
-    ninguna pasada sola los garantizó.
+  - Revisar muchos archivos en una sola pasada larga, que diluye la atención (`--anti una_pasada`: una instancia nueva,
+    una única pasada con lectura sobre todo el diff y la misma verificación).
+- Lo medido aquí no respalda la viñeta central ni el reparto en pasadas (cifras en el README y en `docs/hallazgos.md`):
+  - La autorrevisión con `--resume --fork-session`, con y sin la instrucción explícita, no encontró menos que la
+    instancia nueva: los cinco fallos en 5 de 5 en las tres ramas, sin falsos positivos. Falta señal, no muestra: la
+    instancia nueva ya lo encuentra todo. En el examen manda la guía (4.6-K1, K2; 3.6-K4); la lección queda como
+    conceptual.
+  - Una sola pasada sobre todo el diff (93 líneas, cuatro archivos) tampoco pierde nada (24 de 25) y cuesta unas 2 veces
+    menos que el reparto en pasadas. A este tamaño no se ve la atención diluida de 4.6-K3/S2; la lección es conceptual.
+  - Con la instancia nueva, la pasada por archivo ve D en 3 de 5 y F en 1 de 5, y la de integración completa el resto.
+    Que los fallos entre archivos salgan sobre todo por integración es en parte consecuencia del diseño: la pasada por
+    archivo no tiene tools ni ve a los llamadores, así que no puede comprobar el otro lado. No es una medida de que el
+    reparto encuentre más.
 - Inferencias propias:
   - El «razonamiento de generación» de la sesión generadora es el de copiar un cambio que se le da y explicar sus
     decisiones, no el de diseñarlo. Es una adaptación: no reproduce del todo la situación de la guía, y puede ser una de
@@ -43,7 +50,12 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
   - Una sesión bifurcada de la generadora no hace pasadas locales de verdad: recuerda todos los archivos que escribió.
     Solo una instancia nueva sin tools mira un archivo sin ver el resto.
   - La confianza de cada hallazgo la da la pasada de verificación y se mide contra lo sembrado con la calibración de
-    `app3/10`. Con todos los hallazgos reales, no hay nada que separar.
+    `app3/10`. Con todos los hallazgos reales casi no hay nada que separar; con `una_pasada`, que marca más veces el
+    cambio correcto, la banda de confianza baja recoge esas marcas y la confianza sí separa algo.
+  - La sesión generadora parte de un repositorio con un solo commit y su diff incluye los archivos nuevos, así que el
+    cambio no queda en su historial. En la última medida escribió exactamente el cambio dado en las dos ramas; en una
+    medida anterior añadió un archivo de tests. No se sabe si la orden «no crees ningún otro archivo» lo evita: no se
+    probó sin ella.
 - Producto observado (no evaluable): el `total_cost_usd` de una sesión reanudada es acumulado y `--max-budget-usd` no
   cuenta ese histórico, así que el tope de la rama lo lleva `headless.Ledger` (sonda C1 en `docs/hallazgos.md`). Una
   pasada con poco margen puede cortar sin resultado, y sus hallazgos quedan sin confianza.
@@ -51,8 +63,9 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
 Pregunta tipo examen: ver `app3_sistema_multiagente/README.md`, módulo 12.
 
 INTRODUCE: TS 4.6-K1, TS 4.6-K2, TS 4.6-K3, TS 4.6-S1, TS 4.6-S2, TS 4.6-S3, TS 1.6-K2, TS 1.6-S2, TS 3.6-K4
+USA: TS 1.6-S1
 
-Uso: `uv run python app3_sistema_multiagente/12_revision_independiente.py [--parte plan|revision] [--anti autorrevision|autorrevision_explicita] [--repeat N]`
+Uso: `uv run python app3_sistema_multiagente/12_revision_independiente.py [--parte plan|revision] [--anti autorrevision|autorrevision_explicita|una_pasada] [--repeat N]`
 """
 
 import copy
