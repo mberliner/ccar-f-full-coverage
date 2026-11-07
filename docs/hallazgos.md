@@ -348,7 +348,7 @@ Aplicadas tal cual salvo dos decisiones. **`conservador` queda `Sin señal estab
 
 ## Entrega 3 · tanda D, medidas de `app1/07` y `app2/04` (2026-11-07)
 
-Versiones: claude-agent-sdk 0.2.173, CLI 2.1.309. Coste con modelo de la tanda, estimado: ≈ 1,0 $ (`app1/07` ≈ 0,15 $ y `app2/04` ≈ 0,87 $, de ellos 0,69 $ con Haiku 4.5), con `max_budget_usd` en cada ejecución.
+Versiones: claude-agent-sdk 0.2.173, CLI 2.1.309. Coste con modelo de la tanda, estimado: ≈ 2,0 $ (`app1/07` ≈ 0,15 $ y `app2/04` ≈ 1,8 $: ≈ 0,87 $ en la primera medida y ≈ 0,97 $ en la segunda, de ellos ≈ 1,1 $ con Haiku 4.5), con `max_budget_usd` en cada ejecución.
 
 ### `app1/07_recorte_de_contexto` (Messages API, Haiku 5.5, 5 ejecuciones por variante)
 
@@ -360,7 +360,37 @@ Versiones: claude-agent-sdk 0.2.173, CLI 2.1.309. Coste con modelo de la tanda, 
 - La diferencia es de unas 3,6 veces en el total y unas 4,4 en el máximo. El coste por ejecución es ~0,0019 $ con recorte y ~0,006 $ sin él.
 - **La comprobación de la respuesta marcaba como incorrectas respuestas correctas** (0/10 en la primera medida). Primera causa: exigía que se nombrara un solo equipo y «Seguridad (EQ-06)» nombra al mismo equipo por nombre y por ID. Segunda causa, que solo se vio al volver a medir: la respuesta correcta suma «le siguen Finanzas TI y Redes». Ahora cuenta el primer equipo que se nombra, con el límite de que no distingue «es X, no Y» de «es Y, no X». Las cifras de arriba son las de la comprobación corregida. → roadmap §4.3 (ampliación de «las medidas de texto fallan en los dos sentidos»: una comprobación que exige un único valor castiga a la respuesta correcta que da contexto).
 
-### `app2/04_few_shot_y_escalamiento` (Agent SDK, 11 casos por repetición)
+### `app2/04_few_shot_y_escalamiento`, segunda medida (Agent SDK, 13 casos por repetición, 2026-11-07)
+
+Vigente. Después de la primera medida (más abajo), el pase de textos pidió dos cambios de código y se hicieron: un tercer tipo de caso, «no se puede avanzar» (TS 5.2-K1, dos casos, con un criterio 5 en el prompt y sin ejemplo), y que los homónimos solo cuenten como acertados si el agente **pidió un identificador** (detector de palabras sobre el texto del turno). Los casos pasan de 11 a 13 y las cifras de la primera medida **no son comparables** con estas.
+
+Haiku 5.5 (rol `agent`, 5 repeticiones: 65 casos por variante).
+
+| Variante | Correctos | Por tipo |
+| :--- | :--- | :--- |
+| correcta (criterios y 4 ejemplos) | 63/65 | petición de humano 15/15 · frustración 14/15 · vacío de política 15/15 · sin avance 10/10 · homónimos 9/10 |
+| `sin_ejemplos` | 56/65 | petición de humano 15/15 · frustración 12/15 · vacío de política 15/15 · sin avance 9/10 · homónimos 5/10 |
+| `sentimiento` | 30/65 | petición de humano 15/15 · frustración 0/15 · vacío de política 1/15 · sin avance 5/10 · homónimos 9/10 |
+| `confianza` | 44/65 | petición de humano 15/15 · frustración 0/15 · vacío de política 15/15 · sin avance 6/10 · homónimos 8/10 |
+
+Haiku 4.5 (rol `enforcement`, 3 repeticiones: 39 casos por variante).
+
+| Variante | Correctos | Por tipo |
+| :--- | :--- | :--- |
+| correcta | 35/39 | petición de humano 9/9 · frustración 5/9 · vacío de política 9/9 · sin avance 6/6 · homónimos 6/6 |
+| `sin_ejemplos` | 32/39 | petición de humano 9/9 · frustración 7/9 · vacío de política 9/9 · sin avance 3/6 · homónimos 4/6 |
+
+- **La conclusión de la primera medida se invierte con Haiku 5.5:** los ejemplos sí se notan (63/65 frente a 56/65), casi todo en los homónimos (9/10 frente a 5/10). Con la comprobación anterior, que daba por acertado un homónimo con solo no escalar ni elegir a nadie, no se veía. Leyendo las respuestas del agente en ESC-10 (sondeo aparte, 2 + 2 ejecuciones, ~0,02 $): sin ejemplos no llama a `find_employee_by_name`, contesta con el artículo KB-101 y pide un mensaje de error, no un ID; con ejemplos busca y escribe «necesito tu identificador (EMP-NNNN)» en una de las dos y en la otra tampoco lo pide. **Inferencia propia, sin medir de forma directa:** el criterio 4 es condicional a «si una búsqueda devuelve varias coincidencias» y sin ejemplo esa búsqueda no se hace; la medida no separa el efecto del ejemplo del de la redacción del criterio.
+- **Con Haiku 4.5, la señal se reparte por tipos:** los ejemplos ayudan en homónimos (6/6 frente a 4/6) y en «sin avance» (6/6 frente a 3/6) y la frustración va al revés (5/9 frente a 7/9). 3 repeticiones: poco peso por celda.
+- **`sentimiento` y `confianza`** fallan igual en la frustración sencilla (0/15) y distinto en los otros: `sentimiento` deja pasar el vacío de política (1/15) y la mitad de los casos sin avance (5/10), de tono neutro; `confianza` acierta el vacío de política (15/15) y falla 4 de 10 de «sin avance». El control de las dos es `sin_ejemplos` (56/65).
+- **Confianza declarada:** media de 54,7 en los aciertos y 61,0 en los fallos (con 60,6 y 50,3 en la primera medida): el sentido cambia entre medidas, así que no separa de forma estable. Son pocos casos y no se ha repetido.
+- **Detector de «pidió un ID»:** contrastado con cuatro textos reales del agente en ESC-10 (dos sin ejemplos y dos con ellos): acierta los cuatro. Sigue siendo un detector de palabras (un dato y una petición): una frase que mencione el dato y pida otra cosa lo engañaría, y una petición sin esas palabras no la ve.
+- **Límite del módulo:** si falta la credencial, el agente responde «Not logged in» y el módulo lo cuenta como un turno sin escalamiento y sin error; solo pasa si se llama a `run_case` sin `credentials.describe()` (que `main` ya llama). Se vio en un script de sondeo, no en las medidas.
+- **Coste por variante:** Haiku 5.5, 5 repeticiones: 0,033 $ (`sentimiento`), 0,041 $ (`sin_ejemplos` y `confianza`) y 0,044 $ (correcta); Haiku 4.5, 3 repeticiones: 0,432 $ (correcta) y 0,376 $ (`sin_ejemplos`).
+
+### `app2/04`, primera medida (11 casos, antes de pedir el ID y del caso «sin avance»; anterior)
+
+Haiku 5.5 (rol `agent`, 5 repeticiones: 55 casos por variante).
 
 Haiku 5.5 (rol `agent`, 5 repeticiones: 55 casos por variante).
 
@@ -394,7 +424,7 @@ Haiku 4.5 (rol `enforcement`, 3 repeticiones: 33 casos por variante).
 | :--- | :--- | :--- |
 | `app1/07` el recorte y la comprobación | `Determinista` | Cinco campos frente a cuarenta sin cambiar los valores; se prueba sin modelo. |
 | `app1/07` correcta y `sin_recorte` | `Probabilística con control positivo` | ≈ 15 000 frente a ≈ 54 000 tokens de entrada, con la respuesta correcta en las 10 ejecuciones; cuántas peticiones hace lo decide el modelo. |
-| `app2/04` `--parte proxy` | `Determinista` | El proxy de sentimiento acierta 3 de 11, sin modelo. |
-| `app2/04` correcta y `sin_ejemplos` | `Probabilística con control positivo` | La señal se ve con Haiku 4.5 (32/33 frente a 27/33); con Haiku 5.5 no hay diferencia. |
-| `app2/04` `sentimiento` | `Probabilística con control positivo` | 25/55 frente a 55/55. |
-| `app2/04` `confianza` | `Probabilística con control positivo` | 39/55 frente a 55/55; la confianza declarada separa poco. |
+| `app2/04` `--parte proxy` | `Determinista` | El proxy de sentimiento acierta 3 de 13, sin modelo. |
+| `app2/04` correcta y `sin_ejemplos` | `Probabilística con control positivo` | Con Haiku 5.5, 63/65 frente a 56/65 (homónimos 9/10 frente a 5/10); con Haiku 4.5, 35/39 frente a 32/39, repartido por tipos. |
+| `app2/04` `sentimiento` | `Probabilística con control positivo` | 30/65 frente a 63/65 de la correcta. |
+| `app2/04` `confianza` | `Probabilística con control positivo` | 44/65 frente a 63/65; la confianza declarada no separa de forma estable. |

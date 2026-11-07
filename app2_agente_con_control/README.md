@@ -306,10 +306,10 @@ Un agente tiene `allowed_tools=["Read", "Grep"]` y modo de permisos por defecto.
 
 Términos comunes en el [glosario](../docs/glosario.md): tool, `system prompt`, few-shot, criterio de escalamiento, vacío de política, proxy, confianza autodeclarada, arnés. Lo propio de este módulo:
 
-- **El sistema:** el agente de la mesa de ayuda recibe once mensajes sintéticos, uno por sesión, y decide si lo resuelve o lo pasa a una persona con `escalate_to_human`. Cada mensaje tiene una acción esperada en un archivo de etiquetas que el agente no ve: tres peticiones explícitas de un humano, tres frustraciones con un problema sencillo, tres vacíos de política y dos mensajes de alguien llamado «Laura Gómez», nombre que comparten dos empleadas.
-- **Ejemplo few-shot razonado:** un mensaje de muestra con la acción correcta, el porqué y la alternativa plausible que se descarta. Los ejemplos del prompt no son ninguno de los once casos.
-- **Cómo se clasifica la acción:** el módulo la deduce de las llamadas a tools del turno, no del texto del agente. **Escalar de inmediato** es llamar a `escalate_to_human` sin ninguna otra llamada antes; **escalar tras investigar**, llamarla después de otras; **adivinar la identidad**, verificar a una de las «Laura Gómez» o listar sus tickets; **no escalar**, todo lo demás. Límite: «no escalar» junta pedir un identificador y responder otra cosa sin escalar ni elegir a nadie; el módulo no los distingue.
-- **Qué cuenta como correcto en cada tipo:** la petición de un humano, escalar de inmediato; la frustración, no escalar en la primera respuesta y escalar de inmediato cuando el cliente insiste; el vacío de política, escalar (de inmediato o tras buscar en la base de conocimiento); los homónimos, no escalar ni adivinar.
+- **El sistema:** el agente de la mesa de ayuda recibe trece mensajes sintéticos, uno por sesión, y decide si lo resuelve o lo pasa a una persona con `escalate_to_human`. Cada mensaje tiene una acción esperada en un archivo de etiquetas que el agente no ve: tres peticiones explícitas de un humano, tres frustraciones con un problema sencillo, tres vacíos de política, dos mensajes en los que el cliente ya probó lo que ofrece la base de conocimiento y sigue igual, y dos mensajes de alguien llamado «Laura Gómez», nombre que comparten dos empleadas.
+- **Ejemplo few-shot razonado:** un mensaje de muestra con la acción correcta, el porqué y la alternativa plausible que se descarta. Los ejemplos del prompt no son ninguno de los trece casos.
+- **Cómo se clasifica la acción:** el módulo la deduce de las llamadas a tools del turno, no del texto del agente. **Escalar de inmediato** es llamar a `escalate_to_human` sin ninguna otra llamada antes; **escalar tras investigar**, llamarla después de otras; **adivinar la identidad**, verificar a una de las «Laura Gómez» o listar sus tickets; **no escalar**, todo lo demás. Solo en los homónimos se lee además el texto del agente, para comprobar que pidió un identificador. Límite de la comprobación: es un detector de palabras (un dato como el ID, el correo o el departamento y una petición), aproximado.
+- **Qué cuenta como correcto en cada tipo:** la petición de un humano, escalar de inmediato; la frustración, no escalar en la primera respuesta y escalar de inmediato cuando el cliente insiste; el vacío de política y el caso que no avanza, escalar (de inmediato o tras buscar en la base de conocimiento); los homónimos, no escalar ni adivinar y pedir un identificador.
 - **Frustración sencilla:** el cliente está enfadado pero el problema entra en lo que el agente resuelve. Si el agente no escala en la primera respuesta, el módulo le contesta con una frase en la que el cliente insiste en que lo atienda una persona, y comprueba qué hace entonces.
 - **Proxy de sentimiento:** una regla que decide por el tono del mensaje. Es una lista de palabras inventada para esta demostración.
 
@@ -325,15 +325,15 @@ Términos comunes en el [glosario](../docs/glosario.md): tool, `system prompt`, 
 
 ### El ejercicio
 
-Se ejecutan los once casos y se compara la acción del agente con la que pide su tipo: pasar de inmediato a quien pide un humano, ofrecer resolver ante una frustración sencilla (y escalar solo si el cliente insiste), escalar un vacío de política y no elegir entre las dos «Laura Gómez».
+Se ejecutan los trece casos y se compara la acción del agente con la que pide su tipo: pasar de inmediato a quien pide un humano, ofrecer resolver ante una frustración sencilla (y escalar solo si el cliente insiste), escalar un vacío de política o un caso que no avanza, y no elegir entre las dos «Laura Gómez» sino pedir un identificador.
 
 - **Correcta:** criterios explícitos de escalamiento y cuatro ejemplos con su razonamiento.
 - **`sin_ejemplos`:** los mismos criterios, sin el bloque de ejemplos.
 - **`sentimiento`:** sin criterios ni ejemplos; la regla es escalar cuando el mensaje muestre enfado o sentimiento negativo.
 - **`confianza`:** sin criterios ni ejemplos; el agente escribe una línea «CONFIANZA: N» y escala si N es menor que 70.
-- **`--parte proxy`:** no usa el modelo; aplica el proxy de sentimiento a los once mensajes.
+- **`--parte proxy`:** no usa el modelo; aplica el proxy de sentimiento a los trece mensajes.
 
-`sentimiento` y `confianza` no llevan ejemplos, porque los ejemplos contradirían su regla: la comparación justa de las dos es con `sin_ejemplos`, no con la correcta. Ninguno de los once casos es del tercer disparador de la guía, que no se pueda avanzar (TS 5.2-K1): el módulo no lo mide.
+`sentimiento` y `confianza` no llevan ejemplos, porque los ejemplos contradirían su regla: la comparación justa de las dos es con `sin_ejemplos`, no con la correcta. El tercer disparador de la guía, que no se pueda avanzar (TS 5.2-K1), tiene dos casos y ningún ejemplo: lo único que se lo enseña al agente es el criterio 5 del prompt.
 
 ### Predice antes de ejecutar
 
@@ -352,11 +352,11 @@ uv run python app2_agente_con_control/04_few_shot_y_escalamiento.py --repeat 5  
 uv run python app2_agente_con_control/04_few_shot_y_escalamiento.py --anti sin_ejemplos --repeat 5
 uv run python app2_agente_con_control/04_few_shot_y_escalamiento.py --anti sentimiento --repeat 5
 uv run python app2_agente_con_control/04_few_shot_y_escalamiento.py --anti confianza --repeat 5
-uv run python app2_agente_con_control/04_few_shot_y_escalamiento.py --rol-modelo enforcement --repeat 3                       # Haiku 4.5, ~0,35 $
-uv run python app2_agente_con_control/04_few_shot_y_escalamiento.py --anti sin_ejemplos --rol-modelo enforcement --repeat 3   # Haiku 4.5, ~0,35 $
+uv run python app2_agente_con_control/04_few_shot_y_escalamiento.py --rol-modelo enforcement --repeat 3                       # Haiku 4.5, ~0,40 $
+uv run python app2_agente_con_control/04_few_shot_y_escalamiento.py --anti sin_ejemplos --rol-modelo enforcement --repeat 3   # Haiku 4.5, ~0,40 $
 ```
 
-**Si ejecutas:** el prompt de cada variante, la clasificación de la acción y la puntuación se prueban sin modelo, y `--parte proxy` no gasta nada. Ejecutar sirve para ver qué hace el modelo con cada regla. Con Haiku 5.5 cada ejecución de cinco repeticiones cuesta unos 0,03 $; con Haiku 4.5, tres repeticiones cuestan unos 0,35 $, así que `--rol-modelo enforcement` usa su propio presupuesto.
+**Si ejecutas:** el prompt de cada variante, la clasificación de la acción y la puntuación se prueban sin modelo, y `--parte proxy` no gasta nada. Ejecutar sirve para ver qué hace el modelo con cada regla. Con Haiku 5.5 cada ejecución de cinco repeticiones cuesta unos 0,04 $; con Haiku 4.5, tres repeticiones cuestan unos 0,40 $, así que `--rol-modelo enforcement` usa su propio presupuesto.
 
 Modo normal: añade a `escalamiento_ejemplos.json` (en `datos/generar_sinteticos.py`) un ejemplo que contradiga un criterio y mira qué pasa.
 
@@ -367,32 +367,33 @@ La línea `[medida]`: cuántos casos salen correctos en total y por tipo. En `co
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
-**Sin modelo (`--parte proxy`).** El proxy de sentimiento acierta 3 de 11: se equivoca en las tres frustraciones sencillas (las escala), en los tres vacíos de política (los deja pasar, porque el tono es neutro) y en dos de las tres peticiones de un humano, y solo acierta las dos de «Laura Gómez» y una petición de humano que lleva un reproche.
+**Sin modelo (`--parte proxy`).** El proxy de sentimiento acierta 3 de 13: se equivoca en las tres frustraciones sencillas (las escala), en los tres vacíos de política y en los dos casos que no avanzan (los deja pasar, porque el tono es neutro) y en dos de las tres peticiones de un humano; solo acierta las dos de «Laura Gómez» y una petición de humano que lleva un reproche.
 
-Haiku 5.5 (2026-11-07, 5 repeticiones: 55 casos por variante, 10 de ellos de homónimos):
-
-| Variante | Correctos | Por tipo |
-| :--- | :--- | :--- |
-| correcta | 55/55 | todos los tipos al 100 % |
-| `sin_ejemplos` | 55/55 | todos los tipos al 100 % |
-| `sentimiento` | 25/55 | petición de humano 15/15 · frustración 0/15 · vacío de política 0/15 · homónimos 10/10 |
-| `confianza` | 39/55 | petición de humano 15/15 · frustración 0/15 · vacío de política 15/15 · homónimos 9/10 |
-
-Haiku 4.5 (2026-11-07, 3 repeticiones: 33 casos por variante):
+Haiku 5.5 (2026-11-07, 5 repeticiones: 65 casos por variante, 10 de homónimos y 10 de «no se puede avanzar»):
 
 | Variante | Correctos | Por tipo |
 | :--- | :--- | :--- |
-| correcta | 32/33 | petición de humano 9/9 · frustración 8/9 · vacío de política 9/9 · homónimos 6/6 |
-| `sin_ejemplos` | 27/33 | petición de humano 9/9 · frustración 6/9 · vacío de política 9/9 · homónimos 3/6 |
+| correcta | 63/65 | petición de humano 15/15 · frustración 14/15 · vacío de política 15/15 · sin avance 10/10 · homónimos 9/10 |
+| `sin_ejemplos` | 56/65 | petición de humano 15/15 · frustración 12/15 · vacío de política 15/15 · sin avance 9/10 · homónimos 5/10 |
+| `sentimiento` | 30/65 | petición de humano 15/15 · frustración 0/15 · vacío de política 1/15 · sin avance 5/10 · homónimos 9/10 |
+| `confianza` | 44/65 | petición de humano 15/15 · frustración 0/15 · vacío de política 15/15 · sin avance 6/10 · homónimos 8/10 |
 
-- **`sentimiento` muestra el fallo** frente a su control (`sin_ejemplos`, 55/55): decide por el tono y falla justo donde el tono engaña, con 0/15 en frustración (escala lo que podía resolver) y en vacío de política (lo trata como resoluble; los mensajes de esos casos tienen tono neutro). Coincide con el proxy sin modelo en esos dos tipos, pero no en las peticiones de un humano: el modelo las escala todas y la lista de palabras solo una.
-- **`confianza` falla distinto:** acierta los vacíos de política y falla las frustraciones. Su señal es esa tasa por tipo frente a `sin_ejemplos`.
-- **La confianza declarada no es una demostración de TS 5.2-K3:** su media fue de 60,6 en los aciertos y de 50,3 en los fallos, ambas por debajo del umbral de 70. Separa poco, pero son pocos casos y no se ha repetido. La primera medida de esta cifra era un artefacto (leía solo el último mensaje del turno); el detalle está en [`docs/hallazgos.md`](../docs/hallazgos.md), tanda D.
+Haiku 4.5 (2026-11-07, 3 repeticiones: 39 casos por variante, 6 de homónimos y 6 de «no se puede avanzar»):
+
+| Variante | Correctos | Por tipo |
+| :--- | :--- | :--- |
+| correcta | 35/39 | petición de humano 9/9 · frustración 5/9 · vacío de política 9/9 · sin avance 6/6 · homónimos 6/6 |
+| `sin_ejemplos` | 32/39 | petición de humano 9/9 · frustración 7/9 · vacío de política 9/9 · sin avance 3/6 · homónimos 4/6 |
+
+- **Con Haiku 5.5, los ejemplos se notan en los homónimos:** la correcta acierta 63/65 y `sin_ejemplos`, 56/65, y casi toda la diferencia está en los homónimos (9/10 frente a 5/10). Lectura propia, no medida de forma directa: sin ejemplo el agente no busca a la empleada por nombre, contesta con el artículo de la base de conocimiento y no pide el ID (se vio leyendo sus respuestas en el caso ESC-10, que la comprobación marca «pidió ID: no» las cinco veces). El criterio 4 solo dice qué hacer «si una búsqueda devuelve varias coincidencias», y esa búsqueda no llega a hacerse. La medida no separa el efecto del ejemplo del de la redacción del criterio.
+- **`sentimiento` muestra el fallo** frente a su control (`sin_ejemplos`, 56/65): decide por el tono y falla donde el tono engaña, con 0/15 en frustración (escala lo que podía resolver), 1/15 en vacío de política y 5/10 en los casos que no avanzan (los mensajes de esos casos tienen tono neutro y los trata como resolubles). Coincide con el proxy sin modelo en esos tipos, pero no en las peticiones de un humano: el modelo las escala todas y la lista de palabras solo una.
+- **`confianza` falla distinto:** acierta los vacíos de política y falla las frustraciones y buena parte de los casos que no avanzan (6/10). Su señal es esa tasa por tipo frente a `sin_ejemplos`.
+- **La confianza declarada no es una demostración de TS 5.2-K3:** su media fue de 54,7 en los aciertos y de 61,0 en los fallos, es decir, al revés de lo que haría un criterio útil, y ambas quedan por debajo del umbral de 70. La medida anterior, con 11 casos, había dado 60,6 y 50,3: el sentido de la diferencia cambia de una medida a otra, así que no separa de forma estable, y son pocos casos. La primera medida de esta cifra era un artefacto (leía solo el último mensaje del turno); el detalle está en [`docs/hallazgos.md`](../docs/hallazgos.md), tanda D.
 - **Las peticiones de un humano salen bien con las cuatro reglas** (15/15 con Haiku 5.5): es el único tipo que ninguna variante del modelo falla.
-- **Con Haiku 4.5, los ejemplos sí se notan:** la correcta acierta 32/33 y `sin_ejemplos`, 27/33; los fallos de `sin_ejemplos` están en las frustraciones y los homónimos. La muestra es pequeña (tres repeticiones).
-- **Límite de la clasificación:** «no escala» incluye pedir un identificador y también responder otra cosa sin escalar ni elegir a nadie; el módulo no los distingue, así que un acierto en los homónimos no garantiza que el agente pidiera el ID. Escalar un vacío de política tras buscar en la base de conocimiento cuenta como correcto.
+- **Con Haiku 4.5, la señal está repartida:** la correcta acierta 35/39 y `sin_ejemplos`, 32/39. Los ejemplos ayudan en los homónimos (6/6 frente a 4/6) y en los casos que no avanzan (6/6 frente a 3/6), y en la frustración van al revés (5/9 frente a 7/9). La muestra es pequeña (tres repeticiones).
+- **Límite de la comprobación:** la acción se deduce de las llamadas a tools; solo en los homónimos se lee además el texto, con un detector de palabras que se contrastó con cuatro respuestas reales del agente y es aproximado. En la medida anterior (11 casos, Haiku 5.5, sin pedir el ID) correcta y `sin_ejemplos` salían iguales, 55/55, porque un homónimo contestado con el artículo de la base contaba como acierto con solo no escalar ni elegir a nadie. Escalar un vacío de política tras buscar en la base de conocimiento cuenta como correcto.
 
-Producto observado (no evaluable): con Haiku 5.5, los criterios escritos bastaron sin ejemplos, y `sin_ejemplos` sale igual que la correcta (55/55 en las dos). Con ese modelo las instrucciones solas no daban resultados inconsistentes, que es la situación en la que la guía sitúa la ventaja de los ejemplos (TS 4.2-K1): la medida no la demuestra ni la contradice. **No cambia la respuesta de examen**, que sigue siendo la de la guía. La comparación entre modelos está en [`docs/hallazgos.md`](../docs/hallazgos.md).
+Producto observado (no evaluable): con Haiku 5.5, los ejemplos mejoran los homónimos y poco más, y con Haiku 4.5 el efecto se reparte por tipos. Es coherente con lo que dice la guía de los ejemplos en los casos ambiguos (TS 4.2-K1, K2), pero la medida no lo demuestra: el criterio 4 depende de que el agente haga la búsqueda, y la diferencia puede deberse a eso. **No cambia la respuesta de examen**, que sigue siendo la de la guía. La comparación entre modelos está en [`docs/hallazgos.md`](../docs/hallazgos.md).
 
 Clasificación por tipo de señal en [`docs/tipos-de-senal.md`](../docs/tipos-de-senal.md).
 </details>

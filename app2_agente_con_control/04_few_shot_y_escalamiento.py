@@ -44,13 +44,14 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
     más tickets») en vez de pedir un identificador (5.2-K4, S5).
   - Reservar el escalamiento a los casos «complejos» (5.2-K1).
 - Lo que la medida no respalda:
-  - Con Haiku 5.5, los ejemplos no cambiaron nada: `sin_ejemplos` sale igual que la correcta. Las instrucciones
-    no daban resultados inconsistentes con ese modelo, que es la condición de 4.2-K1, así que la medida ni
-    demuestra ni contradice la guía. Con Haiku 4.5 sí hay diferencia, con una muestra pequeña (`README.md`).
+  - Con Haiku 5.5, `sin_ejemplos` sale peor que la correcta (56/65 frente a 63/65), sobre todo en los homónimos:
+    sin ejemplo el agente no llega a buscar por nombre. La medida no separa el efecto del ejemplo del de la redacción
+    del criterio 4, que depende de esa búsqueda, así que ni demuestra ni contradice 4.2-K1. Con Haiku 4.5 la señal está
+    repartida por tipos y con una muestra pequeña (`README.md`).
   - Los ejemplos no coinciden con ningún caso evaluado, así que lo que acierta la correcta es generalización
-    (4.2-K3); pero mientras `sin_ejemplos` acierte lo mismo, eso no se puede atribuir a los ejemplos.
-  - En `confianza`, la confianza declarada separa poco los aciertos de los fallos, con pocos casos y sin repetir:
-    no es una demostración de 5.2-K3. La señal de la variante es la tasa de acierto por tipo de caso.
+    (4.2-K3); pero la medida no separa lo que aporta el ejemplo de lo que ya hacía el criterio escrito.
+  - En `confianza`, la confianza declarada no separa de forma estable los aciertos de los fallos (la media salió al
+    revés en la medida de 13 casos), con pocos casos y sin repetir: no es una demostración de 5.2-K3. La señal de la variante es la tasa de acierto por tipo de caso.
   - El tercer disparador de 5.2-K1, «no se puede avanzar», tiene dos casos y ningún ejemplo, y solo cuenta con el
     criterio 5 del prompt: lo que acierte ahí es generalización, no memoria de un ejemplo (4.2-K3).
 - Inferencias propias:

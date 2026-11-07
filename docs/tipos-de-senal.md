@@ -47,10 +47,10 @@ Una fila por parte o variante que el módulo ejecuta. La columna de evidencia re
 | app2/02 | correcta (con hooks) | Determinista | El hook normaliza y la frontera 500,00 pasa y 500,01 no; el modelo nunca ve el timestamp crudo |
 | app2/02 | `--anti` (umbral y fechas solo en el prompt) | Sin medir | El README dice que el modelo puede cumplirlo pero es probabilístico; no recoge ninguna tasa |
 | app2/03 | las cuatro `--config` | Determinista | La configuración fija lo que cada una deja pasar; es una comprobación operativa, no evaluable |
-| app2/04 | `--parte proxy` | Determinista | El proxy de sentimiento acierta 3 de 11 casos etiquetados y se equivoca en frustración, vacío de política y petición de humano; se prueba sin modelo |
-| app2/04 | correcta y `--anti sin_ejemplos` | Probabilística con control positivo | Con Haiku 5.5 las dos aciertan 55/55; con Haiku 4.5 la correcta acierta 32/33 y `sin_ejemplos`, 27/33 (frustración 6/9, homónimos 3/6) |
-| app2/04 | `--anti sentimiento` | Probabilística con control positivo | Con Haiku 5.5 acierta 25/55: 0/15 en frustración y 0/15 en vacío de política, frente a 55/55 de la correcta |
-| app2/04 | `--anti confianza` | Probabilística con control positivo | Con Haiku 5.5 acierta 39/55 (frustración 0/15) y la confianza declarada separa poco aciertos (60,6) de fallos (50,3) |
+| app2/04 | `--parte proxy` | Determinista | El proxy de sentimiento acierta 3 de 13 casos etiquetados y se equivoca en frustración, vacío de política, casos que no avanzan y petición de humano; se prueba sin modelo |
+| app2/04 | correcta y `--anti sin_ejemplos` | Probabilística con control positivo | Con Haiku 5.5 la correcta acierta 63/65 y `sin_ejemplos`, 56/65 (homónimos 9/10 frente a 5/10); con Haiku 4.5, 35/39 frente a 32/39, repartido por tipos |
+| app2/04 | `--anti sentimiento` | Probabilística con control positivo | Con Haiku 5.5 acierta 30/65: 0/15 en frustración y 1/15 en vacío de política, frente a 63/65 de la correcta |
+| app2/04 | `--anti confianza` | Probabilística con control positivo | Con Haiku 5.5 acierta 44/65 (frustración 0/15); la confianza declarada no separa de forma estable aciertos (54,7) de fallos (61,0) |
 | app2/05 | correcta (case facts y handoff estructurado) | Probabilística con control positivo | El handoff llegó completo (una ejecución) |
 | app2/05 | `--anti resumen` | Probabilística con control positivo | El resumen conservó el importe pero perdió la fecha de compra y el año de los plazos (una ejecución) |
 | app2/05 | `--anti handoff_libre` | Determinista | Fallo estructural: con texto libre faltan los campos que la persona necesita y el código no puede comprobarlos |

@@ -42,7 +42,7 @@ Los cuatro módulos de ejecución obligatoria existen porque su lección solo se
 | app2/01 | Regla en el prompt frente a puerta programática · Agent SDK | API key o suscripción | obligatoria | sin cifra en el README | Hay que ejecutarlo |
 | app2/02 | Hooks `PreToolUse` y `PostToolUse` · Agent SDK | API key o suscripción | ligera | sin cifra en el README | Se completa leyendo (Paso 3) |
 | app2/03 | Permisos · Agent SDK | API key o suscripción | ligera | sin cifra en el README | Se completa leyendo (Paso 3) |
-| app2/04 | Criterios de escalamiento y ejemplos few-shot · Agent SDK | API key o suscripción | ligera | unos 0,03 $ por cinco repeticiones con Haiku 5.5 y unos 0,35 $ por tres con Haiku 4.5; `--parte proxy` no cuesta | Se completa leyendo; `--parte proxy` se ejecuta sin credencial |
+| app2/04 | Criterios de escalamiento y ejemplos few-shot · Agent SDK | API key o suscripción | ligera | unos 0,04 $ por cinco repeticiones con Haiku 5.5 y unos 0,40 $ por tres con Haiku 4.5; `--parte proxy` no cuesta | Se completa leyendo; `--parte proxy` se ejecuta sin credencial |
 | app2/05 | Varios asuntos, case facts y handoff · Agent SDK | API key o suscripción | ligera | sin cifra en el README | Se completa leyendo (Paso 3) |
 | app2/06 | Sesiones · Agent SDK | API key o suscripción | ligera | sin cifra en el README | Se completa leyendo (Paso 3) |
 | app2/07 | Reescribir argumentos (apéndice) · no llama al modelo | Ninguna | ligera | 0 $ | Se ejecuta sin credencial |
