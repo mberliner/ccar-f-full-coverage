@@ -32,4 +32,9 @@ Comprueba lo siguiente:
 6. **Tipos de señal.** Las filas de `docs/tipos-de-senal.md` para `10`–`12` coinciden con lo que el README dice que se observó.
 7. **Notas `→ roadmap`** de `docs/hallazgos.md` (sonda C1 y tanda C). ¿Le pasarían también a otra persona, con otra máquina y otra cuenta, o dependen de esta implementación?
 
+**Pendientes conocidos: no los señales como hallazgos, pero sí di si el registro los describe bien.**
+- Tras el pase de textos se midió una batería nueva de `app3/12` (5 ejecuciones por rama, registrada en `docs/hallazgos.md` y `NOTAS.md`). Esas cifras son posteriores al README de `app3/12` y a `docs/tipos-de-senal.md`, que Opus 5.5 actualiza en el pase de correcciones. Una diferencia entre el registro y esos dos documentos, en lo que afecta a `autorrevision` y `autorrevision_explicita`, es esperada. Lo que sí quiero saber es si el registro es correcto y si se interpretó sin forzar la guía.
+- La batería tiene dos limitaciones que el registro anota: las ramas de autorrevisión corrieron con un tope de 1,0 $ y no de 1,5 $ (sin efecto en lo medido), y la rama de la instancia nueva revisó un diff algo distinto (el generador añadió un archivo de tests). Valora si eso invalida la comparación entre ramas.
+- Las tres ramas encuentran todos los fallos en todas las ejecuciones, así que la medida no discrimina. Opina sobre la clasificación de las tres filas de `app3/12` en `docs/tipos-de-senal.md` (propuesta en el registro) y sobre si basta con dejarlo como está o hace falta un fallo más sutil en los datos.
+
 Puedes ejecutar `uv run pytest -q`. No ejecutes nada que llame al modelo.
