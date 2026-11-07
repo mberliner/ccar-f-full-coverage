@@ -87,7 +87,7 @@ m11 = load_sibling("11_criterios_y_ci.py")
 m10 = load_sibling("10_confianza_y_revision.py")
 
 PARTS = ["plan", "revision"]
-ANTI_VARIANTS = ["autorrevision", "autorrevision_explicita"]
+ANTI_VARIANTS = ["autorrevision", "autorrevision_explicita", "una_pasada"]
 # Herramientas de la sesión que genera: puede escribir. Las de revisión nunca.
 GENERATOR_TOOLS = ("Read", "Grep", "Glob", "Write", "Edit")
 # Confianza (de la verificación) desde la que un hallazgo se publica sin pasar por una persona (elección propia).
@@ -104,6 +104,12 @@ INTEGRATION_TASK = (
     "Eres un revisor de código en CI. Esta es la pasada de integración: cada archivo ya se revisó por separado (hallazgos abajo). "
     "No repitas esos hallazgos; busca solo problemas entre archivos: contratos, unidades, firmas y flujo de datos entre quien cambia y quien llama. "
     "Puedes leer el repositorio con Read, Grep y Glob. Responde solo con el objeto JSON del schema, con tu confianza (0 a 1) en cada hallazgo.\n"
+)
+SINGLE_TASK = (
+    "Eres un revisor de código en CI. Revisa el cambio completo de este commit, todos sus archivos, en una sola pasada: "
+    "tanto los problemas de cada archivo como los que aparecen entre archivos. "
+    "Puedes leer el repositorio con Read, Grep y Glob para comprobar a quién afecta un cambio. "
+    "Responde solo con el objeto JSON del schema, con tu confianza (0 a 1) en cada hallazgo.\n"
 )
 VERIFICATION_TASK = (
     "Eres un verificador. Para cada hallazgo numerado, di con qué confianza (0 a 1) es un problema real del código de este diff, "
@@ -138,8 +144,14 @@ def split_diff(diff: str) -> dict[str, str]:
     return chunks
 
 
-def plan_passes(diff: str) -> list[Pass]:
-    """Una pasada local por archivo (sin tools: no puede ver a los llamadores) y una de integración (con lectura)."""
+def plan_passes(diff: str, anti: str | None = None) -> list[Pass]:
+    """Una pasada local por archivo (sin tools: no puede ver a los llamadores) y una de integración (con lectura).
+
+    `--anti una_pasada` cambia solo este reparto: una única pasada larga sobre todo el diff (con las tools de lectura de la
+    de integración), sin pasada por archivo ni de integración. La verificación y la instancia nueva son las mismas.
+    """
+    if anti == "una_pasada":
+        return [Pass("single", "revisión única", diff, headless.READ_ONLY_TOOLS)]
     passes = [Pass("file", name, chunk, ()) for name, chunk in split_diff(diff).items()]
     return passes + [Pass("integration", "integración", diff, headless.READ_ONLY_TOOLS)]
 
@@ -167,6 +179,11 @@ def file_pass_prompt(file_diff: str, *, message: str) -> str:
     return m11.build_review_prompt(file_diff, message=message, task=FILE_TASK)
 
 
+def single_pass_prompt(diff: str, *, message: str) -> str:
+    """La pasada única de `--anti una_pasada`: mismos criterios y ejemplos que las demás, sobre todo el diff a la vez."""
+    return m11.build_review_prompt(diff, message=message, task=SINGLE_TASK)
+
+
 def _listing(findings: list[dict]) -> str:
     return "\n".join(f"- {f['file']}:{f['line']} ({f['category']}): {f['problem']}" for f in findings) or "ninguno"
 
@@ -182,22 +199,37 @@ def verification_prompt(diff: str, findings: list[dict]) -> str:
 
 
 def with_arm_note(prompt: str, anti: str | None) -> str:
-    """La rama `autorrevision_explicita` antepone una frase; las otras dos usan el prompt tal cual."""
-    if anti not in (None, "autorrevision", "autorrevision_explicita"):
+    """La rama `autorrevision_explicita` antepone una frase; las otras usan el prompt tal cual."""
+    if anti not in (None, "autorrevision", "autorrevision_explicita", "una_pasada"):
         raise ValueError(f"variante desconocida: {anti}")
     return SELF_REVIEW_NOTE + prompt if anti == "autorrevision_explicita" else prompt
 
 
 def session_args(anti: str | None, generator_session: str) -> dict[str, Any]:
-    """La instancia nueva no parte de ninguna sesión; la autorrevisión bifurca la que generó el código."""
-    return {"resume": None, "fork": False} if anti is None else {"resume": generator_session, "fork": True}
+    """La instancia nueva (también la de `una_pasada`) no parte de ninguna sesión; la autorrevisión bifurca la que generó el código."""
+    return {"resume": None, "fork": False} if anti in (None, "una_pasada") else {"resume": generator_session, "fork": True}
 
 
 # --- Fusión, confianza y enrutado ----------------------------------------------------------------------------------------------------------
 
 
+def _alike(a: dict, b: dict) -> bool:
+    """¿Hablan del mismo problema? El mismo `detected_pattern` normalizado, o palabras del problema en común (Jaccard ≥ 0,3)."""
+    pa, pb = m11.normalize_pattern(a.get("detected_pattern")), m11.normalize_pattern(b.get("detected_pattern"))
+    if pa == pb and pa != "sin_patron":
+        return True
+    words = lambda f: {w for w in re.findall(r"\w+", str(f.get("problem", "")).casefold()) if len(w) > 3}  # noqa: E731
+    wa, wb = words(a), words(b)
+    return bool(wa and wb) and len(wa & wb) / len(wa | wb) >= 0.3
+
+
 def _same(a: dict, b: dict) -> bool:
-    return a["file"] == b["file"] and a["category"] == b["category"] and abs(a["line"] - b["line"]) <= MERGE_WINDOW
+    """Mismo archivo, misma categoría, línea cercana **y** el mismo problema.
+
+    Con solo la ventana, dos hallazgos distintos a una línea de distancia se fusionaban y el segundo se perdía. Límite que
+    queda: el mismo problema contado con otras palabras y otro `detected_pattern` no se fusiona, y cuenta dos veces.
+    """
+    return a["file"] == b["file"] and a["category"] == b["category"] and abs(a["line"] - b["line"]) <= MERGE_WINDOW and _alike(a, b)
 
 
 def merge_findings(per_file: dict[str, list[dict]], integration: list[dict]) -> list[dict]:
@@ -238,7 +270,9 @@ def finding_cells(findings: list[dict], labels: dict, *, scope: int) -> list[Any
 
 
 def found_by_pass(merged: list[dict], labels: dict, *, scope: int) -> dict[str, set[str]]:
-    """Qué fallos sembrados encontró cada pasada. Uno que salió en las dos cuenta para la local."""
+    """Qué fallos sembrados encontró cada pasada. Uno que salió en las dos cuenta para la local. Con `una_pasada`, todo es de la única."""
+    if merged and all(f.get("source") == "single" for f in merged):
+        return {"single": m11.score_findings(merged, labels, scope=scope).found}
     local = m11.score_findings([f for f in merged if f.get("source") == "file"], labels, scope=scope).found
     both = m11.score_findings(merged, labels, scope=scope).found
     return {"file": local, "integration": both - local}
@@ -253,25 +287,43 @@ def generator_prompt(change: dict) -> str:
     return (
         f"Implementa este cambio en el repositorio del directorio actual: {change['message_1']}.\n"
         f"Escribe cada archivo con Write con exactamente este contenido, sin modificarlo:\n\n{files}\n"
+        "No crees ningún otro archivo ni toques ninguno que no esté en esta lista.\n"
         "Cuando termines, explica en un párrafo por qué tomaste cada decisión de este cambio.\n"
     )
 
 
-def build_generator_repo() -> Any:
-    """El repositorio temporal de `11`, devuelto al estado base: la sesión generadora escribe el cambio sobre él."""
-    repo = m11.build_review_repo()
-    m11._git(repo.path, "reset", "-q", "--hard", repo.base)
-    return repo
+@dataclass
+class GeneratorRepo:
+    path: Path
+    base: str
+    target_diff: str  # el diff del cambio dado, calculado aparte: el repositorio del generador no lo contiene
+
+
+def build_generator_repo() -> GeneratorRepo:
+    """Repositorio temporal en el estado base, con un único commit: la sesión generadora escribe el cambio sobre él.
+
+    No es el repositorio de `11` devuelto con `reset --hard`: ese conserva los dos commits del cambio (y sus mensajes, en el
+    reflog y en `COMMIT_EDITMSG`) al alcance de `Grep` y `Read`, y el revisor podría leer el cambio ya hecho. El diff esperado
+    se calcula en otro repositorio.
+    """
+    full = m11.build_review_repo()
+    target = m11.diff_of(full, full.base, full.commit_1)
+    clean = m11.build_review_repo(commits=0)
+    return GeneratorRepo(clean.path, clean.base, target)
 
 
 def generated_diff(repo: Any) -> str:
-    """Lo que ha cambiado el árbol de trabajo respecto al estado base."""
+    """Lo que ha cambiado el árbol de trabajo respecto al estado base, también los archivos nuevos sin seguimiento.
+
+    `git diff <base>` no los ve; `add -N` (intent-to-add) los registra sin guardar su contenido y entran en el diff.
+    """
+    m11._git(repo.path, "add", "-N", "--all")
     return m11._git(repo.path, "diff", "--no-color", "-U3", repo.base)
 
 
 def matches_target(repo: Any, change: dict) -> bool:
     """¿Escribió la sesión exactamente el cambio que se le dio? Si no, se puntúa su diff real, no el esperado."""
-    return generated_diff(repo) == m11.diff_of(repo, repo.base, repo.commit_1)
+    return generated_diff(repo) == repo.target_diff
 
 
 def mismatch_files(repo: Any, change: dict) -> list[str]:
@@ -289,16 +341,24 @@ def pass_command(cwd: Path, *, model: str, budget: float, schema: dict, tools: t
 # --- Ejecución ------------------------------------------------------------------------------------------------------------------------------
 
 
-def run_plan(model: str, budget: float) -> None:
+def run_plan(model: str, budget: float, anti: str | None = None) -> None:
     repo = m11.build_review_repo()
     diff = m11.diff_of(repo, repo.base, repo.commit_1)
-    plan = plan_passes(diff)
+    plan = plan_passes(diff, anti)
     message = load("cambio_revision.json")["message_1"]
     print(f"\n=== plan de pasadas · {len(plan)} sobre el diff del primer commit ({len(diff.splitlines())} líneas) ===")
     for p in plan:
-        prompt = file_pass_prompt(p.chunk, message=message) if p.kind == "file" else integration_prompt(p.chunk, [], message=message)
+        if p.kind == "single":
+            prompt = single_pass_prompt(p.chunk, message=message)
+        else:
+            prompt = file_pass_prompt(p.chunk, message=message) if p.kind == "file" else integration_prompt(p.chunk, [], message=message)
         print(f"  {p.kind:11} {p.name:28} tools={','.join(p.tools) or 'ninguna'} · prompt {len(prompt)} caracteres")
     print("  verificación: confianza por hallazgo, sin tools")
+    if anti == "una_pasada":
+        cmd = pass_command(repo.path, model=model, budget=budget, schema=findings_schema(), tools=plan[0].tools, session=session_args(anti, "<sesión generadora>"))
+        print("[una_pasada: instancia nueva, una sola pasada con lectura; sin --resume]")
+        headless.print_command(cmd, stdin_chars=len(single_pass_prompt(plan[0].chunk, message=message)))
+        return
     cmd = pass_command(repo.path, model=model, budget=budget, schema=findings_schema(), tools=(), session=session_args("autorrevision", "<sesión generadora>"))
     print("[la autorrevisión bifurca la sesión que generó el código]")
     headless.print_command(cmd, stdin_chars=0)
@@ -330,22 +390,29 @@ def run_revision(args: Any, model: str, budget: float) -> None:
     if not exact:
         print(f"[generador] difieren o sobran: {mismatch_files(repo, change)}; se puntúa el diff que escribió, no el esperado")
     arm = args.anti
-    print(f"\n=== revisión · {'instancia nueva' if arm is None else arm} · {args.repeat} ejecuciones · pasadas por archivo + integración + verificación ===")
+    steps = "una pasada sobre todo el diff + verificación" if arm == "una_pasada" else "pasadas por archivo + integración + verificación"
+    print(f"\n=== revisión · {'instancia nueva' if arm is None else arm} · {args.repeat} ejecuciones · {steps} ===")
     pooled_cells: list[Any] = []
     message = change["message_1"]
     for run in range(1, args.repeat + 1):
         session = session_args(arm, generator.session_id)
-        per_file: dict[str, list[dict]] = {}
-        for p in plan_passes(diff):
-            if p.kind != "file":
-                continue
-            prompt = with_arm_note(file_pass_prompt(p.chunk, message=message), arm)
-            r = _call(ledger, {"model": model, "tools": p.tools, "session": session}, prompt, repo, findings_schema(), generator)
-            per_file[p.name] = r.structured["findings"] if r.ok else []
-        local = [f for fs in per_file.values() for f in fs]
-        r = _call(ledger, {"model": model, "tools": headless.READ_ONLY_TOOLS, "session": session}, with_arm_note(integration_prompt(diff, local, message=message), arm), repo, findings_schema(), generator)
-        integration = r.structured["findings"] if r.ok else []
-        merged = merge_findings(per_file, integration)
+        if arm == "una_pasada":
+            # Una sola pasada larga con lectura, sin pasada por archivo ni de integración: lo único que cambia respecto a la instancia nueva.
+            (p,) = plan_passes(diff, arm)
+            r = _call(ledger, {"model": model, "tools": p.tools, "session": session}, single_pass_prompt(p.chunk, message=message), repo, findings_schema(), generator)
+            merged = [{**f, "source": "single"} for f in (r.structured["findings"] if r.ok else [])]
+        else:
+            per_file: dict[str, list[dict]] = {}
+            for p in plan_passes(diff):
+                if p.kind != "file":
+                    continue
+                prompt = with_arm_note(file_pass_prompt(p.chunk, message=message), arm)
+                r = _call(ledger, {"model": model, "tools": p.tools, "session": session}, prompt, repo, findings_schema(), generator)
+                per_file[p.name] = r.structured["findings"] if r.ok else []
+            local = [f for fs in per_file.values() for f in fs]
+            r = _call(ledger, {"model": model, "tools": headless.READ_ONLY_TOOLS, "session": session}, with_arm_note(integration_prompt(diff, local, message=message), arm), repo, findings_schema(), generator)
+            integration = r.structured["findings"] if r.ok else []
+            merged = merge_findings(per_file, integration)
         verdicts: list[dict] = []
         if merged:
             v = _call(ledger, {"model": model, "tools": (), "session": session}, with_arm_note(verification_prompt(diff, merged), arm), repo, verification_schema(), generator)
@@ -356,8 +423,9 @@ def run_revision(args: Any, model: str, budget: float) -> None:
         publish, human = route_by_confidence(verified, threshold=PUBLISH_THRESHOLD)
         cells = finding_cells(verified, labels, scope=1)
         pooled_cells += cells
+        where = f"una pasada: {sorted(by_pass['single'])}" if "single" in by_pass else f"por archivo: {sorted(by_pass['file'])} · integración: {sorted(by_pass['integration'])}"
         print(
-            f"[{run}/{args.repeat}] por archivo: {sorted(by_pass['file'])} · integración: {sorted(by_pass['integration'])} · faltan {sorted(score.missed)} · "
+            f"[{run}/{args.repeat}] {where} · faltan {sorted(score.missed)} · "
             f"falsos positivos {len(score.false_positives)} · marcó lo correcto {len(score.flagged_ok)} · publicados {len(publish)} (acierto {m10.pct(m10.accuracy([c for c in cells if c.confidence is not None and c.confidence >= PUBLISH_THRESHOLD]))}) · "
             f"a una persona {len(human)} · coste acumulado {ledger.spent:.4f} $"
         )
@@ -373,13 +441,13 @@ def main() -> int:
     parser = build_parser(__doc__.splitlines()[0], anti_variants=ANTI_VARIANTS)
     parser.add_argument("--parte", choices=PARTS, default="plan", help="`plan` muestra las pasadas y la orden sin ejecutar nada; `revision` genera y revisa con `claude -p`")
     args = parser.parse_args()
-    if args.anti and args.parte != "revision":
-        parser.error("--anti es de la parte revision")
+    if args.anti and args.parte != "revision" and not (args.parte == "plan" and args.anti == "una_pasada"):
+        parser.error("--anti es de la parte revision (`--parte plan` acepta solo una_pasada, para ver su única pasada)")
     print(credentials.describe())
     model = report_model("reviewer")
     budget = report_budget(args.budget, "multiagent")
     if args.parte == "plan":
-        run_plan(model, budget)
+        run_plan(model, budget, args.anti)
         return 0
     try:
         run_revision(args, model, budget)

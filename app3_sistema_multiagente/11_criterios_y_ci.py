@@ -311,8 +311,14 @@ def _write(path: Path, files: dict[str, str]) -> None:
         target.write_bytes(content.encode("utf-8"))  # sin traducir saltos de línea: el diff solo tiene el cambio
 
 
-def build_review_repo(*, standards: bool = True) -> ReviewRepo:
-    """Copia temporal de `repo_mesa` con su `CLAUDE.md` de CI y dos commits de cambio. `datos/sinteticos/` no se toca."""
+def build_review_repo(*, standards: bool = True, commits: int = 2) -> ReviewRepo:
+    """Copia temporal de `repo_mesa` con su `CLAUDE.md` de CI y hasta dos commits de cambio. `datos/sinteticos/` no se toca.
+
+    `commits` 0 deja solo el commit base (`commit_1` y `commit_2` vacíos): es el repositorio de la sesión generadora de `12`,
+    que no debe llevar en su historial, ni en su reflog, el cambio que va a escribir.
+    """
+    if commits not in (0, 1, 2):
+        raise ValueError("commits debe ser 0, 1 o 2")
     change = load("cambio_revision.json")
     path = copy_to_temp("repo_mesa")
     _write(path, {"CLAUDE.md": ci_claude_md(standards=standards)})
@@ -320,14 +326,17 @@ def build_review_repo(*, standards: bool = True) -> ReviewRepo:
     _git(path, "add", "-A")
     _git(path, "commit", "-q", "-m", "base")
     base = _git(path, "rev-parse", "HEAD").strip()
-    _write(path, change["commit_1"])
-    _git(path, "add", "-A")
-    _git(path, "commit", "-q", "-m", change["message_1"])
-    commit_1 = _git(path, "rev-parse", "HEAD").strip()
-    _write(path, change["commit_2"])
-    _git(path, "add", "-A")
-    _git(path, "commit", "-q", "-m", change["message_2"])
-    commit_2 = _git(path, "rev-parse", "HEAD").strip()
+    commit_1 = commit_2 = ""
+    if commits >= 1:
+        _write(path, change["commit_1"])
+        _git(path, "add", "-A")
+        _git(path, "commit", "-q", "-m", change["message_1"])
+        commit_1 = _git(path, "rev-parse", "HEAD").strip()
+    if commits >= 2:
+        _write(path, change["commit_2"])
+        _git(path, "add", "-A")
+        _git(path, "commit", "-q", "-m", change["message_2"])
+        commit_2 = _git(path, "rev-parse", "HEAD").strip()
     return ReviewRepo(path, base, commit_1, commit_2)
 
 

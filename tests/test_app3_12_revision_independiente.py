@@ -228,7 +228,7 @@ def test_generated_diff_matches_the_target_when_the_files_are_written_as_given()
     for name, content in CHANGE["commit_1"].items():
         (repo.path / name).write_bytes(content.encode("utf-8"))
     assert mod.matches_target(repo, CHANGE)
-    assert m11.diff_of(repo, repo.base, repo.commit_1) == mod.generated_diff(repo)
+    assert repo.target_diff == mod.generated_diff(repo)
     (repo.path / "config.py").write_text("distinto\n", encoding="utf-8")
     assert not mod.matches_target(repo, CHANGE)
 
