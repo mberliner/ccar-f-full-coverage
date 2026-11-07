@@ -46,22 +46,34 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
 - Lo medido aquí no respalda todas las viñetas (cifras «después de las correcciones C4», 5 ejecuciones por variante, en
   el README; las anteriores, en `docs/hallazgos.md`). Las cifras anteriores están contaminadas: el revisor del primer
   commit leía el árbol del segundo, donde A ya estaba arreglado, y un escenario de test se puntuaba sin lo que esperaba.
-  - `conservador` encuentra los cinco fallos y **no marca nunca el cambio correcto** (0 de 5, frente a 5 de 5 con los
-    criterios): al revés de lo que dice 4.1-K2. Hipótesis sin comprobar: la variante sustituye todos los criterios,
-    también el de comentarios, que es el que invita a revisar el comentario del cambio correcto. Las pérdidas de A que
-    se veían antes con `conservador` se explican, con mucha probabilidad, por el árbol contaminado. En el examen manda
-    4.1-K2.
+  Las correcciones C4 cambiaron además el prompt de todas las variantes (la línea de `bug` ya no cita el docstring y
+  cambió el ejemplo de `minor`) y los datos (`TIMEOUT` duplicado pasa a `NOTIF_TIMEOUT`).
+  - «Marca el cambio correcto» incluye un artefacto: 2 de las 5 marcas de la correcta, y la única de la variante sin la
+    categoría `comment`, son el renombrado a `NOTIF_TIMEOUT`, que la puntuación cuenta como marca sin serlo. Leyendo que
+    cada ejecución marcó una sola cosa (3 + 2, una lectura de los recuentos y no una medida directa), la marca del
+    comentario de `REINTENTOS` sale en 3 de 5 con la correcta.
+  - `conservador` encuentra los cinco fallos y **no marca nunca el cambio correcto** (0 de 5, frente a 3 de 5 marcas
+    del comentario de `REINTENTOS` con los criterios): al revés de lo que dice 4.1-K2. Hipótesis sin comprobar: la
+    variante sustituye todos los criterios, también el de comentarios, que es el que invita a revisar el comentario del
+    cambio correcto. Las pérdidas de A que se veían antes con `conservador` tienen una explicación posible en el árbol
+    contaminado, junto a los cambios de prompt y de datos; no se aisló. En el examen manda 4.1-K2.
   - `sin_ejemplos` no se separa de la correcta (B falta en 1 de 25 oportunidades).
-  - Con los tests existentes en el contexto y sin ellos sale 0 escenarios repetidos: 3.6-S4 no se ve con esta métrica,
-    porque los tests existentes son justo los que el cambio rompe. El «al revés de lo esperado» de antes (1 repetido
-    con ellos y 0 sin ellos) era un artefacto de la medida: el test que el cambio rompe se puntuaba como repetido. En el
-    examen manda 3.6-S4.
+  - Con los tests existentes en el contexto y sin ellos salen 0 escenarios repetidos, y ese 0 no es una señal ni a favor
+    ni en contra de 3.6-S4. Solo 2 de los 5 escenarios existentes (`calcular_sla(alta, 3)` y `horas_restantes`) son los
+    que el cambio rompe; los otros 3 (`calcular_sla(alta, 9)` con `ValueError` y los dos de `debe_escalar`) no cambian,
+    y repetirlos sería un duplicado real. Limitación de la medida: la clave exige que coincidan todos los números del
+    texto de `expected`, así que un duplicado real escrito con un número de más («lanza ValueError: 9 h de 8 h») no se
+    cuenta; el 0 frente a 0 puede ser en parte un artefacto de la clave y no demuestra que no hubiera duplicados. Ningún
+    test cubre ese caso, y las propuestas no se guardaron ni se revisaron a mano. El «al revés de lo esperado» de antes
+    (1 repetido con ellos y 0 sin ellos) era otro artefacto: el test que el cambio rompe, reescrito a minutos, se
+    puntuaba como repetido. En el examen manda 3.6-S4.
   - Sin los estándares en el `CLAUDE.md`, el modelo propone más tests (9–12 frente a 7–8, en 5 de 5): una diferencia de
     cantidad en el sentido de 3.6-S5; no se midió si los de más aportan menos.
 - Inferencias propias:
   - Desactivar una categoría es una medida temporal mientras se arregla el criterio, no el arreglo (4.1-S2). Con la
-    variante que quita solo la categoría `comment`, la marca del cambio correcto baja a 1 de 5, pero el fallo C (un
-    comentario que sí contradice el código) se pierde en 1 de 5: apagar la categoría quita también lo que acertaba.
+    variante que quita solo la categoría `comment`, la marca del comentario de `REINTENTOS` pasa de 3 de 5 a 0 de 5
+    (su única marca es el renombrado), pero el fallo C (un comentario que sí contradice el código) se pierde en 1 de 5:
+    apagar la categoría quita también lo que acertaba.
   - La confianza declarada y el `detected_pattern` los rellena el propio modelo: sirven para agrupar los descartes, y
     agrupar sin normalizar el nombre los dispersa.
   - Los hallazgos previos de la segunda revisión son una lista fija construida desde las etiquetas, para que las dos
