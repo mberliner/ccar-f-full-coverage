@@ -34,6 +34,6 @@ Comprueba lo siguiente:
 
 **Pendientes conocidos: no los señales como hallazgos, pero sí di si el registro los describe bien.**
 - Las cabeceras y los README de `04` y `07` los escribió Sonnet 5.5 y pasan después por Opus 5.5 (`docs/prompts-entrega-3/d-textos.md`). Si la revisión se hace antes de esa pasada, no señales el estilo, solo lo que contradiga la guía, el código o las cifras.
-- La muestra con Haiku 4.5 es de 3 repeticiones (5 fallos en 33 de `sin_ejemplos`) y la confianza declarada se midió una vez con n pequeño: valora si el README las presenta con esa cautela.
+- La muestra con Haiku 4.5 es de 3 repeticiones (6 fallos en 33 de `sin_ejemplos` y 1 en la correcta) y la confianza declarada se midió una vez con n pequeño: valora si el README las presenta con esa cautela.
 
 Puedes ejecutar `uv run pytest -q`. No ejecutes nada que llame al modelo.
