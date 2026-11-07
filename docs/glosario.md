@@ -58,9 +58,10 @@ Términos que usan los módulos de las tres apps y el arnés, para quien llega d
 - **Pre-aprobar:** que las llamadas a una tool se ejecuten sin pedir permiso. En el SDK se hace listándola en `allowed_tools`.
 - ***Few-shot*:** ejemplos de casos resueltos que se incluyen en el prompt para mostrar al modelo cómo actuar.
 - **Escalamiento:** pasar un caso a una persona cuando el agente no debe o no puede resolverlo.
-- **Criterio de escalamiento:** la regla explícita que dice cuándo escalar (el cliente pide un humano, la política no cubre la petición, no se puede avanzar) y cuándo resolver; se escribe en el prompt, mejor con ejemplos razonados (`app2/04`).
-- **Vacío de política:** una petición que la política de la empresa no contempla o deja ambigua (por ejemplo, igualar el precio de la competencia cuando solo se prevén ajustes del propio catálogo). El agente no decide: escala.
-- ***Proxy*:** una medida indirecta que se usa en lugar de la que importa. El sentimiento del mensaje y la confianza que declara el propio modelo son proxies poco fiables de la complejidad real de un caso.
+- **Criterio de escalamiento:** una regla escrita en el *system prompt* que dice en qué situaciones el agente pasa el caso a una persona y en cuáles lo resuelve él (`app2/04`).
+- **Vacío de política:** una petición sobre la que la política de la empresa no dice nada o es ambigua; por ejemplo, un gasto que la política de gastos ni permite ni prohíbe.
+- ***Proxy*:** una medida indirecta que se usa en lugar de la que importa. En `app2/04`, el tono del mensaje y la confianza que declara el propio modelo se prueban como proxies de la complejidad de un caso.
+- **Confianza autodeclarada:** una cifra que el propio modelo escribe sobre lo seguro que está de su respuesta o de poder resolver un caso. No sale de ninguna medida externa; en extracción, su forma por valor es la confianza por campo.
 - ***Handoff* (traspaso):** el paquete de información que acompaña a un escalamiento, para que quien recibe el caso pueda seguir sin volver a preguntar.
 - **Sumarización progresiva:** resumir la conversación cada cierto tiempo y seguir trabajando a partir del resumen, para no llenar el contexto.
 - ***Case facts* (hechos del caso):** un bloque con los datos concretos del caso (importes, fechas, IDs, estados) que se mantiene aparte del resumen y se incluye en cada petición.

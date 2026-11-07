@@ -5,37 +5,60 @@ cuándo resolver, enseñado con criterios explícitos y 2 a 4 ejemplos que muest
 sentimiento y la confianza autodeclarada no sirven de criterio.
 
 QUÉ DICE LA GUÍA:
-- Los ejemplos few-shot son la técnica más eficaz cuando las instrucciones detalladas por sí solas dan resultados
-  inconsistentes (4.2-K1). Sirven sobre todo para casos ambiguos, como qué tool elegir ante una petición poco
-  clara (4.2-K2), y permiten que el modelo generalice el juicio a patrones nuevos en vez de limitarse a los casos
-  que ya vio (4.2-K3).
-- La habilidad es escribir de 2 a 4 ejemplos dirigidos a escenarios ambiguos y mostrar el razonamiento: por qué se
-  eligió una acción frente a las alternativas plausibles (4.2-S1). Se aplica aquí a los criterios de escalamiento
-  (5.2-S1).
-- Disparadores apropiados de escalamiento: la petición explícita de un humano, los vacíos o excepciones de
-  política (no solo los casos complejos) y la imposibilidad de avanzar (5.2-K1).
-- Hay que distinguir escalar de inmediato cuando el cliente lo exige de ofrecer resolver cuando el problema es
-  sencillo y el cliente solo expresa frustración; solo se escala si reitera su preferencia por un humano (5.2-K2,
-  5.2-S3). Una petición explícita se respeta sin investigar antes (5.2-S2).
-- El análisis de sentimiento y la confianza autodeclarada son *proxies* poco fiables de la complejidad real del
-  caso (5.2-K3).
-- Cuando la política es ambigua o calla sobre la petición (por ejemplo, igualar el precio de la competencia cuando
-  solo se contemplan ajustes del propio sitio), se escala (5.2-S4).
-- Si una búsqueda devuelve varios clientes coincidentes, se pide un identificador adicional en vez de elegir por
-  una heurística (5.2-K4, 5.2-S5).
+- Few-shot (4.2):
+  - Cuando unas instrucciones detalladas, por sí solas, dan resultados inconsistentes, los ejemplos few-shot son
+    la técnica más eficaz para conseguir una salida consistente en su forma y que se pueda usar (4.2-K1).
+  - Su papel es enseñar cómo se resuelven los casos ambiguos; uno de los ejemplos de la guía es qué tool elegir
+    ante una petición poco clara (4.2-K2).
+  - Con ejemplos, el modelo puede generalizar el criterio a situaciones nuevas, no solo reconocer los casos que
+    se le dieron por adelantado (4.2-K3).
+  - La destreza: escribir de 2 a 4 ejemplos dirigidos a los escenarios ambiguos, cada uno con el razonamiento de
+    por qué se tomó esa acción y no otra alternativa plausible (4.2-S1).
+- Escalamiento (5.2):
+  - Los disparadores adecuados son tres: que el cliente pida un humano, que la política tenga un vacío o una
+    excepción (no basta con que el caso sea complejo) y que no se pueda avanzar de forma útil (5.2-K1).
+  - No es lo mismo un cliente que exige un humano, al que se escala en el acto, que un problema sencillo, en el
+    que se ofrece resolverlo (5.2-K2). Lo primero se cumple de inmediato, sin investigar antes (5.2-S2); ante la
+    frustración se reconoce y se ofrece la solución si está al alcance del agente, y se escala solo si el
+    cliente vuelve a pedir una persona (5.2-S3).
+  - El sentimiento del mensaje y la confianza que el modelo declara sobre sí mismo no miden bien la complejidad
+    real del caso: son *proxies* poco fiables para decidir el escalamiento (5.2-K3).
+  - Si la política es ambigua o no dice nada sobre lo que se pide (el ejemplo de la guía: igualar el precio de
+    un competidor cuando solo se contemplan ajustes en el propio sitio), se escala (5.2-S4).
+  - Varias coincidencias en una búsqueda de cliente piden aclaración, no una elección por heurística (5.2-K4):
+    se instruye al agente para que pida un identificador adicional (5.2-S5).
+  - Las dos partes se unen en 5.2-S1: los criterios explícitos de escalamiento van en el *system prompt* con
+    ejemplos few-shot de cuándo escalar y cuándo resolver sin ayuda.
 
-POR QUÉ IMPORTA: escalar mal cuesta en las dos direcciones. Escalar de más satura al equipo y ofrecer resolución a
-quien pidió un humano lo exaspera; escalar de menos deja a una persona sin respuesta o, con los homónimos, actúa
-sobre la cuenta equivocada.
+POR QUÉ IMPORTA (inferencia propia): escalar mal cuesta en las dos direcciones. Escalar de más satura al equipo, y
+ofrecer resolver a quien pidió un humano lo ignora; escalar de menos deja sin respuesta a quien la necesita y, con
+los homónimos, actúa sobre la cuenta equivocada.
 
-ANTI-PATRÓN / TRAMPA DEL EXAMEN: decidir con el tono del cliente («si está enfadado, escala») o con la confianza
-que el propio modelo declara («si dice que no está seguro, escala»). El tono no mide la complejidad: una
-frustración sencilla se resuelve y un vacío de política suele llegar con tono neutro. Otra trampa es investigar
-antes de pasar con una persona a quien ya la pidió, y elegir un empleado entre varios por una heurística
-(«el más reciente»). Inferencia propia: el proxy de sentimiento de la parte `proxy` es una lista de palabras
-inventada para esta demostración; la guía dice que el sentimiento es poco fiable, no que esa lista falle así.
-Producto observado (no evaluable): la medida se hace sobre las llamadas a tools y no sobre el texto del agente;
-pedir un identificador y responder otra cosa sin escalar ni adivinar cuentan igual como «no escala».
+ANTI-PATRÓN / TRAMPA DEL EXAMEN:
+- Hechos de la guía:
+  - Decidir por el tono del cliente («si está enfadado, escala»: `--anti sentimiento`) o por la confianza que el
+    propio modelo declara («si dice que no está seguro, escala»: `--anti confianza`) (5.2-K3).
+  - Investigar o proponer pasos antes de pasar con una persona a quien ya la pidió (5.2-S2), y escalar una
+    frustración sencilla a la primera (5.2-S3).
+  - Elegir un empleado entre varios homónimos por una heurística («el más reciente», «el del departamento con
+    más tickets») en vez de pedir un identificador (5.2-K4, S5).
+  - Reservar el escalamiento a los casos «complejos» (5.2-K1).
+- Lo que la medida no respalda:
+  - Con Haiku 5.5, los ejemplos no cambiaron nada: `sin_ejemplos` sale igual que la correcta. Las instrucciones
+    no daban resultados inconsistentes con ese modelo, que es la condición de 4.2-K1, así que la medida ni
+    demuestra ni contradice la guía. Con Haiku 4.5 sí hay diferencia, con una muestra pequeña (`README.md`).
+  - Los ejemplos no coinciden con ningún caso evaluado, así que lo que acierta la correcta es generalización
+    (4.2-K3); pero mientras `sin_ejemplos` acierte lo mismo, eso no se puede atribuir a los ejemplos.
+  - En `confianza`, la confianza declarada separa poco los aciertos de los fallos, con pocos casos y sin repetir:
+    no es una demostración de 5.2-K3. La señal de la variante es la tasa de acierto por tipo de caso.
+  - Ningún caso es de «no se puede avanzar», el tercer disparador de 5.2-K1: el módulo no lo mide.
+- Inferencias propias:
+  - El proxy de sentimiento de `--parte proxy` es una lista de palabras inventada para esta demostración; la guía
+    dice que el sentimiento es poco fiable, no que esa lista falle así.
+  - Que un vacío de política suela llegar con tono neutro es una propiedad de los casos de este módulo, no algo
+    que diga la guía.
+- Límite de la medida: la acción se deduce de las llamadas a tools, no del texto. «No escala» incluye tanto pedir
+  un identificador como responder otra cosa sin escalar ni elegir a nadie; el módulo no los distingue.
 
 Qué se mide: la acción de cada caso frente a su etiqueta, deducida de las llamadas a tools. Las variantes `sentimiento`
 y `confianza` van sin ejemplos, porque los ejemplos contradirían su regla; el control con el que se comparan es
