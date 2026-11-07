@@ -4,6 +4,7 @@ import pytest
 
 from harness.narrador import (
     PHASES,
+    ROOT,
     PendingModule,
     UnknownModule,
     all_details_body,
@@ -118,14 +119,31 @@ def delivered():
 
 def test_route_lists_the_delivered_modules():
     ids = [module.id for module in delivered()]
-    assert len(ids) == 24
+    assert len(ids) == 26
     assert ids[0] == "app1/01" and "app2/07" in ids and "app3/03" in ids and "app3/04" in ids and "app3/05" in ids and "app3/06" in ids and "app3/07" in ids
     assert all(module.script.is_file() for module in delivered())
 
 
-def test_route_marks_pending_modules():
-    pending = {module.id for module in route() if not module.delivered}
-    assert {"app1/07", "app2/04"} <= pending and not ({"app3/10", "app3/11", "app3/12"} & pending) and "app3/06" not in pending
+def test_every_module_of_the_route_is_delivered_after_the_last_batch():
+    assert [module.id for module in route() if not module.delivered] == []
+
+
+def pending_root(tmp_path):
+    """Una copia del README de `app1` con la fila de `07` sin enlace: un módulo en la ruta sin entregar."""
+    app_dir = tmp_path / "app1_agente_unico"
+    app_dir.mkdir()
+    text = (ROOT / "app1_agente_unico" / "README.md").read_text(encoding="utf-8")
+    row = "| [`07_recorte_de_contexto.py`](07_recorte_de_contexto.py) |"
+    assert row in text
+    (app_dir / "README.md").write_text(text.replace(row, "| `07_recorte_de_contexto.py` |"), encoding="utf-8")
+    (tmp_path / "README.md").write_text((ROOT / "README.md").read_text(encoding="utf-8"), encoding="utf-8")
+    return tmp_path
+
+
+def test_route_marks_pending_modules(tmp_path):
+    root = pending_root(tmp_path)
+    pending = {module.id for module in route(root) if not module.delivered}
+    assert pending == {"app1/07"}
 
 
 @pytest.mark.parametrize("text", ["app1/05", "app1/05_scoping_y_tool_choice", "app1 05", "APP1/05", "app1/5"])
@@ -138,8 +156,11 @@ def test_resolve_rejects_unknown_and_pending():
         resolve("app9/01")
     with pytest.raises(UnknownModule):
         resolve("bucle")
+
+
+def test_resolve_rejects_a_pending_module(tmp_path):
     with pytest.raises(PendingModule):
-        resolve("app2/04")
+        resolve("app1/07", pending_root(tmp_path))
 
 
 # --- Fases: nada se revela antes de tiempo, en todos los módulos ----------------
@@ -221,7 +242,7 @@ def test_menu_lists_modules_recommends_first_and_offers_setup():
         assert module.id in text
     star_lines = [line for line in text.splitlines() if "★" in line]
     assert len(star_lines) == 1 and "app1/01" in star_lines[0]
-    assert "próximamente" in text and "app2/04" in text
+    assert "próximamente" not in text, "con todos los módulos entregados no queda ninguno por llegar"
     assert "Puesta en marcha" in text and "d3_claude_code" in text
 
 
@@ -273,3 +294,8 @@ def test_setup_accepts_key_from_environment_without_showing_it(tmp_path, clean_e
     assert sentinel not in report
     credential_line = next(line for line in report.splitlines() if "credencial" in line.lower())
     assert "✓" in credential_line
+
+
+def test_menu_flags_a_pending_module(tmp_path):
+    text = menu(pending_root(tmp_path))
+    assert "app1/07" in text and "próximamente" in text

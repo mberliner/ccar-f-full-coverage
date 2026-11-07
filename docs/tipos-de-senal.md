@@ -40,11 +40,17 @@ Una fila por parte o variante que el módulo ejecuta. La columna de evidencia re
 | app1/06 | `--parte conexion` | Determinista | Prefijos `mcp__<servidor>__` y token: el `.mcp.json` generado y los contadores se prueban sin modelo |
 | app1/06 | `--parte recursos` (correcta y `--anti sin_recursos`) | Probabilística con control positivo | La correcta lee los resources sin explorar; sin ellos explora con muchas más llamadas y cuesta de 2,3 a 3,7 veces más |
 | app1/06 | `--parte descripcion` (correcta y `--anti descripcion_minima`) | Sin señal estable | La señal que dice la guía no se vio: sin diferencia entre las dos |
+| app1/07 | el recorte (`trim_fields`, `execute_tool`) y la comprobación de la respuesta | Determinista | Cinco campos frente a cuarenta, sin cambiar los valores que se conservan; se prueba sin modelo en `tests/test_app1_07_recorte_de_contexto.py` |
+| app1/07 | correcta y `--anti sin_recorte` | Probabilística con control positivo | Con recorte, unos 15 000 tokens de entrada en total frente a unos 54 000 sin él, con la respuesta correcta en las 10 ejecuciones; cuántas peticiones hace lo decide el modelo |
 | app2/01 | correcta (con puerta) | Determinista | Con la puerta, los pagos ejecutados son 0 por construcción |
 | app2/01 | `--anti` (regla solo en el prompt) | Probabilística con control positivo | Se ve con el rol `enforcement`, que es el modelo de la medida: se salta la regla en 8 de 10 ejecuciones; con el modelo más reciente no se ve |
 | app2/02 | correcta (con hooks) | Determinista | El hook normaliza y la frontera 500,00 pasa y 500,01 no; el modelo nunca ve el timestamp crudo |
 | app2/02 | `--anti` (umbral y fechas solo en el prompt) | Sin medir | El README dice que el modelo puede cumplirlo pero es probabilístico; no recoge ninguna tasa |
 | app2/03 | las cuatro `--config` | Determinista | La configuración fija lo que cada una deja pasar; es una comprobación operativa, no evaluable |
+| app2/04 | `--parte proxy` | Determinista | El proxy de sentimiento acierta 3 de 11 casos etiquetados y se equivoca en frustración, vacío de política y petición de humano; se prueba sin modelo |
+| app2/04 | correcta y `--anti sin_ejemplos` | Probabilística con control positivo | Con Haiku 5.5 las dos aciertan 55/55; con Haiku 4.5 la correcta acierta 32/33 y `sin_ejemplos`, 27/33 (frustración 6/9, homónimos 3/6) |
+| app2/04 | `--anti sentimiento` | Probabilística con control positivo | Con Haiku 5.5 acierta 25/55: 0/15 en frustración y 0/15 en vacío de política, frente a 55/55 de la correcta |
+| app2/04 | `--anti confianza` | Probabilística con control positivo | Con Haiku 5.5 acierta 39/55 (frustración 0/15) y la confianza declarada separa poco aciertos (60,6) de fallos (50,3) |
 | app2/05 | correcta (case facts y handoff estructurado) | Probabilística con control positivo | El handoff llegó completo (una ejecución) |
 | app2/05 | `--anti resumen` | Probabilística con control positivo | El resumen conservó el importe pero perdió la fecha de compra y el año de los plazos (una ejecución) |
 | app2/05 | `--anti handoff_libre` | Determinista | Fallo estructural: con texto libre faltan los campos que la persona necesita y el código no puede comprobarlos |

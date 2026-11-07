@@ -39,7 +39,7 @@ Cada módulo se hace en 5 pasos: orientarte con su ficha, predecir, ejecutar o n
 | [`01_prompt_vs_enforcement.py`](01_prompt_vs_enforcement.py) | TS 1.4-K1, K2, S1 | 1 |
 | [`02_hooks_pre_post.py`](02_hooks_pre_post.py) | TS 1.5-K1, K2, K3, S1, S2, S3 | 1 |
 | [`03_permisos.py`](03_permisos.py) | apoyo, sin viñeta propia | 1 |
-| `04_few_shot_y_escalamiento.py` | TS 4.2 · TS 5.2 | 3 |
+| [`04_few_shot_y_escalamiento.py`](04_few_shot_y_escalamiento.py) | TS 4.2-K1, K2, K3, S1 · TS 5.2-K1, K2, K3, K4, S1, S2, S3, S4, S5 | 3 |
 | [`05_multi_concern_y_handoff.py`](05_multi_concern_y_handoff.py) | TS 1.4-K3, S2, S3 · TS 5.1-K1, S1, S2 | 1 |
 | [`06_sesiones.py`](06_sesiones.py) | TS 1.7-K1…K4, S1…S4 · TS 1.3-K4 | 1 |
 | [`07_hook_reescritura.py`](07_hook_reescritura.py) | apoyo, sin viñeta propia (sobre TS 1.4-K1, K2 · TS 1.5-K2) | 1 |
@@ -288,6 +288,139 @@ Un agente tiene `allowed_tools=["Read", "Grep"]` y modo de permisos por defecto.
 <summary>Paso 4 · Respuesta</summary>
 
 **B.** `allowed_tools` pre-aprueba, no restringe. Para quitar una tool se usa `disallowed_tools`; para un agente cerrado, `dontAsk` con `allowed_tools`; para una regla que debe cumplirse siempre, un hook `PreToolUse` (ver TS 1.5, módulo 02). `bypassPermissions` haría lo contrario de D.
+</details>
+
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
+---
+
+## 04 · Criterios de escalamiento y ejemplos few-shot
+
+> **Qué vas a hacer:** Probar cuatro maneras de decirle a un agente cuándo pasar un caso a una persona y comparar, caso por caso, lo que hace con la acción que pide cada situación.
+>
+> **Necesitas antes:** Nada (el servidor `helpdesk` es el de [`01`](#01--regla-en-el-prompt-frente-a-puerta-programática), con una tool más para buscar por nombre).
+>
+> **Modo:** Ejecución ligera (puedes hacerlo entero sin ejecutar).
+
+### Antes de empezar
+
+Términos comunes en el [glosario](../docs/glosario.md): tool, `system prompt`, few-shot, criterio de escalamiento, vacío de política, proxy, arnés. Lo propio de este módulo:
+
+- **El sistema:** el agente de la mesa de ayuda recibe once mensajes sintéticos, uno por sesión, y decide si lo resuelve o lo pasa a una persona con `escalate_to_human`. Cada mensaje tiene una acción esperada en un archivo de etiquetas que el agente no ve: tres peticiones explícitas de un humano, tres frustraciones con un problema sencillo, tres vacíos de política y dos mensajes de alguien llamado «Laura Gómez», nombre que comparten dos empleadas.
+- **Ejemplo few-shot razonado:** un mensaje de muestra con la acción correcta, el porqué y la alternativa plausible que se descarta. Los ejemplos del prompt no son ninguno de los once casos.
+- **Escalar de inmediato:** llamar a `escalate_to_human` sin ninguna otra llamada antes. El módulo lo deduce de las llamadas a tools, no del texto del agente.
+- **Frustración sencilla:** el cliente está enfadado pero el problema entra en lo que el agente resuelve. Tras la primera respuesta, el módulo le contesta «prefiero que me atienda una persona» y comprueba qué hace entonces.
+- **Proxy de sentimiento:** una regla que decide por el tono del mensaje. Es una lista de palabras inventada para esta demostración.
+
+### Las tools del ejercicio
+
+| Tool | Qué recibe | Qué devuelve |
+| :--- | :--- | :--- |
+| `find_employee_by_name` | `name` | todas las coincidencias, con ID, nombre y departamento; no elige entre ellas |
+| `verify_employee` | `user_id` | si el ID existe, y deja al empleado verificado |
+| `list_employee_tickets` | `user_id` | los tickets de ese empleado |
+| `search_kb` | `query` | hasta 3 artículos de la base de conocimiento |
+| `escalate_to_human` | `summary` | confirma el traspaso; el resumen es de texto libre porque estos mensajes no traen ticket |
+
+### El ejercicio
+
+Se ejecutan los once casos y se compara la acción del agente con la que pide su tipo: pasar de inmediato a quien pide un humano, ofrecer resolver ante una frustración sencilla (y escalar solo si el cliente insiste), escalar un vacío de política y no elegir entre las dos «Laura Gómez».
+
+- **Correcta:** criterios explícitos de escalamiento y cuatro ejemplos con su razonamiento.
+- **`sin_ejemplos`:** los mismos criterios, sin el bloque de ejemplos.
+- **`sentimiento`:** sin criterios ni ejemplos; la regla es escalar cuando el mensaje muestre enfado o sentimiento negativo.
+- **`confianza`:** sin criterios ni ejemplos; el agente escribe una línea «CONFIANZA: N» y escala si N es menor que 70.
+- **`--parte proxy`:** no usa el modelo; aplica el proxy de sentimiento a los once mensajes.
+
+### Predice antes de ejecutar
+
+Con tus palabras; no hay un número que acertar:
+
+1. Si el agente decide por el tono del cliente, ¿qué tipos de caso crees que resolvería mal, y en qué dirección se equivoca cada uno?
+2. ¿Qué esperas que aporten los ejemplos cuando los criterios ya están escritos con claridad? ¿Qué podría cambiar con un modelo anterior?
+3. Si el agente declara su confianza, ¿esperas que esa cifra separe los casos que acierta de los que falla? ¿Por qué sí o por qué no?
+
+### Ejecutar
+
+```bash
+uv run python app2_agente_con_control/04_few_shot_y_escalamiento.py --parte proxy                       # sin modelo
+uv run python app2_agente_con_control/04_few_shot_y_escalamiento.py --repeat 5                          # criterios + ejemplos
+uv run python app2_agente_con_control/04_few_shot_y_escalamiento.py --anti sin_ejemplos --repeat 5
+uv run python app2_agente_con_control/04_few_shot_y_escalamiento.py --anti sentimiento --repeat 5
+uv run python app2_agente_con_control/04_few_shot_y_escalamiento.py --anti confianza --repeat 5
+uv run python app2_agente_con_control/04_few_shot_y_escalamiento.py --anti sin_ejemplos --rol-modelo enforcement --repeat 3   # Haiku 4.5, ~0,35 $
+```
+
+**Si ejecutas:** el prompt de cada variante, la clasificación de la acción y la puntuación se prueban sin modelo, y `--parte proxy` no gasta nada. Ejecutar sirve para ver qué hace el modelo con cada regla. Con Haiku 5.5 cada ejecución de cinco repeticiones cuesta unos 0,03 $; con Haiku 4.5, tres repeticiones cuestan unos 0,35 $, así que `--rol-modelo enforcement` usa su propio presupuesto.
+
+Modo normal: añade a `escalamiento_ejemplos.json` (en `datos/generar_sinteticos.py`) un ejemplo que contradiga un criterio y mira qué pasa.
+
+### Qué observar
+
+La línea `[medida]`: cuántos casos salen correctos en total y por tipo. En `confianza`, además, la confianza media declarada en los aciertos y en los fallos.
+
+<details>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+**Sin modelo (`--parte proxy`).** El proxy de sentimiento acierta 3 de 11: se equivoca en las tres frustraciones sencillas (las escala), en los tres vacíos de política (los deja pasar, porque el tono es neutro) y en dos de las tres peticiones de un humano, y solo acierta las dos de «Laura Gómez» y una petición de humano que lleva un reproche.
+
+Haiku 5.5 (2026-11-07, 5 repeticiones: 55 casos por variante, 10 de ellos de homónimos):
+
+| Variante | Correctos | Por tipo |
+| :--- | :--- | :--- |
+| correcta | 55/55 | todos los tipos al 100 % |
+| `sin_ejemplos` | 55/55 | todos los tipos al 100 % |
+| `sentimiento` | 25/55 | petición de humano 15/15 · frustración 0/15 · vacío de política 0/15 · homónimos 10/10 |
+| `confianza` | 39/55 | petición de humano 15/15 · frustración 0/15 · vacío de política 15/15 · homónimos 9/10 |
+
+Haiku 4.5 (2026-11-07, 3 repeticiones: 33 casos por variante):
+
+| Variante | Correctos | Por tipo |
+| :--- | :--- | :--- |
+| correcta | 32/33 | petición de humano 9/9 · frustración 8/9 · vacío de política 9/9 · homónimos 6/6 |
+| `sin_ejemplos` | 27/33 | petición de humano 9/9 · frustración 6/9 · vacío de política 9/9 · homónimos 3/6 |
+
+- **`sentimiento` sí muestra el fallo:** decide por el tono y falla justo donde el tono engaña, con 0/15 en frustración (escala lo que podía resolver) y en vacío de política (lo trata como resoluble porque el mensaje es neutro). Es el mismo patrón que el proxy sin modelo.
+- **`confianza` falla distinto:** acierta los vacíos de política y falla las frustraciones. La confianza media declarada fue de 60,6 en los aciertos y de 50,3 en los fallos: separa poco, y ambas medias quedan por debajo del umbral de 70.
+- **Los ejemplos no aportan con Haiku 5.5:** con los criterios ya escritos, `sin_ejemplos` sale igual que la correcta (55/55 en ambas). Con Haiku 4.5 sí hay diferencia (27/33 frente a 32/33), con muestras pequeñas: los fallos son frustraciones y un homónimo que escala tras investigar. `sentimiento` y `confianza` van sin ejemplos, así que su control es `sin_ejemplos` y no la correcta.
+- **La clasificación mira las llamadas a tools:** «no escala» incluye pedir un identificador y también responder otra cosa sin escalar; el módulo no los distingue. Escalar un vacío de política tras buscar en la base de conocimiento cuenta como correcto.
+
+Producto observado (no evaluable): un modelo reciente cumple los criterios escritos aunque no haya ejemplos, y los ejemplos se notan con un modelo anterior. No cambia la respuesta de examen: la guía sostiene los ejemplos razonados cuando las instrucciones solas dan resultados inconsistentes.
+
+Clasificación por tipo de señal en [`docs/tipos-de-senal.md`](../docs/tipos-de-senal.md).
+</details>
+
+### Pregunta tipo examen
+
+**Pregunta 1 (una respuesta).** Un agente de soporte tiene la instrucción «escala los casos difíciles» y decide de forma inconsistente: a veces investiga a un cliente que pidió hablar con una persona y otras escala frustraciones con un problema sencillo. ¿Qué cambio es más eficaz?
+
+- A. Añadir criterios explícitos de escalamiento y de dos a cuatro ejemplos que muestren, para cada caso ambiguo, el razonamiento de la decisión.
+- B. Escalar siempre que el análisis de sentimiento del mensaje supere un umbral de negatividad calibrado con tickets de ejemplo anteriores.
+- C. Pedir al agente que declare su confianza del 0 al 100 y escalar cuando sea inferior a un valor que se calibre con casos de prueba.
+- D. Reservar el escalamiento a los casos que el agente clasifique como complejos tras investigarlos y resolver el resto sin ofrecer una persona.
+
+<details>
+<summary>Paso 4 · Respuesta</summary>
+
+**A.** Los ejemplos few-shot razonados son la técnica más eficaz cuando las instrucciones por sí solas dan resultados inconsistentes, sobre todo en casos ambiguos (TS 4.2-K1, K2, S1), y con criterios explícitos se aplican a los disparadores de escalamiento (TS 5.2-S1). B y C se apoyan en proxies poco fiables de la complejidad real del caso (TS 5.2-K3). D investiga antes de pasar a quien ya pidió una persona, que debe respetarse de inmediato (TS 5.2-S2), y reduce los disparadores a la complejidad, cuando también lo son la petición explícita y los vacíos de política (TS 5.2-K1).
+</details>
+
+**Pregunta 2 (multiple-response).** Una clienta escribe «Soy Laura Gómez y no puedo entrar en el portal de nóminas». La búsqueda por nombre devuelve dos empleadas con ese nombre, de Finanzas y de Ventas. **Selecciona dos** acciones correctas del agente. Evalúa cada opción por separado.
+
+- A. Pedir a la clienta un identificador adicional, como su ID de empleado, antes de hacer nada sobre ninguna cuenta.
+- B. Elegir a la empleada del departamento con más tickets abiertos, porque es la coincidencia más probable.
+- C. Incluir en el prompt la instrucción de pedir identificadores adicionales cuando una búsqueda devuelva varias coincidencias.
+- D. Verificar a las dos empleadas y continuar con la que responda primero al aviso de la verificación.
+
+<details>
+<summary>Paso 4 · Respuesta (pregunta 2)</summary>
+
+**A y C.** Con varias coincidencias hay que pedir aclaración y no elegir con una heurística (TS 5.2-K4), y la habilidad es instruir al agente para pedir identificadores adicionales (TS 5.2-S5).
+
+- **A** Es la acción correcta ante varias coincidencias: pide el dato que desambigua.
+- **B** Es una heurística: la coincidencia más probable puede ser la otra empleada, y se actuaría sobre la cuenta equivocada.
+- **C** Es la instrucción que la guía pide al agente para este caso.
+- **D** Tampoco desambigua: «quien responda primero» es otra heurística, y verificar a las dos deja ambas cuentas listas para operar.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).

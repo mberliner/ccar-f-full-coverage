@@ -8,9 +8,9 @@ Lo comprueba `tests/test_credenciales_y_modos.py`: clasifica cada módulo leyend
 
 | Qué tienes | Qué puedes hacer |
 | :--- | :--- |
-| **Nada** (sin credencial) | Los módulos de modo **ligera** leyendo, con el resultado de referencia del Paso 3. Además `app2/07` se ejecuta tal cual (no usa modelo), `app3/09` con `--ventanas`, `app3/10` con `--parte poblacion`, `app3/11` con `--parte orden` y `app3/12` con `--parte plan`. **No** puedes completar los cuatro de modo obligatoria. |
-| **Suscripción** (login de Claude Code) | Lo anterior y los 15 módulos del **Agent SDK** y los dos de **`claude -p`** (`app3/11` y `app3/12`), incluidos tres de los cuatro obligatorios (`app2/01`, `app3/02`, `app3/04`). Según `harness/credentials.py`; no está verificado módulo a módulo. No sirve para la Messages API ni para Batches. |
-| **API key** (`ANTHROPIC_API_KEY`) | Todo, incluidos los seis módulos de la **Messages API o Batches** (`app1/01`, `app1/05`, `app3/07`, `app3/08`, `app3/09`, `app3/10`). `app3/08` es obligatorio y solo funciona con API key. |
+| **Nada** (sin credencial) | Los módulos de modo **ligera** leyendo, con el resultado de referencia del Paso 3. Además `app2/07` se ejecuta tal cual (no usa modelo), `app2/04` con `--parte proxy`, `app3/09` con `--ventanas`, `app3/10` con `--parte poblacion`, `app3/11` con `--parte orden` y `app3/12` con `--parte plan`. **No** puedes completar los cuatro de modo obligatoria. |
+| **Suscripción** (login de Claude Code) | Lo anterior y los 16 módulos del **Agent SDK** y los dos de **`claude -p`** (`app3/11` y `app3/12`), incluidos tres de los cuatro obligatorios (`app2/01`, `app3/02`, `app3/04`). Según `harness/credentials.py`; no está verificado módulo a módulo. No sirve para la Messages API ni para Batches. |
+| **API key** (`ANTHROPIC_API_KEY`) | Todo, incluidos los siete módulos de la **Messages API o Batches** (`app1/01`, `app1/05`, `app1/07`, `app3/07`, `app3/08`, `app3/09`, `app3/10`). `app3/08` es obligatorio y solo funciona con API key. |
 
 Cada ejecución imprime al empezar la credencial que usa y su tope de gasto (`[presupuesto]`, `--budget`). Los términos están en el [glosario](glosario.md).
 
@@ -38,9 +38,11 @@ Los cuatro módulos de ejecución obligatoria existen porque su lección solo se
 | app1/04 | Errores estructurados · Agent SDK | API key o suscripción | ligera | sin cifra en el README | Se completa leyendo (Paso 3) |
 | app1/05 | Scoping y `tool_choice` · Messages API y Agent SDK | API key | ligera | sin cifra en el README | Se completa leyendo (Paso 3) |
 | app1/06 | Configuración MCP · Agent SDK | API key o suscripción | ligera | sin cifra en el README | Se completa leyendo (Paso 3) |
+| app1/07 | Recorte de contexto · Messages API | API key | ligera | unos 0,002 $ por ejecución con recorte y 0,006 $ sin él (Haiku 5.5) | Se completa leyendo (Paso 3) |
 | app2/01 | Regla en el prompt frente a puerta programática · Agent SDK | API key o suscripción | obligatoria | sin cifra en el README | Hay que ejecutarlo |
 | app2/02 | Hooks `PreToolUse` y `PostToolUse` · Agent SDK | API key o suscripción | ligera | sin cifra en el README | Se completa leyendo (Paso 3) |
 | app2/03 | Permisos · Agent SDK | API key o suscripción | ligera | sin cifra en el README | Se completa leyendo (Paso 3) |
+| app2/04 | Criterios de escalamiento y ejemplos few-shot · Agent SDK | API key o suscripción | ligera | unos 0,03 $ por cinco repeticiones con Haiku 5.5 y unos 0,35 $ por tres con Haiku 4.5; `--parte proxy` no cuesta | Se completa leyendo; `--parte proxy` se ejecuta sin credencial |
 | app2/05 | Varios asuntos, case facts y handoff · Agent SDK | API key o suscripción | ligera | sin cifra en el README | Se completa leyendo (Paso 3) |
 | app2/06 | Sesiones · Agent SDK | API key o suscripción | ligera | sin cifra en el README | Se completa leyendo (Paso 3) |
 | app2/07 | Reescribir argumentos (apéndice) · no llama al modelo | Ninguna | ligera | 0 $ | Se ejecuta sin credencial |

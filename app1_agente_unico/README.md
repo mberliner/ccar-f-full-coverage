@@ -16,7 +16,7 @@ Cada módulo se hace en 5 pasos: orientarte con su ficha, predecir, ejecutar o n
 | [`04_errores_estructurados.py`](04_errores_estructurados.py) | TS 2.2-K1, K2, K3, K4, S1, S2, S4 | 2 |
 | [`05_scoping_y_tool_choice.py`](05_scoping_y_tool_choice.py) | TS 2.3-K1, K4, S4, S5 | 2 |
 | [`06_mcp_config.py`](06_mcp_config.py) | TS 2.4-K1, K2, K3, K4, S1, S2, S3, S4, S5 | 2 |
-| `07_recorte_de_contexto.py` | TS 5.1-K3, S3 | 3 |
+| [`07_recorte_de_contexto.py`](07_recorte_de_contexto.py) | TS 5.1-K3, S3 | 3 |
 
 ---
 
@@ -685,6 +685,100 @@ Un agente tiene `Grep` y un servidor MCP propio con una tool `search_kb` que ord
 <summary>Paso 4 · Respuesta</summary>
 
 **C.** Una descripción que detalla capacidades y salidas evita que el agente prefiera una tool integrada sobre una tool MCP más capaz (TS 2.4-S3): lo que decide la elección es lo que el agente ve de cada tool (TS 2.1-K1). A quita una herramienta que el agente sigue necesitando para otras cosas y no arregla la descripción; B es una instrucción en el prompt que compensa una descripción pobre y puede crear asociaciones no deseadas (TS 2.1-K4); D no aplica el criterio de TS 2.4-S4: una búsqueda sobre el catálogo propio de la mesa es un flujo específico del equipo y pide servidor propio.
+</details>
+
+**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+
+
+---
+
+## 07 · Recorte de contexto
+
+> **Qué vas a hacer:** Preguntar a un agente de inventario por ocho equipos, uno por uno, y comparar los tokens de entrada de cada petición cuando la tool devuelve los 40 campos de cada equipo y cuando devuelve solo los 5 que hacen falta.
+>
+> **Necesitas antes:** [módulo 01](#01--bucle-manual) (el bucle escrito a mano y el historial que se reenvía completo en cada petición).
+>
+> **Modo:** Ejecución ligera (puedes hacerlo entero sin ejecutar).
+
+### Antes de empezar
+
+Términos comunes en el [glosario](../docs/glosario.md): tool, historial, `usage`, arnés. Lo propio de este módulo:
+
+- **El sistema:** un agente de inventario de TI de una empresa ficticia, con un bucle escrito a mano sobre la Messages API (como en `01`). Los datos son ocho equipos sintéticos con 40 campos cada uno (`inventario_equipos.json`); solo cinco responden a las preguntas del módulo.
+- **Recorte (*trimming*):** quitar de un resultado de tool los campos que no hacen falta antes de que entre en el historial. Aquí lo hace el propio código de la tool.
+- **Campo relevante:** el que la tarea usa para responder. Lo fija el código (`KEEP_FIELDS`), no el modelo.
+- **Tokens de entrada:** los que el modelo lee en una petición, que la API informa en el `usage` de la respuesta. Como cada petición reenvía el historial completo, lo que entra una vez se paga en todas las siguientes.
+
+### Las tools del ejercicio
+
+| Tool | Qué recibe | Qué devuelve |
+| :--- | :--- | :--- |
+| `list_teams` | nada | los ocho equipos, con su ID (`EQ-NN`) y su nombre |
+| `get_team_inventory` | `team_id` | el registro del equipo: 5 campos en la variante correcta y los 40 en `sin_recorte` |
+
+### El ejercicio
+
+Se hacen dos preguntas en la misma conversación. La primera pide el equipo con más portátiles sin asignar y que consulte los equipos uno por uno; la segunda, cuántas solicitudes abiertas tiene ese equipo, que se responde con lo que ya está en el historial.
+
+- **Correcta:** el código de la tool recorta cada resultado a `team_id`, `team_name`, `laptops_total`, `laptops_assigned` y `open_requests` antes de añadirlo al historial.
+- **`sin_recorte`:** la tool devuelve el registro entero, como lo guarda el sistema de origen.
+
+### Predice antes de ejecutar
+
+Con tus palabras; no hay un número que acertar:
+
+1. Petición a petición, ¿cómo crecen los tokens de entrada en cada variante? ¿Qué le pasa a la petición de la segunda pregunta, que no llama a ninguna tool?
+2. ¿Puede cambiar la respuesta correcta al recortar a cinco campos? ¿De qué depende que no cambie?
+3. De lo que mide el módulo, ¿qué esperas que salga casi igual en cada ejecución y qué puede variar? Piensa en quién decide cuántas peticiones se hacen.
+
+### Ejecutar
+
+```bash
+uv run python app1_agente_unico/07_recorte_de_contexto.py                            # correcta (con recorte)
+uv run python app1_agente_unico/07_recorte_de_contexto.py --anti sin_recorte         # los 40 campos
+uv run python app1_agente_unico/07_recorte_de_contexto.py --repeat 5 --budget 0.10   # varias ejecuciones
+```
+
+**Si ejecutas:** el recorte, el bucle con el `usage` de cada petición y la comprobación de la respuesta se prueban sin modelo. Ejecutar sirve para ver la curva de tokens real, que depende de las peticiones que haga el modelo. Con Haiku 5.5 cada ejecución cuesta unos 0,002 $ con recorte y 0,006 $ sin él, muy por debajo del tope.
+
+Modo normal: cambia `KEEP_FIELDS` por cuatro campos y mira qué pregunta deja de poder responderse.
+
+### Qué observar
+
+La línea `[medida]`: cuántas peticiones hubo, los tokens de entrada en total y el máximo de una sola petición, cuántos campos traía cada resultado, y si las dos respuestas siguen siendo correctas.
+
+<details>
+<summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+Haiku 5.5 (2026-11-07, 5 ejecuciones por variante). En todas hubo 11 peticiones: la lista, una consulta por equipo, la respuesta a la primera pregunta y la respuesta a la segunda.
+
+| Variante | Campos por resultado | Tokens de entrada en total | Máximo en una petición | Respuestas correctas |
+| :--- | :--- | :--- | :--- | :--- |
+| correcta | 5 | 14 741 – 15 073 | 2 036 – 2 106 | 5/5 y 5/5 |
+| `sin_recorte` | 40 | 52 788 – 55 849 | 9 046 – 9 536 | 5/5 y 5/5 |
+
+- **Estable:** el recorte es determinista y la diferencia de tokens es de unas 3,6 veces en el total y de unas 4,4 en el máximo. La petición de la segunda pregunta paga todo lo acumulado en la primera.
+- **Sin pérdida de acierto:** con cinco campos ambas respuestas son correctas en 5/5, porque la pregunta solo usa esos campos. Recortar un campo que la pregunta necesita sí lo rompería (es la prueba del modo normal).
+- **Lo que decide el modelo:** cuántas peticiones hace. Se le pidió una consulta por turno y lo cumplió en las 10 ejecuciones; si hubiera pedido varias a la vez, la curva por petición sería más corta pero el total seguiría creciendo igual.
+
+Producto observado (no evaluable): la comprobación de la respuesta mira qué equipo se nombra primero, porque la respuesta correcta suele añadir «le siguen…» con otros equipos.
+
+Clasificación por tipo de señal en [`docs/tipos-de-senal.md`](../docs/tipos-de-senal.md): el recorte es determinista y los tokens medidos son probabilísticos con control positivo.
+</details>
+
+### Pregunta tipo examen
+
+Un agente de pedidos consulta una tool que devuelve más de 40 campos por pedido, aunque solo 5 hacen falta para responder a los clientes. Tras varias consultas, la conversación consume muchos tokens y se acerca al límite de contexto. ¿Qué cambio es más adecuado?
+
+- A. Indicar en el *system prompt* que el agente ignore los campos que no necesita y que no los mencione en sus respuestas a los clientes.
+- B. Resumir el historial completo cada cinco peticiones, sustituyendo los resultados de tools antiguos por una frase corta de lo que contenían.
+- C. Cambiar a un modelo con una ventana de contexto mayor, para que quepan los resultados completos de todos los pedidos consultados.
+- D. Recortar la salida de la tool a los campos relevantes antes de que el resultado se añada al historial de la conversación.
+
+<details>
+<summary>Paso 4 · Respuesta</summary>
+
+**D.** Los resultados de las tools se acumulan en el contexto y gastan tokens en proporción a su tamaño y no a su utilidad; la solución es recortarlos a los campos relevantes antes de que se acumulen (TS 5.1-K3, TS 5.1-S3). A no libera nada: el modelo lee igualmente esos campos y el cliente los paga en cada petición. B actúa después de que los tokens ya se hayan gastado y la sumarización progresiva puede condensar valores numéricos en frases vagas (TS 5.1-K1). C no corrige el consumo desproporcionado, solo retrasa el límite.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
