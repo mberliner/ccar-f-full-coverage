@@ -99,19 +99,20 @@ Una fila por parte o variante que el módulo ejecuta. La columna de evidencia re
 | app3/09 | `--batch-id` | Probabilística con control positivo | Los resultados llegan en otro orden; 11 ok y 1 truncado |
 | app3/09 | `--batch-id --anti por_orden` | Probabilística con control positivo | 11 de 11 documentos reciben los datos de otro; por `custom_id`, ninguno |
 | app3/09 | `--batch-id --reenviar` | Probabilística con control positivo | 4 trozos y 4 de 4 correctos; el re-troceo en cadena no se vio en vivo |
-| app3/10 | `--parte poblacion` (correcta, `--anti precision_agregada`, `--anti confianza_global`) | Determinista | Sin modelo y con los mismos números en cada ejecución: global 97,7 % frente a 62,5 % del tipo raro; 6, 17 y 14 errores entre lo automatizado |
-| app3/10 | `--parte confianza_modelo` | Probabilística con control positivo | Se ve con Haiku 4.5 sin reglas de formato (modelo de la medida): los errores llegan con confianza alta (banda 0,97–1,00: 85,5 % de acierto); con Haiku 5.5 no hay errores que calibrar |
+| app3/10 | `--parte poblacion` (correcta, `--anti precision_agregada`, `--anti confianza_global`) | Determinista | Sin modelo y con los mismos números en cada ejecución: global 97,7 % frente a 62,5 % del tipo raro; 6, 17 y 8 errores entre lo automatizado (0, 11 y 0 del tipo raro); la muestra estratificada estima una tasa de error del 10,8 % cruda y del 2,0 % ponderada, igual a la real |
+| app3/10 | `--parte confianza_modelo` | Probabilística con control positivo | Se ve con Haiku 4.5 sin reglas de formato (modelo de la medida): los errores llegan con confianza alta (banda 0,97–1,00: 82,9 % de acierto declarando el 100 %); con Haiku 5.5 no hay errores que calibrar |
 | app3/11 | `--parte orden` | Determinista | Sin modelo: construye la copia temporal, el diff y la orden de `claude -p`, y la imprime entera |
-| app3/11 | `--parte revision` (correcta) | Probabilística con control positivo | Encuentra los fallos sembrados (A a D en 7 de 8 ejecuciones) y marca el cambio correcto en 3 de 8; ~0,02 $ por ejecución |
-| app3/11 | `--parte revision --anti conservador` | Sin señal estable | Sin diferencia con la correcta: A se pierde en 2 de 8 frente a 1 de 8, y con tres ejecuciones parecía una señal |
-| app3/11 | `--parte revision --anti sin_ejemplos` | Sin señal estable | B no salió en 3 de 5 ejecuciones y sí en las 2 siguientes: inestable |
-| app3/11 | `--parte revision --sin-categoria comment` | Sin señal estable | Sin efecto: el modelo reclasifica el hallazgo del comentario como `bug` y sigue marcando el cambio correcto |
-| app3/11 | `--parte rerevision` (correcta y `--anti sin_previos`) | Probabilística con control positivo | Con los hallazgos previos, 0 repetidos; sin ellos, repite B, C y D en 3 de 3 |
-| app3/11 | `--parte tests` (correcta, `--anti sin_tests_existentes`, `--anti sin_estandares`) | Sin señal estable | Al revés de lo esperado: 1 escenario repetido por ejecución con los tests existentes y 0 sin ellos; sin diferencia con los estándares |
-| app3/12 | `--parte plan` | Determinista | Sin modelo: el reparto en pasadas, sus tools y la orden de la autorrevisión |
-| app3/12 | `--parte revision` (instancia nueva) | Probabilística con control positivo | Los fallos entre archivos salen por la pasada de integración en 2 de 3 ejecuciones y por la de archivo en 1 de 3 |
-| app3/12 | `--parte revision --anti autorrevision` | Sin señal estable | Sin diferencia con la instancia nueva (2 ejecuciones): la sesión bifurcada encuentra A, B, C, D y F por archivo |
-| app3/12 | `--parte revision --anti autorrevision_explicita` | Sin medir | Implementada y probada sin modelo; no cupo en el tope de coste |
+| app3/11 | `--parte revision` (correcta) | Probabilística con control positivo | Encuentra los cinco fallos sembrados en 5 de 5 y marca el cambio correcto en 5 de 5 (~0,02 $ por ejecución); frente a `--sin-categoria comment`, que lo marca en 1 de 5 |
+| app3/11 | `--parte revision --anti conservador` | Sin señal estable | La señal de la guía (peor precisión que los criterios) no apareció: encuentra los cinco y marca el cambio correcto en 0 de 5, al revés de lo esperado, y la causa (la variante quita también el criterio de comentarios) está sin comprobar |
+| app3/11 | `--parte revision --anti sin_ejemplos` | Sin señal estable | Sin diferencia con la correcta: B falta en 1 de 25 y marca el cambio correcto en 4 de 5 |
+| app3/11 | `--parte revision --sin-categoria comment` | Probabilística con control positivo | Quitar solo la categoría baja la marca del cambio correcto a 1 de 5 (5 de 5 con la correcta), y el fallo C se pierde en 1 de 5 |
+| app3/11 | `--parte rerevision` (correcta y `--anti sin_previos`) | Probabilística con control positivo | Con los hallazgos previos, 0 repetidos; sin ellos, repite B, C y D en 3 de 3 (cifras de antes de las correcciones C4, no se volvió a medir) |
+| app3/11 | `--parte tests` (correcta, `--anti sin_tests_existentes`, `--anti sin_estandares`) | Sin señal estable | 0 escenarios repetidos en las tres ramas, también sin los tests existentes: 3.6-S4 no se ve con esta métrica. Sin los estándares salen más tests (9–12 frente a 7–8, en 5 de 5), una diferencia de cantidad en el sentido de 3.6-S5 |
+| app3/12 | `--parte plan` | Determinista | Sin modelo: el reparto en pasadas, sus tools y la orden de la autorrevisión o de la pasada única |
+| app3/12 | `--parte revision` (instancia nueva) | Sin señal estable | Encuentra los cinco en 5 de 5, pero sin diferencia frente a una sola pasada (`una_pasada`); que D y F salgan sobre todo por integración es en parte consecuencia del diseño |
+| app3/12 | `--parte revision --anti autorrevision` | Sin señal estable | Sin diferencia con la instancia nueva (5 de 5): la sesión bifurcada encuentra A, B, C, D y F por archivo |
+| app3/12 | `--parte revision --anti autorrevision_explicita` | Sin señal estable | Sin diferencia (5 de 5): la frase añadida no cambió lo encontrado |
+| app3/12 | `--parte revision --anti una_pasada` | Sin señal estable | Sin diferencia: 24 de 25 con una sola pasada sobre un diff de 93 líneas, a unas 2 veces menos coste |
 
 ## Cómo se mantiene
 
