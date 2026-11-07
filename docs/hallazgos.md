@@ -345,3 +345,54 @@ Aplicadas tal cual salvo dos decisiones. **`conservador` queda `Sin señal estab
 | `app3/11` `--parte tests` | `Sin señal estable` | 0 repetidos en las tres ramas, también sin los tests existentes: 3.6-S4 no se ve con esta métrica. Sí hay una señal de 3.6-S5: sin estándares, 9–12 tests por ejecución frente a 7–8, 5/5. |
 | `app3/12` `--parte revision` (instancia nueva) | `Probabilística con control positivo` | Cinco fallos en 5/5; D y F salen por integración (2/5 y 4/5) y rara vez por archivo (3/5 y 1/5). |
 | `app3/12` `--anti una_pasada` (nueva) | `Sin señal estable` | 24/25: una pasada larga no encuentra menos y cuesta 2,1 veces menos. El efecto de 4.6-K3/S2 no se ve a este tamaño de diff. |
+
+## Entrega 3 · tanda D, medidas de `app1/07` y `app2/04` (2026-11-07)
+
+Versiones: claude-agent-sdk 0.2.173, CLI 2.1.309. Coste con modelo de la tanda, estimado: ≈ 1,0 $ (`app1/07` ≈ 0,15 $ y `app2/04` ≈ 0,87 $, de ellos 0,69 $ con Haiku 4.5), con `max_budget_usd` en cada ejecución.
+
+### `app1/07_recorte_de_contexto` (Messages API, Haiku 5.5, 5 ejecuciones por variante)
+
+| Variante | Peticiones | Tokens de entrada en total | Máximo en una petición | Respuestas correctas |
+| :--- | :--- | :--- | :--- | :--- |
+| correcta (5 campos) | 11 en las 5 | 14 741 – 15 073 | 2 036 – 2 106 | 5/5 y 5/5 |
+| `sin_recorte` (40 campos) | 11 en las 5 | 52 788 – 55 849 | 9 046 – 9 536 | 5/5 y 5/5 |
+
+- La diferencia es de unas 3,6 veces en el total y unas 4,4 en el máximo. El coste por ejecución es ~0,0019 $ con recorte y ~0,006 $ sin él.
+- **La comprobación de la respuesta marcaba como incorrectas respuestas correctas** (0/10 en la primera medida). Primera causa: exigía que se nombrara un solo equipo y «Seguridad (EQ-06)» nombra al mismo equipo por nombre y por ID. Segunda causa, que solo se vio al volver a medir: la respuesta correcta suma «le siguen Finanzas TI y Redes». Ahora cuenta el primer equipo que se nombra, con el límite de que no distingue «es X, no Y» de «es Y, no X». Las cifras de arriba son las de la comprobación corregida. → roadmap §4.3 (ampliación de «las medidas de texto fallan en los dos sentidos»: una comprobación que exige un único valor castiga a la respuesta correcta que da contexto).
+
+### `app2/04_few_shot_y_escalamiento` (Agent SDK, 11 casos por repetición)
+
+Haiku 5.5 (rol `agent`, 5 repeticiones: 55 casos por variante).
+
+| Variante | Correctos | Por tipo |
+| :--- | :--- | :--- |
+| correcta (criterios y 4 ejemplos) | 55/55 | todos al 100 % |
+| `sin_ejemplos` | 55/55 | todos al 100 % |
+| `sentimiento` | 25/55 | petición de humano 15/15 · frustración 0/15 · vacío de política 0/15 · homónimos 10/10 |
+| `confianza` | 39/55 | petición de humano 15/15 · frustración 0/15 · vacío de política 15/15 · homónimos 9/10 |
+
+Haiku 4.5 (rol `enforcement`, 3 repeticiones: 33 casos por variante).
+
+| Variante | Correctos | Por tipo |
+| :--- | :--- | :--- |
+| correcta | 32/33 | petición de humano 9/9 · frustración 8/9 · vacío de política 9/9 · homónimos 6/6 |
+| `sin_ejemplos` | 27/33 | petición de humano 9/9 · frustración 6/9 · vacío de política 9/9 · homónimos 3/6 |
+
+- **Con Haiku 5.5, los ejemplos no aportan** cuando los criterios ya están escritos con claridad: es el patrón de «un modelo reciente aguanta la configuración mala» (§4.3). Con Haiku 4.5 sí hay diferencia, con una muestra pequeña (5 fallos de 33): son frustraciones y un homónimo que escala tras investigar. No se compara un modelo con otro: cada fila es la señal de su modelo.
+- **`sentimiento` y `confianza` fallan en la misma frustración sencilla** (0/15) y distinto en el vacío de política: `sentimiento` lo deja pasar por el tono neutro (0/15) y `confianza` lo escala (15/15). Sin ejemplos, el control de ambas es `sin_ejemplos` y no la correcta.
+- **Confianza declarada:** media de 60,6 en los aciertos y 50,3 en los fallos, con ambas por debajo del umbral de 70. No separa bien, pero n es pequeño y no se ha repetido.
+- **La primera medida de la confianza era un artefacto:** daba «fallos: None» porque leía solo el texto final del turno, y tras llamar a `escalate_to_human` ese mensaje ya no trae la línea «CONFIANZA: N», que el agente escribe antes de llamar a la tool. `RunRecord.texts` guarda ahora todos los bloques de texto y la confianza sale de ahí. → roadmap §5 (`recorder.py`) y §4.3: medir el texto del agente en todos sus mensajes, no solo en el último.
+- **Límite de la clasificación:** «no escala» incluye pedir un identificador y responder otra cosa; la medida sale de las llamadas a tools y no los distingue. Escalar un vacío de política tras buscar en la base de conocimiento cuenta como correcto, y escalar tras investigar no lo es para la petición explícita de un humano (5.2-S2).
+- **Lo que sí es de este repositorio y no del roadmap:** `find_employee_by_name` es opcional (`lookup=True`), de modo que los demás módulos de `app2` no ven una tool más, y el escalamiento va en texto libre porque los casos no traen ticket ni empleado verificado.
+- **Perímetro:** `disallowed_tools` no se usa en `04`. Las tools del servidor que no vienen al caso (`process_reimbursement`, `get_ticket`) no están en `allowed_tools`, así que no se pre-aprueban.
+
+### Filas propuestas para `docs/tipos-de-senal.md` (aplicadas)
+
+| Parte | Tipo | Por qué |
+| :--- | :--- | :--- |
+| `app1/07` el recorte y la comprobación | `Determinista` | Cinco campos frente a cuarenta sin cambiar los valores; se prueba sin modelo. |
+| `app1/07` correcta y `sin_recorte` | `Probabilística con control positivo` | ≈ 15 000 frente a ≈ 54 000 tokens de entrada, con la respuesta correcta en las 10 ejecuciones; cuántas peticiones hace lo decide el modelo. |
+| `app2/04` `--parte proxy` | `Determinista` | El proxy de sentimiento acierta 3 de 11, sin modelo. |
+| `app2/04` correcta y `sin_ejemplos` | `Probabilística con control positivo` | La señal se ve con Haiku 4.5 (32/33 frente a 27/33); con Haiku 5.5 no hay diferencia. |
+| `app2/04` `sentimiento` | `Probabilística con control positivo` | 25/55 frente a 55/55. |
+| `app2/04` `confianza` | `Probabilística con control positivo` | 39/55 frente a 55/55; la confianza declarada separa poco. |

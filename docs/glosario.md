@@ -20,6 +20,8 @@ Términos que usan los módulos de las tres apps y el arnés, para quien llega d
 
 ## El agente y su bucle
 
+- **Recorte (*trimming*):** quitar de un resultado de tool los campos que la tarea no usa antes de que entre en el historial (`app1/07`). Es distinto de resumir el historial después.
+- **Tokens de entrada:** los que el modelo lee en una petición. La API los informa en el `usage` de la respuesta; como cada petición reenvía el historial, lo que entra una vez se paga en todas las siguientes.
 - **Agente:** un programa en el que un modelo decide qué pasos dar (qué tools pedir y cuándo terminar) para cumplir una tarea, en lugar de seguir una secuencia fijada por el código.
 - **Messages API:** la API de Claude a bajo nivel: una petición con mensajes y una respuesta. El bucle lo escribe tu código (`app1/01`).
 - **Agent SDK (`claude-agent-sdk`):** una biblioteca que trae el bucle hecho, tools integradas, hooks, permisos, sesiones y subagentes. La usan casi todos los módulos.
@@ -55,6 +57,9 @@ Términos que usan los módulos de las tres apps y el arnés, para quien llega d
 - **Pre-aprobar:** que las llamadas a una tool se ejecuten sin pedir permiso. En el SDK se hace listándola en `allowed_tools`.
 - ***Few-shot*:** ejemplos de casos resueltos que se incluyen en el prompt para mostrar al modelo cómo actuar.
 - **Escalamiento:** pasar un caso a una persona cuando el agente no debe o no puede resolverlo.
+- **Criterio de escalamiento:** la regla explícita que dice cuándo escalar (el cliente pide un humano, la política no cubre la petición, no se puede avanzar) y cuándo resolver; se escribe en el prompt, mejor con ejemplos razonados (`app2/04`).
+- **Vacío de política:** una petición que la política de la empresa no contempla o deja ambigua (por ejemplo, igualar el precio de la competencia cuando solo se prevén ajustes del propio catálogo). El agente no decide: escala.
+- ***Proxy*:** una medida indirecta que se usa en lugar de la que importa. El sentimiento del mensaje y la confianza que declara el propio modelo son proxies poco fiables de la complejidad real de un caso.
 - ***Handoff* (traspaso):** el paquete de información que acompaña a un escalamiento, para que quien recibe el caso pueda seguir sin volver a preguntar.
 - **Sumarización progresiva:** resumir la conversación cada cierto tiempo y seguir trabajando a partir del resumen, para no llenar el contexto.
 - ***Case facts* (hechos del caso):** un bloque con los datos concretos del caso (importes, fechas, IDs, estados) que se mantiene aparte del resumen y se incluye en cada petición.

@@ -12,16 +12,16 @@ Una simulación no sustituye a los módulos: los usa. Se hace cuando los módulo
 
 ## Los seis escenarios
 
-Los dominios principales son los que la guía asigna a cada escenario. El estado de preparación dice si el repositorio ya tiene el material para escribir el caso; es una instantánea (190 de 240 viñetas, 2026-11-06) que se actualiza al cerrar cada tanda.
+Los dominios principales son los que la guía asigna a cada escenario. El estado de preparación dice si el repositorio ya tiene el material para escribir el caso; es una instantánea (240 de 240 viñetas, 2026-11-07) que se actualiza al cerrar cada tanda.
 
 | Caso | Escenario de la guía | Dominios principales | Qué cubre del repositorio | Estado de preparación |
 | :--- | :--- | :--- | :--- | :--- |
-| E1 | Customer Support Resolution Agent (agente de resolución de soporte) | D1 · D2 · D5 | `app2/01`–`03`, `05`–`07`; `app1/03`–`04` | Espera: el escalamiento (TS 5.2, `app2/04`) está en 0 de 9 y es el centro del escenario |
-| E2 | Code Generation with Claude Code (generación de código con Claude Code) | D3 · D5 | Sección D3 (TS 3.1 a 3.5) | Casi: D3 3.1–3.5 está completo; en D5 faltan TS 5.2 y 5.5 |
+| E1 | Customer Support Resolution Agent (agente de resolución de soporte) | D1 · D2 · D5 | `app2/01`–`03`, `05`–`07`; `app1/03`–`04` | Listo: el escalamiento (TS 5.2), centro del escenario, está entregado en `app2/04` |
+| E2 | Code Generation with Claude Code (generación de código con Claude Code) | D3 · D5 | Sección D3 (TS 3.1 a 3.5) | Listo: D3 3.1–3.5 está completo y en D5 están entregados TS 5.2 y 5.5 |
 | E3 | Multi-Agent Research System (sistema multiagente de investigación) | D1 · D2 · D5 | `app3/01`–`06`; `app1/03`–`04` | Listo: D1, D2 y D5 (5.1, 5.3, 5.4 y 5.6) están entregados |
-| E4 | Developer Productivity with Claude (productividad de desarrollo) | D1 · D2 · D3 | `app1/02`, `03`, `06`; `app3/02` (legacy); sección D3 | Listo: D2 y D3 3.1–3.5 completos; D1 en 46 de 48 |
-| E5 | Claude Code for Continuous Integration (Claude Code en CI) | D3 · D4 | Sección D3; `app3/11` y `app3/12` (pendientes) | Espera: TS 3.6 (0 de 9), 4.1 (0 de 6) y 4.6 (0 de 6) llegan con `app3/11` y `app3/12` |
-| E6 | Structured Data Extraction (extracción estructurada) | D4 · D5 | `app3/07`–`09`; `app2/04`, `app3/10` y `app3/11` (pendientes) | Casi: la extracción (4.3, 4.5) está entregada y 4.4 en 6 de 8; faltan 4.2 (3 de 9) y 5.5 (0 de 8) |
+| E4 | Developer Productivity with Claude (productividad de desarrollo) | D1 · D2 · D3 | `app1/02`, `03`, `06`; `app3/02` (legacy); sección D3 | Listo: D1, D2 y D3 3.1–3.5 completos |
+| E5 | Claude Code for Continuous Integration (Claude Code en CI) | D3 · D4 | Sección D3; `app3/11` y `app3/12` | Listo: TS 3.6, 4.1 y 4.6 están entregados con `app3/11` y `app3/12` |
+| E6 | Structured Data Extraction (extracción estructurada) | D4 · D5 | `app3/07`–`09`; `app2/04`, `app3/10` y `app3/11` | Listo: la extracción (4.2 a 4.5) y la confianza (5.5) están entregadas |
 
 Las etiquetas E1, E3 y E4 ya se usan en los README de las apps. Qué módulos cubren cada escenario es una propuesta del proyecto a partir de los dominios, no algo que diga la guía.
 
