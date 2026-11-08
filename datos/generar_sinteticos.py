@@ -1337,9 +1337,9 @@ def build_inventory(rng: random.Random) -> tuple[dict, dict]:
             "contract_end": (REFERENCE_DATE + timedelta(days=rng.randint(90, 900))).isoformat(),
             "warranty_notes": rng.choice(prose),
             "monitors_total": rng.randint(10, 70),
-            "monitors_assigned": rng.randint(5, 60),
+            "monitors_assigned": rng.randint(5, 60),  # se recorta a monitors_total abajo: sin tocar el flujo del generador
             "phones_total": rng.randint(8, 50),
-            "phones_assigned": rng.randint(4, 45),
+            "phones_assigned": rng.randint(4, 45),  # idem
             "docks_total": rng.randint(5, 40),
             "peripherals_total": rng.randint(30, 200),
             "licenses_editor": rng.randint(0, 40),
@@ -1354,6 +1354,10 @@ def build_inventory(rng: random.Random) -> tuple[dict, dict]:
             "tags": rng.sample(["críticos", "remoto", "planta", "laboratorio", "turno-noche", "externo"], 3),
             "comments": rng.choice(prose),
         }
+        # Nada asignado por encima de lo que existe. Se recorta después de sortear, no se vuelve a sortear: así los
+        # campos que importan (portátiles) y el resto del conjunto no cambian.
+        noise["monitors_assigned"] = min(noise["monitors_assigned"], noise["monitors_total"])
+        noise["phones_assigned"] = min(noise["phones_assigned"], noise["phones_total"])
         team.update(noise)
         teams.append(team)
     best = max(teams, key=lambda t: t["laptops_total"] - t["laptops_assigned"])

@@ -248,3 +248,56 @@ def test_the_criteria_name_the_third_trigger_and_the_examples_do_not_cover_it():
     assert any("base de conocimiento" in line and "avanz" in line for line in mod.CRITERIA_LINES)
     assert len(mod.CRITERIA_LINES) == 5
     assert {e["action"] for e in EXAMPLES} == {"escalate_now", "offer_resolution", "escalate_policy_gap", "ask_identifier"}
+
+
+# --- detector de «pidió un identificador»: límites de la revisión independiente --------
+
+def test_asking_to_choose_between_the_departments_is_asking_to_disambiguate():
+    for text in (
+        "¿Eres la de Finanzas o la de Ventas?",
+        "Hay dos Laura Gómez, una en Finanzas y otra en Ventas. ¿Cuál eres?",
+        "Confírmame quién eres con tu ID.",
+        "¿Me confirmas tu número EMP-NNNN?",
+        "¿Me das tu correo corporativo?",
+    ):
+        assert mod.asks_for_identifier(text), text
+
+
+def test_a_word_of_the_data_without_asking_for_it_is_not_asking():
+    for text in (
+        "Te he enviado las instrucciones por correo. ¿Algo más?",
+        "He visto que eres de Finanzas, ¿te reviso el reembolso del departamento?",
+        "¿Puedo ayudarte con algo más sobre el portal?",
+        "Tu departamento ya tiene acceso al portal.",
+    ):
+        assert not mod.asks_for_identifier(text), text
+
+
+def test_known_limit_it_cannot_tell_a_question_about_the_data_from_a_request_for_it():
+    # Límite declarado: una frase que pide el dato de otra forma, sin ninguna de las pistas, no se ve.
+    assert not mod.asks_for_identifier("Para seguir necesito saber exactamente quién eres entre las dos.")
+
+
+# --- turnos cortados por el tope de gasto -------------------------------------------
+
+def test_a_turn_cut_by_the_budget_is_flagged_and_does_not_score():
+    cut = mod.classify_turn(RunRecord(budget_exceeded=True), [])
+    assert cut.cut
+    assert not mod.classify_turn(RunRecord(), []).cut
+    assert mod.scorable(turn("no_escalation"), None)
+    assert not mod.scorable(mod.Turn("no_escalation", False, [], False, cut=True), None)
+    assert not mod.scorable(turn("no_escalation"), mod.Turn("escalate_now", False, [], False, cut=True))
+
+
+def test_case_cap_splits_what_is_left_among_the_remaining_cases():
+    assert mod.case_cap(0.50, 0.0, 39) == pytest.approx(0.50 / 39)
+    assert mod.case_cap(0.50, 0.20, 10) == pytest.approx(0.03)
+    assert mod.case_cap(0.50, 0.50, 5) == 0 and mod.case_cap(0.50, 0.60, 5) == 0
+    assert mod.case_cap(0.50, 0.10, 0) == 0
+
+
+def test_partial_measure_is_announced():
+    assert mod.partial_note(65, 65) is None
+    note = mod.partial_note(40, 65)
+    assert "40" in note and "65" in note and "parcial" in note
+    assert "2" in mod.cut_note(2) and mod.cut_note(0) is None

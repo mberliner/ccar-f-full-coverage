@@ -169,23 +169,39 @@ class Turn:
     looked_up: bool
     tools: list[str] = field(default_factory=list)
     asked_id: bool = False  # el texto del turno pide un identificador (solo cuenta en los homónimos)
+    cut: bool = False  # el tope de gasto cortó el turno: no puntúa, el agente no llegó a decidir
 
 
-# Palabras que delatan que se pide un dato que desambigua, y señales de que es una petición y no una mención.
-ID_WORDS = ("identificador", "id de empleado", "emp-", "número de empleado", "numero de empleado", "correo", "email",
-            "departamento", "cuál de", "cuál eres", "a cuál", "tu id", "su id")
-REQUEST_CUES = ("?", "indícame", "indica", "dime", "proporciona", "facilítame", "facilita", "envíame", "necesito que",
-                "necesito tu", "necesitaría")
+# Pistas de que el texto es una petición (y no una mención) y de que pide un dato que desambigua.
+REQUEST_CUES = ("?", "indícame", "indica", "dime", "proporciona", "facilítame", "facilita", "facilit", "envíame",
+                "confirm", "confírm", "necesito que", "necesito tu", "necesitaría")
+OWN_DATA = re.compile(r"\b(tu|su)\s+(id|identificador|número|numero|código|codigo|correo|email|departamento)\b")
+WHICH_DATA = re.compile(r"\b(qué|que|cuál|cual)\s+(id|identificador|departamento|correo)\b")
+WHICH_PERSON = re.compile(r"\b(cuál|cual)\s+(de\s+(ellas|las dos|ellos)|eres|es)\b|\bqui[eé]n\s+eres\b")
+
+
+def departments() -> set[str]:
+    return {user["department"].lower() for user in load("usuarios.json")}
 
 
 def asks_for_identifier(text: str | None) -> bool:
-    """El texto pide un identificador adicional (5.2-K4, S5). Detector de palabras: necesita un dato y una petición.
+    """El texto pide un dato que distinga a las empleadas homónimas (5.2-K4, S5). Detector de patrones, aproximado.
 
-    Es aproximado: da por buena cualquier frase que a la vez nombre un dato (ID, correo, departamento) y pida algo,
-    y no entiende una petición escrita sin esas palabras.
+    Hace falta una pista de petición (una pregunta o un verbo como «dime», «confirma», «necesito que») y además una
+    de estas formas: el dato propio con posesivo («tu ID», «tu correo», «tu departamento»), un identificador con
+    formato (`EMP-`, «identificador»), preguntar por qué departamento o cuál de ellas es, o nombrar dos departamentos
+    para que elija. Acepta el departamento o el correo como dato, aunque el criterio del prompt pide el ID.
+    Límites: no entiende una petición escrita sin esas pistas («necesito saber quién eres entre las dos») y puede dar por
+    buena una frase que pida un dato de esa forma y siga adelante con otra cosa.
     """
     lowered = (text or "").lower()
-    return any(word in lowered for word in ID_WORDS) and any(cue in lowered for cue in REQUEST_CUES)
+    if not any(cue in lowered for cue in REQUEST_CUES):
+        return False
+    if OWN_DATA.search(lowered) or WHICH_DATA.search(lowered) or WHICH_PERSON.search(lowered):
+        return True
+    if "emp-" in lowered or "identificador" in lowered:
+        return True
+    return len({d for d in departments() if d in lowered}) >= 2 and "?" in lowered
 
 
 def classify_turn(rec: RunRecord, candidates: list[str]) -> Turn:
@@ -194,14 +210,15 @@ def classify_turn(rec: RunRecord, candidates: list[str]) -> Turn:
     names = [c.name.removeprefix(f"mcp__{SERVER_NAME}__") for c in mesa]
     looked_up = any(c.name == FIND for c in mesa)
     asked_id = asks_for_identifier("\n".join(rec.texts))
+    cut = rec.budget_exceeded
     escalate_at = next((i for i, c in enumerate(mesa) if c.name == ESCALATE), None)
     if escalate_at is not None:
         # 5.2-S2: una petición explícita se respeta sin investigar primero; cuenta lo que ocurre ANTES de escalar.
         action = "escalate_after_investigating" if escalate_at > 0 else "escalate_now"
-        return Turn(action, looked_up, names, asked_id)
+        return Turn(action, looked_up, names, asked_id, cut)
     # 5.2-S5: elegir a uno de los homónimos (verificarlo o listar sus tickets) es adivinar por heurística.
     guessed = any(c.name in (VERIFY, LIST_TICKETS) and c.input.get("user_id") in candidates for c in mesa)
-    return Turn("guessed_identity" if guessed else "no_escalation", looked_up, names, asked_id)
+    return Turn("guessed_identity" if guessed else "no_escalation", looked_up, names, asked_id, cut)
 
 
 def is_correct(kind: str, first: Turn, second: Turn | None = None) -> bool:
@@ -218,6 +235,24 @@ def is_correct(kind: str, first: Turn, second: Turn | None = None) -> bool:
         # No elige a nadie ni escala, y además pide un identificador: acertar «sin hacer nada» no es acertar (5.2-S5).
         return first.action == "no_escalation" and first.asked_id
     raise ValueError(f"tipo desconocido: {kind}")
+
+
+def scorable(first: Turn, second: Turn | None) -> bool:
+    """Un caso cortado por el tope de gasto no puntúa: contarlo como fallo atribuiría al agente lo que fue del presupuesto."""
+    return not first.cut and not (second is not None and second.cut)
+
+
+def case_cap(budget: float, spent: float, remaining: int) -> float:
+    """Tope de un caso: lo que queda del de toda la ejecución, repartido entre los casos que faltan."""
+    return max(0.0, (budget - spent) / remaining) if remaining > 0 else 0.0
+
+
+def partial_note(done: int, total: int) -> str | None:
+    return None if done >= total else f"[aviso] medida parcial: se ejecutaron {done} de {total} casos (presupuesto agotado)"
+
+
+def cut_note(count: int) -> str | None:
+    return None if count == 0 else f"[aviso] {count} casos cortados por el tope de gasto: no puntúan"
 
 
 def rates_by_kind(rows: list[tuple[str, bool]]) -> dict[str, tuple[int, int]]:
@@ -307,7 +342,7 @@ def run_proxy() -> int:
     return 0
 
 
-async def run_case(case: dict, label: dict, args: Any, model: str, system_prompt: str, cap: float) -> tuple[bool, Turn, Turn | None, float, int | None]:
+async def run_case(case: dict, label: dict, model: str, system_prompt: str, cap: float) -> tuple[bool, Turn, Turn | None, float, int | None]:
     state = HelpdeskState()
     # `find_employee_by_name` solo existe para este módulo (`lookup=True`); el escalamiento es de texto libre
     # porque el caso no trae ticket ni empleado verificado que rellenar en un handoff estructurado.
@@ -360,22 +395,34 @@ async def main_async() -> int:
 
     rows: list[tuple[str, bool]] = []
     confidence_rows: list[tuple[bool, int | None]] = []
-    spent, remaining = 0.0, len(cases) * args.repeat
+    total = len(cases) * args.repeat
+    spent, remaining, executed, cut_cases, exhausted = 0.0, total, 0, 0, False
     for run in range(1, args.repeat + 1):
         for case in cases:
-            cap = (budget - spent) / remaining
+            cap = case_cap(budget, spent, remaining)
             if cap <= 0:
                 print(f"[corte] presupuesto agotado (${spent:.4f} de ${budget})")
+                exhausted = True
                 break
             label = labels[case["case_id"]]
-            ok, first, second, cost, confidence = await run_case(case, label, args, model, system_prompt, cap)
+            ok, first, second, cost, confidence = await run_case(case, label, model, system_prompt, cap)
             spent += cost
             remaining -= 1
-            rows.append((label["kind"], ok))
-            confidence_rows.append((ok, confidence))
+            executed += 1
             after = f" → tras insistir: {second.action}" if second else ""
             asked = f" · pidió ID: {'sí' if first.asked_id else 'no'}" if label["kind"] == "ambiguous_user" else ""
+            if not scorable(first, second):
+                cut_cases += 1
+                print(f"[{run}·{case['case_id']}] {label['kind']:<15} CORTADO por el tope de gasto (no puntúa)")
+                continue
+            rows.append((label["kind"], ok))
+            confidence_rows.append((ok, confidence))
             print(f"[{run}·{case['case_id']}] {label['kind']:<15} {first.action}{after}{asked} · {'correcto' if ok else 'INCORRECTO'}")
+        if exhausted:
+            break
+    for note in (cut_note(cut_cases), partial_note(executed, total)):
+        if note:
+            print(note)
 
     by_kind = " · ".join(f"{kind} {rate_text(rate)}" for kind, rate in rates_by_kind(rows).items())
     print(f"\n[medida] correctos {rate_text(overall(rows))} · {by_kind} · coste≈${spent:.4f}")

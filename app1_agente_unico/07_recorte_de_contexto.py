@@ -199,7 +199,9 @@ def run_loop(
         results = []
         for use in uses:
             content = executor(use.name, use.input)
-            counts.append(len(json.loads(content)))
+            # Solo cuentan los resultados del inventario: la lista de equipos no es un registro de 40 campos.
+            if use.name == "get_team_inventory":
+                counts.append(field_count(json.loads(content)))
             results.append({"type": "tool_result", "tool_use_id": use.id, "content": content})
         history.append({"role": "user", "content": results})
     return LoopResult("red_de_seguridad", requests, history, None, counts)
@@ -213,20 +215,21 @@ def mentions(text: str | None, value: str) -> bool:
 
 
 def answer_is_correct(text: str | None, expected_team_id: str) -> bool:
-    """El primer equipo que nombra la respuesta (por ID o por nombre) es el esperado.
+    """El primer equipo que nombra la respuesta es el esperado: se busca por ID y, si no hay ninguno, por nombre.
 
-    Los siguientes son contexto («le siguen…»): contarlos como error castigaría una
-    respuesta correcta que da más datos. Límite: no distingue «es X, no Y» de «es Y, no X».
+    Los equipos siguientes son contexto («le siguen…»). Cuatro equipos se llaman con palabras comunes (Redes, Datos,
+    Seguridad, Plataforma), así que el ID manda y el nombre solo cuenta escrito con su mayúscula: «por seguridad» no es
+    el equipo Seguridad. Límites: no distingue «es X, no Y» de «es Y, no X», y una frase que empiece por «Datos…»
+    sin ningún ID se tomaría por el equipo Datos.
     """
     if not text:
         return False
-    first = None
-    for team in load("inventario_equipos.json")["teams"]:
-        for key in (team["team_id"], team["team_name"]):
-            match = re.search(rf"(?<!\w){re.escape(key)}(?!\w)", text, re.IGNORECASE)
-            if match and (first is None or match.start() < first[0]):
-                first = (match.start(), team["team_id"])
-    return first is not None and first[1] == expected_team_id
+    teams = load("inventario_equipos.json")["teams"]
+    by_id = [(m.start(), t["team_id"]) for t in teams for m in [re.search(rf"(?<!\w){re.escape(t['team_id'])}(?!\w)", text, re.IGNORECASE)] if m]
+    if by_id:
+        return min(by_id)[1] == expected_team_id
+    by_name = [(m.start(), t["team_id"]) for t in teams for m in [re.search(rf"(?<!\w){re.escape(t['team_name'])}(?!\w)", text)] if m]
+    return bool(by_name) and min(by_name)[1] == expected_team_id
 
 
 def follow_up_is_correct(text: str | None, expected_team_id: str) -> bool:

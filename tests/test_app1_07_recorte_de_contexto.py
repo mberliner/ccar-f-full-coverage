@@ -168,3 +168,42 @@ def test_the_answer_is_the_first_team_named_so_runners_up_do_not_spoil_it():
     # Si el primero que nombra es otro, la respuesta es otra aunque mencione al esperado después.
     assert not mod.answer_is_correct(f"{others[0]['team_name']}, no {team['team_name']}.", expected)
     assert not mod.answer_is_correct("No lo sé.", expected)
+
+
+# --- revisión independiente: nombres de equipo que son palabras comunes ----------------
+
+def test_common_words_are_not_team_names_unless_written_as_one():
+    # Cuatro equipos se llaman Redes, Datos, Seguridad y Plataforma; el esperado es Seguridad (EQ-06).
+    expected = LABELS["expected"]["team_with_most_unassigned_laptops"]
+    assert not mod.answer_is_correct("Por seguridad revisé los 8 equipos: gana Finanzas TI.", expected)
+    assert mod.answer_is_correct("Según los datos de inventario, el equipo con más portátiles sin asignar es Seguridad (EQ-06).", expected)
+    assert not mod.answer_is_correct("Según los datos de la red, gana Finanzas TI.", expected)
+
+
+def test_an_id_decides_before_any_name():
+    expected = LABELS["expected"]["team_with_most_unassigned_laptops"]
+    assert mod.answer_is_correct("Datos del inventario: gana Seguridad (EQ-06).", expected)
+    assert mod.answer_is_correct("Es EQ-06; Redes (EQ-01) y Datos (EQ-04) le siguen.", expected)
+    assert not mod.answer_is_correct("Es EQ-05; Seguridad (EQ-06) le sigue.", expected)
+
+
+def test_known_limit_a_negation_does_not_change_which_team_is_named_first():
+    # Límite declarado: no distingue «es X, no Y» de «es Y, no X». Se documenta con un test para que no se olvide.
+    expected = LABELS["expected"]["team_with_most_unassigned_laptops"]
+    assert mod.answer_is_correct("No es Seguridad: es Finanzas TI.", expected)
+
+
+def test_field_counts_only_cover_the_inventory_results_not_the_team_list():
+    create, _ = scripted([
+        tool_response([("list_teams", {})], 300),
+        tool_response([("get_team_inventory", {"team_id": "EQ-01"}), ("get_team_inventory", {"team_id": "EQ-02"})], 400),
+        text_response("EQ-06", 900),
+    ])
+    result = mod.run_loop(create, [{"role": "user", "content": "q"}], lambda n, a: mod.execute_tool(n, a, trim=True), echo=False)
+    assert result.field_counts == [5, 5]
+    create, _ = scripted([
+        tool_response([("get_team_inventory", {"team_id": "EQ-01"})], 300),
+        text_response("EQ-06", 900),
+    ])
+    full = mod.run_loop(create, [{"role": "user", "content": "q"}], lambda n, a: mod.execute_tool(n, a, trim=False), echo=False)
+    assert full.field_counts == [40]

@@ -152,3 +152,11 @@ def test_no_progress_cases_say_the_user_already_tried_what_the_knowledge_base_of
         assert any(w in text for w in ("ya ", "seguí", "probé")), "el cliente ya intentó lo que ofrece la base"
         assert "followup" not in case
     assert "sincronización" in kb_titles and "batería" in kb_titles, "los dos casos se apoyan en artículos que existen"
+
+
+def test_assigned_never_exceeds_total_in_the_noise_fields():
+    """Ruido incoherente (más asignados que existentes) despista sin enseñar nada."""
+    for team in inventory()["teams"]:
+        for kind in ("laptops", "monitors", "phones"):
+            if f"{kind}_assigned" in team:
+                assert team[f"{kind}_assigned"] <= team[f"{kind}_total"], (team["team_id"], kind)

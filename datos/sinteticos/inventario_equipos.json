@@ -31,7 +31,7 @@
       "onboarding_notes": "Auditoría interna sin hallazgos críticos; observaciones menores sobre el etiquetado de activos en la planta baja.",
       "open_requests": 11,
       "peripherals_total": 108,
-      "phones_assigned": 27,
+      "phones_assigned": 9,
       "phones_total": 9,
       "security_level": "alto",
       "tags": [
@@ -77,7 +77,7 @@
       "onboarding_notes": "Auditoría interna sin hallazgos críticos; observaciones menores sobre el etiquetado de activos en la planta baja.",
       "open_requests": 3,
       "peripherals_total": 123,
-      "phones_assigned": 44,
+      "phones_assigned": 10,
       "phones_total": 10,
       "security_level": "medio",
       "tags": [
@@ -123,7 +123,7 @@
       "onboarding_notes": "Equipos en préstamo temporal para el proyecto de migración; devolución prevista según el plan del área y su calendario.",
       "open_requests": 1,
       "peripherals_total": 185,
-      "phones_assigned": 36,
+      "phones_assigned": 8,
       "phones_total": 8,
       "security_level": "alto",
       "tags": [
@@ -161,7 +161,7 @@
       "location_notes": "Equipos en préstamo temporal para el proyecto de migración; devolución prevista según el plan del área y su calendario.",
       "manager_email": "responsable4@mesa-ejemplo.test",
       "manager_name": "Laura Prieto",
-      "monitors_assigned": 51,
+      "monitors_assigned": 33,
       "monitors_total": 33,
       "network_notes": "Auditoría interna sin hallazgos críticos; observaciones menores sobre el etiquetado de activos en la planta baja.",
       "network_vlan": "VLAN-37",
@@ -307,7 +307,7 @@
       "onboarding_notes": "Incidencias recurrentes con el cargador de la serie anterior; el proveedor ha enviado un lote de sustitución.",
       "open_requests": 13,
       "peripherals_total": 174,
-      "phones_assigned": 40,
+      "phones_assigned": 34,
       "phones_total": 34,
       "security_level": "alto",
       "tags": [
