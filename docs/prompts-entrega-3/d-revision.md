@@ -1,3 +1,5 @@
+> Prompt de la primera revisión; las cifras de `app2/04` que cita son las de entonces y están superadas por la cuarta medida.
+
 Eres una instancia independiente y no tienes contexto previo. Revisa la tanda D de la entrega 3 de este repositorio. No edites nada: informa de los hallazgos ordenados por gravedad, con archivo y línea en cada uno.
 
 Qué revisar: `git diff main...entrega-3d`. Son `app2_agente_con_control/04_few_shot_y_escalamiento.py`, `app1_agente_unico/07_recorte_de_contexto.py`, sus secciones en los README de `app1_agente_unico` y `app2_agente_con_control`, `app2_agente_con_control/servers/helpdesk.py` (`find_employee_by_name`), `harness/recorder.py` (`texts`), `datos/generar_sinteticos.py`, sus tests, `CONCEPTOS.md` (240/240), `docs/glosario.md`, `docs/hallazgos.md` (tanda D), `docs/tipos-de-senal.md`, `docs/credenciales-y-modos.md`, `docs/simulaciones-por-escenario.md`, `harness/narrador.py` y `tests/test_narrador.py`, `tests/test_una_vez.py` y `NOTAS.md`.
