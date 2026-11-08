@@ -360,9 +360,41 @@ Versiones: claude-agent-sdk 0.2.173, CLI 2.1.309. Coste con modelo de la tanda, 
 - La diferencia es de unas 3,4 veces en el total y unas 4,2 en el máximo (medias de las cinco ejecuciones). El coste por ejecución es ~0,0020 $ con recorte y ~0,006 $ sin él. Los tokens no dependen de la comprobación de la respuesta: las cifras de la medida anterior (14 741 – 15 073 y 52 788 – 55 849) eran de otras ejecuciones, y estas, de la tercera versión de la comprobación (ver abajo), son las vigentes.
 - **La comprobación de la respuesta marcaba como incorrectas respuestas correctas** (0/10 en la primera medida). Primera causa: exigía que se nombrara un solo equipo y «Seguridad (EQ-06)» nombra al mismo equipo por nombre y por ID. Segunda causa, que solo se vio al volver a medir: la respuesta correcta suma «le siguen Finanzas TI y Redes». Tercera causa, señalada en la revisión independiente: cuatro equipos se llaman con palabras comunes (Redes, Datos, Seguridad, Plataforma), y la búsqueda sin mayúsculas daba falsos positivos («por seguridad revisé…» → equipo Seguridad) y falsos negativos («según los datos…»). Ahora cuenta el primer equipo que se nombra, buscando por ID antes que por nombre y con la mayúscula del nombre, con los límites de que no distingue «es X, no Y» de «es Y, no X» y de que una frase que empiece por «Datos…» sin ningún ID se tomaría por ese equipo. Las cifras de arriba son las de la comprobación corregida. → roadmap §4.3 (ampliación de «las medidas de texto fallan en los dos sentidos»: una comprobación que exige un único valor castiga a la respuesta correcta que da contexto).
 
+### `app2/04_few_shot_y_escalamiento`, cuarta medida (Agent SDK, 13 casos por repetición, 2026-11-08)
+
+**Vigente.** Tras la segunda revisión independiente se corrigió el detector de «pidió un ID» (exige una petición y el dato; un «?» o un posesivo solos ya no bastan) y no se lanza la insistencia sobre un primer turno cortado o con error. Las cifras de la tercera medida **no son comparables** con estas: el detector es otro. Las salidas completas están en `estado/<perfil>/medidas/` (fuera de git) y traen por caso la acción y si pidió el ID, **no el texto del agente**, así que los aciertos de homónimos no se pueden auditar uno a uno.
+
+Los topes son los de `.env` (0,25 $ y 0,50 $ por ejecución del script; un intento de subirlos desde la shell no se aplicó, porque `.env` manda). Ningún caso cortado ni con error en las seis ejecuciones; la de Haiku 4.5 con la variante correcta usó 0,457 $ de 0,50 $.
+
+Haiku 5.5 (rol `agent`, 5 repeticiones: 65 casos por variante).
+
+| Variante | Correctos | Por tipo |
+| :--- | :--- | :--- |
+| correcta (criterios y 4 ejemplos) | 58/65 | petición de humano 15/15 · frustración 10/15 · vacío de política 15/15 · sin avance 9/10 · homónimos 9/10 |
+| `sin_ejemplos` | 56/65 | petición de humano 15/15 · frustración 12/15 · vacío de política 15/15 · sin avance 9/10 · homónimos 5/10 |
+| `sentimiento` | 30/65 | petición de humano 15/15 · frustración 0/15 · vacío de política 1/15 · sin avance 5/10 · homónimos 9/10 |
+| `confianza` | 44/65 | petición de humano 15/15 · frustración 1/15 · vacío de política 15/15 · sin avance 6/10 · homónimos 7/10 |
+
+Haiku 4.5 (rol `enforcement`, 3 repeticiones: 39 casos por variante).
+
+| Variante | Correctos | Por tipo |
+| :--- | :--- | :--- |
+| correcta | 31/39 | petición de humano 9/9 · frustración 4/9 · vacío de política 9/9 · sin avance 4/6 · homónimos 5/6 |
+| `sin_ejemplos` | 33/39 | petición de humano 9/9 · frustración 6/9 · vacío de política 9/9 · sin avance 4/6 · homónimos 5/6 |
+
+- **Homónimos con Haiku 5.5:** correcta 9/10 y `sin_ejemplos` 5/10. Los fallos son el caso ESC-10, que sin ejemplos **no pidió el ID en las 5 repeticiones** y con ejemplos, en 1 de 5; ESC-11 lo pidió siempre en las dos variantes. Es un único caso con 5 repeticiones, y el detector solo mira el texto en los homónimos.
+- **Frustración con Haiku 5.5:** correcta 10/15 y `sin_ejemplos` 12/15, es decir, en sentido contrario al de los homónimos. Con 15 casos y sin repetir, no se sostiene como diferencia en ninguna dirección. Total: 58/65 frente a 56/65.
+- **Con Haiku 4.5 los ejemplos no se notan:** 31/39 frente a 33/39, con la frustración en 4/9 con ejemplos y 6/9 sin ellos. `sin_ejemplos` en frustración dio **7/9 (segunda medida), 4/9 (tercera) y 6/9 (cuarta)**, con el mismo prompt: la oscilación es de 3/9 entre medidas, del mismo tamaño que la «señal» que se atribuyó a los ejemplos. No es una señal estable.
+- **`sentimiento` y `confianza`:** `sentimiento` 30/65 y `confianza` 44/65, frente a 56/65 de su control (`sin_ejemplos`). Fallan en la frustración sencilla (0/15 y 1/15); `sentimiento` deja pasar el vacío de política (1/15).
+- **Confianza declarada:** media de 62,9 en los aciertos y 56,4 en los fallos. En las medidas anteriores el sentido cambió (60,6 y 50,3; 54,7 y 61,0; 60,8 y 61,7): no es una señal estable.
+- **Coste por variante:** Haiku 5.5, 0,033 $ (`sentimiento`), 0,042 $ (`confianza`, correcta y `sin_ejemplos`); Haiku 4.5, 0,457 $ (correcta) y 0,388 $ (`sin_ejemplos`).
+- **Coste total declarado de la tanda:** no se desglosa el intento intermedio de la tercera medida; su coste **no consta**.
+
 ### `app2/04_few_shot_y_escalamiento`, tercera medida (Agent SDK, 13 casos por repetición, 2026-11-07)
 
-**Vigente.** La revisión independiente señaló, entre otras cosas, que el tope de gasto podía cortar un caso y que la medida lo contaba como un fallo del agente, y que el detector de «pidió un ID» dejaba pasar o perdía frases corrientes. Cambios: un caso cortado por el tope **no puntúa** y se avisa (`CORTADO`, `[aviso]`); el tope de un caso admite hasta tres partes iguales de lo que queda (`CAP_SHARES`), porque con partes iguales la frustración, de dos turnos, se cortaba; el detector reconoce «¿Eres la de Finanzas o la de Ventas?», «confírmame con tu ID» o «tu número EMP…» y deja de dar por buena una frase que solo menciona «correo» o «departamento». Las cifras de las medidas anteriores **no son comparables** con estas.
+Superada por la cuarta (otro detector).
+
+**Vigente hasta la cuarta.** La revisión independiente señaló, entre otras cosas, que el tope de gasto podía cortar un caso y que la medida lo contaba como un fallo del agente, y que el detector de «pidió un ID» dejaba pasar o perdía frases corrientes. Cambios: un caso cortado por el tope **no puntúa** y se avisa (`CORTADO`, `[aviso]`); el tope de un caso admite hasta tres partes iguales de lo que queda (`CAP_SHARES`), porque con partes iguales la frustración, de dos turnos, se cortaba; el detector reconoce «¿Eres la de Finanzas o la de Ventas?», «confírmame con tu ID» o «tu número EMP…» y deja de dar por buena una frase que solo menciona «correo» o «departamento». Las cifras de las medidas anteriores **no son comparables** con estas.
 
 Haiku 5.5 (rol `agent`, 5 repeticiones: 65 casos por variante; ningún caso cortado).
 
