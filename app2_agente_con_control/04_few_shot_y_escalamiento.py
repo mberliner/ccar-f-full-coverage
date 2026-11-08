@@ -250,9 +250,20 @@ def scorable(first: Turn, second: Turn | None) -> bool:
     return not first.cut and not (second is not None and second.cut)
 
 
+# Veces la parte igual que puede gastar un caso. Un caso de dos turnos (la frustración) cuesta más que la parte igual,
+# y con partes iguales el tope lo cortaba y se contaba como un fallo del agente.
+CAP_SHARES = 3.0
+
+
 def case_cap(budget: float, spent: float, remaining: int) -> float:
-    """Tope de un caso: lo que queda del de toda la ejecución, repartido entre los casos que faltan."""
-    return max(0.0, (budget - spent) / remaining) if remaining > 0 else 0.0
+    """Tope de un caso: hasta `CAP_SHARES` partes iguales de lo que queda, sin pasar nunca de lo que queda.
+
+    El total sigue acotado por el tope de toda la ejecución: cada caso, como mucho, gasta lo que queda.
+    """
+    if remaining <= 0:
+        return 0.0
+    left = max(0.0, budget - spent)
+    return min(left, CAP_SHARES * left / remaining)
 
 
 def partial_note(done: int, total: int) -> str | None:

@@ -289,9 +289,13 @@ def test_a_turn_cut_by_the_budget_is_flagged_and_does_not_score():
     assert not mod.scorable(turn("no_escalation"), mod.Turn("escalate_now", False, [], False, cut=True))
 
 
-def test_case_cap_splits_what_is_left_among_the_remaining_cases():
-    assert mod.case_cap(0.50, 0.0, 39) == pytest.approx(0.50 / 39)
-    assert mod.case_cap(0.50, 0.20, 10) == pytest.approx(0.03)
+def test_case_cap_gives_each_case_up_to_three_shares_without_exceeding_what_is_left():
+    # Un caso de dos turnos (la frustración) cuesta más que la parte igual: con partes iguales el tope lo cortaba.
+    assert mod.case_cap(0.50, 0.0, 39) == pytest.approx(3 * 0.50 / 39)
+    assert mod.case_cap(0.50, 0.20, 10) == pytest.approx(3 * 0.03)
+    # Nunca más de lo que queda del tope de toda la ejecución: el total sigue acotado.
+    assert mod.case_cap(0.50, 0.45, 1) == pytest.approx(0.05)
+    assert mod.case_cap(0.50, 0.45, 2) == pytest.approx(0.05)
     assert mod.case_cap(0.50, 0.50, 5) == 0 and mod.case_cap(0.50, 0.60, 5) == 0
     assert mod.case_cap(0.50, 0.10, 0) == 0
 
