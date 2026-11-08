@@ -369,31 +369,25 @@ La línea `[medida]`: cuántos casos salen correctos en total y por tipo. En `co
 
 **Sin modelo (`--parte proxy`).** El proxy de sentimiento acierta 3 de 13: se equivoca en las tres frustraciones sencillas (las escala), en los tres vacíos de política y en los dos casos que no avanzan (los deja pasar, porque el tono es neutro) y en dos de las tres peticiones de un humano; solo acierta las dos de «Laura Gómez» y una petición de humano que lleva un reproche.
 
-Haiku 5.5 (2026-11-07, 5 repeticiones: 65 casos por variante, 10 de homónimos y 10 de «no se puede avanzar»):
+Haiku 5.5 (2026-11-07, 5 repeticiones: 65 casos por variante, 10 de homónimos y 10 de «no se puede avanzar»; ningún caso cortado por el tope de gasto):
 
 | Variante | Correctos | Por tipo |
 | :--- | :--- | :--- |
-| correcta | 63/65 | petición de humano 15/15 · frustración 14/15 · vacío de política 15/15 · sin avance 10/10 · homónimos 9/10 |
-| `sin_ejemplos` | 56/65 | petición de humano 15/15 · frustración 12/15 · vacío de política 15/15 · sin avance 9/10 · homónimos 5/10 |
-| `sentimiento` | 30/65 | petición de humano 15/15 · frustración 0/15 · vacío de política 1/15 · sin avance 5/10 · homónimos 9/10 |
-| `confianza` | 44/65 | petición de humano 15/15 · frustración 0/15 · vacío de política 15/15 · sin avance 6/10 · homónimos 8/10 |
+| correcta | 60/65 | petición de humano 15/15 · frustración 13/15 · vacío de política 15/15 · sin avance 9/10 · homónimos 8/10 |
+| `sin_ejemplos` | 59/65 | petición de humano 15/15 · frustración 14/15 · vacío de política 15/15 · sin avance 9/10 · homónimos 6/10 |
+| `sentimiento` | 30/65 | petición de humano 15/15 · frustración 0/15 · vacío de política 3/15 · sin avance 5/10 · homónimos 7/10 |
+| `confianza` | 44/65 | petición de humano 15/15 · frustración 0/15 · vacío de política 15/15 · sin avance 7/10 · homónimos 7/10 |
 
-Haiku 4.5 (2026-11-07, 3 repeticiones: 39 casos por variante, 6 de homónimos y 6 de «no se puede avanzar»):
+@@H45@@
 
-| Variante | Correctos | Por tipo |
-| :--- | :--- | :--- |
-| correcta | 35/39 | petición de humano 9/9 · frustración 5/9 · vacío de política 9/9 · sin avance 6/6 · homónimos 6/6 |
-| `sin_ejemplos` | 32/39 | petición de humano 9/9 · frustración 7/9 · vacío de política 9/9 · sin avance 3/6 · homónimos 4/6 |
-
-- **Con Haiku 5.5, los ejemplos se notan en los homónimos:** la correcta acierta 63/65 y `sin_ejemplos`, 56/65, y casi toda la diferencia está en los homónimos (9/10 frente a 5/10). Lectura propia, no medida de forma directa: sin ejemplo el agente no busca a la empleada por nombre, contesta con el artículo de la base de conocimiento y no pide el ID (se vio leyendo sus respuestas en el caso ESC-10, que la comprobación marca «pidió ID: no» las cinco veces). El criterio 4 solo dice qué hacer «si una búsqueda devuelve varias coincidencias», y esa búsqueda no llega a hacerse. La medida no separa el efecto del ejemplo del de la redacción del criterio.
-- **`sentimiento` muestra el fallo** frente a su control (`sin_ejemplos`, 56/65): decide por el tono y falla donde el tono engaña, con 0/15 en frustración (escala lo que podía resolver), 1/15 en vacío de política y 5/10 en los casos que no avanzan (los mensajes de esos casos tienen tono neutro y los trata como resolubles). Coincide con el proxy sin modelo en esos tipos, pero no en las peticiones de un humano: el modelo las escala todas y la lista de palabras solo una.
-- **`confianza` falla distinto:** acierta los vacíos de política y falla las frustraciones y buena parte de los casos que no avanzan (6/10). Su señal es esa tasa por tipo frente a `sin_ejemplos`.
-- **La confianza declarada no es una demostración de TS 5.2-K3:** su media fue de 54,7 en los aciertos y de 61,0 en los fallos, es decir, al revés de lo que haría un criterio útil, y ambas quedan por debajo del umbral de 70. La medida anterior, con 11 casos, había dado 60,6 y 50,3: el sentido de la diferencia cambia de una medida a otra, así que no separa de forma estable, y son pocos casos. La primera medida de esta cifra era un artefacto (leía solo el último mensaje del turno); el detalle está en [`docs/hallazgos.md`](../docs/hallazgos.md), tanda D.
+- **Con Haiku 5.5, los ejemplos casi no se notan:** la correcta acierta 60/65 y `sin_ejemplos`, 59/65, sin diferencia que se pueda sostener. La única diferencia está en los homónimos (8/10 frente a 6/10), con diez casos por variante y sin repetir la medida. Hipótesis propia, sin medir de forma directa: en un sondeo aparte, leyendo el texto de dos ejecuciones sin ejemplos, el agente contestó con el artículo de la base de conocimiento y no buscó a la empleada por nombre, y el criterio 4 solo dice qué hacer «si una búsqueda devuelve varias coincidencias».
+- **`sentimiento` muestra el fallo** frente a su control (`sin_ejemplos`, 59/65): decide por el tono y falla donde el tono engaña, con 0/15 en frustración (escala lo que podía resolver), 3/15 en vacío de política y 5/10 en los casos que no avanzan (los mensajes de esos casos tienen tono neutro y los trata como resolubles). Coincide con el proxy sin modelo en esos tipos, pero no en las peticiones de un humano: el modelo las escala todas y la lista de palabras solo una.
+- **`confianza` falla distinto:** acierta los vacíos de política (15/15) y falla las frustraciones (0/15), con 7/10 en los casos que no avanzan. Su señal es esa tasa por tipo frente a `sin_ejemplos`.
+- **La confianza declarada no es una demostración de TS 5.2-K3:** su media fue de 60,8 en los aciertos y de 61,7 en los fallos, es decir, no los separa, y ambas quedan por debajo del umbral de 70. Son pocos casos, y en medidas anteriores el sentido de la diferencia cambiaba, así que no es una señal estable. El historial de esa cifra, y la primera medida, que era un artefacto, están en [`docs/hallazgos.md`](../docs/hallazgos.md), tanda D.
 - **Las peticiones de un humano salen bien con las cuatro reglas** (15/15 con Haiku 5.5): es el único tipo que ninguna variante del modelo falla.
-- **Con Haiku 4.5, la señal está repartida:** la correcta acierta 35/39 y `sin_ejemplos`, 32/39. Los ejemplos ayudan en los homónimos (6/6 frente a 4/6) y en los casos que no avanzan (6/6 frente a 3/6), y en la frustración van al revés (5/9 frente a 7/9). La muestra es pequeña (tres repeticiones).
-- **Límite de la comprobación:** la acción se deduce de las llamadas a tools; solo en los homónimos se lee además el texto, con un detector de palabras que se contrastó con cuatro respuestas reales del agente y es aproximado. En la medida anterior (11 casos, Haiku 5.5, sin pedir el ID) correcta y `sin_ejemplos` salían iguales, 55/55, porque un homónimo contestado con el artículo de la base contaba como acierto con solo no escalar ni elegir a nadie. Escalar un vacío de política tras buscar en la base de conocimiento cuenta como correcto.
+- **Límite de la comprobación:** la acción se deduce de las llamadas a tools; solo en los homónimos se lee además el texto, con un detector de patrones aproximado (los límites, arriba). Escalar un vacío de política tras buscar en la base de conocimiento cuenta como correcto. Si el tope de gasto corta un caso, no puntúa y el módulo lo avisa en lugar de contarlo como un fallo. Las medidas anteriores de este módulo, hechas con otra comprobación o con casos cortados por el tope, no son comparables y están en `docs/hallazgos.md`.
 
-Producto observado (no evaluable): con Haiku 5.5, los ejemplos mejoran los homónimos y poco más, y con Haiku 4.5 el efecto se reparte por tipos. Es coherente con lo que dice la guía de los ejemplos en los casos ambiguos (TS 4.2-K1, K2), pero la medida no lo demuestra: el criterio 4 depende de que el agente haga la búsqueda, y la diferencia puede deberse a eso. **No cambia la respuesta de examen**, que sigue siendo la de la guía. La comparación entre modelos está en [`docs/hallazgos.md`](../docs/hallazgos.md).
+Producto observado (no evaluable): con Haiku 5.5, los criterios escritos bastan casi igual sin ejemplos (60/65 frente a 59/65). Con ese modelo las instrucciones solas no daban resultados inconsistentes, que es la situación en la que la guía sitúa la ventaja de los ejemplos (TS 4.2-K1): la medida no la demuestra ni la contradice, y no hay diferencia estable. **No cambia la respuesta de examen**, que sigue siendo la de la guía. La comparación entre modelos está en [`docs/hallazgos.md`](../docs/hallazgos.md).
 
 Clasificación por tipo de señal en [`docs/tipos-de-senal.md`](../docs/tipos-de-senal.md).
 </details>

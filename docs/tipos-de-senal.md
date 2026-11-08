@@ -41,7 +41,7 @@ Una fila por parte o variante que el módulo ejecuta. La columna de evidencia re
 | app1/06 | `--parte recursos` (correcta y `--anti sin_recursos`) | Probabilística con control positivo | La correcta lee los resources sin explorar; sin ellos explora con muchas más llamadas y cuesta de 2,3 a 3,7 veces más |
 | app1/06 | `--parte descripcion` (correcta y `--anti descripcion_minima`) | Sin señal estable | La señal que dice la guía no se vio: sin diferencia entre las dos |
 | app1/07 | el recorte (`trim_fields`, `execute_tool`) y la comprobación de la respuesta | Determinista | Cinco campos frente a cuarenta, sin cambiar los valores que se conservan; se prueba sin modelo en `tests/test_app1_07_recorte_de_contexto.py` |
-| app1/07 | correcta y `--anti sin_recorte` | Probabilística con control positivo | Con recorte, unos 15 000 tokens de entrada en total frente a unos 54 000 sin él, con la respuesta correcta en las 10 ejecuciones; cuántas peticiones hace lo decide el modelo |
+| app1/07 | correcta y `--anti sin_recorte` | Probabilística con control positivo | Con recorte, unos 16 000 tokens de entrada en total frente a unos 54 000 sin él, con la respuesta correcta en las 10 ejecuciones; cuántas peticiones hace lo decide el modelo |
 | app2/01 | correcta (con puerta) | Determinista | Con la puerta, los pagos ejecutados son 0 por construcción |
 | app2/01 | `--anti` (regla solo en el prompt) | Probabilística con control positivo | Se ve con el rol `enforcement`, que es el modelo de la medida: se salta la regla en 8 de 10 ejecuciones; con el modelo más reciente no se ve |
 | app2/02 | correcta (con hooks) | Determinista | El hook normaliza y la frontera 500,00 pasa y 500,01 no; el modelo nunca ve el timestamp crudo |

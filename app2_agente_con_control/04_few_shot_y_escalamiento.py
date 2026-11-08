@@ -44,15 +44,14 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
     más tickets») en vez de pedir un identificador (5.2-K4, S5).
   - Reservar el escalamiento a los casos «complejos» (5.2-K1).
 - Lo que la medida no respalda:
-  - Con Haiku 5.5, `sin_ejemplos` sale peor que la correcta (56/65 frente a 63/65), sobre todo en los homónimos:
-    sin ejemplo el agente no llega a buscar por nombre. La medida no separa el efecto del ejemplo del de la redacción
-    del criterio 4, que depende de esa búsqueda, así que ni demuestra ni contradice 4.2-K1. Con Haiku 4.5 la señal está
-    repartida por tipos y con una muestra pequeña (`README.md`).
+  - Con Haiku 5.5, `sin_ejemplos` sale casi igual que la correcta (59/65 frente a 60/65). Las instrucciones no daban
+    resultados inconsistentes con ese modelo, que es la condición de 4.2-K1, así que la medida ni demuestra ni
+    contradice la guía. @@H45CAB@@
   - Los ejemplos no coinciden con ningún caso evaluado, así que lo que acierta la correcta no es memoria de un
     caso; pero la medida no separa lo que aporta el ejemplo de lo que ya hacía el criterio escrito, y por eso no
     demuestra 4.2-K3 (generalizar a patrones nuevos).
-  - En `confianza`, la confianza declarada no separa de forma estable los aciertos de los fallos (la media salió al
-    revés en la medida de 13 casos), con pocos casos y sin repetir: no es una demostración de 5.2-K3. La señal de la variante es la tasa de acierto por tipo de caso.
+  - En `confianza`, la confianza declarada no separa los aciertos de los fallos (60,8 frente a 61,7) y en medidas
+    anteriores el sentido cambiaba, con pocos casos: no es una demostración de 5.2-K3. La señal de la variante es la tasa de acierto por tipo de caso.
   - El tercer disparador de 5.2-K1, «no se puede avanzar», tiene dos casos y ningún ejemplo, y solo cuenta con el
     criterio 5 del prompt. Ejercita 5.2-K1, no 4.2-K3: el patrón está dicho de antemano en el criterio, así que
     acertarlo no es generalizar a un patrón nuevo gracias a los ejemplos.
@@ -61,6 +60,9 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
     dice que el sentimiento es poco fiable, no que esa lista falle así.
   - Que un vacío de política suela llegar con tono neutro es una propiedad de los casos de este módulo, no algo
     que diga la guía.
+  - Que sin ejemplo el agente a veces no busque a la empleada por nombre, y que por eso el criterio 4 (condicional a
+    esa búsqueda) no llegue a aplicarse, es una hipótesis: salió de leer dos respuestas en un sondeo aparte, no de la
+    medida.
 - Límite de la medida: la acción se deduce de las llamadas a tools. En la frustración, «no escala» en el primer
   turno incluye cualquier cosa que no sea escalar (ofrecer resolver, pedir un dato o no decir nada): no se comprueba
   que se ofreciera resolver. Solo en los homónimos se lee además el texto del agente, con un detector de patrones

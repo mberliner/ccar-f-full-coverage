@@ -756,10 +756,10 @@ Haiku 5.5 (2026-11-07, 5 ejecuciones por variante). En todas hubo 11 peticiones:
 
 | Variante | Campos por resultado | Tokens de entrada en total | Máximo en una petición | Respuestas correctas |
 | :--- | :--- | :--- | :--- | :--- |
-| correcta | 5 | 14 741 – 15 073 | 2 036 – 2 106 | 5/5 y 5/5 |
-| `sin_recorte` | 40 | 52 788 – 55 849 | 9 046 – 9 536 | 5/5 y 5/5 |
+| correcta | 5 | 14 864 – 17 071 | 2 078 – 2 400 | 5/5 y 5/5 |
+| `sin_recorte` | 40 | 53 319 – 54 607 | 9 076 – 9 209 | 5/5 y 5/5 |
 
-- **Estable:** el recorte es determinista y la diferencia de tokens es de unas 3,6 veces en el total y de unas 4,4 en el máximo, menos que la proporción de campos porque (lectura propia) el *system prompt*, las tools, las preguntas y las respuestas pesan igual en las dos variantes. El máximo llega al final: la petición de la segunda pregunta, que no llama a ninguna tool, lleva todo lo acumulado en la primera.
+- **Estable:** el recorte es determinista y la diferencia de tokens es de unas 3,4 veces en el total y de unas 4,2 en el máximo (medias de las cinco ejecuciones), menos que la proporción de campos porque (lectura propia) el *system prompt*, las tools, las preguntas y las respuestas pesan igual en las dos variantes. El máximo llega al final: la petición de la segunda pregunta, que no llama a ninguna tool, lleva todo lo acumulado en la primera.
 - **Sin pérdida de acierto, en ninguna de las dos:** con cinco campos ambas respuestas son correctas en 5/5, porque la pregunta solo usa esos campos. Sin recorte también lo son, así que la medida no muestra que los campos sobrantes empeoren la respuesta: la señal del módulo es de tokens, no de calidad. Que recortar un campo necesario la rompa es lo previsible, pero no se ha medido (es la prueba del modo normal).
 - **Lo que decide el modelo:** cuántas peticiones hace. Con menos peticiones (varias consultas en una), el total bajaría en las dos variantes; lo que el recorte cambia es cuánto pesa cada resultado en todas las peticiones que vienen detrás.
 - **Límite de la comprobación:** cuenta el primer equipo que se nombra, porque la respuesta correcta suele añadir «le siguen…» con otros equipos. Busca por ID antes que por nombre y exige la mayúscula del nombre. Las correcciones que tuvo (la primera medida daba 0/10 con respuestas correctas) están en [`docs/hallazgos.md`](../docs/hallazgos.md), tanda D.

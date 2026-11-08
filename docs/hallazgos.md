@@ -354,11 +354,11 @@ Versiones: claude-agent-sdk 0.2.173, CLI 2.1.309. Coste con modelo de la tanda, 
 
 | Variante | Peticiones | Tokens de entrada en total | Máximo en una petición | Respuestas correctas |
 | :--- | :--- | :--- | :--- | :--- |
-| correcta (5 campos) | 11 en las 5 | 14 741 – 15 073 | 2 036 – 2 106 | 5/5 y 5/5 |
-| `sin_recorte` (40 campos) | 11 en las 5 | 52 788 – 55 849 | 9 046 – 9 536 | 5/5 y 5/5 |
+| correcta (5 campos) | 11 en las 5 | 14 864 – 17 071 | 2 078 – 2 400 | 5/5 y 5/5 |
+| `sin_recorte` (40 campos) | 11 en las 5 | 53 319 – 54 607 | 9 076 – 9 209 | 5/5 y 5/5 |
 
-- La diferencia es de unas 3,6 veces en el total y unas 4,4 en el máximo. El coste por ejecución es ~0,0019 $ con recorte y ~0,006 $ sin él.
-- **La comprobación de la respuesta marcaba como incorrectas respuestas correctas** (0/10 en la primera medida). Primera causa: exigía que se nombrara un solo equipo y «Seguridad (EQ-06)» nombra al mismo equipo por nombre y por ID. Segunda causa, que solo se vio al volver a medir: la respuesta correcta suma «le siguen Finanzas TI y Redes». Ahora cuenta el primer equipo que se nombra, con el límite de que no distingue «es X, no Y» de «es Y, no X». Las cifras de arriba son las de la comprobación corregida. → roadmap §4.3 (ampliación de «las medidas de texto fallan en los dos sentidos»: una comprobación que exige un único valor castiga a la respuesta correcta que da contexto).
+- La diferencia es de unas 3,4 veces en el total y unas 4,2 en el máximo (medias de las cinco ejecuciones). El coste por ejecución es ~0,0020 $ con recorte y ~0,006 $ sin él. Los tokens no dependen de la comprobación de la respuesta: las cifras de la medida anterior (14 741 – 15 073 y 52 788 – 55 849) eran de otras ejecuciones, y estas, de la tercera versión de la comprobación (ver abajo), son las vigentes.
+- **La comprobación de la respuesta marcaba como incorrectas respuestas correctas** (0/10 en la primera medida). Primera causa: exigía que se nombrara un solo equipo y «Seguridad (EQ-06)» nombra al mismo equipo por nombre y por ID. Segunda causa, que solo se vio al volver a medir: la respuesta correcta suma «le siguen Finanzas TI y Redes». Tercera causa, señalada en la revisión independiente: cuatro equipos se llaman con palabras comunes (Redes, Datos, Seguridad, Plataforma), y la búsqueda sin mayúsculas daba falsos positivos («por seguridad revisé…» → equipo Seguridad) y falsos negativos («según los datos…»). Ahora cuenta el primer equipo que se nombra, buscando por ID antes que por nombre y con la mayúscula del nombre, con los límites de que no distingue «es X, no Y» de «es Y, no X» y de que una frase que empiece por «Datos…» sin ningún ID se tomaría por ese equipo. Las cifras de arriba son las de la comprobación corregida. → roadmap §4.3 (ampliación de «las medidas de texto fallan en los dos sentidos»: una comprobación que exige un único valor castiga a la respuesta correcta que da contexto).
 
 ### `app2/04_few_shot_y_escalamiento`, segunda medida (Agent SDK, 13 casos por repetición, 2026-11-07)
 
@@ -421,7 +421,7 @@ Haiku 4.5 (rol `enforcement`, 3 repeticiones: 33 casos por variante).
 | Parte | Tipo | Por qué |
 | :--- | :--- | :--- |
 | `app1/07` el recorte y la comprobación | `Determinista` | Cinco campos frente a cuarenta sin cambiar los valores; se prueba sin modelo. |
-| `app1/07` correcta y `sin_recorte` | `Probabilística con control positivo` | ≈ 15 000 frente a ≈ 54 000 tokens de entrada, con la respuesta correcta en las 10 ejecuciones; cuántas peticiones hace lo decide el modelo. |
+| `app1/07` correcta y `sin_recorte` | `Probabilística con control positivo` | ≈ 16 000 frente a ≈ 54 000 tokens de entrada, con la respuesta correcta en las 10 ejecuciones; cuántas peticiones hace lo decide el modelo. |
 | `app2/04` `--parte proxy` | `Determinista` | El proxy de sentimiento acierta 3 de 13, sin modelo. |
 | `app2/04` correcta y `sin_ejemplos` | `Probabilística con control positivo` | Con Haiku 5.5, 63/65 frente a 56/65 (homónimos 9/10 frente a 5/10); con Haiku 4.5, 35/39 frente a 32/39, repartido por tipos. |
 | `app2/04` `sentimiento` | `Probabilística con control positivo` | 30/65 frente a 63/65 de la correcta. |
