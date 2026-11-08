@@ -39,8 +39,11 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
   Sin recorte el modelo también acierta; la señal de este módulo es de tokens,
   no de calidad.
 - Límite de la comprobación: la respuesta se da por correcta si el primer
-  equipo que nombra es el esperado; no distingue «es X, no Y» de «es Y, no X»
-  (las dos correcciones que tuvo están en `docs/hallazgos.md`).
+  equipo que nombra es el esperado, buscando primero por ID y, si no hay ninguno,
+  por nombre con su mayúscula (cuatro equipos se llaman con palabras comunes:
+  «por seguridad» no es el equipo Seguridad). No distingue «es X, no Y» de «es Y,
+  no X», y una frase que empiece por «Datos…» sin ningún ID se tomaría por el
+  equipo Datos. Las correcciones que tuvo están en `docs/hallazgos.md`.
 
 Qué se mide: los tokens de entrada de cada petición, que salen del `usage` de
 la respuesta de la API, y si la respuesta sigue siendo correcta con 5 campos. El

@@ -385,12 +385,10 @@ Haiku 4.5 (rol `enforcement`, 3 repeticiones: 39 casos por variante).
 - **`sentimiento` y `confianza`** fallan igual en la frustración sencilla (0/15) y distinto en los otros: `sentimiento` deja pasar el vacío de política (1/15) y la mitad de los casos sin avance (5/10), de tono neutro; `confianza` acierta el vacío de política (15/15) y falla 4 de 10 de «sin avance». El control de las dos es `sin_ejemplos` (56/65).
 - **Confianza declarada:** media de 54,7 en los aciertos y 61,0 en los fallos (con 60,6 y 50,3 en la primera medida): el sentido cambia entre medidas, así que no separa de forma estable. Son pocos casos y no se ha repetido.
 - **Detector de «pidió un ID»:** contrastado con cuatro textos reales del agente en ESC-10 (dos sin ejemplos y dos con ellos): acierta los cuatro. Sigue siendo un detector de palabras (un dato y una petición): una frase que mencione el dato y pida otra cosa lo engañaría, y una petición sin esas palabras no la ve.
-- **Límite del módulo:** si falta la credencial, el agente responde «Not logged in» y el módulo lo cuenta como un turno sin escalamiento y sin error; solo pasa si se llama a `run_case` sin `credentials.describe()` (que `main` ya llama). Se vio en un script de sondeo, no en las medidas.
+- **Hueco del módulo, arreglado tras la revisión independiente:** `credentials.describe()` carga el `.env` pero no corta si falta la credencial, así que sin sesión de Claude Code ni API key el agente respondía «Not logged in» y la medida lo contaba como un turno sin escalamiento y sin error (también habría pasado con `main`). Ahora `run_case` lo detecta (`not_logged_in`) y aborta con un mensaje. Se vio primero en un script de sondeo, no en las medidas.
 - **Coste por variante:** Haiku 5.5, 5 repeticiones: 0,033 $ (`sentimiento`), 0,041 $ (`sin_ejemplos` y `confianza`) y 0,044 $ (correcta); Haiku 4.5, 3 repeticiones: 0,432 $ (correcta) y 0,376 $ (`sin_ejemplos`).
 
 ### `app2/04`, primera medida (11 casos, antes de pedir el ID y del caso «sin avance»; anterior)
-
-Haiku 5.5 (rol `agent`, 5 repeticiones: 55 casos por variante).
 
 Haiku 5.5 (rol `agent`, 5 repeticiones: 55 casos por variante).
 

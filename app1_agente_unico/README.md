@@ -708,7 +708,7 @@ Términos comunes en el [glosario](../docs/glosario.md): tool, historial, `usage
 - **Recorte (*trimming*):** quitar de un resultado de tool los campos que no hacen falta antes de que entre en el historial. Aquí lo hace el propio código de la tool.
 - **Campo relevante:** el que la tarea usa para responder. Lo fija el código (`KEEP_FIELDS`), no el modelo.
 - **Tokens de entrada:** los que el modelo lee en una petición (el *system prompt*, las definiciones de las tools y el historial), que la API informa en el `usage` de la respuesta. El módulo suma también los de caché.
-- **Comprobación de la respuesta:** el código da por correcta la primera respuesta si el primer equipo que nombra (por ID o por nombre) es el esperado, y la segunda si contiene el número de solicitudes abiertas de ese equipo. Límite: no distingue «es X, no Y» de «es Y, no X».
+- **Comprobación de la respuesta:** el código da por correcta la primera respuesta si el primer equipo que nombra (por ID o por nombre) es el esperado, y la segunda si contiene el número de solicitudes abiertas de ese equipo. Busca primero por ID y, si no hay ninguno, por nombre escrito con su mayúscula (cuatro equipos se llaman con palabras comunes, y «por seguridad» no es el equipo Seguridad). Límites: no distingue «es X, no Y» de «es Y, no X», y una frase que empiece por «Datos…» sin ningún ID se tomaría por el equipo Datos.
 
 ### Las tools del ejercicio
 
@@ -762,7 +762,7 @@ Haiku 5.5 (2026-11-07, 5 ejecuciones por variante). En todas hubo 11 peticiones:
 - **Estable:** el recorte es determinista y la diferencia de tokens es de unas 3,6 veces en el total y de unas 4,4 en el máximo, menos que la proporción de campos porque (lectura propia) el *system prompt*, las tools, las preguntas y las respuestas pesan igual en las dos variantes. El máximo llega al final: la petición de la segunda pregunta, que no llama a ninguna tool, lleva todo lo acumulado en la primera.
 - **Sin pérdida de acierto, en ninguna de las dos:** con cinco campos ambas respuestas son correctas en 5/5, porque la pregunta solo usa esos campos. Sin recorte también lo son, así que la medida no muestra que los campos sobrantes empeoren la respuesta: la señal del módulo es de tokens, no de calidad. Que recortar un campo necesario la rompa es lo previsible, pero no se ha medido (es la prueba del modo normal).
 - **Lo que decide el modelo:** cuántas peticiones hace. Con menos peticiones (varias consultas en una), el total bajaría en las dos variantes; lo que el recorte cambia es cuánto pesa cada resultado en todas las peticiones que vienen detrás.
-- **Límite de la comprobación:** cuenta el primer equipo que se nombra, porque la respuesta correcta suele añadir «le siguen…» con otros equipos. Las dos correcciones que tuvo (la primera medida daba 0/10 con respuestas correctas) están en [`docs/hallazgos.md`](../docs/hallazgos.md), tanda D.
+- **Límite de la comprobación:** cuenta el primer equipo que se nombra, porque la respuesta correcta suele añadir «le siguen…» con otros equipos. Busca por ID antes que por nombre y exige la mayúscula del nombre. Las correcciones que tuvo (la primera medida daba 0/10 con respuestas correctas) están en [`docs/hallazgos.md`](../docs/hallazgos.md), tanda D.
 
 Producto observado (no evaluable): se le pidió una consulta por turno y Haiku 5.5 lo cumplió en las 10 ejecuciones (11 peticiones en todas).
 

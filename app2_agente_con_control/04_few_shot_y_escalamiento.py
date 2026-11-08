@@ -48,21 +48,24 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
     sin ejemplo el agente no llega a buscar por nombre. La medida no separa el efecto del ejemplo del de la redacción
     del criterio 4, que depende de esa búsqueda, así que ni demuestra ni contradice 4.2-K1. Con Haiku 4.5 la señal está
     repartida por tipos y con una muestra pequeña (`README.md`).
-  - Los ejemplos no coinciden con ningún caso evaluado, así que lo que acierta la correcta es generalización
-    (4.2-K3); pero la medida no separa lo que aporta el ejemplo de lo que ya hacía el criterio escrito.
+  - Los ejemplos no coinciden con ningún caso evaluado, así que lo que acierta la correcta no es memoria de un
+    caso; pero la medida no separa lo que aporta el ejemplo de lo que ya hacía el criterio escrito, y por eso no
+    demuestra 4.2-K3 (generalizar a patrones nuevos).
   - En `confianza`, la confianza declarada no separa de forma estable los aciertos de los fallos (la media salió al
     revés en la medida de 13 casos), con pocos casos y sin repetir: no es una demostración de 5.2-K3. La señal de la variante es la tasa de acierto por tipo de caso.
   - El tercer disparador de 5.2-K1, «no se puede avanzar», tiene dos casos y ningún ejemplo, y solo cuenta con el
-    criterio 5 del prompt: lo que acierte ahí es generalización, no memoria de un ejemplo (4.2-K3).
+    criterio 5 del prompt. Ejercita 5.2-K1, no 4.2-K3: el patrón está dicho de antemano en el criterio, así que
+    acertarlo no es generalizar a un patrón nuevo gracias a los ejemplos.
 - Inferencias propias:
   - El proxy de sentimiento de `--parte proxy` es una lista de palabras inventada para esta demostración; la guía
     dice que el sentimiento es poco fiable, no que esa lista falle así.
   - Que un vacío de política suela llegar con tono neutro es una propiedad de los casos de este módulo, no algo
     que diga la guía.
-- Límite de la medida: la acción se deduce de las llamadas a tools. Solo en los homónimos se lee además el texto del
-  agente para comprobar que pidió un identificador, con un detector de palabras (un dato y una petición) que es
-  aproximado: puede dar por buena una frase que mencione el dato y pida otra cosa, y no entiende una petición
-  escrita sin esas palabras.
+- Límite de la medida: la acción se deduce de las llamadas a tools. En la frustración, «no escala» en el primer
+  turno incluye cualquier cosa que no sea escalar (ofrecer resolver, pedir un dato o no decir nada): no se comprueba
+  que se ofreciera resolver. Solo en los homónimos se lee además el texto del agente, con un detector de patrones
+  (`asks_for_identifier`) que acepta como dato el ID, el correo o el departamento aunque el criterio 4 pida el ID: no
+  entiende una petición escrita sin sus pistas y puede dar por buena una frase que las tenga y pida otra cosa.
 
 Qué se mide: la acción de cada caso frente a su etiqueta, deducida de las llamadas a tools. Las variantes `sentimiento`
 y `confianza` van sin ejemplos, porque los ejemplos contradirían su regla; el control con el que se comparan es
@@ -113,7 +116,7 @@ BASE_PROMPT = (
     "con las tools o lo pasas a una persona con escalate_to_human (resumen en texto libre). "
     "Responde en español y de forma breve."
 )
-# Criterios explícitos (5.2-K1, K2, K4). El 5 (no se puede avanzar) no tiene ejemplo: es un patrón nuevo (4.2-K3). Iguales en la correcta y en `sin_ejemplos`.
+# Criterios explícitos (5.2-K1, K2, K4). El 5 (no se puede avanzar, 5.2-K1) no tiene ejemplo. Iguales en la correcta y en `sin_ejemplos`.
 CRITERIA_LINES = (
     "1. Si la persona pide de forma explícita hablar con un humano, escala de inmediato con escalate_to_human, sin investigar antes ni proponer pasos.",
     "2. Si solo expresa frustración y el problema es sencillo, reconoce la frustración y ofrece resolverlo; escala solo si insiste en querer a una persona.",
@@ -235,6 +238,11 @@ def is_correct(kind: str, first: Turn, second: Turn | None = None) -> bool:
         # No elige a nadie ni escala, y además pide un identificador: acertar «sin hacer nada» no es acertar (5.2-S5).
         return first.action == "no_escalation" and first.asked_id
     raise ValueError(f"tipo desconocido: {kind}")
+
+
+def not_logged_in(rec: RunRecord) -> bool:
+    """Sin sesión de Claude Code ni API key el agente responde «Not logged in»: no es un resultado, es un error."""
+    return any("Not logged in" in text for text in rec.texts)
 
 
 def scorable(first: Turn, second: Turn | None) -> bool:
@@ -362,6 +370,9 @@ async def run_case(case: dict, label: dict, model: str, system_prompt: str, cap:
     async with ClaudeSDKClient(options=options) as client:
         await client.query(case["text"])
         first_rec = await record(client.receive_response(), echo=False)
+        if not_logged_in(first_rec):
+            # Sin esto, una ejecución sin credencial se mediría como «ningún caso escala», sin un solo error.
+            raise RuntimeError("el agente responde «Not logged in»: abre sesión en Claude Code o define ANTHROPIC_API_KEY")
         first = classify_turn(first_rec, candidates)
         second, cost = None, first_rec.cost_usd or 0.0
         # Frustración sencilla: si no escaló, el cliente insiste y se comprueba que entonces sí escala (5.2-K2).

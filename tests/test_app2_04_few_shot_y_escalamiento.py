@@ -244,7 +244,7 @@ def test_confidence_is_read_from_any_text_of_the_turn_not_only_the_final_one():
 
 
 def test_the_criteria_name_the_third_trigger_and_the_examples_do_not_cover_it():
-    """4.2-K3: el criterio 5 es un patrón sin ejemplo; lo que acierte el modelo ahí es generalización."""
+    """El criterio 5 (5.2-K1, no se puede avanzar) es un patrón sin ejemplo: no se atribuye a los ejemplos."""
     assert any("base de conocimiento" in line and "avanz" in line for line in mod.CRITERIA_LINES)
     assert len(mod.CRITERIA_LINES) == 5
     assert {e["action"] for e in EXAMPLES} == {"escalate_now", "offer_resolution", "escalate_policy_gap", "ask_identifier"}
@@ -301,3 +301,10 @@ def test_partial_measure_is_announced():
     note = mod.partial_note(40, 65)
     assert "40" in note and "65" in note and "parcial" in note
     assert "2" in mod.cut_note(2) and mod.cut_note(0) is None
+
+
+def test_a_run_without_a_session_is_detected_instead_of_being_measured_as_no_escalation():
+    # Sin sesión de Claude Code ni API key el agente responde «Not logged in»: no es un resultado del caso.
+    assert mod.not_logged_in(RunRecord(texts=["Not logged in · Please run /login"]))
+    assert not mod.not_logged_in(RunRecord(texts=["Te paso con una persona."]))
+    assert not mod.not_logged_in(RunRecord())
