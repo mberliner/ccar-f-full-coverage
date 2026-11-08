@@ -378,16 +378,22 @@ Haiku 5.5 (2026-11-07, 5 repeticiones: 65 casos por variante, 10 de homónimos y
 | `sentimiento` | 30/65 | petición de humano 15/15 · frustración 0/15 · vacío de política 3/15 · sin avance 5/10 · homónimos 7/10 |
 | `confianza` | 44/65 | petición de humano 15/15 · frustración 0/15 · vacío de política 15/15 · sin avance 7/10 · homónimos 7/10 |
 
-@@H45@@
+Haiku 4.5 (2026-11-07, 3 repeticiones: 39 casos por variante, 6 de homónimos y 6 de «no se puede avanzar»; ningún caso cortado por el tope de gasto):
+
+| Variante | Correctos | Por tipo |
+| :--- | :--- | :--- |
+| correcta | 36/39 | petición de humano 9/9 · frustración 7/9 · vacío de política 9/9 · sin avance 6/6 · homónimos 5/6 |
+| `sin_ejemplos` | 31/39 | petición de humano 9/9 · frustración 4/9 · vacío de política 9/9 · sin avance 5/6 · homónimos 4/6 |
 
 - **Con Haiku 5.5, los ejemplos casi no se notan:** la correcta acierta 60/65 y `sin_ejemplos`, 59/65, sin diferencia que se pueda sostener. La única diferencia está en los homónimos (8/10 frente a 6/10), con diez casos por variante y sin repetir la medida. Hipótesis propia, sin medir de forma directa: en un sondeo aparte, leyendo el texto de dos ejecuciones sin ejemplos, el agente contestó con el artículo de la base de conocimiento y no buscó a la empleada por nombre, y el criterio 4 solo dice qué hacer «si una búsqueda devuelve varias coincidencias».
+- **Con Haiku 4.5, los ejemplos se notan en la frustración:** la correcta acierta 36/39 y `sin_ejemplos`, 31/39, y casi toda la diferencia está en la frustración (7/9 frente a 4/9): sin ejemplos, el agente escala tras investigar en lugar de ofrecer resolver. Son tres repeticiones, nueve casos por celda.
 - **`sentimiento` muestra el fallo** frente a su control (`sin_ejemplos`, 59/65): decide por el tono y falla donde el tono engaña, con 0/15 en frustración (escala lo que podía resolver), 3/15 en vacío de política y 5/10 en los casos que no avanzan (los mensajes de esos casos tienen tono neutro y los trata como resolubles). Coincide con el proxy sin modelo en esos tipos, pero no en las peticiones de un humano: el modelo las escala todas y la lista de palabras solo una.
 - **`confianza` falla distinto:** acierta los vacíos de política (15/15) y falla las frustraciones (0/15), con 7/10 en los casos que no avanzan. Su señal es esa tasa por tipo frente a `sin_ejemplos`.
 - **La confianza declarada no es una demostración de TS 5.2-K3:** su media fue de 60,8 en los aciertos y de 61,7 en los fallos, es decir, no los separa, y ambas quedan por debajo del umbral de 70. Son pocos casos, y en medidas anteriores el sentido de la diferencia cambiaba, así que no es una señal estable. El historial de esa cifra, y la primera medida, que era un artefacto, están en [`docs/hallazgos.md`](../docs/hallazgos.md), tanda D.
 - **Las peticiones de un humano salen bien con las cuatro reglas** (15/15 con Haiku 5.5): es el único tipo que ninguna variante del modelo falla.
 - **Límite de la comprobación:** la acción se deduce de las llamadas a tools; solo en los homónimos se lee además el texto, con un detector de patrones aproximado (los límites, arriba). Escalar un vacío de política tras buscar en la base de conocimiento cuenta como correcto. Si el tope de gasto corta un caso, no puntúa y el módulo lo avisa en lugar de contarlo como un fallo. Las medidas anteriores de este módulo, hechas con otra comprobación o con casos cortados por el tope, no son comparables y están en `docs/hallazgos.md`.
 
-Producto observado (no evaluable): con Haiku 5.5, los criterios escritos bastan casi igual sin ejemplos (60/65 frente a 59/65). Con ese modelo las instrucciones solas no daban resultados inconsistentes, que es la situación en la que la guía sitúa la ventaja de los ejemplos (TS 4.2-K1): la medida no la demuestra ni la contradice, y no hay diferencia estable. **No cambia la respuesta de examen**, que sigue siendo la de la guía. La comparación entre modelos está en [`docs/hallazgos.md`](../docs/hallazgos.md).
+Producto observado (no evaluable): con Haiku 5.5, los criterios escritos bastan casi igual sin ejemplos (60/65 frente a 59/65). Con ese modelo las instrucciones solas no daban resultados inconsistentes, que es la situación en la que la guía sitúa la ventaja de los ejemplos (TS 4.2-K1): la medida no la demuestra ni la contradice, y no hay diferencia estable. Con Haiku 4.5, los ejemplos mejoran la frustración (el agente ofrece resolver en vez de escalar tras investigar), que es lo que la guía dice de los ejemplos en los casos ambiguos (TS 4.2-K1, K2), con una muestra pequeña. **No cambia la respuesta de examen**, que sigue siendo la de la guía. La comparación entre modelos está en [`docs/hallazgos.md`](../docs/hallazgos.md).
 
 Clasificación por tipo de señal en [`docs/tipos-de-senal.md`](../docs/tipos-de-senal.md).
 </details>

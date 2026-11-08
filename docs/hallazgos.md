@@ -348,7 +348,7 @@ Aplicadas tal cual salvo dos decisiones. **`conservador` queda `Sin señal estab
 
 ## Entrega 3 · tanda D, medidas de `app1/07` y `app2/04` (2026-11-07)
 
-Versiones: claude-agent-sdk 0.2.173, CLI 2.1.309. Coste con modelo de la tanda, estimado: ≈ 2,0 $ (`app1/07` ≈ 0,15 $ y `app2/04` ≈ 1,8 $: ≈ 0,87 $ en la primera medida y ≈ 0,97 $ en la segunda, de ellos ≈ 1,1 $ con Haiku 4.5), con `max_budget_usd` en cada ejecución.
+Versiones: claude-agent-sdk 0.2.173, CLI 2.1.309. Coste con modelo de la tanda, estimado: ≈ 3,9 $ (`app1/07` ≈ 0,15 $ y `app2/04` ≈ 3,7 $, repartido en tres medidas de ≈ 0,87 $, ≈ 0,97 $ y ≈ 1,84 $ más ≈ 0,04 $ de sondeos; ≈ 3,2 $ del total son de Haiku 4.5), con `max_budget_usd` en cada ejecución.
 
 ### `app1/07_recorte_de_contexto` (Messages API, Haiku 5.5, 5 ejecuciones por variante)
 
@@ -360,9 +360,37 @@ Versiones: claude-agent-sdk 0.2.173, CLI 2.1.309. Coste con modelo de la tanda, 
 - La diferencia es de unas 3,4 veces en el total y unas 4,2 en el máximo (medias de las cinco ejecuciones). El coste por ejecución es ~0,0020 $ con recorte y ~0,006 $ sin él. Los tokens no dependen de la comprobación de la respuesta: las cifras de la medida anterior (14 741 – 15 073 y 52 788 – 55 849) eran de otras ejecuciones, y estas, de la tercera versión de la comprobación (ver abajo), son las vigentes.
 - **La comprobación de la respuesta marcaba como incorrectas respuestas correctas** (0/10 en la primera medida). Primera causa: exigía que se nombrara un solo equipo y «Seguridad (EQ-06)» nombra al mismo equipo por nombre y por ID. Segunda causa, que solo se vio al volver a medir: la respuesta correcta suma «le siguen Finanzas TI y Redes». Tercera causa, señalada en la revisión independiente: cuatro equipos se llaman con palabras comunes (Redes, Datos, Seguridad, Plataforma), y la búsqueda sin mayúsculas daba falsos positivos («por seguridad revisé…» → equipo Seguridad) y falsos negativos («según los datos…»). Ahora cuenta el primer equipo que se nombra, buscando por ID antes que por nombre y con la mayúscula del nombre, con los límites de que no distingue «es X, no Y» de «es Y, no X» y de que una frase que empiece por «Datos…» sin ningún ID se tomaría por ese equipo. Las cifras de arriba son las de la comprobación corregida. → roadmap §4.3 (ampliación de «las medidas de texto fallan en los dos sentidos»: una comprobación que exige un único valor castiga a la respuesta correcta que da contexto).
 
-### `app2/04_few_shot_y_escalamiento`, segunda medida (Agent SDK, 13 casos por repetición, 2026-11-07)
+### `app2/04_few_shot_y_escalamiento`, tercera medida (Agent SDK, 13 casos por repetición, 2026-11-07)
 
-Vigente. Después de la primera medida (más abajo), el pase de textos pidió dos cambios de código y se hicieron: un tercer tipo de caso, «no se puede avanzar» (TS 5.2-K1, dos casos, con un criterio 5 en el prompt y sin ejemplo), y que los homónimos solo cuenten como acertados si el agente **pidió un identificador** (detector de palabras sobre el texto del turno). Los casos pasan de 11 a 13 y las cifras de la primera medida **no son comparables** con estas.
+**Vigente.** La revisión independiente señaló, entre otras cosas, que el tope de gasto podía cortar un caso y que la medida lo contaba como un fallo del agente, y que el detector de «pidió un ID» dejaba pasar o perdía frases corrientes. Cambios: un caso cortado por el tope **no puntúa** y se avisa (`CORTADO`, `[aviso]`); el tope de un caso admite hasta tres partes iguales de lo que queda (`CAP_SHARES`), porque con partes iguales la frustración, de dos turnos, se cortaba; el detector reconoce «¿Eres la de Finanzas o la de Ventas?», «confírmame con tu ID» o «tu número EMP…» y deja de dar por buena una frase que solo menciona «correo» o «departamento». Las cifras de las medidas anteriores **no son comparables** con estas.
+
+Haiku 5.5 (rol `agent`, 5 repeticiones: 65 casos por variante; ningún caso cortado).
+
+| Variante | Correctos | Por tipo |
+| :--- | :--- | :--- |
+| correcta (criterios y 4 ejemplos) | 60/65 | petición de humano 15/15 · frustración 13/15 · vacío de política 15/15 · sin avance 9/10 · homónimos 8/10 |
+| `sin_ejemplos` | 59/65 | petición de humano 15/15 · frustración 14/15 · vacío de política 15/15 · sin avance 9/10 · homónimos 6/10 |
+| `sentimiento` | 30/65 | petición de humano 15/15 · frustración 0/15 · vacío de política 3/15 · sin avance 5/10 · homónimos 7/10 |
+| `confianza` | 44/65 | petición de humano 15/15 · frustración 0/15 · vacío de política 15/15 · sin avance 7/10 · homónimos 7/10 |
+
+Haiku 4.5 (rol `enforcement`, 3 repeticiones: 39 casos por variante; ningún caso cortado).
+
+| Variante | Correctos | Por tipo |
+| :--- | :--- | :--- |
+| correcta | 36/39 | petición de humano 9/9 · frustración 7/9 · vacío de política 9/9 · sin avance 6/6 · homónimos 5/6 |
+| `sin_ejemplos` | 31/39 | petición de humano 9/9 · frustración 4/9 · vacío de política 9/9 · sin avance 5/6 · homónimos 4/6 |
+
+- **Con Haiku 5.5, los ejemplos casi no se notan:** 60/65 frente a 59/65. La única diferencia está en los homónimos (8/10 frente a 6/10), con diez casos y sin repetir. La conclusión de la segunda medida («los ejemplos sí se notan») era un efecto de la comprobación más laxa de entonces y no se sostiene.
+- **Con Haiku 4.5, los ejemplos se notan en la frustración:** 36/39 frente a 31/39, con 7/9 frente a 4/9 en la frustración (sin ejemplos escala tras investigar en lugar de ofrecer resolver). Tres repeticiones: nueve casos por celda.
+- **La señal que parecía repartida con Haiku 4.5 en la segunda medida era un artefacto del tope de gasto.** Un intento intermedio, ya con los casos cortados avisados pero con partes iguales, cortó 10 de 39 casos en la correcta y 6 de 39 en `sin_ejemplos` (29/29 y 31/33 sobre los que puntuaban). La segunda medida los contaba como fallos. → roadmap §4.3 (una medida con tope por caso tiene que avisar de los casos cortados y no puntuarlos; con partes iguales, un caso de dos turnos se corta aunque el total no se agote).
+- **`sentimiento` y `confianza`** fallan igual en la frustración sencilla (0/15). `sentimiento` deja pasar el vacío de política (3/15) y la mitad de los casos sin avance (5/10), de tono neutro; `confianza` acierta el vacío de política (15/15) y llega a 7/10 en sin avance. El control de las dos es `sin_ejemplos` (59/65).
+- **Confianza declarada:** media de 60,8 en los aciertos y 61,7 en los fallos: no los separa. En la primera medida fue 60,6 y 50,3 y en la segunda, 54,7 y 61,0: el sentido cambió entre medidas, así que no es una señal estable. Son pocos casos.
+- **Detector de «pidió un ID»:** con tests de los falsos positivos y negativos que dio la revisión. Sigue siendo un detector de patrones: acepta el correo o el departamento como dato aunque el criterio 4 pida el ID, no ve una petición escrita sin sus pistas y puede dar por buena una frase que las tenga y pida otra cosa.
+- **Coste por variante:** Haiku 5.5 (5 repeticiones), 0,033 $ (`sentimiento`), 0,042 $ (`sin_ejemplos` y `confianza`) y 0,044 $ (correcta); Haiku 4.5 (3 repeticiones), 0,453 $ (correcta) y 0,396 $ (`sin_ejemplos`). Por eso los README dicen «unos 0,04 $» y «unos 0,4 $».
+
+### `app2/04`, segunda medida (13 casos; superada por la tercera, con otra comprobación y con casos cortados por el tope)
+
+Superada. Después de la primera medida (más abajo), el pase de textos pidió dos cambios de código y se hicieron: un tercer tipo de caso, «no se puede avanzar» (TS 5.2-K1, dos casos, con un criterio 5 en el prompt y sin ejemplo), y que los homónimos solo cuenten como acertados si el agente **pidió un identificador** (detector de palabras sobre el texto del turno). Los casos pasan de 11 a 13 y las cifras de la primera medida **no son comparables** con estas.
 
 Haiku 5.5 (rol `agent`, 5 repeticiones: 65 casos por variante).
 
@@ -408,7 +436,7 @@ Haiku 4.5 (rol `enforcement`, 3 repeticiones: 33 casos por variante).
 
 - **Con Haiku 5.5, los ejemplos no aportan** cuando los criterios ya están escritos con claridad: es el patrón de «un modelo reciente aguanta la configuración mala» (§4.3). Con Haiku 4.5 sí hay diferencia, con una muestra pequeña: `sin_ejemplos` tuvo 6 fallos de 33 (3 de frustración y 3 de homónimos) y la correcta, 1 (de frustración). En los 7, el agente escaló después de investigar: en vez de ofrecer resolver (frustración) o de pedir el identificador (homónimo). No se compara un modelo con otro: cada fila es la señal de su modelo.
   - **Corregido (2026-11-07):** la frase anterior decía «5 fallos de 33» y «un homónimo», y no cuadraba con la tabla. Contrastada con la salida de la medida: son 6 fallos (3 y 3) en `sin_ejemplos` y 1 en la correcta.
-  - **Coste por variante con Haiku 5.5** (5 repeticiones, 55 casos): 0,027 $ (`sentimiento`) a 0,035 $ (correcta y `sin_ejemplos`); con Haiku 4.5, 3 repeticiones: 0,352 $ (correcta) y 0,340 $ (`sin_ejemplos`). Por eso los README dicen «unos 0,03 $» y «unos 0,35 $».
+  - **Coste por variante con Haiku 5.5** (5 repeticiones, 55 casos): 0,027 $ (`sentimiento`) a 0,035 $ (correcta y `sin_ejemplos`); con Haiku 4.5, 3 repeticiones: 0,352 $ (correcta) y 0,340 $ (`sin_ejemplos`).
 - **`sentimiento` y `confianza` fallan en la misma frustración sencilla** (0/15) y distinto en el vacío de política: `sentimiento` lo deja pasar por el tono neutro (0/15) y `confianza` lo escala (15/15). Sin ejemplos, el control de ambas es `sin_ejemplos` y no la correcta.
 - **Confianza declarada:** media de 60,6 en los aciertos y 50,3 en los fallos, con ambas por debajo del umbral de 70. No separa bien, pero n es pequeño y no se ha repetido.
 - **La primera medida de la confianza era un artefacto:** daba «fallos: None» porque leía solo el texto final del turno, y tras llamar a `escalate_to_human` ese mensaje ya no trae la línea «CONFIANZA: N», que el agente escribe antes de llamar a la tool. `RunRecord.texts` guarda ahora todos los bloques de texto y la confianza sale de ahí. → roadmap §5 (`recorder.py`) y §4.3: medir el texto del agente en todos sus mensajes, no solo en el último.
@@ -423,6 +451,7 @@ Haiku 4.5 (rol `enforcement`, 3 repeticiones: 33 casos por variante).
 | `app1/07` el recorte y la comprobación | `Determinista` | Cinco campos frente a cuarenta sin cambiar los valores; se prueba sin modelo. |
 | `app1/07` correcta y `sin_recorte` | `Probabilística con control positivo` | ≈ 16 000 frente a ≈ 54 000 tokens de entrada, con la respuesta correcta en las 10 ejecuciones; cuántas peticiones hace lo decide el modelo. |
 | `app2/04` `--parte proxy` | `Determinista` | El proxy de sentimiento acierta 3 de 13, sin modelo. |
-| `app2/04` correcta y `sin_ejemplos` | `Probabilística con control positivo` | Con Haiku 5.5, 63/65 frente a 56/65 (homónimos 9/10 frente a 5/10); con Haiku 4.5, 35/39 frente a 32/39, repartido por tipos. |
-| `app2/04` `sentimiento` | `Probabilística con control positivo` | 30/65 frente a 63/65 de la correcta. |
-| `app2/04` `confianza` | `Probabilística con control positivo` | 44/65 frente a 63/65; la confianza declarada no separa de forma estable. |
+| `app2/04` correcta y `sin_ejemplos` (Haiku 5.5) | `Sin señal estable` | 60/65 frente a 59/65: sin diferencia que se pueda sostener (homónimos 8/10 frente a 6/10, con n = 10). |
+| `app2/04` correcta y `sin_ejemplos` (Haiku 4.5) | `Probabilística con control positivo` | 36/39 frente a 31/39, casi toda la diferencia en la frustración (7/9 frente a 4/9). Tres repeticiones. |
+| `app2/04` `sentimiento` | `Probabilística con control positivo` | 30/65 frente a 59/65 de su control `sin_ejemplos`. |
+| `app2/04` `confianza` | `Probabilística con control positivo` | 44/65 frente a 59/65 de su control; la confianza declarada no separa aciertos (60,8) de fallos (61,7). |

@@ -46,7 +46,8 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
 - Lo que la medida no respalda:
   - Con Haiku 5.5, `sin_ejemplos` sale casi igual que la correcta (59/65 frente a 60/65). Las instrucciones no daban
     resultados inconsistentes con ese modelo, que es la condición de 4.2-K1, así que la medida ni demuestra ni
-    contradice la guía. @@H45CAB@@
+    contradice la guía. Con Haiku 4.5 sí hay diferencia, sobre todo en la frustración (36/39 frente a
+    31/39), con una muestra pequeña (`README.md`).
   - Los ejemplos no coinciden con ningún caso evaluado, así que lo que acierta la correcta no es memoria de un
     caso; pero la medida no separa lo que aporta el ejemplo de lo que ya hacía el criterio escrito, y por eso no
     demuestra 4.2-K3 (generalizar a patrones nuevos).
