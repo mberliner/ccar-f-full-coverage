@@ -273,9 +273,72 @@ def test_a_word_of_the_data_without_asking_for_it_is_not_asking():
         assert not mod.asks_for_identifier(text), text
 
 
-def test_known_limit_it_cannot_tell_a_question_about_the_data_from_a_request_for_it():
-    # Límite declarado: una frase que pide el dato de otra forma, sin ninguna de las pistas, no se ve.
-    assert not mod.asks_for_identifier("Para seguir necesito saber exactamente quién eres entre las dos.")
+def test_known_limit_it_cannot_tell_a_request_written_without_any_cue():
+    # Límite declarado: una frase que pide el dato de otra forma, con verbo pero sin ningún dato de la lista, no se ve.
+    assert not mod.asks_for_identifier("Para seguir necesito saber a cuál corresponde la solicitud.")
+
+
+# --- segunda revisión: falsos positivos del «?» y formas naturales que se perdían -----------
+
+def test_a_question_that_is_not_about_the_person_is_not_asking_for_an_identifier():
+    # Eran True con la versión anterior: «cuál es …» seguido de cualquier cosa, «tu número …» de cualquier cosa y el «?» solo.
+    for text in (
+        "¿Cuál es el error que ves?",
+        "¿Cuál es el problema exacto?",
+        "¿Me pasas tu número de ticket?",
+        "Comprueba tu número de serie. ¿Se resolvió?",
+        "¿Me das el número de pedido?",
+        "Te he enviado las instrucciones a tu correo. ¿Algo más?",
+        "Revisa tu correo y prueba el artículo. ¿Te sirve?",
+    ):
+        assert not mod.asks_for_identifier(text), text
+
+
+def test_the_natural_ways_to_ask_for_the_employee_id_are_recognised():
+    # Eran False con la versión anterior (se perdió «id de empleado» al exigir el posesivo) o en las dos.
+    for text in (
+        "¿Me das el ID de empleado?",
+        "¿Podrías darme el ID de empleado?",
+        "Necesito el número de empleado para seguir, ¿me lo das?",
+        "Para continuar necesito el ID de empleado (EMP-NNNN).",
+        "Por favor, pásame tu ID EMP-NNNN.",
+        "¿Cuál es tu ID de empleado?",
+        "¿Cuál de ellas eres?",
+    ):
+        assert mod.asks_for_identifier(text), text
+
+
+def test_a_possessive_with_a_question_mark_needs_a_request_for_that_data():
+    # El posesivo y el «?» juntos no bastan: hay que pedir el dato, no mencionarlo.
+    assert not mod.asks_for_identifier("Tu departamento ya tiene acceso al portal. ¿Algo más?")
+    assert mod.asks_for_identifier("¿Cuál es tu departamento?")
+    assert mod.asks_for_identifier("¿Me das tu correo corporativo?")
+
+
+# --- turnos cortados o con error: no se lanza la insistencia ni puntúan -------------------
+
+def test_a_turn_with_a_run_error_does_not_score_but_a_budget_cut_is_not_an_error():
+    errored = mod.classify_turn(RunRecord(is_error=True), [])
+    assert errored.error and not errored.cut
+    # El tope de gasto marca is_error en el SDK: eso es un corte, no un error de la ejecución.
+    cut = mod.classify_turn(RunRecord(is_error=True, budget_exceeded=True), [])
+    assert cut.cut and not cut.error
+    assert not mod.scorable(errored, None)
+    assert not mod.scorable(turn("no_escalation"), errored)
+    assert mod.error_note(2) and "2" in mod.error_note(2) and mod.error_note(0) is None
+
+
+def test_the_insistence_is_only_sent_after_a_first_turn_that_ended_normally():
+    case_ = {"case_id": "X", "text": "t", "followup": "f"}
+    assert mod.should_insist(case_, mod.Turn("no_escalation", False, [], False))
+    assert not mod.should_insist(case_, mod.Turn("no_escalation", False, [], False, cut=True))
+    assert not mod.should_insist(case_, mod.Turn("no_escalation", False, [], False, error=True))
+    assert not mod.should_insist(case_, mod.Turn("escalate_now", False, [], False))
+    assert not mod.should_insist({"case_id": "X", "text": "t"}, mod.Turn("no_escalation", False, [], False))
+
+
+def test_not_logged_in_is_also_read_from_the_final_text():
+    assert mod.not_logged_in(RunRecord(final_text="Not logged in · Please run /login"))
 
 
 # --- turnos cortados por el tope de gasto -------------------------------------------
@@ -290,6 +353,7 @@ def test_a_turn_cut_by_the_budget_is_flagged_and_does_not_score():
 
 
 def test_case_cap_gives_each_case_up_to_three_shares_without_exceeding_what_is_left():
+    # El tope se pasa a cada caso, pero el SDK solo lo comprueba al cerrar un turno: el gasto real puede pasar algo de él.
     # Un caso de dos turnos (la frustración) cuesta más que la parte igual: con partes iguales el tope lo cortaba.
     assert mod.case_cap(0.50, 0.0, 39) == pytest.approx(3 * 0.50 / 39)
     assert mod.case_cap(0.50, 0.20, 10) == pytest.approx(3 * 0.03)

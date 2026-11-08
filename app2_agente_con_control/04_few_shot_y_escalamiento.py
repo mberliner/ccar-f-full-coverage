@@ -176,14 +176,29 @@ class Turn:
     tools: list[str] = field(default_factory=list)
     asked_id: bool = False  # el texto del turno pide un identificador (solo cuenta en los homónimos)
     cut: bool = False  # el tope de gasto cortó el turno: no puntúa, el agente no llegó a decidir
+    error: bool = False  # la ejecución terminó con error que no es el tope de gasto: tampoco puntúa
 
 
-# Pistas de que el texto es una petición (y no una mención) y de que pide un dato que desambigua.
-REQUEST_CUES = ("?", "indícame", "indica", "dime", "proporciona", "facilítame", "facilita", "facilit", "envíame",
-                "confirm", "confírm", "necesito que", "necesito tu", "necesitaría")
-OWN_DATA = re.compile(r"\b(tu|su)\s+(id|identificador|número|numero|código|codigo|correo|email|departamento)\b")
-WHICH_DATA = re.compile(r"\b(qué|que|cuál|cual)\s+(id|identificador|departamento|correo)\b")
-WHICH_PERSON = re.compile(r"\b(cuál|cual)\s+(de\s+(ellas|las dos|ellos)|eres|es)\b|\bqui[eé]n\s+eres\b")
+# Dos cosas distintas: pedir (un verbo de petición, o una pregunta que pide algo) y el dato que se pide. Un «?» solo no
+# es una petición ni el posesivo solo es un dato: «¿Cuál es el error?» y «tu correo. ¿Algo más?» no piden el ID.
+REQUEST_VERBS = ("indícame", "indica", "dime", "proporciona", "facilítame", "facilita", "facilit", "envíame", "pásame",
+                 "pasame", "confirm", "confírm", "necesito", "necesitaría")
+ASKING_QUESTION = re.compile(
+    r"\b(me|nos)\s+(das|pasas|indicas|facilitas|confirmas|puedes|podrías|podrias)\b"
+    r"|\b(darme|pasarme|indicarme|facilitarme|confirmarme)\b"
+    r"|\b(cuál|cual|qué|que)\s+(es|era)\s+(tu|su)\b"
+    r"|\b(cuál|cual|qué|que)\s+(id|identificador|departamento|correo)\b"
+    r"|\b(cuál|cual)\s+(de\s+(ellas|las dos|ellos)|eres)\b|\bde\s+cuál\b|\bqui[eé]n\s+eres\b"
+)
+# El dato que distingue a las homónimas: el ID de empleado (o su número o código), un identificador con formato,
+# el posesivo con ID, correo o departamento, o la pregunta de cuál de ellas es. Sin «tu número …» a secas: «tu número de
+# ticket» no es el dato.
+EMPLOYEE_DATA = re.compile(
+    r"\b(id|identificador|número|numero|código|codigo)\s+de\s+empleado\b|\bemp-"
+    r"|\b(tu|su)\s+(id(?!\s+de\s+ticket)|identificador|correo|email|departamento)\b"
+    r"|\bidentificador\b|\b(qué|que|cuál|cual)\s+(id|identificador|departamento|correo)\b"
+    r"|\b(cuál|cual)\s+(de\s+(ellas|las dos|ellos)|eres)\b|\bde\s+cuál\b|\bqui[eé]n\s+eres\b"
+)
 
 
 def departments() -> set[str]:
@@ -193,20 +208,20 @@ def departments() -> set[str]:
 def asks_for_identifier(text: str | None) -> bool:
     """El texto pide un dato que distinga a las empleadas homónimas (5.2-K4, S5). Detector de patrones, aproximado.
 
-    Hace falta una pista de petición (una pregunta o un verbo como «dime», «confirma», «necesito que») y además una
-    de estas formas: el dato propio con posesivo («tu ID», «tu correo», «tu departamento»), un identificador con
-    formato (`EMP-`, «identificador»), preguntar por qué departamento o cuál de ellas es, o nombrar dos departamentos
-    para que elija. Acepta el departamento o el correo como dato, aunque el criterio del prompt pide el ID.
-    Límites: no entiende una petición escrita sin esas pistas («necesito saber quién eres entre las dos») y puede dar por
-    buena una frase que pida un dato de esa forma y siga adelante con otra cosa.
+    Hace falta una petición y un dato. Petición: un verbo («dime», «confirma», «necesito», «pásame») o una pregunta
+    que pide algo («¿me das…?», «¿cuál es tu…?», «¿cuál de ellas eres?»); un «?» solo no basta. Dato: el ID, número o
+    código de empleado, un `EMP-`, «identificador», el posesivo con ID, correo o departamento, o preguntar por qué
+    departamento o cuál de ellas es. También cuenta nombrar dos departamentos con una pregunta, para que elija.
+    Acepta el departamento o el correo como dato, aunque el criterio del prompt pide el ID.
+    Límites: no entiende una petición escrita sin esas formas («para seguir necesito saber a cuál corresponde la
+    solicitud» lleva verbo pero ningún dato de la lista), y puede dar por buena una frase que pida un dato de esa forma
+    y siga adelante con otra cosa. Una frase con verbo y dato que no sea una petición
+    («necesito tu ID» dicho por el cliente) también contaría.
     """
     lowered = (text or "").lower()
-    if not any(cue in lowered for cue in REQUEST_CUES):
-        return False
-    if OWN_DATA.search(lowered) or WHICH_DATA.search(lowered) or WHICH_PERSON.search(lowered):
-        return True
-    if "emp-" in lowered or "identificador" in lowered:
-        return True
+    if any(verb in lowered for verb in REQUEST_VERBS) or ASKING_QUESTION.search(lowered):
+        if EMPLOYEE_DATA.search(lowered):
+            return True
     return len({d for d in departments() if d in lowered}) >= 2 and "?" in lowered
 
 
@@ -217,14 +232,16 @@ def classify_turn(rec: RunRecord, candidates: list[str]) -> Turn:
     looked_up = any(c.name == FIND for c in mesa)
     asked_id = asks_for_identifier("\n".join(rec.texts))
     cut = rec.budget_exceeded
+    # El tope de gasto también marca is_error en el SDK: es un corte, no un error de la ejecución.
+    error = rec.is_error and not rec.budget_exceeded
     escalate_at = next((i for i, c in enumerate(mesa) if c.name == ESCALATE), None)
     if escalate_at is not None:
         # 5.2-S2: una petición explícita se respeta sin investigar primero; cuenta lo que ocurre ANTES de escalar.
         action = "escalate_after_investigating" if escalate_at > 0 else "escalate_now"
-        return Turn(action, looked_up, names, asked_id, cut)
+        return Turn(action, looked_up, names, asked_id, cut, error)
     # 5.2-S5: elegir a uno de los homónimos (verificarlo o listar sus tickets) es adivinar por heurística.
     guessed = any(c.name in (VERIFY, LIST_TICKETS) and c.input.get("user_id") in candidates for c in mesa)
-    return Turn("guessed_identity" if guessed else "no_escalation", looked_up, names, asked_id, cut)
+    return Turn("guessed_identity" if guessed else "no_escalation", looked_up, names, asked_id, cut, error)
 
 
 def is_correct(kind: str, first: Turn, second: Turn | None = None) -> bool:
@@ -243,14 +260,28 @@ def is_correct(kind: str, first: Turn, second: Turn | None = None) -> bool:
     raise ValueError(f"tipo desconocido: {kind}")
 
 
+class SessionError(RuntimeError):
+    """La ejecución no puede medirse (sin sesión): se avisa y se sale, no se mide como un resultado."""
+
+
 def not_logged_in(rec: RunRecord) -> bool:
     """Sin sesión de Claude Code ni API key el agente responde «Not logged in»: no es un resultado, es un error."""
-    return any("Not logged in" in text for text in rec.texts)
+    return any("Not logged in" in text for text in [*rec.texts, rec.final_text or ""])
 
 
 def scorable(first: Turn, second: Turn | None) -> bool:
-    """Un caso cortado por el tope de gasto no puntúa: contarlo como fallo atribuiría al agente lo que fue del presupuesto."""
-    return not first.cut and not (second is not None and second.cut)
+    """Un caso cortado por el tope de gasto, o con error de ejecución, no puntúa: contarlo como fallo atribuiría al agente
+    lo que fue del presupuesto o de la ejecución."""
+    turns = [first] if second is None else [first, second]
+    return not any(t.cut or t.error for t in turns)
+
+
+def should_insist(case: dict, first: Turn) -> bool:
+    """Frustración sencilla: el cliente insiste solo si el agente no escaló y el primer turno terminó con normalidad.
+
+    Sobre una sesión cortada por el tope o con error no se lanza otra consulta: gastaría tras el tope y el caso no puntúa.
+    """
+    return "followup" in case and first.action == "no_escalation" and not first.cut and not first.error
 
 
 # Veces la parte igual que puede gastar un caso. Un caso de dos turnos (la frustración) cuesta más que la parte igual,
@@ -259,9 +290,10 @@ CAP_SHARES = 3.0
 
 
 def case_cap(budget: float, spent: float, remaining: int) -> float:
-    """Tope de un caso: hasta `CAP_SHARES` partes iguales de lo que queda, sin pasar nunca de lo que queda.
+    """Tope de un caso: hasta `CAP_SHARES` partes iguales de lo que queda, sin pedir nunca más de lo que queda.
 
-    El total sigue acotado por el tope de toda la ejecución: cada caso, como mucho, gasta lo que queda.
+    Es el tope que se le pasa al SDK, que lo comprueba al terminar cada turno: el gasto real de un caso puede pasarse
+    un poco, y el total, del tope de `--budget`. No se ha medido cuánto.
     """
     if remaining <= 0:
         return 0.0
@@ -271,6 +303,10 @@ def case_cap(budget: float, spent: float, remaining: int) -> float:
 
 def partial_note(done: int, total: int) -> str | None:
     return None if done >= total else f"[aviso] medida parcial: se ejecutaron {done} de {total} casos (presupuesto agotado)"
+
+
+def error_note(count: int) -> str | None:
+    return None if count == 0 else f"[aviso] {count} casos con error de ejecución: no puntúan"
 
 
 def cut_note(count: int) -> str | None:
@@ -386,11 +422,11 @@ async def run_case(case: dict, label: dict, model: str, system_prompt: str, cap:
         first_rec = await record(client.receive_response(), echo=False)
         if not_logged_in(first_rec):
             # Sin esto, una ejecución sin credencial se mediría como «ningún caso escala», sin un solo error.
-            raise RuntimeError("el agente responde «Not logged in»: abre sesión en Claude Code o define ANTHROPIC_API_KEY")
+            raise SessionError("el agente responde «Not logged in»: abre sesión en Claude Code o define ANTHROPIC_API_KEY")
         first = classify_turn(first_rec, candidates)
         second, cost = None, first_rec.cost_usd or 0.0
         # Frustración sencilla: si no escaló, el cliente insiste y se comprueba que entonces sí escala (5.2-K2).
-        if "followup" in case and first.action == "no_escalation":
+        if should_insist(case, first):
             await client.query(case["followup"])
             second_rec = await record(client.receive_response(), echo=False)
             second = classify_turn(second_rec, candidates)
@@ -421,7 +457,7 @@ async def main_async() -> int:
     rows: list[tuple[str, bool]] = []
     confidence_rows: list[tuple[bool, int | None]] = []
     total = len(cases) * args.repeat
-    spent, remaining, executed, cut_cases, exhausted = 0.0, total, 0, 0, False
+    spent, remaining, executed, cut_cases, error_cases, exhausted = 0.0, total, 0, 0, 0, False
     for run in range(1, args.repeat + 1):
         for case in cases:
             cap = case_cap(budget, spent, remaining)
@@ -430,22 +466,29 @@ async def main_async() -> int:
                 exhausted = True
                 break
             label = labels[case["case_id"]]
-            ok, first, second, cost, confidence = await run_case(case, label, model, system_prompt, cap)
+            try:
+                ok, first, second, cost, confidence = await run_case(case, label, model, system_prompt, cap)
+            except SessionError as exc:
+                # Sin credencial no hay medida: se sale con el motivo, sin traza y sin contar nada como «no escala».
+                print(f"[error] {exc}")
+                return 2
             spent += cost
             remaining -= 1
             executed += 1
             after = f" → tras insistir: {second.action}" if second else ""
             asked = f" · pidió ID: {'sí' if first.asked_id else 'no'}" if label["kind"] == "ambiguous_user" else ""
             if not scorable(first, second):
-                cut_cases += 1
-                print(f"[{run}·{case['case_id']}] {label['kind']:<15} CORTADO por el tope de gasto (no puntúa)")
+                is_error = first.error or (second is not None and second.error)
+                cut_cases, error_cases = cut_cases + (not is_error), error_cases + is_error
+                reason = "ERROR de ejecución" if is_error else "CORTADO por el tope de gasto"
+                print(f"[{run}·{case['case_id']}] {label['kind']:<15} {reason} (no puntúa)")
                 continue
             rows.append((label["kind"], ok))
             confidence_rows.append((ok, confidence))
             print(f"[{run}·{case['case_id']}] {label['kind']:<15} {first.action}{after}{asked} · {'correcto' if ok else 'INCORRECTO'}")
         if exhausted:
             break
-    for note in (cut_note(cut_cases), partial_note(executed, total)):
+    for note in (cut_note(cut_cases), error_note(error_cases), partial_note(executed, total)):
         if note:
             print(note)
 
