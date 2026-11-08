@@ -193,6 +193,40 @@ def test_known_limit_a_negation_does_not_change_which_team_is_named_first():
     assert mod.answer_is_correct("No es Seguridad: es Finanzas TI.", expected)
 
 
+# --- límites declarados de la comprobación (decisión B de la segunda revisión) ------------
+# La comprobación es una red de seguridad barata, no un evaluador: cada test fija un límite
+# conocido para que no se olvide ni se «arregle» sin decidirlo. Si alguno cambia de resultado,
+# hay que actualizar a la vez la cabecera, el README y `docs/hallazgos.md`.
+
+def test_known_limit_an_id_decides_even_when_only_one_team_carries_one():
+    # El ID tiene prioridad sobre los nombres: si solo un equipo lleva ID, los demás no se miran.
+    # Esperado EQ-06 (Seguridad). Las dos respuestas dan el resultado contrario al de «el primero que nombra».
+    expected = LABELS["expected"]["team_with_most_unassigned_laptops"]
+    assert not mod.answer_is_correct("Seguridad tiene 21; le sigue Finanzas TI (EQ-05).", expected)  # era correcta
+    assert mod.answer_is_correct("Finanzas TI gana; Seguridad (EQ-06) le sigue.", expected)  # era incorrecta
+
+
+def test_known_limit_a_sentence_starting_with_a_common_word_and_no_id_is_taken_for_the_team():
+    # Sin ningún ID se busca por nombre con mayúscula, y «Datos…» al inicio de frase cuenta como el equipo Datos (EQ-04).
+    assert mod.answer_is_correct("Datos del inventario revisados: gana Finanzas TI.", "EQ-04")  # falso positivo
+    expected = LABELS["expected"]["team_with_most_unassigned_laptops"]
+    assert not mod.answer_is_correct("Datos del inventario revisados: gana Seguridad.", expected)  # falso negativo (cuenta «Datos»)
+
+
+def test_known_limit_a_name_that_is_not_the_answer_counts_if_it_comes_first():
+    # No se mira el sentido de la frase: el primer nombre con su mayúscula decide.
+    expected = LABELS["expected"]["team_with_most_unassigned_laptops"]
+    assert mod.answer_is_correct("Seguridad revisada: gana Finanzas TI.", expected)  # falso positivo
+
+
+def test_known_limit_the_name_must_be_written_with_its_capital_so_other_spellings_lose_hits():
+    # Exigir la mayúscula evita «por seguridad», pero también pierde respuestas correctas sin ella.
+    expected = LABELS["expected"]["team_with_most_unassigned_laptops"]
+    assert not mod.answer_is_correct("El equipo seguridad tiene más portátiles sin asignar.", expected)  # falso negativo
+    assert not mod.answer_is_correct("SEGURIDAD tiene más portátiles sin asignar.", expected)  # falso negativo
+    assert mod.answer_is_correct("El equipo Seguridad tiene más portátiles sin asignar.", expected)
+
+
 def test_field_counts_only_cover_the_inventory_results_not_the_team_list():
     create, _ = scripted([
         tool_response([("list_teams", {})], 300),

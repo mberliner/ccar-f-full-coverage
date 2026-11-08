@@ -38,12 +38,33 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
 - Lo que la medida no respalda: que los campos sobrantes empeoren la respuesta.
   Sin recorte el modelo también acierta; la señal de este módulo es de tokens,
   no de calidad.
-- Límite de la comprobación: la respuesta se da por correcta si el primer
-  equipo que nombra es el esperado, buscando primero por ID y, si no hay ninguno,
-  por nombre con su mayúscula (cuatro equipos se llaman con palabras comunes:
-  «por seguridad» no es el equipo Seguridad). No distingue «es X, no Y» de «es Y,
-  no X», y una frase que empiece por «Datos…» sin ningún ID se tomaría por el
-  equipo Datos. Las correcciones que tuvo están en `docs/hallazgos.md`.
+- Límite de la comprobación (es una red de seguridad barata, no un evaluador):
+  la respuesta se da por correcta según el equipo que nombra primero, buscando
+  por ID y, solo si no hay ningún ID en el texto, por nombre con su mayúscula
+  (cuatro equipos se llaman con palabras comunes: «por seguridad» no es el
+  equipo Seguridad). Consecuencias, todas fijadas en `tests/`:
+  - El ID manda sobre los nombres. Si solo un equipo lleva ID, los demás no se
+    miran y el resultado puede salir al revés que con «el primero que nombra»:
+    «Seguridad tiene 21; le sigue Finanzas TI (EQ-05).» da incorrecta, y
+    «Finanzas TI gana; Seguridad (EQ-06) le sigue.» da correcta.
+  - No lee el sentido: no distingue «es X, no Y» de «es Y, no X», y
+    «Seguridad revisada: gana Finanzas TI.» cuenta como Seguridad.
+  - Sin ningún ID, una frase que empiece por «Datos…» se toma por el equipo
+    Datos, y eso da falsos positivos y falsos negativos.
+  - Exigir la mayúscula pierde aciertos: «el equipo seguridad» y «SEGURIDAD»
+    se dan por incorrectas.
+  Las correcciones que tuvo están en `docs/hallazgos.md`.
+  Esta comprobación se queda así a propósito: la señal del módulo es de tokens,
+  y la respuesta solo sirve para ver que el recorte no rompió la tarea.
+- EN PRODUCCIÓN (no evaluable): no se comprobaría leyendo texto libre. Se
+  obligaría al modelo a devolver el resultado en un campo, por ejemplo
+  `{"team_id": "EQ-06", "unassigned_laptops": 21}` (una tool de respuesta final
+  con `tool_choice` forzado, o un esquema JSON), y la comprobación sería
+  `result["team_id"] == expected`, sin expresiones regulares. Para respuestas
+  abiertas, un conjunto de casos etiquetados medido en muchas ejecuciones y, con
+  calibración humana, otro modelo como juez. Es práctica general, no un
+  mecanismo que la guía asigne a este módulo, y no cambia la respuesta de
+  examen.
 
 Qué se mide: los tokens de entrada de cada petición, que salen del `usage` de
 la respuesta de la API, y si la respuesta sigue siendo correcta con 5 campos. El
@@ -222,8 +243,12 @@ def answer_is_correct(text: str | None, expected_team_id: str) -> bool:
 
     Los equipos siguientes son contexto («le siguen…»). Cuatro equipos se llaman con palabras comunes (Redes, Datos,
     Seguridad, Plataforma), así que el ID manda y el nombre solo cuenta escrito con su mayúscula: «por seguridad» no es
-    el equipo Seguridad. Límites: no distingue «es X, no Y» de «es Y, no X», y una frase que empiece por «Datos…»
-    sin ningún ID se tomaría por el equipo Datos.
+    el equipo Seguridad.
+
+    Límites declarados (cada uno tiene su test «known_limit»; ver la cabecera del módulo): el ID manda aunque solo
+    un equipo lo lleve, así que puede invertir el resultado de «el primero que nombra»; no lee el sentido («es X, no
+    Y», «Seguridad revisada: gana Finanzas TI»); sin ID, «Datos…» al inicio de frase cuenta como el equipo Datos; y
+    la mayúscula obligatoria pierde «seguridad» y «SEGURIDAD». Se deja así a propósito: es una red de seguridad.
     """
     if not text:
         return False
