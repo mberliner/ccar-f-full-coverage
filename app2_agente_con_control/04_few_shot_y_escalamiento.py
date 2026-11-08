@@ -44,15 +44,17 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
     más tickets») en vez de pedir un identificador (5.2-K4, S5).
   - Reservar el escalamiento a los casos «complejos» (5.2-K1).
 - Lo que la medida no respalda:
-  - Con Haiku 5.5, `sin_ejemplos` sale casi igual que la correcta (59/65 frente a 60/65). Las instrucciones no daban
-    resultados inconsistentes con ese modelo, que es la condición de 4.2-K1, así que la medida ni demuestra ni
-    contradice la guía. Con Haiku 4.5 sí hay diferencia, sobre todo en la frustración (36/39 frente a
-    31/39), con una muestra pequeña (`README.md`).
+  - Con Haiku 5.5, la correcta y `sin_ejemplos` quedan sin diferencia que se pueda sostener (58/65 frente a 56/65):
+    los homónimos van a favor de los ejemplos (9/10 frente a 5/10, un solo caso, ESC-10) y la frustración, al revés
+    (10/15 frente a 12/15). Con Haiku 4.5 los ejemplos no se notan (31/39 frente a 33/39), y `sin_ejemplos` varía en
+    la frustración de una medida a otra tanto como esa diferencia (`docs/hallazgos.md`). Los criterios ya son
+    explícitos y 4.2-K1 sitúa la ventaja de los ejemplos cuando las instrucciones solas dan resultados
+    inconsistentes: la medida ni demuestra ni contradice la guía.
   - Los ejemplos no coinciden con ningún caso evaluado, así que lo que acierta la correcta no es memoria de un
     caso; pero la medida no separa lo que aporta el ejemplo de lo que ya hacía el criterio escrito, y por eso no
     demuestra 4.2-K3 (generalizar a patrones nuevos).
-  - En `confianza`, la confianza declarada no separa los aciertos de los fallos (60,8 frente a 61,7) y en medidas
-    anteriores el sentido cambiaba, con pocos casos: no es una demostración de 5.2-K3. La señal de la variante es la tasa de acierto por tipo de caso.
+  - En `confianza`, la confianza declarada (62,9 en los aciertos y 56,4 en los fallos) cambió de sentido entre
+    medidas, con pocos casos: no es una demostración de 5.2-K3. La señal de la variante es la tasa de acierto por tipo de caso.
   - El tercer disparador de 5.2-K1, «no se puede avanzar», tiene dos casos y ningún ejemplo, y solo cuenta con el
     criterio 5 del prompt. Ejercita 5.2-K1, no 4.2-K3: el patrón está dicho de antemano en el criterio, así que
     acertarlo no es generalizar a un patrón nuevo gracias a los ejemplos.
@@ -67,8 +69,10 @@ ANTI-PATRÓN / TRAMPA DEL EXAMEN:
 - Límite de la medida: la acción se deduce de las llamadas a tools. En la frustración, «no escala» en el primer
   turno incluye cualquier cosa que no sea escalar (ofrecer resolver, pedir un dato o no decir nada): no se comprueba
   que se ofreciera resolver. Solo en los homónimos se lee además el texto del agente, con un detector de patrones
-  (`asks_for_identifier`) que acepta como dato el ID, el correo o el departamento aunque el criterio 4 pida el ID: no
-  entiende una petición escrita sin sus pistas y puede dar por buena una frase que las tenga y pida otra cosa.
+  (`asks_for_identifier`) que exige una petición y el dato: un «?» solo o un posesivo solo no cuentan. Acepta el
+  correo o el departamento aunque el criterio 4 pida el ID, no entiende una petición con verbo y sin ningún dato de
+  su lista, y una frase con verbo y dato que no sea una petición también cuenta. Un caso cortado por el tope de
+  gasto o con error de ejecución no puntúa, y sobre un primer turno así no se lanza la insistencia.
 
 Qué se mide: la acción de cada caso frente a su etiqueta, deducida de las llamadas a tools. Las variantes `sentimiento`
 y `confianza` van sin ejemplos, porque los ejemplos contradirían su regla; el control con el que se comparan es
