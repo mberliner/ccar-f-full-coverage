@@ -7,7 +7,7 @@ El dominio 3 trata de cómo se configura y se usa Claude Code, así que no tiene
 3. **Práctica propia:** la haces tú, en tu sesión.
 4. **Cinco comprobaciones cortas (una por TS) y tres preguntas tipo examen integradas.**
 
-La TS 3.6 (CI/CD) no está en esta sección: llega con la entrega 3 (ver `CONCEPTOS.md`).
+La TS 3.6 (CI/CD) no está en esta sección: se practica en `app3` `11` y `12` (ver `CONCEPTOS.md`).
 
 En todo el README, «la guía» es la Exam Guide v1.0. Lo que hace el producto actual y la guía no dice va marcado como **Producto observado (no evaluable)**, y una práctica o mecanismo adicional que la guía no nombra, como **EN PRODUCCIÓN (no evaluable)**. En el examen manda la guía.
 

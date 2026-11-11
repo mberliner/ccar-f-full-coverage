@@ -278,7 +278,7 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
 
 ## Notas de construcción
 
-- **Cobertura 240/240:** `test_full_coverage` está en `xfail(strict=True)`; cuando pase, pytest lo marcará como XPASS fallido y hay que quitar la marca.
+- **Cobertura 240/240:** alcanzada en la tanda D; `test_full_coverage` ya no lleva `xfail` y falla si una viñeta se queda sin introducir.
 - **Viñetas de D3:** las 40 introducidas. 13 en `d3_claude_code/README.md` (3.1-S1, 3.1-S4, 3.2-K4, 3.2-S5 y las 9 de 3.5) y 27 en `CLAUDE.md`, `docs/` y `.claude/`.
 
 Los hallazgos de producto y de implementación están en [docs/hallazgos.md](docs/hallazgos.md). Tu estado de estudio (fallos, sesiones, práctica) vive fuera de git, en `estado/<perfil>/`.

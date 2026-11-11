@@ -2,16 +2,16 @@
 
 PROPÓSITO: un hook `PreToolUse` que deniega al agente principal las tools del
 servidor `investigacion` y deja pasar a los subagentes, y la medida de cuántas
-veces lo intentó el coordinador. Lo usan `01_coordinador`, `02_paralelo_y_descomposicion`
-y `03_tools_entre_roles`.
+veces lo intentó el coordinador. Lo usan los módulos con coordinador y
+subagentes, de `01_coordinador` a `06`.
 
 POR QUÉ EXISTE: `tools=["Agent"]` solo limita las tools integradas; las del
 servidor MCP siguen visibles para el coordinador, y como están pre-aprobadas
 para los subagentes, «no busques tú» en su prompt es una petición, no una
 barrera. Comprobado en app3/03 (revisión independiente de la entrega 2): sin el
 hook, el coordinador las usó cuando se le pidió expresamente. Sin barrera, las
-medidas de delegación mezclarían su trabajo con el de los subagentes. Los
-módulos numerados no se pueden importar entre sí, así que la pieza vive aquí.
+medidas de delegación mezclarían su trabajo con el de los subagentes. La pieza
+es común a varios módulos, así que vive aquí y no en uno numerado.
 
 EN PRODUCCIÓN (no evaluable): que el subagente traiga `agent_id` en la entrada
 del hook y el agente principal no, y el alcance de `tools`, son comportamiento

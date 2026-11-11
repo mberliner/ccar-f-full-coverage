@@ -2,7 +2,7 @@
 
 Cómo se practica con varias preguntas que comparten un mismo contexto, como en el examen. Este documento fija el formato; todavía no hay ningún caso escrito. La plantilla está en [`plantillas/simulacion/ESCENARIO.md`](../plantillas/simulacion/ESCENARIO.md) y el formato lo comprueba `tests/test_simulaciones_formato.py`.
 
-> **Dónde encaja.** Esto es un complemento propio y opcional, no una entrega del roadmap. Lo propuso la auditoría (G-07). El roadmap prevé, tras la entrega 3, un repaso sin código nuevo (`S-1`, roadmap §10) con las filas pendientes de `FALLOS.md` y las preguntas tipo examen de los módulos y de D3 mezcladas; no menciona escenarios. Los simulacros de examen completo del plan de estudio son externos (mocks y simulacros del propio plan), y ahí es donde se practican varias preguntas de un mismo escenario. Con el examen cerca, escribir un caso compite con terminar las tandas C y D y con repasar `FALLOS.md`, así que por ahora no se escribe ninguno. Este formato queda definido por si se retoma, por ejemplo dentro de `S-1`.
+> **Dónde encaja.** Esto es un complemento propio y opcional, no una entrega del roadmap. Lo propuso la auditoría (G-07). El roadmap prevé, tras la entrega 3, un repaso sin código nuevo (`S-1`, roadmap §10) con las filas pendientes de `FALLOS.md` y las preguntas tipo examen de los módulos y de D3 mezcladas; no menciona escenarios. Los simulacros de examen completo del plan de estudio son externos (mocks y simulacros del propio plan), y ahí es donde se practican varias preguntas de un mismo escenario. Todavía no se ha escrito ninguno; el formato queda definido para cuando se escriban, por ejemplo dentro de `S-1`.
 
 ## Por qué
 
@@ -55,7 +55,7 @@ El validador comprueba la estructura (cabecera, secciones, restricciones, numera
 
 ## La simulación completa
 
-Al llegar a 240 de 240, una simulación completa son 4 casos de examen (15 preguntas cada uno, 60 ítems, 120 minutos) de escenarios distintos. El reparto objetivo por dominio sigue los pesos del blueprint; con 4 escenarios al azar no sale exacto, así que se ajusta eligiendo las preguntas por TS.
+Con las 240 viñetas entregadas, una simulación completa son 4 casos de examen (15 preguntas cada uno, 60 ítems, 120 minutos) de escenarios distintos. El reparto objetivo por dominio sigue los pesos del blueprint; con 4 escenarios al azar no sale exacto, así que se ajusta eligiendo las preguntas por TS.
 
 | Área | Dominio | Ítems | Peso |
 | :--- | :--- | :---: | :---: |
@@ -67,6 +67,6 @@ Al llegar a 240 de 240, una simulación completa son 4 casos de examen (15 pregu
 
 ## Qué falta
 
-- **Los casos.** Ninguno escrito. E3 y E4 podrían escribirse ya; E2 y E6, casi; E1 y E5 esperan a las tandas C y D.
+- **Los casos.** Ninguno escrito. Los seis escenarios tienen ya su material entregado (tabla de arriba), así que cualquiera puede escribirse.
 - **Presentarlos con la práctica guiada.** `practica-guiada` narra módulos; para un caso hay que definir cómo se presentan varias preguntas con contexto compartido. No está hecho.
-- **Los casos de examen completo.** Dependen del 240 de 240.
+- **Los casos de examen completo.** Ninguno escrito; ya no dependen de la cobertura.

@@ -7,7 +7,7 @@ referencia, mismos bytes en cada ejecución.
 POR QUÉ EXISTE: es la única vía para crear o cambiar los datos de prueba. Los
 archivos generados se versionan para que los módulos funcionen sin ejecutar
 nada, y `--check` (también en `tests/test_datos_sinteticos.py`) detecta
-cualquier edición a mano. El hook `PreToolUse` de la capa meta bloqueará además
+cualquier edición a mano. El hook `PreToolUse` de la capa meta bloquea además
 editar esa carpeta directamente.
 
 QUÉ NO HACE: no usa datos reales ni nombres de empresas, y los correos van al

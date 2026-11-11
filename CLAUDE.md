@@ -21,7 +21,7 @@ Los `CLAUDE.md` de directorios padre y la memoria de usuario (`~/.claude/CLAUDE.
 ## Jerarquía
 
 - Este archivo es el nivel de proyecto y se comparte por git.
-- Cada app tendrá su propio `CLAUDE.md`, solo con lo específico de esa app.
+- Cada app tiene su propio `CLAUDE.md`, solo con lo específico de esa app.
 - Las convenciones por tipo de archivo viven en `.claude/rules/`.
 - Nada del proyecto va en `~/.claude/CLAUDE.md` (ni en el directorio que indique `CLAUDE_CONFIG_DIR`) ni en la memoria automática, porque no le llegaría a nadie más ni a otra sesión.
 

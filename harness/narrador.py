@@ -325,9 +325,8 @@ def setup_report(root: Path = ROOT, environ: Mapping[str, str] | None = None) ->
 
 
 def main(argv: list[str] | None = None) -> int:
-    # Claude Code lee UTF-8; en Windows la salida por defecto sería cp1252.
-    sys.stdout.reconfigure(encoding="utf-8")
-    parser = argparse.ArgumentParser(description="Fases de los módulos para /practica-guiada.")
+    # La salida ya va en UTF-8: lo fija `harness/__init__.py` al importar el paquete.
+    parser =argparse.ArgumentParser(description="Fases de los módulos para /practica-guiada.")
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("menu", help="todo lo disponible, con el módulo recomendado")
     commands.add_parser("setup", help="comprobaciones de puesta en marcha")
