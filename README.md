@@ -30,10 +30,10 @@ Si prefieres leer a tu ritmo, cada sección de módulo se sigue sola con el cicl
 Es el mismo ciclo con guía o sin ella; con `/practica-guiada`, el asistente te lleva por cada paso. Cada sección de módulo tiene las mismas partes, en este orden:
 
 1. **Oriéntate.** Lee la ficha del principio (qué vas a hacer, qué necesitas antes y el **Modo**), «Antes de empezar» y «El ejercicio».
-2. **Predice.** Responde por escrito, con tus palabras, las preguntas de «Predice antes de ejecutar». No hay un número que acertar.
+2. **Predice.** Responde por escrito, con tus palabras, las preguntas de «Predice antes de ejecutar». No hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de ese ejercicio.
 3. **Ejecuta o no, y contrasta.** Si el Modo es *ejecución ligera*, puedes hacerlo sin ejecutar nada; si es *obligatoria*, ejecuta los comandos de «Ejecutar». Después abre el bloque plegado **«Paso 3 · Contrastar»** de «Qué observar» y compáralo con lo que predijiste.
 4. **Responde.** Contesta la «Pregunta tipo examen» y, después, abre **«Paso 4 · Respuesta»**.
-5. **Anota.** Cada predicción o respuesta fallida va en tu `FALLOS.md` ([estado personal](#5-crear-tu-estado-personal)): es lo que repasarás antes del examen.
+5. **Anota.** Cada predicción `(guía)` o respuesta fallida va en tu `FALLOS.md` ([estado personal](#5-crear-tu-estado-personal)): es lo que repasarás antes del examen.
 
 Para profundizar, la cabecera del script explica el concepto, qué dice la guía, por qué importa y la trampa del examen.
 

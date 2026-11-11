@@ -273,6 +273,13 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
     - **Segunda revisión independiente y sus correcciones (Opus 5.5; Sonnet 5.5 en el código):** 13 hallazgos (2 altos, 5 medios, 6 bajos). Hechos: código y tests (detector de «pidió un ID» con petición y dato, sin insistencia tras un turno cortado o con error, límites de `app1/07` declarados y fijados con tests), remedida (cuarta medida de `app2/04`, vigente) y textos (`docs/prompts-entrega-3/d-correcciones-textos2.md`). **Cambia una conclusión:** con Haiku 4.5 los ejemplos no se notan (31/39 frente a 33/39): `sin_ejemplos` varía en la frustración de una medida a otra tanto como la señal que se les atribuía, y la fila pasa a `Sin señal estable`. Con Haiku 5.5, 58/65 frente a 56/65, también `Sin señal estable`: los homónimos a favor de los ejemplos son un solo caso (ESC-10).
     - **`/verificar-concepto`** (2026-11-08): TS 5.2-K4 (`app2/04`) y TS 5.1-K3 (`app1/07`), sin problemas (`INTRODUCE` único, cabecera completa, pregunta tipo examen). La atribución de la «señal de los ejemplos» de la segunda medida a la comprobación laxa queda en `docs/hallazgos.md` como inferencia sin comprobar, para la próxima revisión.
     - Tanda D cerrada (2026-11-08): roadmap origen hecho (momento 2 y cierre de la entrega, momento 3; Opus 5.5), con los `→ roadmap` de la tanda reducidos a `✓ roadmap 2026-11-08` en `docs/hallazgos.md`. La entrega 3 queda cerrada con él.
+- [ ] **Mejoras didácticas y de redundancia** (2026-11-11; plan en seis fases, sin viñetas nuevas ni ejecuciones con modelo).
+  - [x] Fase 0 · desfases: ruta de estudio del `README.md` (con `app1/07`, `app2/04`, `app3/10`–`12` y D3), D3, simulaciones, este archivo y los `CLAUDE.md`.
+  - [x] Fase 1 · predicciones autónomas: criterio en `plantillas/modulo/README.md` y test de forma en `tests/test_readme_modulos.py`; los 26 módulos adaptados (una cosa por predicción, marca `(guía)` o `(módulo)`, contraste `**Pn**` en el Paso 3 y «Para pensar» para lo que no se contrasta); `practica-guiada` anota solo las `(guía)` y consulta `docs/tipos-de-senal.md` antes de recomendar ejecutar. Pendiente: revisión independiente de los textos contra la guía y un recorrido con una persona.
+  - [ ] Fase 2 · preguntas tipo examen y segundo ángulo (comprobaciones cortas por módulo, reparto de letras, longitud de opciones).
+  - [ ] Fase 3 · repaso: `narrador repaso` sobre `FALLOS.md`, práctica mezclada, D3 en el narrador, simulaciones y hojas por dominio.
+  - [ ] Fase 4 · redundancia y navegación de `docs/`.
+  - [ ] Fase 5 · código: helpers del arnés, salida legible y tests de reglas sin vigilancia.
 - [ ] `S-1` · repaso sin código nuevo
 - [ ] Entrega 4 · opcional, después del examen
 

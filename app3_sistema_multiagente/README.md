@@ -1212,14 +1212,16 @@ La parte `confianza_modelo` pide a un modelo que extraiga los 12 documentos con 
 
 ### Predice antes de ejecutar
 
-Con tus palabras; no hay un número que acertar:
+Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. Una extracción acierta el 97 % de los valores. ¿Qué tendría que pasar con los demás segmentos para que un tipo de documento rinda mucho peor sin que el titular lo muestre? ¿De qué depende cuánto puede esconder?
-2. Para vigilar lo que se acepta con confianza alta, ¿qué muestra esperas que vea más a menudo los errores de un tipo de documento poco frecuente, una aleatoria simple o una estratificada? ¿Qué cambiaría si ese tipo pesara aún menos?
-3. Si el modelo declara 0,99 en un campo, ¿qué más necesitas saber para decidir si basta para no revisarlo? ¿Y si el segmento tiene muy pocos ejemplos etiquetados?
-4. Un documento tiene una confianza media alta, pero uno de sus campos es dudoso. ¿Qué decide una sola confianza por documento y qué decidiría una por campo?
-5. Con poca capacidad de revisión, ¿pesan igual un documento con conflicto y uno con un campo de baja confianza? ¿Qué tipo de problema dejará sin ver cada orden de la cola?
-6. En la parte con modelo, ¿qué tiene que haber en las extracciones para que se pueda medir si la confianza declarada está calibrada? ¿Dónde esperas que el modelo esté más seguro de lo que debería?
+1. (guía) Una extracción acierta el 97 % de los valores en conjunto. ¿Puede haber un tipo de documento que rinda mucho peor sin que esa cifra lo muestre? ¿De qué depende cuánto puede esconder?
+2. (guía) Para vigilar lo que se acepta con confianza alta, ¿qué muestra verá más a menudo los errores de un tipo de documento poco frecuente: una aleatoria simple o una estratificada? ¿Por qué?
+3. (guía) El modelo declara una confianza de 0,99 en un campo. ¿Qué más hace falta saber para decidir si basta para no revisarlo?
+4. (guía) Un segmento (un tipo de documento y un campo) tiene muy pocos ejemplos etiquetados. ¿Debería el sistema dejar de revisar sus extracciones de confianza alta? ¿Por qué?
+5. (módulo) Un documento tiene una confianza media alta, pero uno de sus campos es dudoso. ¿Qué decide `confianza_global`, que usa una sola confianza por documento, y qué decidiría una confianza por campo?
+6. (guía) Además de las extracciones de confianza baja, ¿qué documentos deben ir a una persona? ¿Por qué hay que priorizar la cola de revisión?
+7. (módulo) En la parte `confianza_modelo`, ¿qué tiene que haber en las extracciones para que se pueda medir si la confianza declarada está calibrada?
+8. (módulo) Con `--sin-reglas-de-formato`, ¿en qué clase de campo esperas que el modelo esté más seguro de lo que debería?
 
 ### Ejecutar
 
@@ -1239,6 +1241,17 @@ En `poblacion`: la exactitud global frente a la del peor tipo de documento y del
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+**Tus predicciones:**
+
+- **P1** Sí: el global es 97,7 % y el tipo raro acierta el 62,5 %. Cuanto menos pesa un segmento en el total, más puede esconder la cifra agregada (TS 5.5-K1).
+- **P2** La estratificada: vio algún error del tipo raro en el 100 % de las muestras, frente al 53,4 % de la aleatoria simple, porque asegura un mínimo por estrato. Mide la tasa de error y deja ver patrones que no se conocían (TS 5.5-K2, 5.5-S1). Para estimar la tasa hay que ponderar cada estrato por su tamaño.
+- **P3** Si esa confianza está calibrada contra un conjunto de validación etiquetado, que es de donde salen los umbrales de revisión (TS 5.5-K3, 5.5-S3). Aquí la mayoría de los errores llegan con confianza de 0,85 o más.
+- **P4** No: sin ejemplos no hay evidencia de que acierte. La exactitud se comprueba segmento a segmento antes de dejar de revisar (TS 5.5-K4, 5.5-S2). Aquí esos segmentos quedan como `insufficient_data` y no se automatizan.
+- **P5** La media del documento deja pasar el campo dudoso (2 errores más); la confianza por campo lo manda a revisión. La diferencia es pequeña con esta población simulada.
+- **P6** Las de documentos ambiguos o contradictorios, aunque su confianza sea alta. Se prioriza porque la capacidad de revisión es limitada (TS 5.5-S4).
+- **P7** Errores: si el modelo no falla, no hay nada que calibrar. Con el modelo por defecto hubo 0 errores en 153 valores.
+- **P8** En las fechas: casi todos los errores son de formato de fecha y llegan con confianza de 0,85 o más; la banda más alta acierta el 82,9 % y declara el 100 %.
 
 **Parte `poblacion`** (sin modelo; mismos números en cada ejecución):
 
@@ -1356,13 +1369,16 @@ Además, el **cambio correcto** (el comentario que justifica `REINTENTOS`) y el 
 
 ### Predice antes de ejecutar
 
-Con tus palabras; no hay un número que acertar:
+Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. Dos variantes tocan el prompt de la revisión: una sustituye los criterios por «sé conservador» y otra quita los ejemplos. ¿Dónde podría notarse cada cambio, en lo que el revisor encuentra o en lo que marca de más? ¿Cuántas ejecuciones necesitarías para distinguir un efecto de la variación de una ejecución a otra?
-2. Una categoría genera falsos positivos y la quitas del prompt y del schema. ¿Qué puede pasar con el hallazgo que antes caía en esa categoría? ¿Qué te diría cada posibilidad sobre el criterio?
-3. Revisas una segunda vez, tras un commit nuevo, el diff completo de la rama. ¿Qué repetirá un revisor que no sabe lo que ya se publicó, y qué cambia si le das la lista?
-4. Pides los tests que faltan con y sin los tests existentes en el contexto, y con y sin los estándares de tests en el `CLAUDE.md`. ¿Qué podría cambiar en los escenarios que repiten lo ya cubierto? ¿Qué harías si el resultado no fuera el que esperas?
-5. El modelo escribe el `detected_pattern` del mismo falso positivo de varias formas. ¿Qué se pierde al agrupar los descartados, y qué parte de eso arregla el código y qué parte no?
+1. (guía) `conservador` sustituye los criterios por «sé conservador: informa solo de los problemas de los que estés muy seguro». ¿Qué efecto cabe esperar en la precisión de la revisión frente a unos criterios categóricos explícitos?
+2. (guía) `sin_ejemplos` quita el bloque *few-shot* de la revisión. ¿Qué dos cosas le aportaban esos ejemplos al revisor?
+3. (módulo) Cada variante se mide con 5 ejecuciones sobre el mismo cambio. ¿Esperas que eso baste para distinguir el efecto de `conservador` y de `sin_ejemplos` de la variación entre ejecuciones?
+4. (guía) Una categoría de hallazgos genera muchos falsos positivos. ¿Qué coste tiene dejarla activa? ¿Qué se hace con ella mientras se mejora su prompt?
+5. (módulo) Con `--sin-categoria comment`, la categoría desaparece del prompt y del schema. ¿Qué puede pasar con el fallo real C, que caía en ella?
+6. (guía) En `rerevision` se revisa otra vez el diff completo de la rama tras un commit nuevo. ¿Qué repetirá un revisor que no sabe lo que ya se publicó? ¿Qué hay que darle para evitarlo?
+7. (guía) En `tests`, ¿qué se evita al poner los tests existentes en el contexto? ¿Qué aporta documentar los estándares de tests en el `CLAUDE.md`?
+8. (guía) Cada hallazgo lleva un campo `detected_pattern`. ¿Para qué sirve registrar qué construcción del código provocó el hallazgo?
 
 ### Ejecutar
 
@@ -1385,6 +1401,17 @@ En `revision`: qué fallos sembrados encuentra (A a F, el segundo commit añade 
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+**Tus predicciones:**
+
+- **P1** Según la guía, una instrucción general de ese tipo no mejora la precisión como lo hacen los criterios categóricos, que dicen qué se informa y qué se deja (TS 4.1-K1, 4.1-K2, 4.1-S1). Aquí no se vio: `conservador` encontró los cinco fallos y marcó menos. En el examen manda la guía.
+- **P2** Fijan el formato de cada hallazgo (TS 4.2-S2) y enseñan a distinguir un patrón aceptable de un problema real, lo que reduce los falsos positivos (TS 4.2-S3). En la medida no hubo diferencia.
+- **P3** No basta: las variantes difieren en 0 o 1 hallazgos de 25. Lo único que se mueve es la marca del comentario que justifica `REINTENTOS` (3 de 5 sin `--anti`, 0 de 5 con `conservador`).
+- **P4** Cuesta confianza: quien lee deja de fiarse también de las categorías que aciertan (TS 4.1-K3). Se apaga por un tiempo mientras se mejora su prompt (TS 4.1-S2).
+- **P5** Puede perderse o salir en otra categoría: C faltó en 1 de 5. La marca falsa del comentario desaparece (0 de 5), pero a veces se va también el acierto.
+- **P6** Lo que ya se publicó: sin la lista repitió B, C y D en 3 de 3. Hay que darle los hallazgos anteriores con la orden de informar solo de lo nuevo o de lo no resuelto (TS 3.6-S3). Esta parte se midió antes de las últimas correcciones.
+- **P7** Se evita proponer escenarios que la suite ya cubre (TS 3.6-S4). El `CLAUDE.md` es por donde llega el contexto del proyecto en CI, y documentar ahí los estándares mejora los tests y reduce los que aportan poco (TS 3.6-K3, 3.6-S5). En la medida, sin los tests existentes no hubo repetidos (sin diferencia), y sin los estándares salieron más tests (9 a 12 frente a 7 u 8).
+- **P8** Para analizar de forma sistemática qué patrones descartan los desarrolladores, y mejorar los criterios con eso (TS 4.4-K3, 4.4-S3).
 
 Sonnet 5.5 (rol `reviewer`), `claude -p` aislado. **Las cifras de referencia son las de después de las correcciones C4** (2026-11-07, 5 ejecuciones por variante, la misma puntuación en toda la batería): cada revisión corre sobre el árbol del commit que revisa, un escenario de test se compara con lo que espera y el símbolo se compara por nombre completo. Las cifras anteriores están más abajo, rotuladas «antes», y **no son comparables**: el revisor del primer commit leía el árbol del segundo, donde A ya estaba arreglado, la puntuación era otra, el prompt de todas las variantes era otro (la línea de `bug` citaba el docstring y el ejemplo de `minor` era otro) y los datos tenían `TIMEOUT` duplicado (ahora `NOTIF_TIMEOUT`).
 
@@ -1510,14 +1537,14 @@ El cambio lleva los fallos A, B, C, D y F del módulo 11 (E es del segundo commi
 
 ### Predice antes de ejecutar
 
-Con tus palabras; no hay un número que acertar:
+Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. La sesión que escribió un cambio lo revisa en la misma sesión. ¿Qué sabe que no sabe una instancia nueva, y en qué sentido puede jugarle a favor y en contra? ¿Qué tendría que tener el cambio para que esa diferencia se notara?
-2. ¿Qué fallos puede ver, en principio, una pasada por archivo sin acceso al resto del repositorio, y cuáles necesitan ver dos archivos a la vez? ¿Esperas que eso se cumpla igual en cada ejecución?
-3. ¿Por qué se pide a la pasada de integración que no repita lo que ya salió por archivo? ¿Qué pasaría si dos pasadas se contradijeran?
-4. La verificación da una confianza de 0,6 a un hallazgo. ¿Qué decides con eso y cómo comprobarías que esa confianza vale algo? ¿Qué necesitas en los hallazgos para poder comprobarlo?
-5. A la autorrevisión le añades una frase que le pide revisar críticamente su propio cambio. ¿Qué cambia en lo que la sesión sabe, y qué no cambia?
-6. Una sola pasada sobre todo el diff frente al reparto en pasadas: ¿qué podría perder, qué podría ganar, y de qué depende que la diferencia se note?
+1. (guía) La sesión que escribió un cambio lo revisa en esa misma sesión. ¿Qué conserva que no tiene una instancia nueva? ¿Cómo afecta eso a su revisión?
+2. (guía) Para detectar problemas sutiles, ¿qué es más eficaz: pedirle a la misma sesión que revise su trabajo con más cuidado o una instancia independiente, sin el contexto del generador?
+3. (módulo) Con `autorrevision_explicita` se añade la frase «revisa críticamente tu propio cambio». ¿Qué cambia con ella en lo que la sesión sabe?
+4. (guía) En un cambio de varios archivos, ¿qué fallos puede ver una pasada por archivo y cuáles necesitan una pasada de integración aparte?
+5. (módulo) El cambio de este módulo es pequeño: 93 líneas en cuatro archivos. Con `una_pasada`, ¿esperas que la revisión pierda los fallos entre archivos D y F?
+6. (guía) La pasada de verificación da una confianza a cada hallazgo. ¿Para qué sirve? ¿Qué hace falta para poder fiarse de ella?
 
 ### Ejecutar
 
@@ -1537,6 +1564,15 @@ Por repetición: qué fallos sembrados encontró cada pasada, cuáles faltan, fa
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+**Tus predicciones:**
+
+- **P1** El razonamiento con el que generó el código. Con él, es menos probable que ponga en duda sus propias decisiones: la sesión que generó el código revisa sus cambios peor que una instancia independiente (TS 4.6-K1, 3.6-K4).
+- **P2** La instancia independiente (TS 4.6-K2, 4.6-S1). Aquí no hubo señal: las tres ramas encontraron los cinco fallos, así que la medida está en su techo. En el examen manda la guía.
+- **P3** Nada: tiene el mismo contexto que antes. La frase no cambió lo que encontró.
+- **P4** La pasada por archivo ve lo local (A, B y C); el flujo de datos entre archivos (D y F) necesita la de integración. Partir así una revisión grande evita diluir la atención (TS 4.6-K3, 4.6-S2, 1.6-K2, 1.6-S2). Aquí, D salió por archivo en 3 de 5 y F en 1 de 5; la integración completó el resto.
+- **P5** No los perdió: 24 de 25, con la mitad de coste. Con un diff de este tamaño no hay diferencia; la guía habla de revisiones grandes.
+- **P6** Para enrutar la revisión de forma calibrada (TS 4.6-S3). Para fiarse hay que comprobar esa confianza contra hallazgos etiquetados: aquí el hueco de calibración fue de 0,129 a 0,215.
 
 Sonnet 5.5 (rol `reviewer`), `claude -p` aislado. Hay tres mediciones, cada una con su versión del código; **la de referencia es la última**, después de las correcciones C4 (2026-11-07). En ella la sesión generadora escribió exactamente el cambio dado (93 líneas, cuatro archivos) en las dos ramas.
 
@@ -1576,6 +1612,8 @@ Notas:
 - **El coste de la sesión reanudada es acumulado:** cada revisión bifurcada informa del coste de la generadora más el suyo. El módulo cuenta cada revisión por la diferencia y suma la generadora una vez.
 - **La orden «no crees ningún otro archivo»** se añadió tras la medida en que la generadora añadió un archivo de tests. En la última medida copió el cambio exacto, pero no se probó sin la orden: no se sabe si es ella la que lo evita.
 - Lo que no depende del modelo se prueba en `tests/test_app3_12_revision_independiente.py` y `tests/test_headless.py`. Coste de las ejecuciones con modelo de este módulo: ~1,3 $ en la tanda C (incluidas las de prueba), 1,90 $ en la batería de la autorrevisión y 0,76 $ en la medida tras las correcciones.
+
+**Para pensar (sin evaluación):** ¿qué pasaría si la pasada de integración y una pasada por archivo se contradijeran? El módulo no lo provoca, así que no cuenta como predicción.
 </details>
 
 ### Pregunta tipo examen

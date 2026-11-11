@@ -51,15 +51,15 @@ Argumento recibido: `$ARGUMENTS`
 
 ### Paso 2 · Predecir
 
-Presenta las preguntas de «Predice antes de ejecutar», numeradas y tal como vienen. Pide que responda con sus palabras, en texto libre: no hay un número que acertar. **Espera a tener sus respuestas** antes de seguir. Si deja alguna en blanco, pregunta si quiere intentarla o saltarla. No las corrijas ni las comentes todavía.
+Presenta las preguntas de «Predice antes de ejecutar», numeradas y tal como vienen, con su marca: `(guía)` evalúa un concepto del examen y `(módulo)`, un detalle de este ejercicio. Explica la diferencia la primera vez. Pide que responda con sus palabras, en texto libre: no hay un número que acertar. **Espera a tener sus respuestas** antes de seguir. Si deja alguna en blanco, pregunta si quiere intentarla o saltarla. No las corrijas ni las comentes todavía.
 
 ### Paso 3 · Ejecutar o no, y contrastar
 
 1. Pide `ejecutar`. Según el Modo:
    - **Obligatoria:** explica por qué hay que ejecutarlo y propone los comandos de «Ejecutar» con `!` delante (`! uv run python …`). Si hay que tener cuidado con `--budget`, dilo.
-   - **Ligera:** ofrece dos caminos, ejecutar (propones los comandos igual) o seguir sin ejecutar con el resultado de referencia.
+   - **Ligera:** ofrece dos caminos, ejecutar (propones los comandos igual) o seguir sin ejecutar con el resultado de referencia. Antes de proponer una variante, mira en `docs/tipos-de-senal.md` cómo está clasificada esa parte: si es «Sin señal estable» o «Sin medir», di que ejecutarla no enseña el mecanismo y no la recomiendes.
    Cuenta qué mirar en la salida («Qué observar») y espera a que la persona lance el comando o diga que sigue sin ejecutar. Si ejecutó, la salida ya está en la conversación: úsala.
-2. Pide `contraste`. Compara pregunta por pregunta lo que predijo con lo observado (y con su salida, si ejecutó): qué coincide, qué no y por qué, separando lo estable de lo que varía entre ejecuciones. Después pregunta si alguna predicción la considera fallida. **Lo decide la persona**, no tú.
+2. Pide `contraste`. El bloque trae una entrada `**Pn**` por predicción: compara cada una con lo que predijo (y con su salida, si ejecutó): qué coincide, qué no y por qué, separando lo estable de lo que varía entre ejecuciones. «Para pensar», si lo hay, se comenta sin evaluar. Después pregunta si alguna predicción la considera fallida. **Lo decide la persona**, no tú.
 
 ### Paso 4 · Responder
 
@@ -68,7 +68,9 @@ Presenta las preguntas de «Predice antes de ejecutar», numeradas y tal como vi
 
 ### Paso 5 · Anotar
 
-Si la persona reconoce algún fallo (de predicción o de la pregunta):
+Se anotan los fallos de la pregunta tipo examen y de las predicciones `(guía)`. Un fallo en una `(módulo)` no es un fallo de examen: coméntalo y no lo propongas para `FALLOS.md`, salvo que la persona lo pida.
+
+Si la persona reconoce algún fallo de los que se anotan:
 
 1. Busca dónde está su estado con `uv run python -m harness.estado where`. Si `FALLOS.md` no existe, propón `! uv run python -m harness.estado init` y espera.
 2. Propón la fila o las filas en el formato de la tabla de `FALLOS.md` (`plantillas/estado/FALLOS.md`): `| Viñeta | Módulo | Qué predije o respondí | Qué ocurrió o cuál era la correcta | Por qué me equivoqué | ☐ |`. La viñeta sale de la ficha, el módulo es el id y «por qué me equivoqué» se lo preguntas a la persona: no lo inventes.
