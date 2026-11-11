@@ -74,12 +74,12 @@ Con `--repeat 10`, el código repite la ejecución diez veces, con un estado del
 
 ### Predice antes de ejecutar
 
-Con tus palabras; no hay un número que acertar.
+Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. Con la puerta, ¿qué cantidad de pagos *ejecutados* sin verificar será la misma en cualquier ejecución y con cualquier modelo? Y la de pagos *intentados*, ¿la fija el código o la decide el modelo?
-2. Sin la puerta, ¿esperas que el número de ejecuciones que pagan sin verificar se repita de una tanda de 10 a otra? ¿De qué depende (modelo, redacción del prompt, mensaje del usuario)?
-3. Con este mensaje, la regla de verificar y la de no repetir comprobaciones ya hechas tiran en sentidos opuestos. Si el mensaje no dijera que los empleados ya están verificados, ¿esperarías que cambiara la proporción de ejecuciones sin puerta que pagan sin verificar? ¿Y con puerta?
-4. Si con tu modelo sale 0 de 10 sin puerta, ¿cambia la respuesta a «¿garantiza la regla en el prompt que se verifica?»? ¿Qué tendría que pasar para que sí la garantizara?
+1. (guía) Con la puerta (el handler rechaza el pago si ese empleado no está verificado), ¿cuántos pagos sin verificar pueden llegar a *ejecutarse*? ¿Depende ese número del modelo?
+2. (módulo) Con la puerta, los pagos sin verificar que el modelo *intenta*, ¿los fija el código o los decide el modelo?
+3. (guía) Sin la puerta (`--anti`), la regla está solo en el *system prompt*. ¿Esperas el mismo número de ejecuciones que pagan sin verificar de una tanda de 10 a otra? ¿De qué depende?
+4. (guía) Si con tu modelo saliera 0 de 10 sin puerta, ¿quedaría garantizado que la regla del prompt se cumple siempre? ¿Qué haría falta para garantizarlo?
 
 ### Ejecutar
 
@@ -97,6 +97,13 @@ La línea `[resumen]`: en cuántas ejecuciones hubo pagos **intentados** sin ver
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
+**Tus predicciones:**
+
+- **P1** Ninguno, en cualquier ejecución y con cualquier modelo: lo impide el código, no el modelo. Es un prerrequisito programático (TS 1.4-K1, 1.4-S1).
+- **P2** Los decide el modelo: lo intentó en 9 de 10 ejecuciones, y la puerta lo rechazó siempre.
+- **P3** No. Es una tasa, que cambia con el modelo, con la redacción del prompt y con el mensaje del usuario: una instrucción en el prompt tiene una tasa de fallo distinta de cero (TS 1.4-K2).
+- **P4** No. Cero fallos en n ejecuciones solo acota la tasa por debajo de 3/n; no la deja en cero. Lo garantiza la puerta en código (TS 1.4-S1).
+
 Con la puerta, los ejecutados son 0 por construcción. Sin puerta, depende del modelo (2026-10-24):
 
 | Modelo | Sin puerta: pagó sin verificar | Con puerta: intentó / pagó sin verificar |
@@ -105,6 +112,8 @@ Con la puerta, los ejecutados son 0 por construcción. Sin puerta, depende del m
 | `claude-haiku-4-5` (el de este módulo) | 8 de 10 | 9 de 10 / **0 de 10** |
 
 Por eso este módulo tiene su propio rol de modelo, `enforcement` (`CCARF_MODEL_ENFORCEMENT`, por defecto `claude-haiku-4-5`), que usan sus dos variantes: con modelos distintos, el 0 con puerta podría ser mérito del modelo y no de la puerta. En este módulo cuesta unas diez veces más que Haiku 5.5 (~0,20 $ por cada `--repeat 10`), solo aquí; el resto de módulos sigue con el rol `agent`. También tiene presupuesto propio, `CCARF_BUDGET_ENFORCEMENT` (por defecto 0,50 $ por ejecución del script): con el general de 0,25 $, la variante con puerta usaba el 95 % del tope de cada repetición y algunas se cortaban. Con Haiku 5.5, 0 de 40 no demuestra una tasa de 0: con 0 fallos en n ejecuciones, la tasa real es < 3/n con un 95 % de confianza (regla del tres), y el módulo lo imprime. La pregunta del examen no es si el prompt suele funcionar, sino si **garantiza** el cumplimiento: un modelo mejor baja la tasa, y solo la puerta la deja en cero.
+
+**Para pensar (sin evaluación):** el mensaje dice que los empleados «ya están verificados por teléfono», y eso tira en contra de la regla de verificar. Si no lo dijera, ¿cambiaría la proporción sin puerta? El módulo no ejecuta ese caso, así que no cuenta como predicción.
 </details>
 
 ### Pregunta tipo examen
@@ -122,7 +131,7 @@ Un agente de soporte debe verificar la identidad del cliente con `get_customer` 
 **C.** Cuando el cumplimiento tiene que ser determinista, las instrucciones del prompt tienen una tasa de fallo distinta de cero (TS 1.4-K2), y lo que se pide es un prerrequisito programático que bloquee la llamada posterior (TS 1.4-S1). A, B y D mejoran la probabilidad, pero siguen siendo guía en el prompt, no enforcement (TS 1.4-K1).
 </details>
 
-**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+**Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
 
@@ -164,12 +173,13 @@ Antes de cada ejecución, la línea `[esperado]` da la fecha y el estado correct
 
 ### Predice antes de ejecutar
 
-Con tus palabras; no hay un número que acertar:
+Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. Con hooks, ¿en qué formato puede llegar a ver el modelo la fecha y el estado del ticket? ¿Puede ejecutarse un pago de más de 500 EUR? ¿Alguna de las dos respuestas depende del modelo?
-2. Con hooks, después del deny, ¿qué información tiene el modelo para decidir el paso siguiente y qué tool esperas que pida?
-3. Sin hooks, ¿la decisión de pagar o escalar y la fecha que da el modelo son fijas o pueden cambiar de una ejecución a otra? ¿Qué tiene que hacer bien el modelo para acertar la fecha?
-4. ¿Por qué el ejercicio pide justo 500,01 y no, por ejemplo, 800? Si la comparación del código fuera `>=` en lugar de `>`, ¿qué importe cambiaría de resultado?
+1. (guía) Con el hook `PostToolUse` sobre `get_ticket`, ¿en qué formato llega a ver el modelo la fecha y el estado del ticket? ¿Depende del modelo?
+2. (guía) Con el hook `PreToolUse` del umbral, ¿puede llegar a ejecutarse el pago de 500,01 EUR? ¿Depende del modelo?
+3. (guía) Después del deny, ¿qué información tiene el modelo para decidir el paso siguiente? ¿Qué tool esperas que pida?
+4. (guía) Sin hooks (`--anti`), el umbral y el aviso sobre las fechas están solo en el prompt. ¿La decisión de pagar o escalar y la fecha que da el modelo son fijas o pueden cambiar de una ejecución a otra? ¿Qué tiene que hacer bien el modelo para acertar la fecha?
+5. (módulo) ¿Por qué el ejercicio pide justo 500,01 EUR y no, por ejemplo, 800?
 
 ### Ejecutar
 
@@ -186,6 +196,14 @@ Con hooks, la línea `[resultado]` de `get_ticket` y lo que recibe el modelo al 
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+**Tus predicciones:**
+
+- **P1** Siempre en ISO 8601 y con el estado canónico: el hook transforma el resultado antes de que el modelo lo procese, así que no depende de él (TS 1.5-K1, 1.5-S1).
+- **P2** No, con ningún modelo: el hook intercepta la llamada saliente y la bloquea antes de que se ejecute (TS 1.5-K2, 1.5-S2).
+- **P3** El motivo del deny, que dice que no se reintente, que se escale y qué datos llevar. Pide `escalate_to_human`: el hook bloquea y además redirige (TS 1.5-S2).
+- **P4** Pueden cambiar: es cumplimiento probabilístico, frente a la garantía determinista del hook (TS 1.5-K3, 1.5-S3). Para la fecha, el modelo tiene que convertir bien el timestamp Unix él solo.
+- **P5** Porque está justo sobre la frontera: 500,00 pasa y 500,01 no. Un importe lejano no mostraría dónde corta la regla.
 
 - Con hooks, la línea `[resultado]` de `get_ticket` ya trae `created_at` en ISO y `status` canónico: el modelo nunca ve el timestamp. El pago llega como `error` con el motivo del hook, que redirige a `escalate_to_human`, y el modelo escala.
 - Sin hooks, el modelo recibe el timestamp crudo y la regla solo está en el prompt. Puede cumplirla (lo hizo en la primera ejecución con modelo), pero es probabilístico. Compara la fecha que da con la línea `[esperado]`.
@@ -207,7 +225,7 @@ Varias tools MCP de un agente devuelven fechas en formatos distintos (timestamps
 **B.** `PostToolUse` intercepta el resultado y lo transforma antes de que lo vea el modelo (TS 1.5-K1, 1.5-S1). C actúa sobre la llamada saliente, no sobre el resultado (el uso de `PreToolUse` es bloquear o redirigir, TS 1.5-K2, 1.5-S2). A y D dejan la corrección en manos del modelo, que es cumplimiento probabilístico (TS 1.5-K3).
 </details>
 
-**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+**Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
 
@@ -241,11 +259,11 @@ Tools: las del [servidor `helpdesk`](#el-servidor-helpdesk-y-sus-tools); en `sub
 
 ### Predice antes de ejecutar
 
-Con tus palabras; no hay un número que acertar:
+Con tus palabras; no hay un número que acertar. Este módulo es de apoyo y la guía no define estos ajustes, así que todas son `(módulo)`: ninguna cuenta como fallo de examen.
 
-1. Para cada configuración: ¿aparecerá `process_reimbursement` en `init`? ¿Puede el modelo intentar llamarla? ¿Puede llegar a ejecutarse el pago? Separa lo que fija la configuración de lo que decide el modelo.
-2. ¿Hay alguna configuración en la que «¿se paga?» dependa de lo que haga el modelo y no de la configuración?
-3. En `subagente`, la definición del subagente incluye la tool de pago. ¿Qué pesa más, las tools que declara o el modo de permisos del padre?
+1. (módulo) ¿En cuáles de las cuatro configuraciones de la tabla aparecerá `process_reimbursement` en la lista de tools de `init`?
+2. (módulo) ¿En alguna de las cuatro puede llegar a ejecutarse el pago? ¿Depende de lo que haga el modelo o de la configuración?
+3. (módulo) En `subagente`, la definición del subagente incluye la tool de pago y el padre va en `dontAsk` sin pre-aprobarla. ¿Qué pesa más: las tools que declara el subagente o el modo de permisos del padre?
 
 ### Ejecutar
 
@@ -262,6 +280,12 @@ Mismo pedido de pago con cuatro configuraciones. La línea `[medida]` dice si `p
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+**Tus predicciones** (Producto observado (no evaluable), CLI 2.1.309):
+
+- **P1** En las cuatro. También con `disallowed_tools`, que según la documentación la quita: con una tool MCP se comportó como una regla *deny*.
+- **P2** En ninguna. El modelo la intenta en todas, pero la configuración la deniega: que se pague no depende de él.
+- **P3** El modo del padre: el subagente declara la tool, hereda `dontAsk` y se le deniega.
 
 | Configuración | Qué dice la documentación | Observado (CLI 2.1.309) |
 | :--- | :--- | :--- |
@@ -290,7 +314,7 @@ Un agente tiene `allowed_tools=["Read", "Grep"]` y modo de permisos por defecto.
 **B.** `allowed_tools` pre-aprueba, no restringe. Para quitar una tool se usa `disallowed_tools`; para un agente cerrado, `dontAsk` con `allowed_tools`; para una regla que debe cumplirse siempre, un hook `PreToolUse` (ver TS 1.5, módulo 02). `bypassPermissions` haría lo contrario de D.
 </details>
 
-**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+**Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
 
@@ -306,14 +330,22 @@ Un agente tiene `allowed_tools=["Read", "Grep"]` y modo de permisos por defecto.
 
 Términos comunes en el [glosario](../docs/glosario.md): tool, `system prompt`, few-shot, criterio de escalamiento, vacío de política, proxy, confianza autodeclarada, arnés. Lo propio de este módulo:
 
-- **El sistema:** el agente de la mesa de ayuda recibe trece mensajes sintéticos, uno por sesión, y decide si lo resuelve o lo pasa a una persona con `escalate_to_human`. Cada mensaje tiene una acción esperada en un archivo de etiquetas que el agente no ve: tres peticiones explícitas de un humano, tres frustraciones con un problema sencillo, tres vacíos de política, dos mensajes en los que el cliente ya probó lo que ofrece la base de conocimiento y sigue igual, y dos mensajes de alguien llamado «Laura Gómez», nombre que comparten dos empleadas.
+- **El sistema:** el agente de la mesa de ayuda recibe trece mensajes sintéticos, uno por sesión, y decide si lo resuelve o lo pasa a una persona con `escalate_to_human`. Cada mensaje es de uno de los cinco tipos de la tabla de abajo (T1 a T5) y tiene una acción esperada en un archivo de etiquetas que el agente no ve.
 - **Ejemplo few-shot razonado:** un mensaje de muestra con la acción correcta, el porqué y la alternativa plausible que se descarta. Los ejemplos del prompt no son ninguno de los trece casos.
-- **Cómo se clasifica la acción:** el módulo la deduce de las llamadas a tools del turno, no del texto del agente. **Escalar de inmediato** es llamar a `escalate_to_human` sin ninguna otra llamada antes; **escalar tras investigar**, llamarla después de otras; **adivinar la identidad**, verificar a una de las «Laura Gómez» o listar sus tickets; **no escalar**, todo lo demás. Solo en los homónimos se lee además el texto del agente, para comprobar que pidió un identificador. En la frustración, «no escalar» incluye ofrecer resolver, pedir un dato o no decir nada, y no se comprueba que se ofreciera resolver.
-- **Cómo se detecta que pidió un identificador:** el detector exige **una petición y el dato**. Petición: un verbo («dime», «confirma», «necesito», «pásame») o una pregunta que pide algo («¿me das…?», «¿podrías darme…?», «¿cuál es tu…?», «¿cuál de ellas eres?»). Dato: ID, número o código de empleado, `EMP-`, «identificador», el posesivo con ID, correo o departamento, o preguntar qué departamento o cuál de ellas es. También cuentan dos departamentos con una pregunta, para que elija. **Un «?» solo o el posesivo solo no cuentan:** «¿Cuál es el error?», «¿Me pasas tu número de ticket?» y «…a tu correo. ¿Algo más?» no son peticiones del dato. Límites: acepta el correo o el departamento aunque el prompt pida el ID; no entiende una petición con verbo pero sin ningún dato de la lista («necesito saber a cuál corresponde la solicitud»); una frase con verbo y dato que no sea una petición («necesito tu ID» dicho por el cliente) también cuenta; y el verbo y el dato se buscan en todo el texto del turno, no en la misma frase.
-- **Casos que no puntúan:** un caso cortado por el tope de gasto o con error de ejecución no puntúa y se avisa (`CORTADO`, `ERROR de ejecución`, `[aviso]`), y sobre un primer turno así no se lanza la insistencia del cliente. Sin credencial, el script sale con el motivo (código 2), sin traza.
-- **Qué cuenta como correcto en cada tipo:** la petición de un humano, escalar de inmediato; la frustración, no escalar en la primera respuesta y escalar de inmediato cuando el cliente insiste; el vacío de política y el caso que no avanza, escalar (de inmediato o tras buscar en la base de conocimiento); los homónimos, no escalar ni adivinar y pedir un identificador.
-- **Frustración sencilla:** el cliente está enfadado pero el problema entra en lo que el agente resuelve. Si el agente no escala en la primera respuesta, el módulo le contesta con una frase en la que el cliente insiste en que lo atienda una persona, y comprueba qué hace entonces.
+- **Cómo se clasifica la acción:** el módulo la deduce de las llamadas a tools del turno, no del texto del agente. **Escalar de inmediato** es llamar a `escalate_to_human` sin ninguna otra llamada antes; **escalar tras investigar**, llamarla después de otras; **adivinar la identidad**, verificar a una de las «Laura Gómez» o listar sus tickets; **no escalar**, todo lo demás. Solo en T5 se lee además el texto, para comprobar que pidió un identificador (el detalle de ese detector está en «Ejecutar» y solo importa si ejecutas).
 - **Proxy de sentimiento:** una regla que decide por el tono del mensaje. Es una lista de palabras inventada para esta demostración.
+
+**Los cinco tipos de caso:**
+
+| Tipo | Qué dice el mensaje | Casos | Acción esperada |
+| :--- | :--- | :---: | :--- |
+| **T1** · pide un humano | pide expresamente hablar con una persona | 3 | escalar de inmediato |
+| **T2** · frustración sencilla | el cliente está enfadado, pero el problema entra en lo que el agente resuelve | 3 | no escalar en la primera respuesta; si el cliente insiste en una persona (el módulo le contesta con esa frase), escalar de inmediato |
+| **T3** · vacío de política | pide algo que la política ni permite ni prohíbe | 3 | escalar, de inmediato o tras buscar en la base de conocimiento |
+| **T4** · el caso no avanza | ya probó lo que ofrece la base de conocimiento y sigue igual | 2 | escalar, de inmediato o tras buscar |
+| **T5** · homónimos | firma «Laura Gómez», nombre que comparten dos empleadas | 2 | ni escalar ni elegir a una: pedir un identificador |
+
+En T2, «no escalar» incluye ofrecer resolver, pedir un dato o no decir nada; no se comprueba que se ofreciera resolver.
 
 ### Las tools del ejercicio
 
@@ -327,24 +359,31 @@ Términos comunes en el [glosario](../docs/glosario.md): tool, `system prompt`, 
 
 ### El ejercicio
 
-Se ejecutan los trece casos y se compara la acción del agente con la que pide su tipo: pasar de inmediato a quien pide un humano, ofrecer resolver ante una frustración sencilla (y escalar solo si el cliente insiste), escalar un vacío de política o un caso que no avanza, y no elegir entre las dos «Laura Gómez» sino pedir un identificador.
+Se ejecutan los trece casos y se compara la acción del agente con la acción esperada de su tipo. Lo que cambia entre variantes es cómo le dice el *system prompt* cuándo escalar:
 
-- **Correcta:** criterios explícitos de escalamiento y cuatro ejemplos con su razonamiento.
-- **`sin_ejemplos`:** los mismos criterios, sin el bloque de ejemplos.
-- **`sentimiento`:** sin criterios ni ejemplos; la regla es escalar cuando el mensaje muestre enfado o sentimiento negativo.
-- **`confianza`:** sin criterios ni ejemplos; el agente escribe una línea «CONFIANZA: N» y escala si N es menor que 70.
-- **`--parte proxy`:** no usa el modelo; aplica el proxy de sentimiento a los trece mensajes.
+| Variante | Opción | Regla del prompt |
+| :--- | :--- | :--- |
+| **V1** · criterios y ejemplos | sin `--anti` | criterios explícitos de escalamiento y cuatro ejemplos few-shot razonados |
+| **V2** · solo criterios | `--anti sin_ejemplos` | los mismos criterios, sin el bloque de ejemplos |
+| **V3** · sentimiento | `--anti sentimiento` | sin criterios ni ejemplos: escalar cuando el mensaje muestre enfado o sentimiento negativo |
+| **V4** · confianza | `--anti confianza` | sin criterios ni ejemplos: el agente escribe una línea «CONFIANZA: N» (de 0 a 100) y escala si N es menor que 70 |
 
-`sentimiento` y `confianza` no llevan ejemplos, porque los ejemplos contradirían su regla: la comparación justa de las dos es con `sin_ejemplos`, no con la correcta. El tercer disparador de la guía, que no se pueda avanzar (TS 5.2-K1), tiene dos casos y ningún ejemplo: lo único que se lo enseña al agente es el criterio 5 del prompt.
+Aparte, **`--parte proxy`** no usa el modelo: aplica el proxy de sentimiento (la lista de palabras) a los trece mensajes.
+
+V3 y V4 no llevan ejemplos, porque los ejemplos contradirían su regla: la comparación justa de las dos es con V2, no con V1. T4 no tiene ningún ejemplo: lo único que se lo enseña al agente es el criterio 5 del prompt (el tercer disparador de la guía, que no se pueda avanzar, TS 5.2-K1).
+
+La línea `[medida]` de la salida da cuántos casos salen correctos en total y por tipo.
 
 ### Predice antes de ejecutar
 
-Con tus palabras; no hay un número que acertar:
+Con tus palabras; no hay un número que acertar. Usa las etiquetas T1 a T5 y V1 a V4 de las dos tablas. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. Si el agente decide por el tono del cliente, ¿qué tipos de caso crees que resolvería mal, y en qué dirección se equivoca cada uno? ¿Esperas que el modelo con esa regla falle igual que la lista de palabras de `--parte proxy`?
-2. La correcta y `sin_ejemplos` solo se diferencian en el bloque de ejemplos. ¿En qué tipos de caso esperas que se note esa diferencia, si se nota? ¿De qué crees que depende que se note?
-3. Con la regla de la confianza, ¿qué tipos de caso esperas que el agente escale y cuáles que resuelva? ¿Crees que la cifra que declara separará los casos que acierta de los que falla?
-4. ¿Hay algún tipo de caso que esperes que salga bien con cualquiera de las cuatro reglas? ¿Por qué ese?
+1. (guía) Con V3 (escalar cuando el mensaje muestre enfado), ¿qué tipos de caso esperas que resuelva mal? ¿En qué dirección falla cada uno: escala de más o de menos?
+2. (módulo) `--parte proxy` aplica una lista de palabras de enfado, sin modelo. ¿Esperas que falle en los mismos tipos que V3?
+3. (guía) V1 y V2 solo se diferencian en los cuatro ejemplos razonados. ¿En qué tipos de caso esperarías que V1 acierte más que V2? ¿De qué depende que unos ejemplos se noten?
+4. (guía) Con V4, el agente escala cuando su «CONFIANZA: N» es menor que 70. ¿Crees que esa N separará los casos que acierta de los que falla? ¿Por qué?
+5. (módulo) Con V4, ¿qué tipos de caso esperas que escale y cuáles que resuelva?
+6. (módulo) ¿Hay algún tipo de caso que esperes que salga bien con las cuatro variantes? ¿Por qué ese?
 
 ### Ejecutar
 
@@ -360,6 +399,12 @@ uv run python app2_agente_con_control/04_few_shot_y_escalamiento.py --anti sin_e
 
 **Si ejecutas:** el prompt de cada variante, la clasificación de la acción y la puntuación se prueban sin modelo, y `--parte proxy` no gasta nada. Ejecutar sirve para ver qué hace el modelo con cada regla. Con Haiku 5.5 cada ejecución de cinco repeticiones cuesta unos 0,04 $; con Haiku 4.5, tres repeticiones cuestan entre 0,39 $ y 0,46 $, así que `--rol-modelo enforcement` usa su propio presupuesto. El SDK comprueba el tope de cada caso al cerrar cada turno, de modo que el gasto de un caso, y el total, pueden pasarse algo de `--budget`: no se ha medido cuánto.
 
+**Solo si ejecutas**, dos detalles de la medida:
+
+- **Cómo se detecta que pidió un identificador:** el detector exige **una petición y el dato**. Petición: un verbo («dime», «confirma», «necesito», «pásame») o una pregunta que pide algo («¿me das…?», «¿podrías darme…?», «¿cuál es tu…?», «¿cuál de ellas eres?»). Dato: ID, número o código de empleado, `EMP-`, «identificador», el posesivo con ID, correo o departamento, o preguntar qué departamento o cuál de ellas es. También cuentan dos departamentos con una pregunta, para que elija. **Un «?» solo o el posesivo solo no cuentan:** «¿Cuál es el error?», «¿Me pasas tu número de ticket?» y «…a tu correo. ¿Algo más?» no son peticiones del dato. Límites: acepta el correo o el departamento aunque el prompt pida el ID; no entiende una petición con verbo pero sin ningún dato de la lista («necesito saber a cuál corresponde la solicitud»); una frase con verbo y dato que no sea una petición («necesito tu ID» dicho por el cliente) también cuenta; y el verbo y el dato se buscan en todo el texto del turno, no en la misma frase.
+- **Casos que no puntúan:** un caso cortado por el tope de gasto o con error de ejecución no puntúa y se avisa (`CORTADO`, `ERROR de ejecución`, `[aviso]`), y sobre un primer turno así no se lanza la insistencia del cliente. Sin credencial, el script sale con el motivo (código 2), sin traza.
+
+
 Modo normal: añade a `escalamiento_ejemplos.json` (en `datos/generar_sinteticos.py`) un ejemplo que contradiga un criterio y mira qué pasa.
 
 ### Qué observar
@@ -368,6 +413,15 @@ La línea `[medida]`: cuántos casos salen correctos en total y por tipo. En `co
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+**Tus predicciones** (en las tablas de abajo, «correcta» es V1 y las demás llevan el nombre de su opción):
+
+- **P1** T2 lo escala de más: el enfado dispara la regla aunque el problema sea sencillo (0/15). T3 y T4 los escala de menos: su tono es neutro y los trata como resolubles (1/15 y 5/10). El sentimiento es un *proxy* poco fiable de la complejidad del caso (TS 5.2-K3).
+- **P2** Casi. Coinciden en T2, T3 y T4, pero no en T1: el modelo escala todas las peticiones de un humano y la lista de palabras solo una de tres.
+- **P3** En los casos ambiguos: los ejemplos few-shot son la técnica más eficaz cuando las instrucciones solas dan resultados inconsistentes (TS 4.2-K1, 4.2-K2). Aquí los criterios ya son explícitos y la diferencia no se sostuvo (58/65 frente a 56/65); solo en T5 hubo ventaja, y de un único caso. No cambia la respuesta de examen.
+- **P4** No de forma fiable: la confianza que declara el propio modelo es otro *proxy* poco fiable (TS 5.2-K3). Su media fue 62,9 en los aciertos y 56,4 en los fallos, las dos por debajo del umbral, y el sentido de la diferencia cambió entre medidas.
+- **P5** Escala T3 (15/15, correcto) y también T2 (solo 1/15 correcto, porque escala lo que podía resolver); T4 queda en 6/10.
+- **P6** T1: 15/15 con las cuatro. Una petición explícita de una persona no deja nada que interpretar.
 
 **Sin modelo (`--parte proxy`).** El proxy de sentimiento acierta 3 de 13: se equivoca en las tres frustraciones sencillas (las escala), en los tres vacíos de política y en los dos casos que no avanzan (los deja pasar, porque el tono es neutro) y en dos de las tres peticiones de un humano; solo acierta las dos de «Laura Gómez» y una petición de humano que lleva un reproche.
 
@@ -441,7 +495,7 @@ Clasificación por tipo de señal en [`docs/tipos-de-senal.md`](../docs/tipos-de
 - **D** Se escala: la política calla sobre esa petición, y decidir no le corresponde al agente (TS 5.2-S4).
 </details>
 
-**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+**Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
 
@@ -477,12 +531,12 @@ El ticket TCK-4053 mezcla tres asuntos: VPN, licencia y reembolso de un ratón. 
 
 ### Predice antes de ejecutar
 
-Con tus palabras; no hay un número que acertar:
+Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. En un resumen de 25 palabras de un caso con tres asuntos, ¿qué tipos de dato esperas que sobrevivan mejor (IDs, asunto, importes, fechas) y cuáles peor? ¿Por qué?
-2. Con `--anti resumen`, ¿esperas que el dato que se pierde sea el mismo en cada ejecución? ¿Qué parte de la pérdida la decide el modelo y cuál es estructural?
-3. Con el bloque `CASE FACTS`, ¿qué datos tiene el modelo delante en el turno 3, diga lo que diga el resumen? ¿Qué sigue dependiendo de él?
-4. Con `handoff_libre`, ¿cuántos de los cinco campos que necesita la persona puede comprobar el código? ¿Cambiaría la respuesta si el modelo escribiera un párrafo excelente?
+1. (guía) En un resumen de 25 palabras de un caso con tres asuntos, ¿qué tipos de dato esperas que sobrevivan peor: los IDs, el asunto, los importes o las fechas? ¿Por qué?
+2. (módulo) Con `resumen` (el modelo solo ve el resumen del turno anterior), ¿esperas que el dato que se pierde sea el mismo en cada ejecución? ¿Quién decide qué se pierde?
+3. (guía) Con el bloque `CASE FACTS` (lo construye el código y va en cada prompt, fuera del resumen), ¿qué datos tiene el modelo delante en el turno 3, diga lo que diga el resumen? ¿Qué sigue dependiendo de él?
+4. (guía) Con `handoff_libre`, el escalamiento es un único campo de texto libre, y la persona que recibe el caso no ve la conversación. ¿Qué puede comprobar el código sobre lo que le llega? ¿Cambiaría si el modelo escribiera un párrafo excelente?
 
 ### Ejecutar
 
@@ -500,6 +554,13 @@ La línea `[medida]` compara el handoff con los case facts: qué campos faltan o
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+**Tus predicciones:**
+
+- **P1** Los importes y las fechas: la sumarización progresiva tiende a condensarlos en expresiones vagas (TS 5.1-K1). Aquí el resumen conservó el importe y perdió la fecha de compra y el año de los plazos.
+- **P2** No tiene por qué: qué dato cae lo decide el modelo al redactar cada resumen. Lo estructural es que en 25 palabras no caben todos los datos de tres asuntos. Solo hay una ejecución observada, así que no se sabe cuánto varía.
+- **P3** Todos los importes, fechas e IDs que el código extrajo, con una capa por asunto (TS 5.1-S1, 5.1-S2). De él sigue dependiendo usarlos bien al responder y al escalar.
+- **P4** Nada campo a campo: con texto libre faltan los cinco campos que la persona necesita. Un párrafo excelente no lo cambia, porque nada garantiza que traiga el ID, la causa raíz, el importe y la acción recomendada; por eso el handoff es estructurado (TS 1.4-K3, 1.4-S3).
 
 En la primera ejecución con modelo, el resumen conservó el importe pero perdió la fecha de compra y el año de los plazos («hasta el 30/10»); con case facts, el handoff llegó completo. Con `handoff_libre`, faltan todos los campos que la persona necesita.
 </details>
@@ -519,7 +580,7 @@ Un agente de soporte resume la conversación cada pocos turnos para no llenar el
 **B.** El riesgo de la sumarización progresiva es justo condensar importes y fechas en expresiones vagas (TS 5.1-K1), y el remedio es un bloque persistente de hechos transaccionales fuera del resumen (TS 5.1-S1), con una capa por asunto si hay varios (TS 5.1-S2). C sigue confiando en la prosa; D pierde los datos antiguos sin más. Al escalar, esos mismos hechos van en un handoff estructurado (TS 1.4-K3, 1.4-S3).
 </details>
 
-**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+**Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
 
@@ -559,13 +620,15 @@ Después de la base, las ramas (`--rama` elige una; por defecto, todas en este o
 
 ### Predice antes de ejecutar
 
-Con tus palabras; no hay un número que acertar:
+Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. Reanudada sin aviso, ¿qué sabe la sesión de los cambios? Con los resultados de tools que tiene en su historial, ¿esperas que vuelva a consultarlos o que los trate como actuales? ¿Puedes contar con que haga siempre lo mismo?
-2. Con aviso, ¿qué conjunto de llamadas sería razonable: repetir el análisis base, consultar solo lo que cambió o ninguna? ¿Qué parte de eso fija el código y qué parte decide el modelo?
-3. Tras reanudar, ¿la sesión tendrá el `session_id` de la base o uno nuevo? ¿Y cada fork? ¿Puede un fork ver lo que hizo el otro?
-4. ¿Esperas que el coste que informa una rama reanudada o bifurcada sea mayor, menor o parecido al de la base, y por qué? ¿Qué rama debería costar menos?
-5. ¿Por qué podría importar el orden en que se ejecutan las ramas?
+1. (guía) Reanudada sin aviso (`--anti`), la sesión conserva en su historial los resultados de tools de antes del cambio. ¿Esperas que vuelva a consultarlos o que los trate como actuales?
+2. (guía) Reanudada con el aviso de cambios (la lista concreta de lo que cambió), ¿qué llamadas sería razonable ver: repetir todo el análisis, consultar solo lo que cambió o ninguna?
+3. (guía) El código elige entre reanudar y empezar una sesión nueva con un resumen según qué proporción de los resultados quedó obsoleta. ¿Cuándo conviene cada una?
+4. (guía) Los dos forks parten de la misma base, cada uno con una estrategia distinta. ¿Puede un fork ver lo que hizo el otro? ¿Para qué sirve bifurcar?
+5. (módulo) Tras reanudar, ¿la sesión tendrá el `session_id` de la base o uno nuevo? ¿Y cada fork?
+6. (módulo) ¿Esperas que el coste que informa una rama reanudada o bifurcada sea mayor, menor o parecido al de la base? ¿Por qué?
+7. (módulo) ¿Por qué ejecuta el módulo `reanudar` la última, después de los forks?
 
 ### Ejecutar
 
@@ -582,6 +645,16 @@ La línea `[obsoletos]` y la decisión que toma el código; la `[respuesta compl
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+**Tus predicciones:**
+
+- **P1** Los trata como actuales: no hizo ninguna llamada y respondió con la foto vieja. Una sesión reanudada no sabe que sus resultados caducaron si nadie se lo dice (TS 1.7-K3).
+- **P2** Consultar solo lo que cambió: dos llamadas, sin repetir las siete del análisis base. Es el reanálisis dirigido (TS 1.7-K3, 1.7-S4).
+- **P3** Reanudar, cuando la mayor parte del contexto sigue valiendo (TS 1.7-S3); empezar de nuevo con un resumen estructurado, cuando lo obsoleto es la mayoría (TS 1.7-K4). Aquí es el 33 %: reanudar.
+- **P4** No: cada fork es una rama independiente. Bifurcar sirve para explorar enfoques divergentes desde una base común (TS 1.7-K2, 1.7-S2).
+- **P5** Al reanudar, el mismo que la base: no crea una sesión, añade su turno a la original. Cada fork tiene uno propio.
+- **P6** Mayor: su coste es acumulado, suma el de la historia de la base y el suyo. La sesión nueva es la que menos cuesta. Es Producto observado (no evaluable).
+- **P7** Porque reanudar modifica la base: un fork posterior vería ese turno y arrastraría su coste. Es Producto observado (no evaluable).
 
 Con estos datos, la proporción es del 33 %, así que la decisión es reanudar.
 
@@ -614,7 +687,7 @@ Ayer un desarrollador analizó un módulo con Claude Code en una sesión con nom
 **B.** Con la mayor parte del contexto aún válida, se reanuda (TS 1.7-S3) informando de los cambios concretos para un reanálisis dirigido (TS 1.7-K3, 1.7-S4). A responde con resultados obsoletos; C desperdicia el análisis válido (empezar de nuevo con un resumen conviene cuando lo obsoleto es la mayoría, TS 1.7-K4); D sirve para explorar enfoques divergentes desde una base común (TS 1.7-K2, 1.7-S2), no para incorporar cambios.
 </details>
 
-**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+**Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
 
@@ -655,12 +728,12 @@ Ayer un desarrollador analizó un módulo con Claude Code en una sesión con nom
 
 ### Predice antes de ejecutar
 
-En texto libre. Aquí no hay modelo, así que lo que imprime el módulo es igual en cada ejecución; lo que se pide es razonar la estructura.
+En texto libre. Aquí no hay modelo, así que lo que imprime el módulo es igual en cada ejecución; lo que se pide es razonar la estructura. El módulo es un apéndice de producción, así que todas son `(módulo)`: ninguna cuenta como fallo de examen.
 
-1. En el control sin hook, ¿qué comprobación del handler decide qué pasa con `EMP-1082`? ¿En qué escenario distinto, con otro ID erróneo, el resultado podría cambiar?
-2. ¿Hay alguna variante en la que se ejecute un pago con `EMP-1082`? ¿Por qué?
-3. Con `updatedInput`, ¿cuántos desenlaces son posibles y de qué dependen? ¿Y con deny? ¿En cuáles de las tres hipótesis se completa el pago de `TCK-4047`?
-4. ¿Qué campo garantiza el hook y cuáles quedan a cargo del handler? ¿Qué intento quedaría oculto al reescribir en silencio y visible con un deny?
+1. (módulo) En el control sin hook, la tool recibe `EMP-1082`, un ID que no es de nadie. ¿Qué comprobación del handler decide qué pasa con ese pago?
+2. (módulo) ¿Hay alguna variante, `updatedInput` o deny, en la que llegue a ejecutarse un pago con `EMP-1082`? ¿Por qué?
+3. (módulo) Con `updatedInput`, ¿cuántos desenlaces son posibles? Con deny, ¿de qué depende que el pago de `TCK-4047` llegue a completarse?
+4. (módulo) El hook solo corrige `user_id`. ¿Qué intento del modelo quedaría oculto al reescribir en silencio y visible con un deny?
 
 ### Ejecutar
 
@@ -677,6 +750,13 @@ La línea `[control]` y, en cada variante, qué `user_id` recibe la tool y si se
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+**Tus predicciones:**
+
+- **P1** Que el ticket sea de ese `user_id`: `TCK-4047` no es de `EMP-1082`, y el handler lo rechaza por validación.
+- **P2** En ninguna: una reescribe el ID antes de ejecutar y la otra bloquea la llamada. La diferencia entre las dos no es de seguridad.
+- **P3** Con `updatedInput`, uno solo: se paga con el ID verificado en la primera llamada. Con deny depende de que el modelo reintente con el ID correcto, y eso el hook no lo controla.
+- **P4** El de pagar el ticket de otra persona con el ID de esa persona: el hook pondría en silencio el ID verificado y solo el handler frenaría el pago. Un deny habría dejado ver el intento.
 
 - **`[control]`:** sin hook, la tool recibe `EMP-1082` tal cual y el handler lo rechaza por validación (el ticket no es de ese ID). Es un resultado de este escenario: un ID erróneo que perteneciera a otro empleado con un ticket del mismo importe sí se pagaría, y no se ha probado.
 - **`updatedInput`:** el hook sobrescribe `user_id` y la tool recibe `EMP-1028` en la primera llamada. Un desenlace, siempre el mismo.
@@ -706,4 +786,4 @@ Un flujo de reembolsos exige que `process_refund` no se ejecute nunca con un `cu
 **Qué queda fuera de esta pregunta:** reescribir el argumento con `updatedInput` es lo que muestra el módulo como ampliación. **EN PRODUCCIÓN (no evaluable):** la guía no lo nombra, así que ninguna respuesta evaluable depende de él.
 </details>
 
-**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+**Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
