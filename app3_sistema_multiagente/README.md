@@ -71,14 +71,18 @@ Hay dos preguntas: la amplia por defecto («¿Qué problemas de red están tenie
 
 La salida imprime la respuesta y varias líneas `[medida]`: los subagentes invocados; las llamadas por agente y los intentos del coordinador que denegó la barrera; si hubo sintetizador, cuántos de los IDs que encontraron los analistas llegaron a su prompt, y cuáles faltan; y qué subtemas aparecen en la respuesta. Esta última línea busca las palabras en el texto final: no comprueba si el subtema se investigó.
 
+**El papel del sintetizador.** Invocarlo no es obligatorio: el coordinador puede redactar él mismo la respuesta final o encargársela al `synthesizer`, que separa la redacción de la investigación. Si lo invoca, el sintetizador solo sabe lo que el coordinador escriba en su prompt.
+
 ### Predice antes de ejecutar
 
-Con tus palabras; no hay un número que acertar:
+Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. ¿Por dónde tiene que pasar algo que encuentra un analista para llegar al sintetizador? ¿Qué parte de ese camino fija el código y qué parte depende del prompt del coordinador?
-2. Con `--pregunta simple`, ¿qué subagentes hacen falta y cuáles sobran? ¿Qué cambiaría con esa misma pregunta en `pipeline_completo`?
-3. Con `estrecha`, ¿qué parte del tema puede quedarse fuera, y por qué no la puede recuperar ningún subagente? Para saber si se investigó, ¿te fías más de la línea de subtemas o de las consultas delegadas?
-4. Con `sin_hallazgos`, ¿qué le llega al sintetizador? ¿Quién más podría acabar redactando la respuesta, y en qué líneas de la salida lo verías?
+1. (guía) Un analista encuentra un ticket relevante. ¿Por dónde tiene que pasar ese hallazgo para llegar al sintetizador? ¿Puede el sintetizador verlo por su cuenta?
+2. (guía) Con `--pregunta simple` («¿Qué dice el artículo KB-109?»), ¿qué analistas hacen falta y cuáles sobran?
+3. (guía) Con `estrecha` (el prompt dice que «problemas de red» es casi siempre la VPN y que cada analista reciba una sola consulta), ¿qué parte del tema puede quedarse fuera? ¿Puede recuperarla algún subagente?
+4. (módulo) Para saber si un subtema se investigó hay dos señales: la línea de subtemas, que busca palabras en la respuesta final, y las consultas delegadas (`[llamada rN]`). ¿De cuál te fías más y por qué?
+5. (guía) Con `sin_hallazgos` (el coordinador pasa al sintetizador solo la pregunta), ¿qué puede redactar el sintetizador? ¿Por qué?
+6. (módulo) En `sin_hallazgos`, ¿quién esperas que acabe redactando la respuesta final?
 
 ### Ejecutar
 
@@ -97,6 +101,15 @@ Las líneas `[medida]`: qué subagentes se invocan, cuántos hallazgos llegan al
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
+**Tus predicciones:**
+
+- **P1** Por el coordinador: toda la comunicación entre subagentes pasa por él (TS 1.2-K1, 1.2-S4). El sintetizador no lo ve por su cuenta: su contexto está aislado y los hallazgos hay que incluirlos en su prompt (TS 1.2-K2, 1.3-K2, 1.3-S1).
+- **P2** Solo `kb_analyst`. El coordinador elige según la pregunta en vez de recorrer siempre todo el pipeline (TS 1.2-K3, 1.2-S1), y aquí redactó él mismo.
+- **P3** La wifi y la impresora. Ningún subagente puede recuperarlas: cada uno solo recibe la consulta que le delegan. Una descomposición demasiado estrecha deja sin cubrir partes de un tema amplio (TS 1.2-K4).
+- **P4** De las consultas delegadas. En una repetición, la línea de subtemas dio `wifi: True` porque la respuesta decía que no había buscado la wifi: mira la palabra, no si se investigó.
+- **P5** Nada con datos: recibió 0 de 33 hallazgos y dijo que no tenía datos. No hereda lo que encontraron los analistas (TS 1.2-K2, 1.3-S1).
+- **P6** El coordinador, que sí tiene los hallazgos.
+
 En la primera ejecución con modelo:
 
 | Variante | Observado |
@@ -112,6 +125,8 @@ Notas:
 
 - **Barrera del coordinador (2026-10-27, Sonnet 5.5 + Haiku 5.5):** como en el módulo 03, `tools=["Agent"]` no oculta al coordinador las tools del servidor, y hasta ahora solo el prompt («No busques tú») le impedía usarlas. Sonda: pidiéndoselo expresamente, sin barrera llamó él mismo a `search_tickets` y obtuvo los 7 tickets; con el hook compartido (`coordinator_gate.py`) recibió el rechazo, delegó en `tickets_analyst` y el subagente buscó con normalidad. Al repetir la medida con la barrera (correcta, `estrecha` y `--pregunta simple`, una ejecución cada una), el coordinador no intentó ninguna tool del servidor (`intentos del coordinador, denegados: 0`): la barrera asegura la medida, no corrige una señal que se hubiera visto.
 - **`estrecha` y el detector de subtemas:** en esa repetición las tres consultas fueron solo de VPN (la descomposición estrecha se mantuvo), pero la línea de subtemas dio `wifi: True`, porque la respuesta decía «No he buscado otros problemas de red… como wifi o DNS». El detector busca la palabra, no si se investigó: es aproximado, y la señal fiable está en las consultas delegadas (`[llamada rN]`).
+
+**Para pensar (sin evaluación):** ¿qué cambiaría con `--pregunta simple` en `pipeline_completo`, y qué pierde `procedimental` frente a un prompt con objetivos (TS 1.3-S4)? Esas dos variantes no están en el resultado de referencia, así que no cuentan como predicción.
 </details>
 
 ### Pregunta tipo examen
@@ -147,7 +162,7 @@ Notas:
 - **D** No reparte el alcance: los tres buscan lo mismo y se duplican, sin garantizar cobertura. Dividir el alcance es trabajo del coordinador (TS 1.2-S2, 1.2-K3).
 </details>
 
-**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+**Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
 
@@ -182,14 +197,19 @@ El módulo tiene cuatro partes independientes que se eligen con `--parte`, cada 
 
 `--anti` tiene una sola variante, `secuencial`, que solo afecta a `--parte paralelo`.
 
+**Cómo se consigue el paralelo.** Ningún código lanza las tres llamadas a la vez: se le pide al coordinador en su prompt, las emite el modelo y el módulo lo comprueba después en el registro, agrupando las llamadas `Agent` por respuesta. El prompt lo pide; el código no lo garantiza.
+
 ### Predice antes de ejecutar
 
-Con tus palabras; no hay un número que acertar:
+Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. En cada modo de `paralelo`, ¿cómo se repartirán las tres llamadas `Agent` entre las respuestas del coordinador? ¿Cuál debería tardar menos y de qué depende que la aceleración se acerque o no a ×3? ¿Esperas la misma cifra en dos ejecuciones?
-2. En `refinamiento`, el comprobador solo busca palabras en la síntesis. ¿Qué clase de síntesis le haría dar por cubierto un subtema que no se investigó? ¿Y qué esperas que pase si la primera síntesis ya nombra los tres?
-3. En `descomposicion`, ¿puede variar el número de pasos de la cadena fija según lo que encuentre? En la adaptativa, ¿de dónde deberían salir las subtareas de la segunda ronda?
-4. En `legacy`, ¿qué hará el agente antes de proponer ningún test, y para qué le sirve cada una de sus tres tools? ¿Basta con `Glob` y `Grep` para conocer todas las dependencias entre módulos, o hace falta leerlos?
+1. (guía) En `paralelo`, ¿cómo tiene que emitir el coordinador las tres llamadas `Agent` para que los subagentes trabajen a la vez: las tres en una misma respuesta o una por turno?
+2. (módulo) ¿Qué modo de `paralelo` debería tardar menos? ¿Esperas la misma aceleración en dos ejecuciones?
+3. (guía) En `refinamiento`, después de la primera síntesis, ¿qué debe recibir el coordinador para volver a delegar: la pregunta entera otra vez o solo lo que falta por cubrir?
+4. (módulo) El comprobador de `refinamiento` solo busca palabras en la síntesis. ¿Qué clase de síntesis le haría dar por cubierto un subtema que no se investigó?
+5. (guía) En `descomposicion`, ¿puede cambiar el número de pasos de la cadena fija según lo que vaya encontrando? ¿Para qué clase de trabajo conviene la cadena y para cuál la descomposición adaptativa?
+6. (guía) En la descomposición adaptativa, ¿de dónde deberían salir las subtareas de la segunda ronda?
+7. (guía) En `legacy`, ¿qué debería hacer el agente antes de proponer ningún test? ¿Qué hace con el plan si después descubre una dependencia?
 
 ### Ejecutar
 
@@ -209,6 +229,16 @@ En `paralelo`, cómo se agrupan las llamadas `Agent` por respuesta y la latencia
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+**Tus predicciones:**
+
+- **P1** Las tres en una misma respuesta (TS 1.3-S3): en el modo paralelo salieron juntas en `r1`; en el secuencial, una por respuesta (`r1`, `r3`, `r5`).
+- **P2** El paralelo. La aceleración no se repite: ×1,66 en una ejecución y ×1,37 en otra.
+- **P3** Solo las brechas, con consultas dirigidas a lo que falta, y después sintetizar otra vez (TS 1.2-S3). En la ejecución de referencia no hubo brechas en la ronda 1 y el bucle no llegó a actuar.
+- **P4** Una que nombre el subtema sin haberlo investigado, por ejemplo para decir que no lo buscó. El comprobador mira la palabra, no el trabajo.
+- **P5** No: son siempre tres pasos. La cadena fija conviene cuando el trabajo es predecible; la descomposición dinámica, cuando depende de lo que se va descubriendo, como una investigación abierta (TS 1.6-K1, 1.6-S1).
+- **P6** De los hallazgos de la primera ronda (TS 1.6-K3): aquí, los tickets del 19 al 22 de septiembre y los bloqueos de cuenta.
+- **P7** Mapear la estructura, leer las zonas de mayor impacto y dar un plan priorizado, que se ajusta cuando aparece una dependencia (TS 1.6-S3). Aquí usó `Glob` y `Grep`, leyó los siete archivos y el plan nombró una dependencia que solo se ve leyendo el código.
 
 En la primera ejecución con modelo:
 
@@ -234,7 +264,7 @@ Un coordinador debe investigar tres temas independientes con tres subagentes. Ho
 **A.** Los subagentes en paralelo se lanzan con varias llamadas a Task en la misma respuesta (TS 1.3-S3). B pierde la especialización y el reparto del alcance; C es usar un tope como mecanismo de control (el anti-patrón de TS 1.1-S3); D rompe el hub-and-spoke, en el que toda la comunicación pasa por el coordinador.
 </details>
 
-**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+**Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
 
@@ -282,12 +312,13 @@ Antes de las medidas, cada ejecución imprime una línea `[esperado]` con la hip
 
 ### Predice antes de ejecutar
 
-Con tus palabras; no hay un número que acertar:
+Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. Con la configuración correcta, ¿qué parte del reparto entre sintetizador y coordinador está garantizada sea cual sea el modelo, y qué parte depende de que el sintetizador llame a `verify_fact` y de lo que haga el coordinador con lo que le vuelve?
-2. Con `--anti todas`, ¿qué podría hacer el sintetizador con las tools que no son suyas? ¿Qué haría más probable o menos probable que las use: que su prompt traiga todo lo que necesita o que le falte algo?
-3. Con `--anti fetch_url`, ¿qué rechazaba el código con `load_document` que ahora ya no rechaza? ¿De quién depende entonces que no entren en los hallazgos páginas que no son documentos, y esperas el mismo resultado en todas las repeticiones?
-4. Con `--anti sin_verify`, ¿quién puede verificar las afirmaciones y con qué? ¿Esperas más delegaciones o menos que en la correcta? Razónalo antes de leer la línea `[esperado]`.
+1. (guía) Sin `--anti`, cada subagente tiene solo las tools de su rol. ¿Qué no puede hacer el sintetizador, decida lo que decida el modelo? ¿Qué sigue dependiendo del modelo?
+2. (guía) Con `todas` (el sintetizador recibe las cinco tools del servidor), ¿qué riesgo hay? ¿Qué lo haría más probable: que su prompt traiga todo lo que necesita o que le falte algo?
+3. (guía) Con `fetch_url` (abre cualquier URL) en lugar de `load_document` (comprueba que la URL es un documento), ¿de quién depende que no entren en los hallazgos páginas que no son documentos? ¿Esperas el mismo resultado en todas las repeticiones?
+4. (guía) Sin `--anti`, el sintetizador tiene `verify_fact`, una tool acotada para comprobaciones simples. ¿Qué pasa con las verificaciones que son complejas?
+5. (módulo) Con `sin_verify` (el sintetizador no tiene ninguna tool), ¿esperas más delegaciones o menos que sin `--anti`? ¿Quién verificará las afirmaciones?
 
 ### Ejecutar
 
@@ -309,6 +340,14 @@ Por variante, las llamadas fuera de rol, las URLs que no son documentos abiertas
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+**Tus predicciones:**
+
+- **P1** Buscar ni cargar documentos: no tiene esas tools, y eso lo fija la configuración (TS 2.3-S1). Del modelo depende que llame a `verify_fact` y lo que haga el coordinador con lo que le vuelve.
+- **P2** Que use mal tools ajenas a su especialidad, como un agente de síntesis que se pone a buscar (TS 2.3-K2). Sería más probable si le faltara información. Aquí no hubo señal: recibe todo en su prompt y no las tocó. En el examen manda la guía.
+- **P3** Del modelo: la tool genérica ya no rechaza nada. No fue igual: en 2 de 3 repeticiones abrió las cuatro páginas que no son documentos y en la otra, ninguna. Por eso se cambia la tool genérica por una restringida (TS 2.3-S2).
+- **P4** Vuelven al coordinador: la tool acotada cubre lo frecuente y lo complejo sigue pasando por él (TS 2.3-K3, 2.3-S3). Aquí, 5 llamadas a `verify_fact` y 2 devueltas por complejas.
+- **P5** Menos: sin tool con la que verificar, el coordinador casi nunca invoca al sintetizador (1 de 6) y resuelve las afirmaciones él. La hipótesis de partida del módulo era la contraria.
 
 Coordinador Sonnet 5.5, subagentes Haiku 5.5, 3 repeticiones:
 
@@ -344,7 +383,7 @@ Un agente de síntesis recibe todas las tools del sistema y, aunque su cometido 
 **C.** Un agente con tools fuera de su especialización tiende a malusarlas (TS 2.3-K2); la solución es el acceso acotado, con las tools de su rol (TS 2.3-S1) y una tool cross-role muy limitada para las necesidades de alta frecuencia, con los casos complejos por el coordinador (TS 2.3-K3, TS 2.3-S3). A pide por prosa lo que la configuración debería garantizar, y el agente conserva las tools que malusa; B deja un agente con todas las tools, lo contrario del acceso acotado (TS 2.3-K3); D elimina la tool acotada, y cada verificación simple pasa a depender del coordinador (el anti-patrón de TS 2.3-S3).
 </details>
 
-**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+**Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
 
@@ -385,13 +424,14 @@ Cada ejecución imprime una línea `[esperado]` con la hipótesis escrita en el 
 
 ### Predice antes de ejecutar
 
-Con tus palabras; no hay un número que acertar:
+Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. En la configuración correcta, ¿qué tendría que haber en lo que el subagente le devuelve al coordinador para que este pueda anotar la brecha sin inventarla? ¿Qué distingue ese contenido de un vacío?
-2. La fuente con *timeout* falla en todas las consultas y `SRC-REDES`, solo en la primera. ¿Qué esperas que haga el subagente con cada una y qué le llegará al coordinador de cada una? ¿Qué parte de eso decide el código y qué parte el modelo?
-3. Con `--anti generico`, el subagente reintenta igual que en la correcta, pero al coordinador solo le llega «búsqueda no disponible»: no sabe qué se intentó ni qué alternativas hay. ¿Esperas que haga algo distinto que en la correcta? ¿Podrá anotar la brecha igualmente?
-4. Con `--anti silenciar`, el *handler* convierte el *timeout* en un vacío antes de que lo vea el subagente. ¿Qué sabe entonces el coordinador de esa fuente? ¿Hay algo en lo que recibe que pudiera delatar el fallo?
-5. Con `--anti abortar`, ¿qué se pierde respecto a la correcta, y qué parte del trabajo ya estaba hecha cuando se decide abortar?
+1. (guía) Sin `--anti`, cuando una fuente falla y el subagente no puede resolverlo, ¿qué tiene que traer su informe para que el coordinador pueda decidir y anotar la brecha? ¿Qué distingue ese informe del de una fuente que respondió vacía?
+2. (guía) `SRC-REDES` falla solo la primera vez que se consulta. ¿Qué debe hacer el subagente con ese fallo? ¿Qué le llega de él al coordinador?
+3. (guía) Con `generico`, al coordinador solo le llega «búsqueda no disponible». ¿Qué información pierde para decidir cómo recuperarse?
+4. (módulo) Aquí solo hay una fuente caída y ninguna alternativa que consultar. Con `generico`, ¿esperas que el coordinador haga algo distinto que sin `--anti`?
+5. (guía) Con `silenciar`, el *handler* convierte el *timeout* en un resultado vacío antes de que lo vea el subagente. ¿Qué sabe entonces el coordinador de esa fuente? ¿Puede anotar la brecha?
+6. (guía) Con `abortar`, el coordinador no entrega nada si una fuente falla. ¿Qué se pierde, sabiendo que las demás fuentes ya habían respondido?
 
 ### Ejecutar
 
@@ -411,6 +451,15 @@ Las consultas por fuente y los reintentos locales, la cobertura según los infor
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+**Tus predicciones:**
+
+- **P1** La clase de fallo, qué se consultó, qué se llegó a obtener y qué otras vías quedan, estructurado junto al fallo (TS 5.3-K1, 5.3-S1). Y la marca de que fue un fallo y no un vacío: una consulta que funcionó y no encontró nada ya es una respuesta (TS 5.3-K2, 5.3-S2).
+- **P2** Reintentarlo en local y, si se recupera, no propagarlo (TS 5.3-S3). Al coordinador le llegó un informe `ok`, sin brecha, en 3 de 3.
+- **P3** Qué se intentó, qué se obtuvo y qué alternativas hay: justo el contexto que necesitaba (TS 5.3-K3).
+- **P4** No hizo nada distinto: una delegación y la brecha anotada, igual que sin `--anti`. Con una sola fuente caída no había decisión que ese contexto pudiera mejorar. En el examen manda la guía.
+- **P5** Que respondió vacía: para él el fallo no existe. La brecha solo salió anotada en 1 de 3, y mal diagnosticada. Devolver un vacío como si fuera un éxito es uno de los dos anti-patrones (TS 5.3-K4).
+- **P6** Todo el trabajo de las fuentes que sí respondieron: es el anti-patrón opuesto, terminar el flujo entero por un solo fallo (TS 5.3-K4). Lo adecuado es entregar el resultado parcial con la cobertura anotada (TS 5.3-S4).
 
 Coordinador Sonnet 5.5, subagente Haiku 5.5, 3 ejecuciones por variante (`--repeat 3`), ~0,26 $ las cuatro variantes:
 
@@ -455,7 +504,7 @@ Un coordinador delega búsquedas en dos subagentes. Tras su recuperación local,
 - **D** repite a ciegas lo que ya falló y, si vuelve a fallar, tira el trabajo de las demás fuentes (TS 5.3-K4).
 </details>
 
-**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+**Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
 
@@ -495,16 +544,22 @@ Qué cambia en el código de cada variante:
 
 El código mide sin modelo cuántas cifras del informe llevan su fuente en la misma frase o fila, si la ubicación y el fragmento llegan al informe, si la decisión del coordinador aparece en el prompt del sintetizador, si algún conflicto aparece fusionado en un promedio, si la tabla lleva las cifras de los pares, cuánto pesa lo que llega al sintetizador, qué contexto usa el informe para explicar cada diferencia, si deja como disputado lo que el contexto no explica y si el resumen del informe largo cita el hallazgo clave.
 
+**Los tres pares de cifras.** Las fuentes traen tres pares de cifras que no coinciden. En dos, los metadatos explican la diferencia: en uno cambian el método y la muestra; en el otro, el periodo y la población. En el tercero, las dos fuentes coinciden en periodo, método y población y aun así dan cifras distintas: nada lo explica. No hace falta abrir el archivo de datos.
+
 ### Predice antes de ejecutar
 
-Con tus palabras; no hay un número que acertar:
+Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. En la configuración correcta, ¿qué parte de la procedencia está garantizada por la estructura de lo que devuelve el investigador y qué parte depende de lo que escriba el sintetizador?
-2. Con `--anti sin_procedencia`, ¿qué sabe el sintetizador de cada cifra? ¿Dónde esperas ver el daño: en lo que devuelve el investigador, en el informe final o en ambos? Razónalo antes de ejecutar.
-3. Con `--anti promedio`, ¿qué cifras tendrá el informe que no sale en ninguna fuente? ¿Seguirán apareciendo también las cifras originales?
-4. Mira el contexto metodológico de cada par en las fuentes (`fuentes_investigacion.json`): ¿qué diferencias explica y cuál no? ¿Qué tendría que hacer un buen informe con cada par, y qué error solo puede delatar un par que nada explica?
-5. Con `--anti formato_uniforme` y con `--anti inventar_explicacion`, el sintetizador recibe una orden que va contra la correcta. ¿Qué esperas ver en el informe con cada una? ¿Cuál crees que obedecerá más, y por qué?
-6. En la parte `medio`, ¿qué cambia al anteponer una línea de resumen, y qué al poner encabezados de sección? ¿Esperas la misma diferencia con un informe mucho más largo que con uno de unas 1.500 palabras?
+1. (guía) Sin `--anti`, el investigador devuelve cada afirmación con su fuente, su fecha y el fragmento que la respalda. ¿Qué se perdería si en su lugar devolviera un resumen en prosa de lo que encontró?
+2. (módulo) Con `sin_procedencia` (prosa larga, sin identificadores de fuente ni fechas), ¿dónde esperas ver el daño: en lo que devuelve el investigador, en el informe final o en ambos?
+3. (guía) Con `promedio` (una única cifra consolidada cuando dos fuentes discrepan), ¿qué cifra tendrá el informe que no sale de ninguna fuente? ¿Qué debería hacer el informe en su lugar?
+4. (guía) En los dos pares cuya diferencia explican los metadatos, ¿qué debería hacer el informe con las dos cifras? ¿Qué información tiene que viajar con cada cifra para que pueda hacerlo?
+5. (guía) En el par que nada explica, ¿qué debería hacer el informe con las dos cifras? ¿Qué error delataría ese par?
+6. (guía) ¿Quién debe decidir cómo reconciliar las cifras en conflicto: el sintetizador mientras redacta o el coordinador antes de la síntesis?
+7. (guía) Con `formato_uniforme` (todo en prosa continua), ¿qué pierde el informe a la hora de presentar las cifras comparables?
+8. (módulo) Con `inventar_explicacion` (la orden de explicar siempre por qué difieren las cifras), ¿esperas que el sintetizador invente una causa para el par que nada explica?
+9. (guía) En la parte `medio`, el hallazgo clave está en mitad de un informe largo. ¿Qué riesgo corre al resumirlo? ¿Qué dos tratamientos del texto lo reducen?
+10. (módulo) El informe de `medio` tiene unas 1.500 palabras. Sin ningún tratamiento, ¿esperas que el resumen pierda el hallazgo clave?
 
 ### Ejecutar
 
@@ -529,6 +584,19 @@ Las afirmaciones estructuradas sin problemas, las fuentes que llegan al sintetiz
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+**Tus predicciones:**
+
+- **P1** La atribución: qué afirmación viene de qué fuente (TS 5.6-K1). Ese emparejamiento es una estructura que el sintetizador tiene que recibir y conservar (TS 5.6-K2, 5.6-S1). Aquí, las 40 afirmaciones llegaron con ubicación y fragmento válidos.
+- **P2** En lo que devuelve el investigador: 0 afirmaciones estructuradas. En el informe final casi no se notó, porque la prosa del modelo ya nombraba la fuente y la fecha.
+- **P3** El promedio (22 horas; 3,85 sobre 5). Debería anotar las dos cifras, cada una con su fuente, en vez de quedarse con una o fundirlas (TS 5.6-K3). La fusión apareció en 1 de 3.
+- **P4** Presentarlas con su contexto, para que la diferencia no parezca una contradicción. Con cada cifra tienen que viajar la fecha, la ubicación en la fuente y el contexto metodológico (TS 5.6-K4, 5.6-S4, 5.1-S5).
+- **P5** Dejarlo como disputado, separado de lo bien establecido y respetando cómo lo describe cada fuente (TS 5.6-S2). Delataría un informe que inventa una causa.
+- **P6** El coordinador, antes de pasar los hallazgos a la síntesis (TS 5.6-S3). Su decisión fue acertada en 9 de 9 pares.
+- **P7** La tabla: salió en 0 de 3. Cada clase de contenido se presenta a su manera, las cifras en tabla, en vez de pasarlo todo a un formato único (TS 5.6-S5).
+- **P8** Con el modelo de la medida no la inventó (0 de 3). Con el otro rol de subagente la inventó en el borrador en 1 de 3, y el coordinador la quitó antes del informe final: el fallo solo se ve midiendo el borrador.
+- **P9** Que el modelo se lo salte: en una entrada larga atiende bien el principio y el final y puede perder lo del medio (TS 5.1-K2). Lo reducen abrir con un resumen de lo importante y ordenar el detalle con encabezados (TS 5.1-S4).
+- **P10** No lo perdió: lo citó en 12 de 12, con y sin tratamiento. Con este tamaño no hay señal; en el examen manda la guía.
 
 Coordinador Sonnet 5.5, subagentes Haiku 5.5, 3 ejecuciones por variante; ~1,18 $ en `conflictos` (incluidos 0,13 $ de una prueba que no valió) y 0,78 $ en `medio`:
 
@@ -557,6 +625,8 @@ Notas:
   - `sources_passed` pide que el id de la fuente vaya con su afirmación en el prompt del sintetizador.
 - **Medición anterior** (antes de las correcciones de la revisión: sin ubicación, fragmento ni decisión del coordinador, con un relleno repetido en el informe largo y medidas más laxas): la correcta explicó los dos pares explicables y no atribuyó el tercero en ninguna de las 9 ejecuciones de `conflictos`. La medida dio 3 «atribuidos», pero leyendo el texto eran falsos positivos («los mismos 1.240 tickets y el mismo método»). `promedio` fusionó en 1 de 3 (22 horas y 9,85 % de reabiertos). La parte `medio` citó el 41 % en 12 de 12.
 - Las medidas, la forma de las afirmaciones y las opciones se prueban sin modelo en `tests/test_app3_05_procedencia.py`.
+
+**Para pensar (sin evaluación):** ¿aparecería el efecto de `medio` con un informe mucho más largo o con distracciones más parecidas al hallazgo? No se ha medido.
 </details>
 
 ### Pregunta tipo examen
@@ -596,7 +666,7 @@ Notas:
 - **D** El informe distingue lo establecido de lo disputado y conserva la caracterización y el método de cada fuente (TS 5.6-S2).
 </details>
 
-**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+**Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
 
@@ -640,12 +710,14 @@ El código mide sin modelo cuántos caracteres de resultados de tools llegan al 
 
 ### Predice antes de ejecutar
 
-Con tus palabras; no hay un número que acertar:
+Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. En la correcta, ¿qué llega al contexto del coordinador de lo que dice cada fuente y qué se queda fuera? ¿Quién decide qué se guarda en el scratchpad, el código o el modelo?
-2. Con `--anti todo_en_contexto`, ¿cuánto contexto esperas acumulado frente a lo que ve el coordinador en cada fase de la correcta? ¿Esperas que el informe final pierda alguno de los hechos o que aparezcan «patrones típicos» en su lugar?
-3. Tras `--simular-caida`, ¿qué tiene que haber en el manifest y en el scratchpad para que la ejecución siguiente no repita consultas? ¿Qué pasaría si faltara uno de los dos?
-4. ¿Cuál de las dos configuraciones esperas que cueste más, y por qué?
+1. (guía) Sin `--anti`, las consultas las hacen subagentes y los hallazgos se guardan en el scratchpad. ¿Qué llega al contexto del coordinador de lo que dice cada fuente y qué se queda fuera?
+2. (guía) Con `todo_en_contexto` (las tres fases en una sola conversación, con los informes en bruto), ¿qué le puede pasar al informe final si la sesión se alarga mucho?
+3. (módulo) Esta investigación es corta: cinco fuentes y unos 11.000 caracteres de resultados. Con `todo_en_contexto`, ¿esperas que el informe final llegue a perder alguno de los cinco hechos?
+4. (guía) Tras `--simular-caida`, ¿de dónde recupera el estado la ejecución siguiente: de la conversación anterior o de otro sitio? ¿Qué necesita para no repetir consultas?
+5. (guía) Sin `--anti`, cada fase es una conversación nueva. ¿Con qué tiene que arrancar una fase para aprovechar el trabajo de la anterior?
+6. (módulo) ¿Cuál de las dos configuraciones, sin `--anti` o `todo_en_contexto`, esperas que cueste más? ¿Por qué?
 
 ### Ejecutar
 
@@ -664,6 +736,15 @@ Los caracteres de resultados de tools en el contexto del coordinador (por fase y
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+**Tus predicciones:**
+
+- **P1** Llega lo que cada subagente devuelve y lo que el coordinador relee del scratchpad; la exploración verbosa se queda en el subagente, fuera del hilo principal (TS 5.4-K3, 5.4-S1), y los hallazgos clave sobreviven fuera del contexto (TS 5.4-K2, 5.4-S2). Como mucho, 4.106 caracteres en una fase.
+- **P2** Que se degrade: respuestas menos coherentes y «patrones típicos» en lugar de lo concreto que se había descubierto (TS 5.4-K1).
+- **P3** No los perdió: 5 de 5 hechos y ningún patrón típico. La acumulación aparece (11.134 caracteres en un solo hilo); la degradación, con este tamaño, no.
+- **P4** Del estado que cada agente dejó escrito: el coordinador lee el manifest y pasa su contenido a los prompts (TS 5.4-K4, 5.4-S4). Con el manifest y el scratchpad, la reanudación hizo 0 consultas repetidas.
+- **P5** Con el resumen de lo encontrado en la fase anterior (TS 5.4-S3), además del estado del manifest.
+- **P6** Sin `--anti`, unas 2,5 veces más: son tres conversaciones y subagentes. Lo que compra no es ahorro, sino contexto acotado por fase y poder retomar.
 
 **Medición anterior a las correcciones B4**, con el informe largo de entonces (B4 cambió su relleno; después solo se volvió a medir la caída simulada, abajo). Coordinador Sonnet 5.5, subagente Haiku 5.5, 0,02–0,04 $ por fase (~0,20 $ en total):
 
@@ -705,7 +786,7 @@ Una investigación en tres fases se corta durante la tercera. Al terminar cada f
 - **D** no repite las fases hechas, pero la tercera arranca sin lo descubierto: vuelve a consultar fuentes y puede contradecir lo que ya se resumió (TS 5.4-S3, S4).
 </details>
 
-**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+**Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
 
@@ -844,7 +925,7 @@ Notas:
 - **D** Declarar más campos obligatorios no mejora el significado: un campo que el documento puede no traer obliga al modelo a fabricarlo, y la forma de decir «puede no estar» es opcional y *nullable* (TS 4.3-K4, 4.3-S4).
 </details>
 
-**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+**Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
 
@@ -942,7 +1023,7 @@ Un proceso extrae datos de facturas y los valida con reglas de código. Cuando u
 - **D** renuncia a la salida estructurada para ese campo y deja el dato ausente igual de ausente.
 </details>
 
-**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+**Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
 
@@ -1052,7 +1133,7 @@ Un equipo usa Claude para dos trabajos. El primero revisa cada *pull request* an
 - **D** invierte el reparto. Además, dentro de una petición del lote no hay tool calling de varios turnos (TS 4.5-K3).
 </details>
 
-**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+**Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
 
@@ -1182,7 +1263,7 @@ Un sistema extrae campos de facturas, albaranes y un tipo de documento de compra
 - **D** decide por el titular y vigila con una muestra simple, que apenas toca un tipo poco frecuente; la guía pide estratificarla (K2, S1).
 </details>
 
-**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+**Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
 
@@ -1346,7 +1427,7 @@ Avisos sobre las cifras y la ejecución:
 **Producto observado (no evaluable):** en este módulo, con los tests existentes en el contexto y sin ellos salieron 0 escenarios repetidos, pero ese 0 no es una señal ni a favor ni en contra de 3.6-S4: solo 2 de los 5 existentes son los que el cambio rompe, y la clave puede dejar de contar un duplicado real (Paso 3). Sin los estándares en el `CLAUDE.md` salieron más tests (9–12 frente a 7–8). No cambia la respuesta de examen: A sigue siendo incorrecta.
 </details>
 
-**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+**Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
 
@@ -1475,4 +1556,4 @@ Un equipo hace que Claude Code genere un cambio de varios archivos y, en la mism
 **Producto observado (no evaluable):** en este módulo, ni la autorrevisión encontró menos que la instancia nueva ni la pasada única (la opción C, medida como `--anti una_pasada`) encontró menos que el reparto en pasadas, con un diff de 93 líneas (Paso 3). No cambia la respuesta de examen.
 </details>
 
-**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+**Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
