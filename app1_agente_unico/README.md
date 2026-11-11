@@ -46,8 +46,10 @@ Términos comunes en el [glosario](../docs/glosario.md#el-agente-y-su-bucle): Me
 
 El agente atiende el ticket ambiguo «Soy Laura Gómez y necesito que me restablezcáis la contraseña», que no trae `user_id`. Hay dos empleadas con ese nombre, así que lo razonable es leer el ticket, buscar a la persona, consultar la base de conocimiento y pedir un identificador.
 
-Además de la versión correcta, el módulo trae variantes construidas mal a propósito (`--anti`), para ver cómo falla cada error. Esto es lo que cambia en el código de las tres que vas a predecir:
+La **variante base** (sin `--anti`) es el bucle bien construido: sigue mientras `stop_reason` vale `"tool_use"`, devuelve cada resultado al historial y para con `"end_turn"`. Además trae cinco variantes construidas mal a propósito (`--anti`), para ver cómo falla cada error. Esto es lo que cambia en el código de cada una:
 
+- **`texto`:** el bucle para la primera vez que el texto de la respuesta contiene «terminado», «listo» o «hecho».
+- **`texto_asistente`:** el bucle para en cuanto una respuesta trae un bloque de texto, pida o no una tool.
 - **`tope`:** un tope de 2 iteraciones. El bucle se corta tras la segunda vuelta, pase lo que pase, aunque el modelo siga pidiendo tools.
 - **`sin_historial`:** en cada petición solo se envía el mensaje inicial, sin los resultados de las tools anteriores.
 - **`arbol_fijo`:** un «árbol de decisión» fijo, es decir, una secuencia de pasos que decide el código y no el modelo. No hay bucle: el código llama siempre a `get_ticket`, `get_user` y `search_kb`, en ese orden y con los datos del ticket, y después pide una sola respuesta al modelo.
@@ -56,19 +58,21 @@ La salida muestra la credencial detectada y las versiones, el modelo y el presup
 
 ### Predice antes de ejecutar
 
-Con tus palabras; no hay un número que acertar:
+Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. ¿Qué valor de `stop_reason` indica que el modelo pide tools y cuál que ha terminado? ¿Qué debería hacer el código con cualquier otro valor?
-2. De `get_ticket`, `get_user` y `search_kb`, ¿cuáles necesitan el resultado de otra y cuáles podrían pedirse a la vez?
-3. Con eso, ¿entre qué mínimo y máximo de iteraciones puede acabar la variante correcta?
-4. Sea cual sea el número de iteraciones, ¿qué tendrá la última que no tenga ninguna de las anteriores?
-5. Con `--anti tope` (tope de 2 iteraciones), `--anti sin_historial` y `--anti arbol_fijo` (secuencia fija decidida por el código), ¿qué trabajo queda sin hacer en cada una y cuál es la causa, en una frase?
+1. (guía) Una respuesta del modelo puede traer texto («voy a mirar el ticket») y, además, la petición de una tool. ¿Debe el bucle parar al ver ese texto? ¿Qué tiene que mirar para decidirlo?
+2. (módulo) De `get_ticket`, `get_user` y `search_kb`, ¿cuáles necesitan el resultado de otra y cuáles podrían pedirse a la vez, en una misma iteración?
+3. (módulo) En la variante base, ¿esperas el mismo número de iteraciones en todas las ejecuciones? ¿De qué depende?
+4. (guía) Sea cual sea el número de iteraciones de la variante base, ¿qué tendrá la última que no tenga ninguna de las anteriores?
+5. (guía) Con `tope` (el bucle se corta tras 2 iteraciones), ¿qué trabajo queda sin hacer? ¿Para qué sirve entonces un tope de iteraciones?
+6. (guía) Con `sin_historial` (cada petición lleva solo el mensaje inicial), ¿qué pedirá el modelo en cada iteración y por qué?
+7. (guía) Con `arbol_fijo` (el código llama siempre a las tres tools, en orden y con los datos del ticket, que no trae `user_id`), ¿qué paso falla? ¿Qué podría hacer el modelo ante ese fallo que la secuencia fija no puede?
 
 ### Ejecutar
 
 ```bash
-uv run python app1_agente_unico/01_bucle_manual.py                  # correcto
-uv run python app1_agente_unico/01_bucle_manual.py --anti texto     # o tope, texto_asistente, sin_historial, arbol_fijo
+uv run python app1_agente_unico/01_bucle_manual.py                  # variante base
+uv run python app1_agente_unico/01_bucle_manual.py --anti tope      # o texto, texto_asistente, sin_historial, arbol_fijo
 uv run python app1_agente_unico/01_bucle_manual.py --budget 0.05    # prueba barata (el tope solo baja)
 ```
 
@@ -76,21 +80,31 @@ uv run python app1_agente_unico/01_bucle_manual.py --budget 0.05    # prueba bar
 
 ### Qué observar
 
-La causa de la parada de cada variante y, en la correcta, cuántas iteraciones hubo y qué tools se pidieron en cada una.
+La causa de la parada de cada variante y, en la base, cuántas iteraciones hubo y qué tools se pidieron en cada una.
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
+**Tus predicciones:**
+
+- **P1** No. El texto que acompaña a un `tool_use` es un comentario, no la respuesta final. El bucle mira `stop_reason`: sigue con `"tool_use"` y para con `"end_turn"` (TS 1.1-K1, 1.1-S1, 1.1-S3). Es lo que rompen `texto` y `texto_asistente`.
+- **P2** `get_user` depende de `get_ticket`, porque hasta leer el ticket no se sabe de quién se trata. `search_kb` no depende de ninguna: puede ir con cualquiera de las dos o al final.
+- **P3** No: varía entre 2 y 4. Depende de qué llamadas independientes agrupe el modelo en una misma iteración, y eso lo decide él (TS 1.1-K3).
+- **P4** Trae `end_turn` y ninguna petición de tool (TS 1.1-K1).
+- **P5** Se corta a mitad del trabajo, sin respuesta final. Un tope solo es una red de seguridad contra un bucle sin fin, nunca la parada principal (TS 1.1-S3).
+- **P6** Repite la misma primera llamada una y otra vez, hasta la red de seguridad (12): la API no guarda estado y, sin el historial, el modelo no ve sus resultados (TS 5.1-K4, 1.1-K2).
+- **P7** Falla `get_user`, que se llama sin `user_id`. El modelo, al ver ese error en el historial, podría buscar por nombre; la secuencia fija no tiene esa rama (TS 1.1-K3).
+
 | Variante | Parada | Qué se rompe |
 | :--- | :--- | :--- |
-| correcta | `end_turn` | — |
+| base | `end_turn` | — |
 | `texto` | la primera vez que el texto dice «terminado», «listo»… | para cuando el modelo comenta, no cuando acaba |
 | `tope` | tras 2 iteraciones | corta a mitad del trabajo, sin respuesta final |
 | `texto_asistente` | en cuanto hay texto junto a un `tool_use` | el texto «voy a mirar el ticket» no es una respuesta |
 | `sin_historial` | red de seguridad (12) | el modelo no ve sus resultados y repite la misma llamada |
 | `arbol_fijo` | una llamada al modelo | la secuencia no se adapta: `get_user` falla sin `user_id` y no hay rama para buscar por nombre |
 
-**Qué es estable y qué varía en la variante correcta:**
+**Qué es estable y qué varía en la variante base:**
 
 | Estable | Varía (lo decide el modelo) |
 | :--- | :--- |
@@ -117,7 +131,7 @@ Un agente de soporte construido con la Messages API a veces deja tareas a medias
 **B.** La parada la decide `stop_reason` (TS 1.1-K1, 1.1-S1) y los resultados vuelven al historial con su `tool_use_id` (TS 1.1-K2, 1.1-S2). A intenta arreglar en prosa un error del código de control; C es el anti-patrón de interpretar lenguaje natural y D el de usar un tope como parada principal (TS 1.1-S3). El texto junto a un `tool_use` es comentario, no una señal de fin.
 </details>
 
-**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+**Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
 

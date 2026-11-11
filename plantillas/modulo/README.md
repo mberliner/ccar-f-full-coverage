@@ -6,7 +6,8 @@ y se amplía solo con términos propios.
 El orden sigue el ciclo de §13 y los 5 pasos de «Empieza aquí» del README raíz: la ficha orienta,
 se predice antes de ver los comandos y la salida, y cada bloque plegado dice a qué paso pertenece.
 `tests/test_readme_modulos.py` exige la ficha, «Antes de empezar», el orden Predice → Ejecutar,
-los `summary` de los pasos 3 y 4, la línea del paso 5 y «Pregunta tipo examen».
+los `summary` de los pasos 3 y 4, la línea del paso 5, «Pregunta tipo examen» y la forma de las
+predicciones (marca `(guía)` o `(módulo)`, dos interrogantes como máximo y su `**Pn**` en el Paso 3).
 Borra estos comentarios al rellenar.
 -->
 
@@ -36,7 +37,11 @@ ni qué valor toma una señal que se pide predecir. -->
 
 Qué se le pide al agente y qué cambia en cada variante `--anti` (descripción del código de cada variante, sin su resultado):
 
-- **`variante_a`:** qué hace distinto el código.
+<!-- Da a cada variante y a cada tipo de caso una etiqueta corta (V1, V2…; T1, T2…) y úsala después.
+«La correcta» nunca es un nombre: suena a «la respuesta correcta». Si una predicción menciona una
+línea de la salida, lista aquí esas líneas con una frase cada una. -->
+
+- **V1 · `variante_a`:** qué hace distinto el código.
 
 ### Predice antes de ejecutar
 
@@ -44,9 +49,22 @@ Con tus palabras; no hay un número que acertar:
 
 <!-- Pide patrones, rangos o invariantes (lo igual en cualquier ejecución y lo que varía), no un valor
 que el modelo pueda variar. No preguntes lo que el contexto ya responde («Antes de empezar», las tablas de tools, «El ejercicio»):
-si una respuesta se lee tal cual, quítala o llévala a «Qué observar». -->
+si una respuesta se lee tal cual, quítala o llévala a «Qué observar».
 
-1. Pregunta sobre un patrón o un rango.
+CRITERIO DE PREDICCIONES AUTÓNOMAS (lo comprueba `tests/test_readme_modulos.py` en lo que es de forma):
+1. Autónoma: se contesta con su propio enunciado y con las etiquetas definidas justo antes, sin buscar
+   en otra parte de la ficha ni abrir un archivo. Los datos que hagan falta van en el enunciado.
+2. Una cosa por predicción: dos interrogantes como máximo («qué pasa y por qué»). Si junta más, se parte.
+3. Marcada: empieza por `(guía)` si evalúa un concepto de la guía, o por `(módulo)` si evalúa un detalle
+   de este ejercicio (un parámetro elegido aquí, una línea de la salida, un comportamiento del producto).
+   Solo un fallo en una `(guía)` se anota en `FALLOS.md`.
+4. Contrastable: el Paso 3 responde cada una con una entrada `- **Pn** …`, en el mismo orden. Si solo
+   se puede contrastar ejecutando otra variante u otro modelo que el módulo no trae, no es una
+   predicción: va a «Para pensar», al final del Paso 3, sin evaluación.
+-->
+
+1. (guía) Pregunta sobre un patrón o un rango.
+2. (módulo) Pregunta sobre un detalle de este ejercicio.
 
 ### Ejecutar
 
@@ -65,6 +83,11 @@ Qué señal mirar en la salida, sin dar aquí el resultado.
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+**Tus predicciones:**
+
+- **P1** Respuesta a la predicción 1, con la viñeta si es `(guía)`.
+- **P2** Respuesta a la predicción 2.
 
 Lo medido con modelo (modelo y fecha), lo estable frente a lo que varía y las notas. Clasifica cada parte por tipo de señal en `docs/tipos-de-senal.md` (determinista, probabilística con control positivo o sin señal estable). Una fila por variante y modelo, con el «modelo de la medida»: no se enfrentan dos modelos en una misma fila o cabecera (las comparaciones van a `docs/hallazgos.md`). Lo que hace hoy el producto y la guía no dice se rotula **Producto observado (no evaluable)**; una práctica adicional que la guía no nombra, **EN PRODUCCIÓN (no evaluable)** (carriles en `docs/estandares-codigo.md`).
 </details>
@@ -110,4 +133,4 @@ Si la añades, etiqueta la primera como «**Pregunta 1 (una respuesta).**». Reg
 </details>
 -->
 
-**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+**Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).

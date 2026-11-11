@@ -5,7 +5,9 @@ los bloques «Antes de empezar» y «Pregunta tipo examen», y que sigue la form
 la plantilla en lo que es determinista: «Predice antes de ejecutar» antes de
 «Ejecutar» (el ciclo de §13), el resultado medido plegado en «Resultado de
 referencia» y la indicación de ejecución obligatoria o ligera, la ficha del
-principio y los pasos 3–5 con nombre (prueba de usabilidad del Hito T).
+principio y los pasos 3–5 con nombre (prueba de usabilidad del Hito T). También
+la forma de las predicciones: cada una marcada `(guía)` o `(módulo)`, con dos
+interrogantes como máximo y con su contraste `**Pn**` en el Paso 3.
 
 POR QUÉ EXISTE: la incorporación de quien llega de cero se quedó sin dueño y solo
 `app1/01` la cumplía. Un test barato impide que un módulo nuevo nazca sin ella.
@@ -117,6 +119,49 @@ def multi_response_problems(section: str) -> list[str]:
     return problems
 
 
+PREDICT_BLOCK = re.compile(r"### Predice antes de ejecutar\n(.*?)\n### ", re.DOTALL)
+CONTRAST_BLOCK = re.compile(r"<summary>Paso 3 · Contrastar[^<]*</summary>(.*?)</details>", re.DOTALL)
+LANES = ("(guía)", "(módulo)")
+# Una predicción pregunta una cosa; dos interrogantes admiten «qué pasa y por qué».
+MAX_QUESTIONS = 2
+
+
+def predictions(section: str) -> list[tuple[int, str]]:
+    """Las predicciones numeradas de «Predice antes de ejecutar», como (número, texto)."""
+    block = PREDICT_BLOCK.search(section)
+    if not block:
+        return []
+    return [(int(number), text) for number, text in re.findall(r"^(\d+)\. (.*)$", block.group(1), re.MULTILINE)]
+
+
+def prediction_problems(section: str) -> list[str]:
+    """Desvíos del criterio de predicciones autónomas (`plantillas/modulo/README.md`).
+
+    Cada predicción dice si evalúa la guía o un detalle del módulo, pregunta una sola cosa
+    y tiene su contraste `**Pn**` dentro del Paso 3, para que ninguna quede sin respuesta.
+    """
+    problems = []
+    contrast = CONTRAST_BLOCK.search(section)
+    answers = contrast.group(1) if contrast else ""
+    for number, text in predictions(section):
+        if not text.startswith(LANES):
+            problems.append(f"la predicción {number} no empieza por (guía) o (módulo)")
+        if text.count("¿") > MAX_QUESTIONS:
+            problems.append(f"la predicción {number} junta {text.count('¿')} preguntas (máximo {MAX_QUESTIONS})")
+        if not re.search(rf"\*\*P{number}\b", answers):
+            problems.append(f"el Paso 3 no contrasta la predicción {number} (falta «**P{number}**»)")
+    return problems
+
+
+# Módulos anteriores al criterio de predicciones autónomas. Se vacía según se adaptan;
+# `test_pending_predictions_really_fail` obliga a borrar la entrada en cuanto el módulo cumple.
+PENDING_PREDICTIONS: set[str] = {
+    *(f"app1_agente_unico {n:02d}" for n in range(2, 8)),
+    *(f"app2_agente_con_control {n:02d}" for n in range(1, 8)),
+    *(f"app3_sistema_multiagente {n:02d}" for n in range(1, 13)),
+}
+
+
 def all_sections() -> dict[str, str]:
     found = {}
     for readme in sorted(ROOT.glob("app*/README.md")):
@@ -195,6 +240,42 @@ def test_multi_response_detects_each_deviation():
     assert multi_response_problems(no_answer) == ["«Selecciona 2» sin respuesta plegada que empiece por «**X y Y.**»"]
 
 
+GOOD_PREDICTIONS = """### Predice antes de ejecutar
+
+Con tus palabras:
+
+1. (guía) ¿Qué pasa? ¿Por qué?
+2. (módulo) ¿Qué línea lo muestra?
+
+### Ejecutar
+
+<details>
+<summary>Paso 3 · Contrastar: lo que se observó</summary>
+
+- **P1** pasa esto.
+- **P2** esta línea.
+</details>
+"""
+
+
+def test_predictions_are_read_from_their_block():
+    assert predictions(GOOD_PREDICTIONS) == [(1, "(guía) ¿Qué pasa? ¿Por qué?"), (2, "(módulo) ¿Qué línea lo muestra?")]
+    assert predictions("sin bloque") == []
+
+
+def test_prediction_problems_detects_each_deviation():
+    assert prediction_problems(GOOD_PREDICTIONS) == []
+    unmarked = GOOD_PREDICTIONS.replace("1. (guía) ", "1. ")
+    assert prediction_problems(unmarked) == ["la predicción 1 no empieza por (guía) o (módulo)"]
+    crowded = GOOD_PREDICTIONS.replace("¿Por qué?", "¿Por qué? ¿Y si no?")
+    assert prediction_problems(crowded) == ["la predicción 1 junta 3 preguntas (máximo 2)"]
+    unanswered = GOOD_PREDICTIONS.replace("- **P2** esta línea.\n", "")
+    assert prediction_problems(unanswered) == ["el Paso 3 no contrasta la predicción 2 (falta «**P2**»)"]
+    # «**P1**» no vale como contraste de la predicción 10.
+    ten = GOOD_PREDICTIONS.replace("2. (módulo)", "10. (módulo)").replace("**P2**", "**P1**")
+    assert "el Paso 3 no contrasta la predicción 10 (falta «**P10**»)" in prediction_problems(ten)
+
+
 # --- Comprobación sobre los README reales -------------------------------------
 
 def test_readmes_have_module_sections():
@@ -222,6 +303,23 @@ def test_every_module_follows_template_shape():
 def test_multi_response_questions_follow_the_format():
     failing = {name: multi_response_problems(body) for name, body in all_sections().items() if multi_response_problems(body)}
     assert not failing, f"preguntas multiple-response mal formadas: {failing}"
+
+
+def test_predictions_are_self_contained():
+    failing = {
+        name: prediction_problems(body)
+        for name, body in all_sections().items()
+        if prediction_problems(body) and name not in PENDING_PREDICTIONS
+    }
+    assert not failing, f"predicciones que no siguen plantillas/modulo/README.md: {failing}"
+
+
+@pytest.mark.parametrize("name", sorted(PENDING_PREDICTIONS))
+def test_pending_predictions_really_fail(name):
+    """Una entrada pendiente que ya cumple debe borrarse de la lista."""
+    sections = all_sections()
+    assert name in sections, f"{name} ya no existe: bórralo de PENDING_PREDICTIONS"
+    assert prediction_problems(sections[name]), f"{name} ya cumple: bórralo de PENDING_PREDICTIONS"
 
 
 def assigned_counts() -> dict[str, int]:
