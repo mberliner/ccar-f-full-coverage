@@ -182,12 +182,15 @@ La salida muestra `[contexto]`, cada llamada con su resultado y, al final de cad
 
 ### Predice antes de ejecutar
 
-Con tus palabras; no hay un número que acertar:
+Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. `busqueda`: de las dos preguntas, ¿cuál es una búsqueda dentro del contenido de los archivos y cuál una búsqueda por su ruta, y qué tool corresponde a cada una? Con `--anti sin_grep`, ¿qué camino le queda para dar con el mensaje de error, y cómo crecería su número de `Read` con el tamaño del repositorio?
-2. `incremental`: ¿por qué clase de archivo tiene sentido empezar, y qué decide qué se lee después? Frente a `leer_todo`, ¿qué esperas que cambie más: la calidad de la explicación, el número de `Read` o el coste?
-3. `wrapper`: `calcular_sla` tiene llamadores que nunca escriben ese nombre. ¿Qué llamadores no puede encontrar, por construcción, una búsqueda del nombre original? ¿Esperas que la respuesta de `solo_nombre` avise de que le faltan, y por qué?
-4. `edicion`: el ancla `TIMEOUT = 30` aparece dos veces. Si el `Edit` pedido falla, ¿qué caminos tiene el agente con sus tools para cambiar solo la segunda, y qué riesgo corre cada uno? ¿Qué sería un error volver a intentar?
+1. (guía) `busqueda` hace dos peticiones: en qué archivo se lanza un mensaje de error y cuáles son todos los archivos de tests. ¿Cuál se resuelve buscando en el contenido de los archivos y cuál en sus rutas? ¿Qué tool corresponde a cada una?
+2. (módulo) Con `sin_grep` (las mismas peticiones, solo con `Read` y `Glob`), ¿qué camino le queda al agente para dar con el mensaje de error? ¿Cómo crecería su número de `Read` con el tamaño del repositorio?
+3. (guía) `incremental` pide explicar cómo se calcula el SLA en un repositorio que el agente no conoce. ¿Por qué clase de archivo tiene sentido empezar y qué decide qué se lee después?
+4. (módulo) Con `leer_todo` (el prompt manda leer antes todos los `.py`), ¿qué esperas que cambie más frente a `incremental` sin `--anti`: la calidad de la explicación, el número de `Read` o el coste?
+5. (guía) En `wrapper`, `api.py` reexporta `calcular_sla` con otro nombre, y hay módulos que importan ese nombre nuevo. Con `solo_nombre` (buscar solo el nombre original), ¿qué llamadores no puede encontrar la búsqueda, por construcción? ¿Qué habría que hacer antes de buscar?
+6. (módulo) ¿Esperas que la respuesta de `solo_nombre` avise de que le faltan llamadores? ¿Por qué?
+7. (guía) En `edicion`, el ancla `TIMEOUT = 30` aparece dos veces en el archivo y solo hay que cambiar la segunda. ¿Qué devuelve un `Edit` con esa ancla? ¿Qué respaldo tiene el agente con `Read` y `Write`, y qué sería un error volver a intentar?
 
 ### Ejecutar
 
@@ -208,6 +211,16 @@ Por parte, qué tools usa el agente y cuántos `Read` hace; en `wrapper`, cuánt
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+**Tus predicciones:**
+
+- **P1** El mensaje de error está en el contenido: `Grep` (TS 2.5-K1, 2.5-S1). Los archivos de tests se reconocen por su ruta: `Glob` (TS 2.5-K2, 2.5-S2).
+- **P2** Listar con `Glob` y abrir archivos con `Read` hasta dar con el mensaje. El número de `Read` crece con el número de archivos; con `Grep` no.
+- **P3** Por un punto de entrada, que se localiza con `Grep`; después se lee solo lo que ese archivo importa y lo que sigue el flujo, en lugar de leer todo por adelantado (TS 2.5-S4).
+- **P4** El número de `Read` (uno por cada `.py`) y el coste. La explicación sale parecida.
+- **P5** Los que importan la función por su alias: nunca escriben el nombre original. Antes de buscar hay que reunir todos los nombres con que se exporta y buscar cada uno (TS 2.5-S5).
+- **P6** No. Devuelve 2 de 4 llamadores y presenta la lista como completa: nada en la búsqueda le dice que existen otros nombres.
+- **P7** Un error, porque el ancla no es única («Found 2 matches») (TS 2.5-K3). El respaldo que nombra la guía es leer el archivo con `Read` y guardarlo entero con `Write` (TS 2.5-K4, 2.5-S3), con cuidado de no tocar la primera asignación. Repetir el mismo `Edit` es el error: el fallo no es pasajero.
 
 | Parte / variante | Señal | Qué se rompe |
 | :--- | :--- | :--- |
@@ -243,7 +256,7 @@ Un agente de mantenimiento debe encontrar todos los llamadores de `process_refun
 **C.** Para rastrear una función a través de un módulo *wrapper* se identifican primero todos los nombres exportados y después se busca cada uno (TS 2.5-S5); `Grep` es la tool para el contenido (TS 2.5-K1, 2.5-S1). A pierde los llamadores por alias y parece completa; B es leer todo cuando una búsqueda lo resuelve, contra la exploración incremental (TS 2.5-S4); D confunde `Glob` (rutas, TS 2.5-K2) con una búsqueda de contenido: un llamador no tiene por qué llevar «refund» en su nombre de archivo.
 </details>
 
-**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+**Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
 
@@ -307,13 +320,13 @@ La salida da, por petición, la tool esperada y la elegida, y al final la tasa d
 
 ### Predice antes de ejecutar
 
-Con tus palabras; no hay un número que acertar:
+Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. Con la variante correcta y sus cuatro tools, ¿en qué rango esperas el acierto (todas, casi todas, la mitad…)? Si alguna petición fallara, ¿qué tendría que tener para confundir al modelo?
-2. Con `--anti minimas` solo hay `analyze_content` y `analyze_document`, de una línea cada una. ¿En qué peticiones podrá el modelo guiarse por las palabras de la propia petición, y en cuáles no tendrá ninguna pista?
-3. Con `--anti palabra_clave` las descripciones son las buenas y el prompt añade una regla. Cuando las dos cosas apuntan a tools distintas, ¿cuál crees que pesará más? ¿Qué peticiones lo pondrán a prueba?
-4. ¿Qué variante esperas más estable entre repeticiones, y por qué?
-5. Con `--anti nombre_enganoso` la tool de verificación se llama `get_ticket_status`, pero su descripción dice que verifica afirmaciones. ¿Se guiará el modelo por el nombre o por la descripción? ¿Cambiaría con un modelo más débil?
+1. (guía) Sin `--anti`, el agente tiene las cuatro tools de la primera tabla, cada una descrita con su propósito, su entrada con un ejemplo, sus casos borde y sus diferencias con las demás. ¿En qué se apoya el modelo para elegir entre ellas? ¿Qué tendría que tener una petición para confundirlo aun así?
+2. (guía) Con `minimas` solo hay `analyze_content` («Analiza contenido.») y `analyze_document` («Analiza un documento.»). ¿En qué peticiones de la tabla podrá el modelo guiarse por las palabras de la propia petición y en cuáles no tendrá ninguna pista?
+3. (guía) Con `palabra_clave`, las descripciones son las buenas y el prompt añade «si la petición menciona un documento, usa siempre `summarize_article`». Cuando la descripción y la regla apuntan a tools distintas, ¿qué puede pasar? ¿Qué peticiones de la tabla lo ponen a prueba?
+4. (módulo) Entre `minimas` y `palabra_clave`, ¿en cuál esperas un resultado más parecido de una repetición a otra? ¿Por qué?
+5. (módulo) Con `nombre_enganoso`, la tool de verificación se llama `get_ticket_status`, pero su descripción sigue diciendo que verifica afirmaciones. ¿Se guiará el modelo por el nombre o por la descripción?
 
 ### Ejecutar
 
@@ -335,6 +348,14 @@ La tasa de acierto y las peticiones falladas de cada variante; si repites con `-
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
+**Tus predicciones:**
+
+- **P1** En la descripción de cada tool, que es el mecanismo principal de selección (TS 2.1-K1); por eso una buena descripción dice propósito, entradas, ejemplos y límites (TS 2.1-K2, 2.1-S1). Para confundirlo, la petición tendría que encajar en dos descripciones a la vez. Con estas cuatro, acierta todas.
+- **P2** Tiene pista cuando la petición dice «documento» o «artículo» y eso coincide con el nombre de una tool; no la tiene en las de tickets, donde ninguna de las dos descripciones dice qué tipo de ID atiende. Descripciones ambiguas o solapadas causan *misrouting* (TS 2.1-K3).
+- **P3** La regla del prompt puede imponerse a la descripción (TS 2.1-K4, 2.1-S4). La ponen a prueba las dos peticiones que dicen «documento» y no piden un resumen: los pasos de KB-109 y la verificación con KB-114.
+- **P4** En `palabra_clave`: la regla desvía siempre las mismas dos peticiones. En `minimas` el modelo adivina, y el resultado cambia de una repetición a otra.
+- **P5** Por la descripción: acertó todas. Es una variante propia, sin respaldo en la guía, y no dio señal.
+
 Cada variante se mide con el modelo en que su señal se ve (el módulo es un banco de pruebas del mecanismo, no una comparación entre modelos):
 
 | Variante | Qué cambia | Modelo de la medida | Resultado | Qué dice |
@@ -354,6 +375,8 @@ Notas:
 - **`nombre_enganoso` (variante propia, sin respaldo en la guía): sin señal.** Con Haiku 5.5 (30/30) y con Haiku 4.5 (24/24) gana la descripción: el modelo no evitó la tool de verificación por llamarse como una de tickets, ni usó `get_ticket_status` donde no tocaba. Con una sonda desechable y solo con Haiku 4.5 se probaron dos casos más duros, renombrar la verificación como `delete_ticket` y cruzar los nombres de `extract_article_steps` y `summarize_article`: 24/24 en ambos. Con estos modelos la descripción pesa más que el nombre, en la línea de TS 2.1-K1 (la descripción es el mecanismo principal de selección). No prueba que el nombre no importe con otros modelos ni con descripciones pobres. La guía no describe este fallo: pide renombrar para quitar solapamientos (TS 2.1-S2), y esta variante hace lo contrario; que un nombre engañoso desvíe al modelo era una hipótesis propia, y aquí no se confirmó.
 - **Tool esperada con `minimas`:** como solo hay dos tools, se espera «tickets → `analyze_content`, artículos → `analyze_document`». Es una convención del módulo, no algo que diga la guía. Para que equivocarse tenga consecuencias, cada tool atiende solo ese tipo de ID y la otra devuelve un error de validación; antes las dos hacían lo mismo y un «fallo» de enrutamiento no costaba nada (revisión independiente).
 - Los contratos de cada tool (entrada y salida) y la medida de acierto se prueban sin modelo en `tests/test_app1_servers_mesa.py` y `tests/test_app1_03_servidor_mcp.py`.
+
+**Para pensar (sin evaluación):** ¿cambiaría `nombre_enganoso` con otro modelo o con descripciones pobres? Este módulo no lo mide con una señal estable, así que no cuenta como predicción.
 </details>
 
 ### Pregunta tipo examen
@@ -371,7 +394,7 @@ Un agente de soporte dispone de dos tools, `analyze_content` y `analyze_document
 **D.** La descripción es el mecanismo con el que el modelo elige (TS 2.1-K1), y las ambiguas o solapadas causan *misrouting* (TS 2.1-K3). La corrección es describir con propósito, entradas y límites (TS 2.1-K2, TS 2.1-S1) y renombrar para quitar el solapamiento (TS 2.1-S2). A es una instrucción por palabra clave que puede anular las descripciones (TS 2.1-K4, TS 2.1-S4): arregla un caso y crea otros. B va al revés de la guía, que divide las tools genéricas en otras de contrato definido (TS 2.1-S3). C añade una pieza para compensar un defecto que se arregla en la descripción; ninguna viñeta de la guía lo propone.
 </details>
 
-**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+**Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
 
@@ -417,13 +440,13 @@ La salida muestra, por tool, los reintentos idénticos (y cuántos son inútiles
 
 ### Predice antes de ejecutar
 
-Con tus palabras; no hay un número que acertar:
+Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. Con la variante correcta, ¿esperas que el agente repita alguna llamada con la misma entrada? ¿Cuál tendría sentido repetir, y qué le dice que no repita las demás?
-2. ¿Cómo explicará el agente el fallo del cupo y el del permiso, y en qué se apoyará para distinguir uno de otro?
-3. El perfil se pide con «1001», un ID mal formado. ¿Llegará a producirse el error de validación? ¿De qué depende?
-4. Con `--anti generico` todos los errores dicen lo mismo. ¿Reintentará el agente algo que no tiene arreglo? ¿Y dejará de reintentar algo que sí lo tenía?
-5. Con `--anti fallo_como_vacio`, ¿qué dirá el agente del histórico del ticket, y habrá un segundo intento?
+1. (guía) Sin `--anti`, cada error llega con su `errorCategory` y su `isRetryable`. De las cuatro tools que fallan, ¿qué llamada tiene sentido repetir con la misma entrada? ¿Qué le dice al agente que no repita las demás?
+2. (guía) La reasignación falla por una regla de negocio (el cupo) y la exportación, por falta de permiso. ¿En qué partes del error se apoyará el agente para distinguir un fallo del otro y explicárselo a la persona?
+3. (módulo) El perfil se pide con «1001», mal formado, y la descripción de `get_user_profile` da el formato `EMP-1001`. ¿Llegará a producirse el error de validación? ¿De qué depende?
+4. (guía) Con `generico`, todo error llega como «Operation failed», sin categoría ni `isRetryable`. ¿Qué deja de poder distinguir el agente? ¿Qué error puede cometer al decidir si reintenta?
+5. (guía) Con `fallo_como_vacio`, el tiempo de espera del histórico llega como un resultado correcto con la lista vacía. ¿Qué dirá el agente del histórico del ticket? ¿Habrá un segundo intento?
 
 ### Ejecutar
 
@@ -442,6 +465,14 @@ Por variante, qué tools se repiten con la misma entrada y cuántos de esos rein
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+**Tus predicciones:**
+
+- **P1** Solo `fetch_ticket_history`: su error es `transient` y reintentable, y al segundo intento responde. En los demás, la categoría y la marca de no reintentable dicen que repetir no arregla nada (TS 2.2-K2, 2.2-K4, 2.2-S1).
+- **P2** En la categoría, que separa la regla de negocio de la falta de permiso, y en el mensaje legible, que explica el cupo o a quién pedir la exportación, para que el agente pueda informar bien (TS 2.2-S2).
+- **P3** No llegó a producirse: el modelo corrige «1001» a `EMP-1001` antes de llamar. Depende de que la descripción de la tool diga el formato.
+- **P4** Lo reintentable de lo que no lo es. Puede repetir lo que no tiene arreglo (aquí, `export_audit_log`) o rendirse ante lo pasajero. Un mensaje genérico es el anti-patrón (TS 2.2-K3).
+- **P5** Lo da por un dato: «no hay histórico». No hay segundo intento, porque nada le dice que fue un fallo. Un fallo de acceso no debe llegar como un vacío válido (TS 2.2-S4).
 
 | Variante | Reintentos | Qué se rompe |
 | :--- | :--- | :--- |
@@ -473,7 +504,7 @@ Una tool MCP de reembolsos devuelve «Operation failed» ante cualquier fallo. E
 **A.** El fallo se comunica con el flag de error y metadatos estructurados (TS 2.2-K1, TS 2.2-S1): la categoría distingue una regla de negocio de un fallo transitorio (TS 2.2-K2; la guía no da nombre al valor de esa categoría), la marca de no reintentable evita el reintento inútil (TS 2.2-K4; la guía la escribe `retriable: false` en S2 e `isRetryable` en S1) y la explicación de la política permite al agente informar bien (TS 2.2-S2). B pone un tope arbitrario en vez de dar al agente la información, y seguirá reintentando lo que no tiene arreglo; C intenta suplir en prosa lo que debería salir de la tool, y no distingue unos errores de otros; D empeora el problema: invita a reintentar justo lo que no es reintentable. Un mensaje genérico es el anti-patrón (TS 2.2-K3).
 </details>
 
-**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+**Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
 
@@ -525,12 +556,13 @@ La familia `amplio` (`--anti amplio`) ofrece esas cinco más 13 alias: `lookup_t
 
 ### Predice antes de ejecutar
 
-Con tus palabras; no hay un número que acertar:
+Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. `scoping`: con 18 tools frente a 5, ¿qué esperas que cambie: el acierto, la tool elegida entre repeticiones, el coste? ¿Qué tendrían que tener las peticiones para que el acierto se resintiera?
-2. `tool_choice`: ante una petición de opinión, ¿qué modo deja al modelo contestar solo con texto? ¿Cuáles obligan a que la primera respuesta empiece por una tool? ¿Esperas que eso cambie entre repeticiones?
-3. Con `any`, ¿de qué depende qué tool se llame? Con la forzada, ¿cuál se llama, y qué puede hacer el modelo en los turnos siguientes, ya con `auto`?
-4. ¿Qué pasaría si `any` o la forzada se enviaran en **todos** los turnos?
+1. (guía) En `scoping`, `amplio` da al agente 18 tools (las 5 básicas y 13 alias que hacen lo mismo) en lugar de 5. ¿Qué riesgo corre la elección de tool cuando hay muchas y se parecen? ¿Qué tendrían que tener las peticiones para que se notara?
+2. (módulo) Las seis peticiones de `scoping` son claras y cada una encaja en una sola tool básica. Con ellas, ¿qué esperas que cambie más entre 5 y 18 tools: el acierto, la tool elegida de una repetición a otra o el coste por petición?
+3. (guía) En `tool_choice`, la petición es de opinión y no necesita ninguna tool. De `auto`, `any` y el forzado, ¿qué modo deja al modelo contestar solo con texto? ¿Cuáles obligan a que la primera respuesta empiece por una tool?
+4. (guía) Con `any`, ¿quién decide qué tool se llama? ¿Y con el forzado?
+5. (guía) El módulo envía `any` o el forzado solo en el primer turno, y `auto` en los siguientes. ¿Qué pasaría si los enviara en todos los turnos?
 
 ### Ejecutar
 
@@ -549,6 +581,14 @@ En `scoping`, el acierto, si la elección cambia entre repeticiones y el coste p
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+**Tus predicciones:**
+
+- **P1** Con demasiadas tools, la selección se vuelve menos fiable (TS 2.3-K1). Se notaría con peticiones ambiguas, que encajan en varias tools.
+- **P2** El coste: cada petición carga 13 definiciones de más. El acierto no bajó con estas peticiones.
+- **P3** `auto` deja contestar con texto. `any` y el forzado obligan a empezar por una tool (TS 2.3-K4, 2.3-S5).
+- **P4** Con `any`, el modelo: se garantiza una llamada, no cuál. Con el forzado se llama la tool que fija el código (TS 2.3-S4, 2.3-S5).
+- **P5** El modelo estaría obligado a llamar a una tool también después de recibir los resultados y no podría dar su respuesta final. Por eso la tool fijada va primero y el resto sigue en turnos posteriores (TS 2.3-S4).
 
 Haiku 5.5:
 
@@ -585,7 +625,7 @@ Un flujo de soporte necesita extraer los metadatos de cada ticket nuevo antes de
 **B.** La selección forzada asegura que una tool concreta se llame primero y los pasos siguientes se procesan en turnos posteriores (TS 2.3-S4, TS 2.3-K4). A fuerza una llamada en cada turno, así que el asistente nunca podría dar su respuesta final, y `"any"` además no fija cuál es la tool (garantiza una llamada, no esa llamada, TS 2.3-S5). C intenta suplir en prosa lo que debe garantizar la configuración: con `"auto"` el modelo puede seguir contestando con texto. D va en contra de TS 2.3-K1: más tools degradan la selección y no aseguran que se llame a la de extracción.
 </details>
 
-**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+**Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
 
@@ -641,12 +681,14 @@ Tres partes, cada una con su petición y sus tools. `--anti` solo vale con la pa
 
 ### Predice antes de ejecutar
 
-Con tus palabras; no hay un número que acertar:
+Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. `conexion`: ¿verás las tools de los tres servidores a la vez? ¿Qué prefijo llevan? ¿Cómo sabrás que el token llegó sin ver su valor?
-2. `recursos`: si el agente tuviera las tools de resources pero nadie le avisara de que existen, ¿crees que las usaría por su cuenta? Sin resources, ¿cómo averiguará qué artículos hay, y esperas que necesite unas pocas llamadas exploratorias o decenas?
-3. `descripcion`: el agente tiene `Grep` y `search_kb` para lo mismo. ¿Qué crees que decidirá cuál usa: la descripción de la tool MCP, saber que los artículos están también como archivos, otra cosa? ¿Cambiará algo con la descripción de una línea?
-4. ¿Dónde pondrías un servidor experimental de una sola persona, y dónde uno que debe tener todo el equipo?
+1. (guía) En `conexion` hay tres servidores configurados: dos en el `.mcp.json` y uno en proceso. ¿Tendrá el agente las tools de los tres a la vez o solo las del que esté usando?
+2. (guía) El `.mcp.json` se versiona y lo comparte todo el equipo, y aquí lleva `${CCARF_DEMO_TOKEN}` en lugar del valor del token. ¿Qué problema evita eso? ¿En qué momento se sustituye la variable por su valor?
+3. (guía) En `recursos`, el índice de artículos está publicado como resource (`kb://catalogo`). ¿Qué gana el agente con eso frente a averiguar qué artículos hay con `search_kb` y `get_article`?
+4. (módulo) Con `sin_recursos` (ni las tools de resources ni la frase del prompt que las anuncia), ¿esperas que el agente necesite unas pocas llamadas exploratorias o decenas para listar todos los artículos?
+5. (guía) En `descripcion`, el agente puede buscar el artículo con `Grep` sobre los archivos o con `search_kb`, que además ordena por relevancia y filtra los obsoletos. Con `descripcion_minima` («Busca en la base de conocimiento.»), ¿qué riesgo corre la elección entre las dos? ¿Qué debería contar la descripción para evitarlo?
+6. (guía) ¿Dónde declararías un servidor experimental que solo usa una persona, y dónde uno que debe tener todo el equipo?
 
 ### Ejecutar
 
@@ -666,6 +708,15 @@ En `conexion`, las tools por servidor y `token_recibido`. En `recursos`, cuánta
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+**Tus predicciones:**
+
+- **P1** Las de los tres a la vez: al conectar, el agente descubre las tools de todos los servidores configurados (TS 2.4-K3). Se distinguen por el prefijo `mcp__<servidor>__`.
+- **P2** Que el secreto quede escrito en el repositorio: el archivo guarda el nombre de la variable y nunca su valor. Se expande al lanzar el servidor (TS 2.4-K2, 2.4-S1).
+- **P3** Ve qué hay sin tener que explorarlo con llamadas (TS 2.4-K4, 2.4-S5): con el resource bastaron 2 llamadas y ninguna exploratoria.
+- **P4** Decenas: entre 19 y 31, con búsquedas y lecturas por ID, incluidos IDs que no existen.
+- **P5** Que el agente prefiera la tool integrada, `Grep`, aunque la tool MCP sea más capaz. La descripción debería contar qué sabe hacer y qué devuelve: el ranking y el filtro de obsoletos (TS 2.4-S3). Con el modelo de la medida esa preferencia no se vio (ver notas); en el examen manda la guía.
+- **P6** El personal o experimental, en `~/.claude.json`, en el ámbito de usuario. El del equipo, en el `.mcp.json` del proyecto (TS 2.4-K1, 2.4-S2).
 
 Haiku 5.5:
 
@@ -701,7 +752,7 @@ Un agente tiene `Grep` y un servidor MCP propio con una tool `search_kb` que ord
 **C.** Una descripción que detalla capacidades y salidas evita que el agente prefiera una tool integrada sobre una tool MCP más capaz (TS 2.4-S3): lo que decide la elección es lo que el agente ve de cada tool (TS 2.1-K1). A quita una herramienta que el agente sigue necesitando para otras cosas y no arregla la descripción; B es una instrucción en el prompt que compensa una descripción pobre y puede crear asociaciones no deseadas (TS 2.1-K4); D no aplica el criterio de TS 2.4-S4: una búsqueda sobre el catálogo propio de la mesa es un flujo específico del equipo y pide servidor propio.
 </details>
 
-**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+**Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 
 ---
@@ -746,12 +797,13 @@ Se hacen dos preguntas en la misma conversación. La primera pide el equipo con 
 
 ### Predice antes de ejecutar
 
-Con tus palabras; no hay un número que acertar:
+Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. Petición a petición, ¿qué forma tiene la curva de tokens de entrada en cada variante? ¿Dónde esperas el máximo de una conversación, y por qué ahí?
-2. Cada resultado recortado tiene 8 veces menos campos. ¿Esperas que el total de tokens baje en esa misma proporción, en más o en menos? ¿Qué partes de cada petición no cambian al recortar?
-3. Sin recorte, el modelo tiene delante 35 campos que la pregunta no usa. ¿Crees que eso cambia si acierta? ¿Qué tendría que pasar para que fuera el recorte el que rompiera la respuesta?
-4. De lo que mide el módulo, ¿qué esperas que salga casi igual en cada ejecución y qué puede variar? Piensa en quién decide cuántas peticiones se hacen.
+1. (guía) Cada petición lleva el historial completo, y cada consulta de equipo añade un resultado. Petición a petición, ¿qué forma tiene la curva de tokens de entrada? ¿Dónde esperas el máximo de la conversación?
+2. (guía) Para reducir ese consumo, ¿en qué momento hay que quitar los campos que sobran: antes de que el resultado entre en el historial, o después, pidiendo al modelo que los ignore? ¿Por qué?
+3. (módulo) Cada resultado recortado tiene 8 veces menos campos (5 frente a 40). ¿Esperas que el total de tokens de entrada baje en esa misma proporción, en más o en menos? ¿Qué partes de cada petición no cambian al recortar?
+4. (módulo) Con `sin_recorte`, el modelo tiene delante 35 campos que las preguntas no usan. ¿Crees que eso cambia si acierta las dos respuestas?
+5. (módulo) De lo que mide el módulo, ¿qué esperas que salga casi igual en cada ejecución y qué puede variar? Piensa en quién decide cuántas peticiones se hacen.
 
 ### Ejecutar
 
@@ -771,6 +823,14 @@ La línea `[medida]`: cuántas peticiones hubo, los tokens de entrada en total y
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+**Tus predicciones:**
+
+- **P1** Crece en cada petición, porque los resultados se acumulan en el historial y este se reenvía entero (TS 5.1-K3, 5.1-K4). El máximo llega al final: la petición de la segunda pregunta lleva todo lo acumulado en la primera.
+- **P2** Antes de que entre en el historial (TS 5.1-S3). Una instrucción de ignorarlos deja los campos en el contexto: el modelo los sigue leyendo en cada petición y el consumo no baja.
+- **P3** En menos: unas 3,4 veces en el total. El *system prompt*, las definiciones de las tools, las preguntas y las respuestas pesan igual en las dos variantes.
+- **P4** No: las dos respuestas fueron correctas con y sin recorte. La señal de este módulo es de tokens, no de calidad.
+- **P5** Casi igual, el recorte (lo hace el código) y la proporción de tokens entre variantes. Puede variar el número de peticiones, que lo decide el modelo.
 
 Haiku 5.5 (2026-11-07, 5 ejecuciones por variante). En todas hubo 11 peticiones: la lista, una consulta por equipo, la respuesta a la primera pregunta y la respuesta a la segunda.
 
@@ -809,4 +869,4 @@ Un agente de pedidos consulta una tool que devuelve más de 40 campos por pedido
 - **D** recorta en el punto que pide la guía, antes de que el resultado entre en el contexto.
 </details>
 
-**Paso 5 ·** Si fallaste una predicción o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
+**Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
