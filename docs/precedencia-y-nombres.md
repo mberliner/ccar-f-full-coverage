@@ -40,8 +40,9 @@ La sustitución elige un ganador. La acumulación carga todo y los conflictos lo
 
 **Trampa:** la fila de proyecto y usuario se invierte. En agentes gana el proyecto; en skills gana la personal.
 
-Detalles documentados del mismo nivel:
+Detalles del mismo tipo:
 
+- **Commands de usuario y de proyecto con el mismo nombre:** se ejecuta el de usuario, como en las skills. El menú `/` y `/skills` listan los dos, sin marcar cuál se ejecuta [P-1].
 - **Agentes en directorios de proyecto anidados:** se recorren todos los `.claude/agents/` desde el directorio de trabajo hasta la raíz del repositorio y gana la definición más cercana al directorio de trabajo [D-AG-1].
 - **Dos agentes con el mismo `name` en un mismo `.claude/agents/`** (incluidas sus subcarpetas): se carga solo uno, elegido por orden de lectura del sistema de archivos, sin precedencia documentada. `/doctor` lo avisa [D-AG-1].
 - **Agentes de plugin:** además de ocupar el último lugar de la tabla, se registran con nombre calificado (`plugin:agente`) [D-AG-1][D-PL-1]. Si dos plugins traen un agente con el mismo nombre, se desambigua con el nombre calificado [D-AG-2]. Cuando el nombre corto coincide con el de un agente de proyecto, conviven: el de proyecto responde al nombre corto y el de plugin, solo a `plugin:agente`. El agente de plugin se registra únicamente con el nombre calificado, también cuando no hay ningún otro con ese nombre corto [P-5].
@@ -53,6 +54,7 @@ Detalles documentados del mismo nivel:
 | Choque | Resultado | Fuente |
 |---|---|---|
 | Skill y archivo en `.claude/commands/` (`commands/deploy.md` y `skills/deploy/SKILL.md`) | Gana la skill | [D-SK-1] |
+| Skill y archivo en `.claude/commands/`, en niveles distintos | Gana la skill en los dos sentidos, también la de proyecto sobre un command de usuario: manda el tipo sobre el nivel | [P-2] |
 | Skill de plugin y skill de cualquier otro nivel | Se cargan las dos; la de plugin es `/plugin:skill` | [D-SK-1] |
 | Skill propia y skill incluida (*bundled*) | La propia sustituye al comando incluido, pero no a sus alias | [D-SK-1] |
 | Skill propia y comando integrado (*built-in*) | En una sesión de terminal local, la propia sustituye al integrado, pero no a sus alias | [D-SK-1] |
@@ -161,22 +163,20 @@ Consultadas el 2026-11-11. La documentación de producto no está versionada por
 | D-PE-3 | `permissions` | *Settings precedence* |
 | D-PL-1 | `plugins-reference` | Campo `name` del manifiesto (espacio de nombres de los componentes) |
 
-**Pruebas propias** (`docs/plan-pruebas-precedencia.md`), ejecutadas el 2026-11-11 con Claude Code 2.1.322 y `claude -p`; modelo de la medida: Opus 5.5. Una ejecución por caso:
+**Pruebas propias** (`docs/plan-pruebas-precedencia.md`), ejecutadas el 2026-11-11 con Claude Code 2.1.322; modelo de la medida: Opus 5.5. P-1 y P-2, en sesión interactiva; P-3 a P-5, con `claude -p`. Una ejecución por caso:
 
 | Clave | Prueba | Señal |
 |---|---|---|
+| P-1 | P1 | Origen devuelto por `/nombre`; entradas del menú `/` y de `/skills` |
+| P-2 | P2a y P2b | Origen devuelto por `/nombre`; orden del menú `/` |
 | P-3 | P3a y P3b | Listas de agentes y skills del mensaje inicial de la sesión, y origen devuelto por cada vía |
 | P-4 | P4a, P4b y P4c | Llamadas a tools del subagente y denegaciones de permiso del registro |
 | P-5 | P5 | Lista de agentes del mensaje inicial, con y sin el agente de proyecto |
 
 ## 8. Sin respaldo en la documentación
 
-La documentación consultada no resuelve estos puntos, así que no figuran arriba como hechos. Cada uno tiene su prueba en `docs/plan-pruebas-precedencia.md`.
+La documentación consultada no resuelve este punto, así que no figura arriba como hecho. Su prueba está en `docs/plan-pruebas-precedencia.md`.
 
 | Punto | Prueba |
 |---|---|
-| Command de usuario y command de proyecto con el mismo nombre | P1 |
-| Skill y command con el mismo nombre en niveles distintos (personal frente a proyecto) | P2 |
 | Si, ante una contradicción, el modelo sigue de hecho el CLAUDE.md más cercano | P6 |
-
-De P3 y P5 quedan sin hacer los pasos de menú (`/doctor` y el autocompletado de `/` y `@`), que no existen en `claude -p`.
