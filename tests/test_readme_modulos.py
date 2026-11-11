@@ -156,9 +156,6 @@ def prediction_problems(section: str) -> list[str]:
 # Módulos anteriores al criterio de predicciones autónomas. Se vacía según se adaptan;
 # `test_pending_predictions_really_fail` obliga a borrar la entrada en cuanto el módulo cumple.
 PENDING_PREDICTIONS: set[str] = {
-    "app3_sistema_multiagente 07",
-    "app3_sistema_multiagente 08",
-    "app3_sistema_multiagente 09",
     "app3_sistema_multiagente 10",
     "app3_sistema_multiagente 11",
     "app3_sistema_multiagente 12",

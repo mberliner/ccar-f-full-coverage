@@ -832,14 +832,19 @@ Cinco partes (`--parte`) y variantes `--anti` en la primera y en la última:
 
 ### Predice antes de ejecutar
 
-Con tus palabras; no hay un número que acertar:
+Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. Un documento no menciona número de pedido. Si `po_number` es obligatorio y de tipo `string`, ¿qué opciones le quedan al modelo? ¿Y si es *nullable* y no obligatorio? En cada caso, ¿qué te garantiza el esquema y qué no?
-2. Con el `enum` cerrado (solo `invoice` y `delivery_note`), ¿qué dos salidas distintas podría dar el modelo con un certificado de garantía? ¿Cuál detectaría un validador del esquema y cuál solo se ve comparando con la etiqueta?
-3. Con las tres tools por tipo, ¿qué esperas de `any`, de `auto` y de forzar siempre la tool de factura? ¿Qué le pasa a un albarán en cada caso?
-4. La parte `few_shot` quita de las descripciones la regla de cómo escribir una fecha. ¿Qué tendría que ocurrir sin ejemplos para que los ejemplos se notaran? ¿Esperas lo mismo con dos modelos distintos? ¿Y con los campos que el documento sí trae pero el modelo podría dejar vacíos?
-5. En `enriquecimiento`, el modelo tiene una tool para extraer y otra para consultar el pedido. Con `auto` desde el primer turno, ¿qué podría hacer mal? Si en tus ejecuciones no lo hace nunca, ¿basta eso para prescindir del primer turno forzado?
-6. En `estricto`, el `enum` solo admite `invoice` y `delivery_note`. Con `strict: true`, ¿puede salir algún valor fuera del `enum`? ¿Qué pasará con el certificado de garantía? ¿Esperas que «forma válida» y «tipo correcto» suban, bajen o se queden igual con `strict` respecto de sin él? ¿Y qué te dice eso de lo que el modo estricto garantiza y de lo que no?
+1. (guía) Un documento no menciona ningún número de pedido. Si `po_number` es obligatorio y de tipo `string` (`sin_nullable`), ¿qué opciones le quedan al modelo para ese campo?
+2. (guía) Con `po_number` opcional y *nullable*, ¿qué devolverá el modelo para ese mismo documento? ¿Garantiza el esquema que el valor de un campo sea verdadero?
+3. (guía) En `enum_cerrado`, `doc_type` solo admite `invoice` y `delivery_note`, y la llamada va con `tool_choice` forzado: el modelo tiene que escribir algo en ese campo. Llega un certificado de garantía. ¿Qué salida rechazaría un validador del esquema y cuál pasaría sin que nadie lo notara?
+4. (guía) En `tipo_desconocido` hay tres tools, una por tipo de documento. ¿Qué garantiza `any` y qué deja sin garantizar `auto`? ¿Qué le pasa a un albarán si se fuerza siempre la tool de factura?
+5. (guía) En `few_shot`, las descripciones ya no dicen cómo escribir una fecha: sin regla ni ejemplos, el modelo tiene que adivinar el formato. ¿Qué aportan tres ejemplos de documentos con estructuras distintas?
+6. (módulo) ¿Esperas que los ejemplos de `few_shot` se noten con cualquier modelo? ¿De qué depende?
+7. (módulo) Algunos campos sí están en el documento, pero el modelo podría dejarlos vacíos. ¿Esperas que los ejemplos cambien cuántos deja vacíos en estos doce documentos?
+8. (guía) En `enriquecimiento`, el módulo fuerza `extract_metadata` en el primer turno y deja `auto` en los siguientes. ¿Para qué sirve ese primer turno forzado?
+9. (módulo) Con `auto_desde_inicio`, si en tus ejecuciones el modelo extrae siempre primero por su cuenta, ¿basta eso para prescindir del primer turno forzado? ¿Por qué?
+10. (guía) En `estricto`, con `strict: true` y el `enum` cerrado, ¿puede salir un valor fuera del `enum`? ¿Qué pasará entonces con el certificado de garantía?
+11. (guía) ¿Qué garantiza el modo estricto y qué no garantiza?
 
 ### Ejecutar
 
@@ -862,6 +867,20 @@ En cada ejecución, `forma válida`, `campos ausentes rellenados`, `tipo correct
 
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
+
+**Tus predicciones:**
+
+- **P1** Inventar algo para cumplir el `required`: el texto `'null'`, una cadena vacía o un valor deducido. Rellenó 21 de 21 campos ausentes (TS 4.3-S4).
+- **P2** `null`, casi siempre (1 o 2 rellenados de 21). No lo garantiza: el esquema elimina los errores de sintaxis, no los de significado (TS 4.3-K3).
+- **P3** Rechazaría un valor fuera de la lista, como `other` (pasó en 2 de 12). Pasaría sin aviso un tipo permitido que no es el suyo: el documento ilegible salió como `invoice`. Por eso el `enum` lleva `other` con un campo de detalle, y `unclear` para lo ambiguo (TS 4.3-K4, 4.3-S5).
+- **P4** `any` obliga a llamar a alguna tool y deja elegir cuál; `auto` permite contestar con texto (TS 4.3-K2). Con la tool de factura forzada, el albarán se trata como factura (5 de 12 correctos). `any` encaja cuando no se sabe de qué tipo es el documento (TS 4.3-S2).
+- **P5** Enseñan dónde está cada dato en cada estructura y con qué formato se espera, y reducen las alucinaciones en la extracción (TS 4.2-K4, 4.2-S4). Las reglas de normalización van en el prompt junto al esquema, porque los documentos no las siguen (TS 4.3-S6).
+- **P6** No: solo se notan si el modelo falla sin ellos. Con el modelo por defecto no hubo fechas mal con ni sin ejemplos; con `--rol-modelo enforcement`, 5 o 6 de 12 sin ejemplos y ninguna con ellos.
+- **P7** No cambió: 0 campos vacíos con y sin ejemplos. La guía da los ejemplos como remedio para los campos que salen vacíos (TS 4.2-S5); aquí no había vacíos que corregir.
+- **P8** Para asegurar que la extracción se hace antes de los pasos que la enriquecen (TS 4.3-S3).
+- **P9** No basta: que hoy lo haga no garantiza el orden; el turno forzado lo garantiza por construcción. El fallo que evita no se pudo provocar (sin señal).
+- **P10** No: 0 valores fuera del `enum` y forma válida en 12 de 12. Pero la garantía cae entonces en una categoría que no es la suya, y el tipo correcto baja de 11 a 9 de 12.
+- **P11** Garantiza la forma, es decir, que la salida cumple el esquema. No garantiza que el dato sea correcto (TS 4.3-K3).
 
 Haiku 5.5 (rol `agent`), 12 documentos, tres repeticiones salvo donde se dice:
 
@@ -961,12 +980,13 @@ Lo que cambia en el código de cada variante (el esquema, los documentos y el va
 
 ### Predice antes de ejecutar
 
-Con tus palabras; no hay un número que acertar:
+Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. Una factura no cita número de pedido en ninguna parte. ¿Qué debería hacer el bucle correcto con ella? Si se le pide al modelo una y otra vez que corrija ese campo, ¿qué acabará devolviendo, y podría distinguirlo el validador de un número bueno?
-2. Una fecha sale como `12/03/2026` y la regla exige ISO. ¿Qué sabe el modelo en el reintento con el mensaje concreto y qué sabe con «Inténtalo de nuevo»? ¿Qué variante esperas que gaste más en reintentos, y por qué?
-3. Dos documentos declaran un total que no es la suma de sus líneas, y el error está en el propio documento, no en la extracción. ¿Qué puede hacer el modelo si le pides que lo revise? ¿Qué sería la salida correcta?
-4. Sin mirar etiquetas, ¿cómo decide el código que un dato no está en el documento? ¿Qué parte de esa decisión no puede tomar el modelo por ti?
+1. (guía) Una factura no cita número de pedido en ninguna parte. ¿Sirve un reintento para conseguir ese dato? ¿Qué debería hacer el bucle con ese campo?
+2. (guía) Con `insistir` se le pide al modelo una y otra vez que corrija ese campo. ¿Qué acabará devolviendo? ¿Podría un validador de formato distinguirlo de un número de pedido real?
+3. (guía) Una fecha sale como `12/03/2026` y la regla exige ISO. ¿Qué sabe el modelo en el reintento con el error concreto? ¿Y con `reintento_generico` («Inténtalo de nuevo.»)?
+4. (módulo) ¿Qué variante esperas que gaste más reintentos para arreglar las fechas: la del error concreto o `reintento_generico`?
+5. (guía) Dos documentos declaran un total que no es la suma de sus líneas, y el error está en el propio documento. ¿Sirve pedir al modelo que lo revise? ¿Cuál sería la salida correcta?
 
 ### Ejecutar
 
@@ -987,6 +1007,14 @@ Por documento, los fallos del primer intento agrupados por patrón, los reintent
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
+**Tus predicciones:**
+
+- **P1** No: un reintento no crea un dato que la fuente no contiene; sirve para fallos de formato o de estructura (TS 4.4-K2). El bucle distingue el caso antes de reintentar y deja el campo marcado con su causa (TS 4.4-S2).
+- **P2** Un pedido inventado, en las 3 repeticiones. El validador no lo distingue, porque tiene el formato correcto: solo lo delata la etiqueta.
+- **P3** Con el error concreto sabe el campo, el valor que falló y la regla (TS 4.4-K1, 4.4-S1). Con el genérico no sabe qué falló, y repite la misma fecha.
+- **P4** `reintento_generico`: 10 u 11 reintentos con solo 1 a 3 útiles, frente a 5 a 7 casi todos útiles con el error concreto.
+- **P5** No sirve: el modelo cambió el total declarado para que cuadrara, y el conflicto desapareció sin que nadie lo marcara. Lo correcto es extraer el total declarado y el calculado y marcar `conflict_detected` (TS 4.4-K4, 4.4-S4).
+
 Haiku 4.5 (rol `enforcement`), 12 documentos, tres repeticiones:
 
 | Variante | Señal observada | Qué dice |
@@ -1002,6 +1030,8 @@ Notas:
 - **Qué mide cada línea:** el validador de formato no distingue un pedido real de uno inventado con la forma correcta. «Inventaron» sale de comparar con la etiqueta, que el bucle no ve. «Dejaron vacío» (el reintento deja `null` un campo que la etiqueta sí tiene) salió 0 en las nueve ejecuciones.
 - **Por qué Haiku 4.5:** en la sonda previa al módulo (A2, `docs/hallazgos.md`), Haiku 5.5 no escribió mal ninguna fecha en 36 primeros intentos. Sin fallos no hay nada que reintentar y la señal no aparece. Es una cifra de la sonda, no de una ejecución del módulo con `--rol-modelo agent`.
 - Lo que no depende del modelo se prueba en `tests/test_app3_08_validacion_reintento.py`.
+
+**Para pensar (sin evaluación):** ¿cómo decide el código, sin mirar etiquetas, que un dato no está en el documento? Lo hace con una búsqueda en el texto (ver las notas). Es un detalle de este módulo y no se evalúa: el concepto es que esa distinción se hace antes de reintentar.
 </details>
 
 ### Pregunta tipo examen
@@ -1067,12 +1097,14 @@ Las peticiones llevan un `max_tokens` corto (600) a propósito, para que el lote
 
 ### Predice antes de ejecutar
 
-Con tus palabras; no hay un número que acertar:
+Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. Las facturas del turno de noche tienen un plazo de 30 h y llegan a lo largo de todo el día. ¿Cada cuántas horas enviarías un lote para cumplirlo, y por qué no basta con comparar 30 h con las 24 h de la ventana? Si un documento falla, ¿queda tiempo para reenviarlo?
-2. Envías 12 peticiones en un lote. ¿En qué orden esperas los resultados? ¿Qué le pasa a un código que los empareja con los documentos por posición?
-3. Una respuesta se corta por `max_tokens`. ¿Con qué tipo de resultado crees que llega dentro del lote? ¿Qué tiene que mirar tu código para saber que no sirve?
-4. Reenvías un documento largo partido en trozos, y uno de ellos vuelve a truncarse. ¿Qué harías y qué no harías con el resto del lote?
+1. (guía) Las facturas del turno de noche tienen un plazo de 30 h, contado desde que llega cada una hasta que tiene su resultado, y llegan a lo largo de todo el día. Un lote puede tardar hasta 24 h en procesarse y el módulo reserva además 2 h de margen. ¿Cada cuántas horas hay que enviar un lote para que ninguna se pase del plazo?
+2. (guía) Con ese mismo plazo de 30 h, si un documento falla, ¿cabe reenviarlo en un segundo lote, que puede tardar otras 24 h?
+3. (guía) Envías 12 peticiones en un lote. ¿Llegarán los resultados en el orden de envío? ¿Con qué debe emparejar el código cada resultado con su documento?
+4. (módulo) Una respuesta del lote se corta por `max_tokens`. ¿Con qué tipo de resultado crees que llega? ¿Qué tiene que mirar tu código para saber que no sirve?
+5. (guía) Al reenviar, ¿se reenvía el lote entero o solo lo que falló? ¿Qué hay que cambiar en un documento que no cupo en la respuesta?
+6. (guía) Antes de crear el lote, el módulo extrae una muestra de tres documentos de forma síncrona. ¿Para qué sirve?
 
 ### Ejecutar
 
@@ -1094,6 +1126,15 @@ El acierto por campo de la muestra antes de crear el lote; el orden de llegada f
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó (ábrelo después de predecir)</summary>
 
+**Tus predicciones:**
+
+- **P1** Cada 4 h. Una factura que llega justo después de un envío espera un intervalo entero hasta el siguiente, y después el lote puede tardar toda la ventana: intervalo + 24 h + 2 h de margen ≤ 30 h. La frecuencia sale del plazo (TS 4.5-S2); el margen es una elección de este módulo, y sin él saldrían 6 h.
+- **P2** No: un segundo lote añade otras 24 h y se pasa del plazo. Ese trabajo cabe en batch, pero sin margen para reenviar lo que falle. La ventana es de hasta 24 h, sin garantía de latencia (TS 4.5-K1).
+- **P3** No llegan en orden. Se emparejan por `custom_id` (TS 4.5-K4): por posición, 11 de 11 documentos recibieron los datos de otro.
+- **P4** Como `succeeded`, igual que los buenos. Hay que mirar el `stop_reason`: `max_tokens` indica que la extracción está cortada.
+- **P5** Solo los documentos que fallaron, localizados por su `custom_id`, y con el cambio que haga falta: aquí, trocear el que no cupo (TS 4.5-S3).
+- **P6** Para afinar el prompt antes de procesar el volumen: sube el acierto a la primera y baja el coste de los reenvíos (TS 4.5-S4). Detecta fallos de prompt y de esquema, no de tamaño.
+
 Haiku 5.5, 12 documentos:
 
 | Paso | Señal observada | Qué dice |
@@ -1112,6 +1153,8 @@ Notas:
 - **La muestra no garantiza el lote:** acertó 24 de 24 con tres documentos cortos, pero el único fallo del lote (`DC-12`, el albarán largo) no estaba en ella. La muestra detecta fallos de prompt y de esquema, no de tamaño.
 - **Un documento sin número en la etiqueta** (`DC-07`) puede salir con uno inventado; eso no es un cruce de documentos y no cuenta en el emparejado (se mide en el módulo 07).
 - Lo que no depende del modelo se prueba en `tests/test_app3_09_batches.py`; el descuento, en `tests/test_budget.py`.
+
+**Para pensar (sin evaluación):** si un trozo reenviado vuelve a truncarse, ¿qué harías con él y con el resto del lote? El módulo lo re-trocea a la mitad; es su algoritmo, no un concepto de la guía, y no se evalúa.
 </details>
 
 ### Pregunta tipo examen
