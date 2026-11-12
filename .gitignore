@@ -3,4 +3,6 @@ __pycache__/
 .pytest_cache/
 .env
 .claude/settings.local.json
+# Claude Code no lo ignora solo (roadmap §4.3); vale en cualquier directorio.
+CLAUDE.local.md
 /estado/
