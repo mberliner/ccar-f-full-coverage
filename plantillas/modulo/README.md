@@ -133,4 +133,29 @@ Si la añades, etiqueta la primera como «**Pregunta 1 (una respuesta).**». Reg
 </details>
 -->
 
+<!-- Comprobaciones cortas (opcional; obligatorio en la práctica si la pregunta principal deja viñetas del módulo
+sin ninguna respuesta evaluable: `tests/test_comprobaciones_cortas.py` exige que cada viñeta que el módulo
+introduce se cite en un «Paso 4» o en una comprobación). Van en su propio `###`, después de la pregunta y antes
+de la línea del paso 5. Cada una cambia de ángulo respecto a la pregunta principal (reconocer el anti-patrón,
+elegir el mecanismo para un caso nuevo, detectar el error de una configuración), practica viñetas ya
+introducidas, tiene cuatro opciones de longitud pareja y una respuesta plegada que cita las viñetas de su título.
+
+### Comprobaciones cortas
+
+Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregunta principal no toca. Responde antes de abrir cada respuesta; un fallo también se anota en tu `FALLOS.md`.
+
+**C1 · TS x.y-Kn, Sn.** Enunciado con un caso distinto del de la pregunta principal.
+
+- A. …
+- B. …
+- C. …
+- D. …
+
+<details>
+<summary>Comprobación C1 · Respuesta</summary>
+
+**X.** Por qué, con las viñetas del título, y por qué no las demás.
+</details>
+-->
+
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).

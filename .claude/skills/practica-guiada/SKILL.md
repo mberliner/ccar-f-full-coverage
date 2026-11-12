@@ -26,7 +26,7 @@ Argumento recibido: `$ARGUMENTS`
 ## Reglas que no se rompen
 
 1. **El contenido del módulo solo llega por el narrador:** `uv run python -m harness.narrador fase <módulo> <fase>`. Hasta haber pedido la fase `respuesta`, no abras con `Read`, `Grep` ni `Bash` el `README.md` de ninguna app (`app*/README.md`) ni los scripts `app*/*.py`, ni sus tests. Ahí están el resultado de referencia y la respuesta.
-2. **Pide cada fase cuando toque, en este orden:** `ficha` → `ejercicio` → `ejecutar` → `contraste` → `pregunta` → `respuesta`. No pidas una fase antes de que la persona haya terminado el paso anterior.
+2. **Pide cada fase cuando toque, en este orden:** `ficha` → `ejercicio` → `ejecutar` → `contraste` → `pregunta` → `respuesta` (y, si la persona quiere, `comprobaciones` → `soluciones`). No pidas una fase antes de que la persona haya terminado el paso anterior.
 3. **No adelantes nada:** ni pistas, ni «ojo con…», ni valoraciones de las predicciones antes del contraste. Si la persona pide la respuesta antes de tiempo, recuérdale que primero predecir es lo que fija el aprendizaje; si insiste, es su decisión y sigues.
 4. **No ejecutes los módulos.** Propones el comando y lo lanza la persona con `!` delante, para que la salida llegue a la conversación. Ella decide el gasto (`--anti`, `--budget`, `--repeat`).
 5. **Lo único que escribes es su `FALLOS.md`**, y solo tras un «sí» explícito en texto. El resto del repositorio no se toca.
@@ -41,7 +41,7 @@ Argumento recibido: `$ARGUMENTS`
 
 ## El ciclo
 
-«Pide `ficha`» (o `ejercicio`, `ejecutar`, `contraste`, `pregunta`, `respuesta`) significa ejecutar **exactamente** `uv run python -m harness.narrador fase <módulo> <fase>`, por ejemplo `uv run python -m harness.narrador fase app2/03 ficha`. Las fases no son subcomandos: `harness.narrador ficha app2/03` da error. Los únicos subcomandos son `menu`, `setup` y `fase`.
+«Pide `ficha`» (o `ejercicio`, `ejecutar`, `contraste`, `pregunta`, `respuesta`) significa ejecutar **exactamente** `uv run python -m harness.narrador fase <módulo> <fase>`, por ejemplo `uv run python -m harness.narrador fase app2/03 ficha`. Las fases no son subcomandos: `harness.narrador ficha app2/03` da error. Los únicos subcomandos son `menu`, `setup` y `fase`. Fuera del ciclo hay dos fases opcionales, `comprobaciones` y `soluciones`, que se piden igual.
 
 ### Paso 1 · Orientarse
 
@@ -65,6 +65,10 @@ Presenta las preguntas de «Predice antes de ejecutar», numeradas y tal como vi
 
 1. Pide `pregunta` y plantéala con `AskUserQuestion`. El enunciado va en `question`. Cada opción lleva su letra como `label` («A», «B»…) y su texto completo como `description`, en el mismo orden que el README. Ninguna va marcada como recomendada ni lleva ninguna pista. Avisa de que puede responder con sus palabras en «Other». Si el módulo trae varias preguntas (la fase `pregunta` las separa con «**Pregunta N**»), plantéalas todas en la misma llamada, una entrada de `questions` por pregunta. Una pregunta «**Selecciona dos**» (o tres, cuatro) es multiple-response: va con `multiSelect: true` y el enunciado conserva cuántas elegir; no añadas más pistas sobre cuáles son. Las multiple-response del repositorio tienen como máximo 4 opciones, que es el límite de la herramienta.
 2. Pide `respuesta`. Di si su elección coincide y narra el porqué con las viñetas que cita. Si ha fallado, explica qué trampa tenía su opción. La sección «Para profundizar» (la cabecera del script) se ofrece en un par de frases, solo si quiere ir más allá. A partir de aquí ya puedes abrir el `README.md` y el script si la persona te pregunta algo de ellos.
+
+### Comprobaciones cortas (opcional, entre el paso 4 y el 5)
+
+Algunos módulos traen comprobaciones cortas: preguntas breves sobre ideas del módulo que la pregunta principal no toca. Pide `comprobaciones` (`uv run python -m harness.narrador fase <módulo> comprobaciones`). Si responde que el módulo no tiene, sigue al paso 5 sin mencionarlo. Si las hay, di cuántas son y ofrece hacerlas ahora o dejarlas para un repaso. Si acepta, plantéalas con `AskUserQuestion` como en el paso 4 (hasta cuatro por llamada), sin pistas, y solo después de tener sus respuestas pide `soluciones` y coméntalas una a una con sus viñetas. Sus fallos se anotan en el paso 5 como los de la pregunta.
 
 ### Paso 5 · Anotar
 

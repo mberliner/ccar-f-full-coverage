@@ -33,6 +33,11 @@ from harness.credentials import ROOT
 from harness.estado import state_dir
 
 PHASES = ("ficha", "ejercicio", "ejecutar", "contraste", "pregunta", "respuesta")
+# Fases opcionales, fuera del ciclo: las comprobaciones cortas de un módulo y sus respuestas.
+EXTRA_PHASES = ("comprobaciones", "soluciones")
+CHECKS_HEADING = "Comprobaciones cortas"
+CHECK_SUMMARY = "Comprobación C"
+NO_CHECKS = "Este módulo no tiene comprobaciones cortas.\n"
 STEP3 = "Paso 3 · Contrastar"
 STEP4 = "Paso 4 · Respuesta"
 STEP5 = "**Paso 5 ·**"
@@ -216,11 +221,22 @@ def render(parts: list[tuple[str, str]]) -> str:
 
 def phase(module: Module, name: str) -> str:
     """El texto de una fase. Ninguna fase previa a `contraste` lleva bloques plegados."""
-    if name not in PHASES:
-        raise ValueError(f"fase «{name}» desconocida: usa una de {', '.join(PHASES)}")
+    if name not in PHASES + EXTRA_PHASES:
+        raise ValueError(f"fase «{name}» desconocida: usa una de {', '.join(PHASES + EXTRA_PHASES)}")
     section = module.section()
     parts = subsections(strip_details(section))
     headings = [heading for heading, _ in parts]
+
+    if name == "comprobaciones":
+        # Solo los enunciados y las opciones: sus respuestas plegadas salen con `soluciones`.
+        found = [(heading, body) for heading, body in parts if heading.startswith(CHECKS_HEADING)]
+        if not found:
+            return NO_CHECKS
+        heading, body = found[0]
+        body = "\n".join(line for line in body.splitlines() if not line.startswith(STEP5) and line.strip() != "---")
+        return render([(heading, body + "\n")])
+    if name == "soluciones":
+        return all_details_body(section, CHECK_SUMMARY) or NO_CHECKS
 
     def index(prefix: str) -> int:
         return next(i for i, heading in enumerate(headings) if heading.startswith(prefix))
@@ -331,7 +347,7 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("menu", help="todo lo disponible, con el módulo recomendado")
     commands.add_parser("setup", help="comprobaciones de puesta en marcha")
     phase_parser = commands.add_parser("fase", help="el texto de una fase de un módulo")
-    phase_parser.add_argument("args", nargs="+", metavar="MÓDULO… FASE", help=f"p. ej. app1/01 ficha; fases: {', '.join(PHASES)}")
+    phase_parser.add_argument("args", nargs="+", metavar="MÓDULO… FASE", help=f"p. ej. app1/01 ficha; fases: {', '.join(PHASES + EXTRA_PHASES)}")
     args = parser.parse_args(argv)
 
     if args.command == "menu":

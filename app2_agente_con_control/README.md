@@ -689,6 +689,36 @@ Ayer un desarrollador analizó un módulo con Claude Code en una sesión con nom
 **A.** Con la mayor parte del contexto aún válida, se reanuda (TS 1.7-S3) informando de los cambios concretos para un reanálisis dirigido (TS 1.7-K3, 1.7-S4). B responde con resultados obsoletos; C desperdicia el análisis válido (empezar de nuevo con un resumen conviene cuando lo obsoleto es la mayoría, TS 1.7-K4); D sirve para explorar enfoques divergentes desde una base común (TS 1.7-K2, 1.7-S2), no para incorporar cambios.
 </details>
 
+### Comprobaciones cortas
+
+Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregunta principal no toca. Responde antes de abrir cada respuesta; un fallo también se anota en tu `FALLOS.md`.
+
+**C1 · TS 1.7-K1, S1.** Ayer se investigó un fallo en una sesión llamada `migracion-pagos` y hoy se quiere seguir esa misma conversación. ¿Cómo?
+
+- A. Con `claude --resume migracion-pagos`, que reanuda esa sesión concreta por su nombre.
+- B. Abriendo una sesión nueva: una sesión no se puede continuar de un día para otro.
+- C. Con `fork_session`, que es la forma de volver a entrar en una sesión del día anterior.
+- D. Pegando en una sesión nueva el nombre de la anterior, para que cargue su historial.
+
+<details>
+<summary>Comprobación C1 · Respuesta</summary>
+
+**A.** Una sesión con nombre se reanuda con `--resume <nombre>` para seguir una conversación concreta, también entre jornadas (TS 1.7-K1, 1.7-S1). C sirve para bifurcar, no para continuar; B y D no describen cómo funcionan las sesiones.
+</details>
+
+**C2 · TS 1.3-K4.** Tras analizar un módulo, el equipo quiere comparar dos estrategias de refactorización sin que una contamine a la otra. ¿Qué encaja?
+
+- A. Reanudar la sesión dos veces seguidas, una estrategia detrás de la otra en el mismo hilo.
+- B. Empezar dos sesiones nuevas y repetir en cada una el análisis completo del módulo.
+- C. Bifurcar con `fork_session`: dos ramas independientes que parten del mismo análisis.
+- D. Pedir las dos estrategias en un solo mensaje, para que el agente las desarrolle a la vez.
+
+<details>
+<summary>Comprobación C2 · Respuesta</summary>
+
+**C.** `fork_session` crea ramas independientes desde una base de análisis común para explorar enfoques distintos (TS 1.3-K4, 1.7-K2, 1.7-S2). A mezcla las dos en un hilo; B repite un análisis que ya vale; D no las aísla.
+</details>
+
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---

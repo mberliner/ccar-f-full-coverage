@@ -3,6 +3,8 @@
 import pytest
 
 from harness.narrador import (
+    CHECK_SUMMARY,
+    NO_CHECKS,
     PHASES,
     ROOT,
     PendingModule,
@@ -232,6 +234,28 @@ def test_step5_line_goes_with_the_answer():
 def test_unknown_phase_is_rejected():
     with pytest.raises(ValueError):
         phase(resolve("app1/01"), "todo")
+
+
+@pytest.mark.parametrize("module", delivered(), ids=lambda module: module.id)
+def test_short_checks_never_reveal_ahead(module):
+    """Las comprobaciones cortas son una fase aparte: ni se cuelan en el ciclo ni enseñan sus respuestas."""
+    answers = leak_lines(all_details_body(module.section(), CHECK_SUMMARY))
+    checks, solutions = phase(module, "comprobaciones"), phase(module, "soluciones")
+    assert "<details>" not in checks and "Paso 5" not in checks
+    for line in answers:
+        assert line not in checks, f"comprobaciones adelanta: {line[:60]}"
+        assert line in solutions
+        for name in PHASES:
+            assert line not in phase(module, name), f"{name} adelanta una comprobación: {line[:60]}"
+    if not answers:
+        assert checks == NO_CHECKS and solutions == NO_CHECKS
+    for name in ("pregunta", "respuesta"):
+        assert "Comprobaciones cortas" not in phase(module, name)
+
+
+def test_short_checks_phase_brings_statements_and_options():
+    checks = phase(resolve("app1/02"), "comprobaciones")
+    assert "**C1 · TS 2.5-K3, K4, S3.**" in checks and "- D. " in checks
 
 
 # --- Menú ----------------------------------------------------------------------

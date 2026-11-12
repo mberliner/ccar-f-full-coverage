@@ -256,6 +256,36 @@ Un agente de mantenimiento debe encontrar todos los llamadores de `process_refun
 **C.** Para rastrear una función a través de un módulo *wrapper* se identifican primero todos los nombres exportados y después se busca cada uno (TS 2.5-S5); `Grep` es la tool para el contenido (TS 2.5-K1, 2.5-S1). A pierde los llamadores por alias y parece completa; B es leer todo cuando una búsqueda lo resuelve, contra la exploración incremental (TS 2.5-S4); D confunde `Glob` (rutas, TS 2.5-K2) con una búsqueda de contenido: un llamador no tiene por qué llevar «refund» en su nombre de archivo.
 </details>
 
+### Comprobaciones cortas
+
+Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregunta principal no toca. Responde antes de abrir cada respuesta; un fallo también se anota en tu `FALLOS.md`.
+
+**C1 · TS 2.5-K3, K4, S3.** Un agente tiene que cambiar una de las dos líneas idénticas `RETRIES = 3` de un archivo, y su `Edit` con ese texto como referencia devuelve un error. ¿Qué hace a continuación?
+
+- A. Repetir el mismo `Edit`, porque el error suele ser pasajero y desaparece al segundo intento.
+- B. Leer el archivo con `Read` y guardarlo completo con `Write`, con solo esa línea cambiada.
+- C. Buscar la línea con `Glob`, que localiza el texto repetido y dice al agente cuál es cada una.
+- D. Usar `Grep` para sustituir la segunda aparición, ya que trabaja sobre el contenido del archivo.
+
+<details>
+<summary>Comprobación C1 · Respuesta</summary>
+
+**B.** `Edit` hace un cambio localizado que depende de que el texto de referencia aparezca una sola vez (TS 2.5-K3). Cuando se repite y falla, el respaldo es cargar el archivo con `Read` y guardarlo entero con `Write` (TS 2.5-K4, 2.5-S3). A repite una llamada que fallará igual; C confunde `Glob`, que casa rutas; D confunde `Grep`, que busca y no edita.
+</details>
+
+**C2 · TS 2.5-S2.** Un agente necesita la lista de todos los archivos de configuración `.yaml` de un repositorio, estén en la carpeta que estén. ¿Qué tool le corresponde?
+
+- A. `Grep` con el patrón `yaml`, que devuelve los archivos cuyo contenido menciona esa palabra.
+- B. `Read` sobre cada carpeta del repositorio, para ver uno a uno los archivos que contiene.
+- C. `Edit` con una referencia vacía, que enumera los archivos antes de aplicar ningún cambio.
+- D. `Glob` con el patrón `**/*.yaml`, que devuelve los archivos cuya ruta casa con el patrón.
+
+<details>
+<summary>Comprobación C2 · Respuesta</summary>
+
+**D.** Encontrar archivos por su nombre o su extensión es una búsqueda por ruta, y esa es la tool `Glob` (TS 2.5-K2, 2.5-S2). A busca en el contenido, así que devolvería también archivos que solo mencionan «yaml»; B lee de más; C no es lo que hace `Edit`.
+</details>
+
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
@@ -750,6 +780,62 @@ Un agente tiene `Grep` y un servidor MCP propio con una tool `search_kb` que ord
 <summary>Paso 4 · Respuesta</summary>
 
 **C.** Una descripción que detalla capacidades y salidas evita que el agente prefiera una tool integrada sobre una tool MCP más capaz (TS 2.4-S3): lo que decide la elección es lo que el agente ve de cada tool (TS 2.1-K1). A quita una herramienta que el agente sigue necesitando para otras cosas y no arregla la descripción; B es una instrucción en el prompt que compensa una descripción pobre y puede crear asociaciones no deseadas (TS 2.1-K4); D no aplica el criterio de TS 2.4-S4: una búsqueda sobre el catálogo propio de la mesa es un flujo específico del equipo y pide servidor propio.
+</details>
+
+### Comprobaciones cortas
+
+Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregunta principal no toca. Responde antes de abrir cada respuesta; un fallo también se anota en tu `FALLOS.md`.
+
+**C1 · TS 2.4-K1, S2.** Una desarrolladora quiere probar un servidor MCP experimental sin que le aparezca al resto del equipo. ¿Dónde lo declara?
+
+- A. En el `.mcp.json` del proyecto, en una rama aparte, para retirarlo cuando acabe la prueba.
+- B. En el `CLAUDE.md` del proyecto, descrito como un servidor que solo ella debe utilizar.
+- C. En su `~/.claude.json`, el ámbito de usuario, que es personal y no viaja con el repositorio.
+- D. En el `.claude/settings.json` del proyecto, donde se listan los servidores de cada persona.
+
+<details>
+<summary>Comprobación C1 · Respuesta</summary>
+
+**C.** Hay dos sitios para declarar un servidor: `.mcp.json` en el proyecto, para lo que comparte el equipo, y `~/.claude.json` en el usuario, para lo personal o experimental (TS 2.4-K1, 2.4-S2). A lo comparte con quien use esa rama; B y D no son donde se declaran los servidores MCP.
+</details>
+
+**C2 · TS 2.4-K2, S1.** El `.mcp.json` del proyecto, que se versiona, necesita un token para uno de sus servidores. ¿Cómo se escribe?
+
+- A. Con una referencia como `${GITHUB_TOKEN}`, que se expande desde el entorno al lanzar el servidor.
+- B. Con el valor del token en el archivo, y el archivo añadido a `.gitignore` en cada clon.
+- C. Con el token cifrado en el archivo y la clave para descifrarlo guardada en el `CLAUDE.md`.
+- D. Con el valor en el *system prompt* del agente, para que él se lo pase al servidor al llamarlo.
+
+<details>
+<summary>Comprobación C2 · Respuesta</summary>
+
+**A.** `.mcp.json` admite referencias a variables de entorno que se expanden al lanzar el servidor: el repositorio guarda el nombre de la variable y nunca el secreto (TS 2.4-K2, 2.4-S1). B deja de compartir la configuración; C y D ponen el secreto donde lo lee quien no debe.
+</details>
+
+**C3 · TS 2.4-K3.** Un agente tiene configurados tres servidores MCP. ¿Qué tools tiene disponibles al empezar?
+
+- A. Las del primer servidor declarado; las de los otros se activan cuando el agente los pide.
+- B. Las de los tres a la vez: al conectar descubre las tools de todos los servidores configurados.
+- C. Ninguna hasta que el usuario elige, en cada petición, con qué servidor quiere trabajar.
+- D. Las del servidor cuya descripción encaje mejor con la primera petición de la sesión.
+
+<details>
+<summary>Comprobación C3 · Respuesta</summary>
+
+**B.** Al conectar, el agente descubre las tools de todos los servidores configurados y puede usarlas todas a la vez (TS 2.4-K3). Ni se activan por turnos ni las elige el usuario.
+</details>
+
+**C4 · TS 2.4-K4, S5.** Un agente gasta decenas de llamadas en averiguar qué tablas tiene una base de datos antes de poder consultarla. ¿Qué cambio lo evita?
+
+- A. Añadir más tools de búsqueda al servidor, una por cada tipo de tabla que pueda existir.
+- B. Subir el tope de iteraciones, para que le dé tiempo a explorar el esquema completo.
+- C. Pedirle en el prompt que explore menos y consulte la tabla que le parezca más probable.
+- D. Publicar el esquema como un resource MCP, para que vea qué hay sin llamadas exploratorias.
+
+<details>
+<summary>Comprobación C4 · Respuesta</summary>
+
+**D.** Un catálogo de contenido, como el esquema de una base de datos, se publica como *MCP resource*: el agente ve qué hay sin explorarlo con llamadas (TS 2.4-K4, 2.4-S5). A añade más tools que elegir; B paga la exploración en vez de evitarla; C la sustituye por adivinar.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).

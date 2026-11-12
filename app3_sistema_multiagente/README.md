@@ -264,6 +264,49 @@ Un coordinador debe investigar tres temas independientes con tres subagentes. Ho
 **A.** Los subagentes en paralelo se lanzan con varias llamadas a Task en la misma respuesta (TS 1.3-S3). B pierde la especialización y el reparto del alcance; C es usar un tope como mecanismo de control (el anti-patrón de TS 1.1-S3); D rompe el hub-and-spoke, en el que toda la comunicación pasa por el coordinador.
 </details>
 
+### Comprobaciones cortas
+
+Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregunta principal no toca. Responde antes de abrir cada respuesta; un fallo también se anota en tu `FALLOS.md`.
+
+**C1 · TS 1.6-K1, S1.** Hay dos trabajos: una revisión que siempre comprueba los mismos tres aspectos en el mismo orden, y una investigación abierta cuyo paso siguiente depende de lo que aparezca. ¿Qué patrón conviene a cada uno?
+
+- A. Descomposición dinámica para los dos, porque se adapta a cualquier tipo de trabajo.
+- B. Cadena fija de pasos para los dos, porque así el resultado es siempre más predecible.
+- C. Descomposición dinámica para la revisión y cadena fija de pasos para la investigación.
+- D. Cadena fija de pasos para la revisión y descomposición dinámica para la investigación.
+
+<details>
+<summary>Comprobación C1 · Respuesta</summary>
+
+**D.** Una cadena secuencial fija conviene cuando el trabajo es predecible, y la descomposición dinámica, cuando depende de lo que se va descubriendo (TS 1.6-K1). El patrón se elige según el flujo (TS 1.6-S1). C los cruza; A y B usan uno solo para dos trabajos distintos.
+</details>
+
+**C2 · TS 1.6-K3, S3.** Se pide a un agente «añade tests completos a este código *legacy*». ¿Cómo debería empezar?
+
+- A. Escribiendo tests para el primer archivo que encuentre y siguiendo por orden alfabético.
+- B. Mapeando la estructura, localizando lo de mayor impacto y dando un plan priorizado que se ajusta.
+- C. Pidiendo al usuario la lista exacta de funciones que hay que probar, antes de leer nada.
+- D. Generando un plan fijo de diez pasos y siguiéndolo aunque aparezcan dependencias nuevas.
+
+<details>
+<summary>Comprobación C2 · Respuesta</summary>
+
+**B.** Para una tarea abierta, primero se mapea la estructura, después se identifican las zonas de mayor impacto y se hace un plan priorizado que se adapta cuando aparecen dependencias (TS 1.6-S3); el plan genera subtareas a partir de lo que encuentra en cada paso (TS 1.6-K3). D es un plan que no se adapta; A no prioriza; C devuelve al usuario un trabajo que el agente puede hacer.
+</details>
+
+**C3 · TS 1.2-S3.** La primera síntesis de un coordinador cubre dos de los tres subtemas de la pregunta. ¿Qué hace el coordinador?
+
+- A. Entregarla tal cual y avisar al usuario de que puede volver a preguntar por lo que falta.
+- B. Repetir desde cero todas las delegaciones, para que la segunda síntesis salga completa.
+- C. Delegar de nuevo con consultas dirigidas a la brecha y sintetizar otra vez hasta cubrirla.
+- D. Pedir al sintetizador que complete el subtema que falta con lo que ya sabe del dominio.
+
+<details>
+<summary>Comprobación C3 · Respuesta</summary>
+
+**C.** Es el bucle de refinamiento: el coordinador evalúa la síntesis, detecta las brechas, vuelve a delegar con consultas dirigidas y sintetiza otra vez hasta que la cobertura basta (TS 1.2-S3). B repite lo que ya está cubierto; D pide inventar; A entrega algo incompleto.
+</details>
+
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
@@ -666,6 +709,49 @@ Notas:
 - **D** El informe distingue lo establecido de lo disputado y conserva la caracterización y el método de cada fuente (TS 5.6-S2).
 </details>
 
+### Comprobaciones cortas
+
+Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregunta principal no toca. Responde antes de abrir cada respuesta; un fallo también se anota en tu `FALLOS.md`.
+
+**C1 · TS 5.1-K2, S4.** Un informe largo lleva su hallazgo más importante en mitad del texto, y el resumen que hace el modelo lo omite. ¿Qué cambio es el adecuado?
+
+- A. Abrir el informe con un resumen de lo importante y ordenar el detalle con encabezados claros.
+- B. Repetir el informe completo dos veces seguidas en el prompt, para reforzar su contenido.
+- C. Pedir al modelo que lea más despacio y que no se salte ninguna parte del documento.
+- D. Mover el hallazgo a una nota al pie del final, donde no interrumpa al resto del texto.
+
+<details>
+<summary>Comprobación C1 · Respuesta</summary>
+
+**A.** En una entrada larga, el modelo atiende bien el principio y el final y puede saltarse lo que queda en medio (TS 5.1-K2). Ayuda abrir con un resumen de lo importante y ordenar el detalle con encabezados (TS 5.1-S4). B duplica el coste; C es una petición sin mecanismo; D lo esconde.
+</details>
+
+**C2 · TS 5.1-S6.** El sintetizador tiene poco margen de contexto, y el investigador le pasa páginas de texto con todo su razonamiento. ¿Qué se cambia?
+
+- A. El sintetizador, para que resuma por su cuenta cada mensaje largo antes de leerlo.
+- B. El investigador, para que devuelva lo esencial estructurado: hechos, citas y relevancia.
+- C. El coordinador, para que reenvíe ese mismo texto repartido en varios mensajes cortos.
+- D. El prompt del investigador, para que explique su razonamiento todavía con más detalle.
+
+<details>
+<summary>Comprobación C2 · Respuesta</summary>
+
+**B.** Cuando el agente siguiente tiene poco margen, se cambia el anterior para que le pase lo esencial estructurado (hechos, citas, una puntuación de relevancia) y no texto largo con su razonamiento (TS 5.1-S6). A y C mantienen el mismo volumen; D lo aumenta.
+</details>
+
+**C3 · TS 5.1-S5, 5.6-S5.** Un informe de síntesis reúne cifras comparables de varias fuentes y explicaciones narrativas. ¿Cómo se presenta, y qué viaja con cada cifra?
+
+- A. Todo en prosa continua, con las fuentes reunidas en una lista al final del informe.
+- B. Todo en una única tabla, incluidas las explicaciones, para que el formato sea uniforme.
+- C. Las cifras en tabla y lo demás en prosa, y cada cifra con su fecha, su fuente y su método.
+- D. Las cifras redondeadas dentro del texto, sin fuente ni fecha, para no recargar la lectura.
+
+<details>
+<summary>Comprobación C3 · Respuesta</summary>
+
+**C.** Cada clase de contenido se presenta a su manera, las cifras en una tabla, en vez de pasarlo todo a un formato único (TS 5.6-S5). Con cada cifra van la fecha, la ubicación en la fuente y el contexto metodológico, que la síntesis necesita para no equivocarse (TS 5.1-S5). A y B fuerzan un solo formato; D pierde la procedencia.
+</details>
+
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
@@ -784,6 +870,49 @@ Una investigación en tres fases se corta durante la tercera. Al terminar cada f
 - **B** arrastra un contexto largo, que es lo que favorece la degradación (TS 5.4-K1), y tras una caída puede no haber conversación que reanudar.
 - **C** tira el trabajo que se guardó precisamente para no repetirlo. Un estado dudoso se comprueba; no se descarta por defecto.
 - **D** no repite las fases hechas, pero la tercera arranca sin lo descubierto: vuelve a consultar fuentes y puede contradecir lo que ya se resumió (TS 5.4-S3, S4).
+</details>
+
+### Comprobaciones cortas
+
+Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregunta principal no toca. Responde antes de abrir cada respuesta; un fallo también se anota en tu `FALLOS.md`.
+
+**C1 · TS 5.4-K2, S2.** En una investigación larga, el agente necesita no perder los hallazgos clave cuando el contexto se llene. ¿Qué hace?
+
+- A. Repetir cada hallazgo al principio de cada respuesta, para tenerlo siempre reciente.
+- B. Confiar en el historial: lo que se dijo antes sigue disponible durante toda la sesión.
+- C. Pedir al usuario que le recuerde los hallazgos cada vez que haga una pregunta nueva.
+- D. Anotarlos en un *scratchpad* fuera del contexto y releerlo ante cada pregunta nueva.
+
+<details>
+<summary>Comprobación C1 · Respuesta</summary>
+
+**D.** Un *scratchpad* guarda los hallazgos clave fuera del contexto, así que sobreviven a sus límites (TS 5.4-K2); el agente anota en él y lo vuelve a leer cuando llega la pregunta siguiente (TS 5.4-S2). A llena el contexto aún más; B es lo que falla en una sesión larga; C traslada el trabajo al usuario.
+</details>
+
+**C2 · TS 5.4-K3, S1.** Explorar un repositorio genera mucha salida, que llena el hilo del agente principal. ¿Cómo se evita?
+
+- A. Delegando la exploración en subagentes, cada uno con una pregunta concreta que responder.
+- B. Pidiendo al agente principal que lea los archivos más deprisa y sin comentar ninguno.
+- C. Subiendo el tope de turnos, para que la exploración acabe antes de llenar el contexto.
+- D. Quitando las tools de lectura al agente principal mientras dure la primera fase.
+
+<details>
+<summary>Comprobación C2 · Respuesta</summary>
+
+**A.** La exploración verbosa se delega en subagentes, que la mantienen fuera del hilo principal mientras este conserva la visión de conjunto (TS 5.4-K3), y a cada subagente se le da una pregunta concreta (TS 5.4-S1). B y C no reducen lo que entra en el contexto; D impide explorar.
+</details>
+
+**C3 · TS 5.4-S5.** En una sesión de Claude Code, el contexto se ha llenado con la salida de una exploración larga y aún queda trabajo. ¿Qué encaja?
+
+- A. Cerrar la sesión y empezar otra sin llevarse nada de lo que se ha descubierto.
+- B. Usar `/compact`, que condensa la conversación y libera contexto para poder seguir.
+- C. Usar `/memory`, que borra del contexto los archivos que ya no hacen falta.
+- D. Seguir sin hacer nada: el contexto se vacía por sí solo al llegar a su límite.
+
+<details>
+<summary>Comprobación C3 · Respuesta</summary>
+
+**B.** En una exploración larga, `/compact` libera contexto cuando se ha llenado de salida de descubrimiento (TS 5.4-S5). A pierde lo descubierto; C no es para eso; D deja que la sesión se degrade.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
@@ -942,6 +1071,75 @@ Notas:
 - **B** Una tool con esquema estricto elimina los errores de sintaxis: la salida cumple el esquema (TS 4.3-K1, 4.3-K3).
 - **C** Líneas que no suman el total y valores en el campo equivocado son los errores semánticos que la guía cita como no evitables con el esquema, estricto o no (TS 4.3-K3).
 - **D** Declarar más campos obligatorios no mejora el significado: un campo que el documento puede no traer obliga al modelo a fabricarlo, y la forma de decir «puede no estar» es opcional y *nullable* (TS 4.3-K4, 4.3-S4).
+</details>
+
+### Comprobaciones cortas
+
+Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregunta principal no toca. Responde antes de abrir cada respuesta; un fallo también se anota en tu `FALLOS.md`.
+
+**C1 · TS 4.3-S1.** Se usa una tool cuyo `input_schema` es el esquema de la extracción. ¿De dónde lee el código los datos extraídos?
+
+- A. Del texto que el modelo escribe antes de la llamada, que el código convierte a JSON.
+- B. Del `tool_result` que el código devuelve al modelo después de ejecutar la tool.
+- C. De la entrada (`input`) del bloque `tool_use` que el modelo devuelve en su respuesta.
+- D. Del *system prompt*, donde el modelo deja anotados los valores que ha encontrado.
+
+<details>
+<summary>Comprobación C1 · Respuesta</summary>
+
+**C.** Con una tool cuyo `input_schema` es el esquema, la extracción se lee de la entrada del bloque `tool_use` (TS 4.3-K1, 4.3-S1). A vuelve al texto libre, con sus errores de sintaxis; B es lo que el código envía, no lo que recibe; D no existe como mecanismo.
+</details>
+
+**C2 · TS 4.3-S2.** Llegan documentos de tipo desconocido y hay un esquema de extracción para cada tipo, cada uno en su tool. ¿Qué `tool_choice` encaja?
+
+- A. `auto`, para que el modelo decida si extrae o si contesta con una explicación.
+- B. Forzar siempre la tool de factura, que es el tipo de documento más frecuente.
+- C. Ninguno: sin conocer el tipo no se puede usar una tool de extracción.
+- D. `any`, que obliga a llamar a alguna tool y deja al modelo elegir cuál.
+
+<details>
+<summary>Comprobación C2 · Respuesta</summary>
+
+**D.** `any` encaja cuando hay varios esquemas de extracción y no se sabe de qué tipo es el documento (TS 4.3-S2): garantiza una llamada y deja elegir la tool (TS 4.3-K2). A permite contestar con texto; B trata como factura lo que no lo es.
+</details>
+
+**C3 · TS 4.3-S3.** Un flujo debe extraer los metadatos de un documento antes de enriquecerlos con otras tools. ¿Cómo se asegura ese orden?
+
+- A. Forzando la tool de extracción en el primer turno y dejando los demás pasos para después.
+- B. Pidiendo en el prompt que extraiga primero, y confiando en que el modelo lo cumpla.
+- C. Usando `any` en todos los turnos, para que siempre haya alguna llamada a una tool.
+- D. Poniendo la tool de extracción en primer lugar en la lista de tools de la petición.
+
+<details>
+<summary>Comprobación C3 · Respuesta</summary>
+
+**A.** Forzar una tool asegura que esa extracción se haga antes de los pasos que la enriquecen (TS 4.3-S3). B es una petición, no una garantía; C no fija cuál se llama; D no impone ningún orden.
+</details>
+
+**C4 · TS 4.3-S5, S6.** Los documentos escriben las fechas de muchas formas, y algunos son ambiguos sobre su tipo. ¿Qué diseño es el adecuado?
+
+- A. Dejar que el modelo elija el formato de la fecha y descartar los documentos ambiguos.
+- B. Normalizar las fechas a mano después y obligar a elegir siempre un tipo conocido.
+- C. Poner las reglas de formato en el prompt, junto al esquema, y añadir el valor `unclear`.
+- D. Añadir un campo de texto libre para la fecha y otro campo para describir el tipo.
+
+<details>
+<summary>Comprobación C4 · Respuesta</summary>
+
+**C.** Las reglas de normalización van en el prompt, junto al esquema, porque los documentos fuente no las siguen (TS 4.3-S6), y `unclear` recoge los casos ambiguos (TS 4.3-S5). A y D dejan el formato sin fijar; B obliga a inventar un tipo.
+</details>
+
+**C5 · TS 4.2-K4, S4, S5.** Una extracción deja vacíos campos que sí están en los documentos cuando estos cambian de formato: tabla, prosa o líneas sueltas. ¿Qué ayuda más?
+
+- A. Marcar todos los campos como obligatorios, para que el modelo no pueda dejarlos vacíos.
+- B. Añadir ejemplos *few-shot* de extracciones correctas sobre documentos de formatos distintos.
+- C. Repetir la instrucción «no dejes campos vacíos» al principio y al final del prompt.
+- D. Reducir el esquema a los campos que aparecen igual en todos los formatos de documento.
+
+<details>
+<summary>Comprobación C5 · Respuesta</summary>
+
+**B.** Los ejemplos *few-shot* reducen las alucinaciones en la extracción (TS 4.2-K4): ejemplos de documentos con estructuras distintas enseñan dónde está cada dato (TS 4.2-S4), y ejemplos de extracciones correctas sobre formatos variados corrigen los campos que salen vacíos (TS 4.2-S5). A hace que el modelo invente; C insiste sin enseñar; D renuncia a los datos.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
@@ -1319,6 +1517,62 @@ Un sistema extrae campos de facturas, albaranes y un tipo de documento de compra
 - **D** decide por el titular y vigila con una muestra simple, que apenas toca un tipo poco frecuente; la guía pide estratificarla (K2, S1).
 </details>
 
+### Comprobaciones cortas
+
+Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregunta principal no toca. Responde antes de abrir cada respuesta; un fallo también se anota en tu `FALLOS.md`.
+
+**C1 · TS 5.5-K2, S1.** Las extracciones de confianza alta ya no se revisan una a una. ¿Cómo se sigue vigilando su calidad?
+
+- A. Con una muestra aleatoria estratificada, que mide la tasa de error y destapa patrones nuevos.
+- B. Revisando solo las extracciones cuya confianza baje del umbral que se fijó al principio.
+- C. Con una revisión completa una vez al año, cuando se renueve el conjunto de validación.
+- D. No hace falta: si la confianza es alta, el error que queda es despreciable por definición.
+
+<details>
+<summary>Comprobación C1 · Respuesta</summary>
+
+**A.** Lo que se acepta con confianza alta se sigue vigilando con una muestra aleatoria estratificada: mide la tasa de error de forma continua y deja ver patrones de error que no se conocían (TS 5.5-K2, 5.5-S1). B no mira lo aceptado; C llega tarde; D da por buena la confianza sin comprobarla.
+</details>
+
+**C2 · TS 5.5-K3, S3.** El modelo acompaña cada campo extraído con una confianza. ¿Cuándo sirve para decidir qué se revisa?
+
+- A. Siempre: una confianza de 0,9 significa que acierta nueve de cada diez veces.
+- B. Nunca: la confianza que declara un modelo no guarda relación con su acierto.
+- C. Cuando el modelo la declara con dos decimales y la justifica con un comentario.
+- D. Cuando se ha calibrado con un conjunto etiquetado, de donde salen los umbrales.
+
+<details>
+<summary>Comprobación C2 · Respuesta</summary>
+
+**D.** La confianza por campo sirve para decidir dónde mirar solo después de calibrarla contra un conjunto de validación etiquetado, que es de donde salen los umbrales de revisión (TS 5.5-K3, 5.5-S3). A la toma sin calibrar; B la descarta del todo; C confunde formato con fiabilidad.
+</details>
+
+**C3 · TS 5.5-K4, S2.** La exactitud global es del 98 % y se propone dejar de revisar las extracciones de confianza alta. ¿Qué se comprueba antes?
+
+- A. Que ese 98 % se mantiene durante un mes seguido, sin necesidad de más detalle.
+- B. Que el modelo declara una confianza media superior a la exactitud global medida.
+- C. Que la exactitud es consistente por tipo de documento y por campo, no solo en conjunto.
+- D. Que los documentos más frecuentes son también los que el modelo extrae mejor.
+
+<details>
+<summary>Comprobación C3 · Respuesta</summary>
+
+**C.** Antes de dejar de revisar, se comprueba la exactitud segmento a segmento, por tipo de documento y por campo, y se exige que sea consistente en todos (TS 5.5-K4, 5.5-S2): una cifra agregada alta puede ocultar un segmento que rinde mal (TS 5.5-K1). A y B siguen mirando solo el conjunto; D es justo lo que esconde el problema.
+</details>
+
+**C4 · TS 5.5-S4.** La capacidad de revisión humana es limitada. ¿Qué extracciones van a una persona?
+
+- A. Una de cada diez, elegidas al azar entre todas las que han llegado ese mismo día.
+- B. Las de confianza baja y las de documentos ambiguos o contradictorios, con la cola priorizada.
+- C. Solo las que el propio modelo pide revisar en un comentario al final de su respuesta.
+- D. Las de los documentos más largos, porque tienen más campos en los que equivocarse.
+
+<details>
+<summary>Comprobación C4 · Respuesta</summary>
+
+**B.** A una persona van las extracciones con confianza baja y las de documentos ambiguos o contradictorios, y la cola se prioriza porque la capacidad de revisión es limitada (TS 5.5-S4). A gasta la revisión al azar; C depende de que el modelo se delate; D usa un criterio que no mide el riesgo.
+</details>
+
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
@@ -1497,6 +1751,101 @@ Avisos sobre las cifras y la ejecución:
 **Producto observado (no evaluable):** en este módulo, con los tests existentes en el contexto y sin ellos salieron 0 escenarios repetidos, pero ese 0 no es una señal ni a favor ni en contra de 3.6-S4: solo 2 de los 5 existentes son los que el cambio rompe, y la clave puede dejar de contar un duplicado real (Paso 3). Sin los estándares en el `CLAUDE.md` salieron más tests (9–12 frente a 7–8). No cambia la respuesta de examen: A sigue siendo incorrecta.
 </details>
 
+### Comprobaciones cortas
+
+Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregunta principal no toca. Responde antes de abrir cada respuesta; un fallo también se anota en tu `FALLOS.md`.
+
+**C1 · TS 3.6-K1, S1.** Un job de CI lanza Claude Code y se queda colgado, esperando una entrada que nadie va a dar. ¿Qué falta?
+
+- A. Un tope de presupuesto, para que el job termine cuando se agote el gasto.
+- B. La opción `-p` (o `--print`), que lo ejecuta en modo no interactivo.
+- C. Un `CLAUDE.md` en la raíz, sin el cual no puede arrancar en un pipeline.
+- D. Más tiempo de espera en el job, para que le dé tiempo a responderse solo.
+
+<details>
+<summary>Comprobación C1 · Respuesta</summary>
+
+**B.** En un pipeline, Claude Code se lanza en modo no interactivo con `-p` (o `--print`), para que no se quede esperando una entrada (TS 3.6-K1, 3.6-S1). A y D no cambian que espere; C no es un requisito para arrancar.
+</details>
+
+**C2 · TS 3.6-K2, S2.** La revisión automática debe publicarse como comentarios en línea del PR. ¿Cómo se obtiene una salida que una máquina pueda leer?
+
+- A. Pidiendo en el prompt que responda en JSON y convirtiendo después el texto recibido.
+- B. Con una segunda llamada que pase a JSON la prosa que devolvió la primera revisión.
+- C. Leyendo el registro del job y sacando los hallazgos con expresiones regulares.
+- D. Con `--output-format json` y `--json-schema`, que imponen la estructura de la salida.
+
+<details>
+<summary>Comprobación C2 · Respuesta</summary>
+
+**D.** `--output-format json` junto con `--json-schema` imponen una salida estructurada, que en CI da hallazgos que una máquina puede leer y publicar como comentarios en línea (TS 3.6-K2, 3.6-S2). A, B y C dependen de interpretar texto libre.
+</details>
+
+**C3 · TS 3.6-K3, S4, S5.** Los tests que genera Claude Code en CI repiten escenarios ya cubiertos e ignoran las *fixtures* del proyecto. ¿Qué se cambia?
+
+- A. Poner los tests existentes en el contexto y documentar estándares y *fixtures* en `CLAUDE.md`.
+- B. Pedir el doble de tests, para que entre todos haya suficientes que no estén repetidos.
+- C. Borrar los tests antiguos antes de generar, para que no quede nada que duplicar.
+- D. Lanzar la generación dos veces y quedarse con los tests que aparezcan en las dos.
+
+<details>
+<summary>Comprobación C3 · Respuesta</summary>
+
+**A.** El contexto del proyecto le llega a Claude Code en CI por `CLAUDE.md` (TS 3.6-K3): documentar ahí los estándares, qué hace valioso un test y qué *fixtures* hay mejora los tests generados (TS 3.6-S5). Y los tests existentes van en el contexto, para no proponer escenarios que la suite ya cubre (TS 3.6-S4). B y D no dan esa información; C destruye la cobertura.
+</details>
+
+**C4 · TS 4.1-K1, K2, S1.** Un revisor automático marca demasiados falsos positivos. ¿Qué instrucción mejora más su precisión?
+
+- A. «Sé conservador e informa solo de aquello de lo que estés muy seguro.»
+- B. «Revisa el código con mucho cuidado y no te dejes ningún problema.»
+- C. Criterios explícitos: qué se informa (bugs, seguridad) y qué no (estilo menor).
+- D. «Da una confianza a cada hallazgo y descarta los que no lleguen a 0,8.»
+
+<details>
+<summary>Comprobación C4 · Respuesta</summary>
+
+**C.** Un criterio explícito precisa más que una instrucción vaga (TS 4.1-K1), y las instrucciones generales del tipo «sé conservador» no mejoran la precisión como los criterios categóricos (TS 4.1-K2). Los criterios dicen qué se informa y qué se deja, en vez de filtrar por confianza (TS 4.1-S1), que es lo que hace D. A y B son las instrucciones vagas.
+</details>
+
+**C5 · TS 4.1-S2, S3.** Una categoría de hallazgos se equivoca a menudo, y los desarrolladores empiezan a ignorar todos los comentarios del revisor. ¿Qué se hace?
+
+- A. Mantenerla, con un aviso de que sus hallazgos pueden no ser del todo fiables.
+- B. Subir la severidad de las demás categorías, para que destaquen sobre ella.
+- C. Pedir a los desarrolladores que contesten cada comentario antes de fusionar.
+- D. Apagarla mientras se mejora su prompt, y definir cada severidad con ejemplos.
+
+<details>
+<summary>Comprobación C5 · Respuesta</summary>
+
+**D.** Los falsos positivos de una categoría hacen que se desconfíe también de las que aciertan (TS 4.1-K3), así que esa categoría se apaga por un tiempo mientras se mejora su prompt (TS 4.1-S2), y cada severidad se define con ejemplos de código concretos (TS 4.1-S3). A y B dejan el ruido; C traslada el coste a las personas.
+</details>
+
+**C6 · TS 4.2-S2, S3.** ¿Qué aportan unos ejemplos *few-shot* al prompt de una revisión de código?
+
+- A. Fijan el formato de cada hallazgo y enseñan a separar un patrón aceptable de un problema real.
+- B. Sustituyen a los criterios de revisión, que dejan de hacer falta cuando ya hay ejemplos.
+- C. Garantizan que el revisor no dará ningún falso positivo en las categorías que cubren.
+- D. Limitan la revisión a los casos idénticos a los ejemplos, sin generalizar a otros nuevos.
+
+<details>
+<summary>Comprobación C6 · Respuesta</summary>
+
+**A.** Los *few-shot* fijan el formato de cada hallazgo (ubicación, problema, severidad y arreglo propuesto) (TS 4.2-S2) y enseñan a distinguir un patrón aceptable de un problema real, lo que reduce los falsos positivos sin impedir generalizar (TS 4.2-S3). B y C prometen de más; D dice lo contrario de S3.
+</details>
+
+**C7 · TS 4.4-K3, S3.** Se quiere saber qué tipo de hallazgos descartan los desarrolladores una y otra vez. ¿Qué lo permite?
+
+- A. Preguntar al modelo, al acabar cada revisión, qué hallazgos cree que se van a descartar.
+- B. Un campo `detected_pattern` en cada hallazgo, con la construcción de código que lo provocó.
+- C. Guardar solo cuántos hallazgos se descartan cada semana y mirar si la cifra sube o baja.
+- D. Pedir a cada desarrollador un informe mensual con los comentarios que no le han servido.
+
+<details>
+<summary>Comprobación C7 · Respuesta</summary>
+
+**B.** Un campo `detected_pattern` en cada hallazgo registra qué construcción del código lo provocó y permite analizar de forma sistemática los patrones que los desarrolladores descartan (TS 4.4-K3, 4.4-S3). C cuenta sin decir qué; A y D no dejan un dato que se pueda agrupar.
+</details>
+
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
@@ -1635,6 +1984,49 @@ Un equipo hace que Claude Code genere un cambio de varios archivos y, en la mism
 - **C** acierta con la instancia nueva, pero una sola pasada sobre muchos archivos diluye la atención; el fallo entre archivos pide su propia pasada de integración (4.6-K3, S2).
 
 **Producto observado (no evaluable):** en este módulo, ni la autorrevisión encontró menos que la instancia nueva ni la pasada única (la opción C, medida como `--anti una_pasada`) encontró menos que el reparto en pasadas, con un diff de 93 líneas (Paso 3). No cambia la respuesta de examen.
+</details>
+
+### Comprobaciones cortas
+
+Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregunta principal no toca. Responde antes de abrir cada respuesta; un fallo también se anota en tu `FALLOS.md`.
+
+**C1 · TS 4.6-K2, S1.** Se quiere detectar problemas sutiles en código que acaba de generar una sesión de Claude. ¿Qué es más eficaz?
+
+- A. Pedir a esa misma sesión que relea su código con más razonamiento extendido.
+- B. Pedir a esa misma sesión que se revise «de forma crítica» antes de entregar.
+- C. Una segunda instancia que revise el código sin el contexto de quien lo generó.
+- D. Lanzar la misma generación dos veces y quedarse con la segunda versión.
+
+<details>
+<summary>Comprobación C1 · Respuesta</summary>
+
+**C.** Una instancia independiente, sin el razonamiento previo, detecta mejor los problemas sutiles que pedirle a la misma sesión que se revise o darle más razonamiento extendido (TS 4.6-K2); en la práctica, una segunda instancia revisa sin el contexto del generador (TS 4.6-S1). A y B son las dos alternativas que la guía descarta; D no revisa nada.
+</details>
+
+**C2 · TS 4.6-K3, S2, 1.6-K2, S2.** Hay que revisar un cambio grande que toca muchos archivos. ¿Cómo se organiza la revisión?
+
+- A. En una sola pasada sobre todo el cambio, para que el revisor lo vea completo de una vez.
+- B. Solo con pasadas por archivo, sin ninguna que mire cómo se relacionan entre ellos.
+- C. Empezando por los archivos más cortos y parando en cuanto aparezca el primer problema.
+- D. Una pasada por archivo para lo local y otra de integración para el flujo entre archivos.
+
+<details>
+<summary>Comprobación C2 · Respuesta</summary>
+
+**D.** Una revisión grande se parte en pasadas: una por archivo para lo local y otra aparte de integración para el flujo de datos entre archivos, lo que evita diluir la atención (TS 4.6-K3, 4.6-S2). Es el ejemplo de cadena fija de prompts para una tarea predecible de varios aspectos (TS 1.6-K2, 1.6-S2). A diluye la atención; B pierde los fallos entre archivos; C deja la revisión a medias.
+</details>
+
+**C3 · TS 4.6-S3.** ¿Para qué sirve una pasada de verificación en la que el modelo da su confianza junto a cada hallazgo?
+
+- A. Para enrutar la revisión de forma calibrada: qué se publica y qué pasa por una persona.
+- B. Para descartar sin más los hallazgos de las categorías con más falsos positivos.
+- C. Para sustituir a la revisión independiente cuando no hay otra instancia disponible.
+- D. Para ordenar los hallazgos por archivo antes de publicarlos como comentarios del PR.
+
+<details>
+<summary>Comprobación C3 · Respuesta</summary>
+
+**A.** Una pasada de verificación, en la que el modelo informa de su confianza junto a cada hallazgo, permite enrutar la revisión de forma calibrada (TS 4.6-S3). B filtra por categoría, no por confianza; C confunde verificar con revisar de forma independiente; D es solo presentación.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
