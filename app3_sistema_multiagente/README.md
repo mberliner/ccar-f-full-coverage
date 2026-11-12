@@ -133,10 +133,10 @@ Notas:
 
 **Pregunta 1 (una respuesta).** Un sistema de investigación tiene un coordinador y tres subagentes: búsqueda web, análisis de documentos y síntesis. Los informes finales omiten con frecuencia datos que los subagentes de búsqueda sí encontraron. Los registros muestran que el coordinador invoca al sintetizador con la pregunta original. ¿Cuál es la causa más probable?
 
-- A. El sintetizador necesita un modelo con una ventana de contexto mayor.
-- B. Los subagentes no heredan el contexto del coordinador: el sintetizador nunca recibió los hallazgos, que había que pasarle en el prompt.
-- C. Los subagentes de búsqueda deberían escribir sus resultados en una memoria compartida.
-- D. Falta `"Task"` en las `allowedTools` del sintetizador.
+- A. El sintetizador necesita un modelo con una ventana de contexto mayor para abarcar todos los hallazgos.
+- B. El sintetizador no hereda el contexto del coordinador: los hallazgos había que pasárselos en su prompt.
+- C. Los subagentes de búsqueda deberían escribir sus resultados en una memoria compartida con el sintetizador.
+- D. Falta `"Task"` en las `allowedTools` del sintetizador, y por eso no puede pedir los hallazgos a los demás.
 
 <details>
 <summary>Paso 4 · Respuesta</summary>
@@ -254,9 +254,9 @@ En la primera ejecución con modelo:
 Un coordinador debe investigar tres temas independientes con tres subagentes. Hoy los invoca uno por turno y cada investigación tarda el triple de lo necesario. ¿Qué cambio es el más adecuado?
 
 - A. Emitir las tres llamadas a Task en una sola respuesta del coordinador.
-- B. Fusionar los tres subagentes en uno con todas las tools.
-- C. Bajar `max_turns` para que el coordinador termine antes.
-- D. Pedir a cada subagente que lance al siguiente cuando termine.
+- B. Fusionar los tres subagentes en uno solo que tenga todas las tools.
+- C. Bajar `max_turns` para que el coordinador termine antes cada tema.
+- D. Pedir a cada subagente que lance al siguiente cuando haya terminado.
 
 <details>
 <summary>Paso 4 · Respuesta</summary>

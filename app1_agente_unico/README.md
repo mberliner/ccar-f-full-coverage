@@ -120,10 +120,10 @@ La variabilidad entre ejecuciones es parte de la lección: según la ejecución,
 
 Un agente de soporte construido con la Messages API a veces deja tareas a medias: responde «Perfecto, ya lo tengo» y el bucle termina antes de consultar el sistema de pedidos. El código actual sale del bucle cuando la respuesta contiene un bloque de texto. ¿Qué cambio es el más adecuado?
 
-- A. Añadir al *system prompt* «no escribas texto hasta haber terminado».
+- A. Añadir al *system prompt* «no escribas texto hasta haber terminado», para que solo haya texto en la respuesta final.
 - B. Continuar mientras `stop_reason` sea `"tool_use"` y terminar con `"end_turn"`, devolviendo cada `tool_result` al historial.
-- C. Buscar frases como «he terminado» o «listo» en el texto para decidir el final.
-- D. Fijar un máximo de 5 iteraciones para asegurar que el bucle consulta todas las tools.
+- C. Buscar en el texto frases como «he terminado» o «listo» y salir del bucle solo cuando aparezca alguna de ellas.
+- D. Fijar un máximo de 5 iteraciones, para asegurar que el bucle consulta todas las tools antes de darse por acabado.
 
 <details>
 <summary>Paso 4 · Respuesta</summary>

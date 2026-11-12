@@ -120,10 +120,10 @@ Por eso este módulo tiene su propio rol de modelo, `enforcement` (`CCARF_MODEL_
 
 Un agente de soporte debe verificar la identidad del cliente con `get_customer` antes de llamar a `process_refund`. En producción, un 2 % de los reembolsos se procesan sin verificación. El equipo propone varias soluciones. ¿Cuál es la más adecuada?
 
-- A. Reescribir el *system prompt* con la regla en mayúsculas y al principio.
-- B. Añadir ejemplos *few-shot* de conversaciones en las que el agente verifica primero.
+- A. Reescribir el *system prompt* con la regla en mayúsculas y al principio, para que el modelo no la pase por alto.
+- B. Añadir ejemplos *few-shot* de conversaciones en las que el agente verifica la identidad antes de reembolsar.
 - C. Bloquear en código `process_refund` hasta que `get_customer` haya devuelto un ID verificado en la sesión.
-- D. Cambiar a un modelo más capaz, que sigue mejor las instrucciones.
+- D. Cambiar a un modelo más capaz, que sigue mejor las instrucciones largas y las reglas de negocio del prompt.
 
 <details>
 <summary>Paso 4 · Respuesta</summary>
@@ -214,15 +214,15 @@ Con hooks, la línea `[resultado]` de `get_ticket` y lo que recibe el modelo al 
 
 Varias tools MCP de un agente devuelven fechas en formatos distintos (timestamps Unix, ISO 8601 y `dd/mm/aaaa`), y el agente a veces calcula mal los plazos. ¿Dónde conviene resolverlo?
 
-- A. En el *system prompt*, con instrucciones para interpretar cada formato.
-- B. En un hook `PostToolUse` que normaliza los resultados antes de que el modelo los procese.
-- C. En un hook `PreToolUse` que reescribe la entrada de cada llamada.
-- D. Pidiendo al modelo que convierta todas las fechas a ISO antes de razonar.
+- A. En el *system prompt*, con instrucciones detalladas para interpretar cada uno de los tres formatos.
+- B. En un hook `PreToolUse` que reescribe la entrada de cada llamada antes de que la tool se ejecute.
+- C. En el propio modelo, pidiéndole que convierta todas las fechas a ISO 8601 antes de razonar con ellas.
+- D. En un hook `PostToolUse` que normaliza los resultados antes de que el modelo llegue a procesarlos.
 
 <details>
 <summary>Paso 4 · Respuesta</summary>
 
-**B.** `PostToolUse` intercepta el resultado y lo transforma antes de que lo vea el modelo (TS 1.5-K1, 1.5-S1). C actúa sobre la llamada saliente, no sobre el resultado (el uso de `PreToolUse` es bloquear o redirigir, TS 1.5-K2, 1.5-S2). A y D dejan la corrección en manos del modelo, que es cumplimiento probabilístico (TS 1.5-K3).
+**D.** `PostToolUse` intercepta el resultado y lo transforma antes de que lo vea el modelo (TS 1.5-K1, 1.5-S1). B actúa sobre la llamada saliente, no sobre el resultado (el uso de `PreToolUse` es bloquear o redirigir, TS 1.5-K2, 1.5-S2). A y C dejan la corrección en manos del modelo, que es cumplimiento probabilístico (TS 1.5-K3).
 </details>
 
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
@@ -301,12 +301,14 @@ Para el examen vale la lectura de la documentación. La diferencia observada con
 
 Este módulo es apoyo técnico para ejecutar el SDK. La guía no define `permission_mode`, `disallowed_tools` ni la semántica de `allowed_tools` como pre-aprobación, así que esta comprobación no entrena una respuesta de examen. Lo evaluable (TS 1.4 y TS 1.5) está en los módulos 01 y 02.
 
+**No lo confundas con `allowed-tools` (con guion), el campo del frontmatter de una skill o de un command.** Son dos mecanismos distintos: aquí se habla de la opción `allowed_tools` del Agent SDK, que la guía no define. Del campo del frontmatter sí habla la guía, que lo presenta como la restricción de las tools de esa skill; esa es la lectura de examen y se practica en [`d3_claude_code/`](../d3_claude_code/README.md).
+
 Un agente tiene `allowed_tools=["Read", "Grep"]` y modo de permisos por defecto. El equipo cree que así no puede ejecutar `Bash`. ¿Qué es cierto?
 
-- A. `Bash` no está disponible, porque `allowed_tools` es una lista blanca.
+- A. `Bash` no está disponible, porque `allowed_tools` funciona como una lista blanca de las tools del agente.
 - B. `Bash` sigue disponible; `allowed_tools` solo pre-aprueba `Read` y `Grep`, y lo demás pasa al modo de permisos.
-- C. `Bash` se ejecuta sin preguntar, porque el modo por defecto lo aprueba todo.
-- D. `Bash` solo se bloquea si además se pasa `permission_mode="bypassPermissions"`.
+- C. `Bash` se ejecuta sin preguntar, porque el modo de permisos por defecto aprueba todo lo que no se prohíbe.
+- D. `Bash` solo queda bloqueado si además se pasa `permission_mode="bypassPermissions"` en las opciones.
 
 <details>
 <summary>Paso 4 · Respuesta</summary>
@@ -569,15 +571,15 @@ En la primera ejecución con modelo, el resumen conservó el importe pero perdi�
 
 Un agente de soporte resume la conversación cada pocos turnos para no llenar el contexto. Tras varios turnos, los resúmenes dicen «el cliente pidió un reembolso por un importe pequeño» y el agente ofrece una cantidad equivocada. ¿Qué cambio es el más adecuado?
 
-- A. Resumir con más frecuencia para que los resúmenes sean más cortos.
-- B. Extraer importes, fechas, IDs y estados a un bloque de case facts que se incluye en cada prompt, fuera del historial resumido.
-- C. Pedir al modelo que «preste atención a los números» en los resúmenes.
-- D. Eliminar la sumarización y truncar los mensajes más antiguos.
+- A. Resumir con más frecuencia, para que cada resumen cubra menos turnos y pierda menos detalle de cada uno.
+- B. Pedir al modelo en el prompt que preste atención a los números y los copie tal cual en cada resumen.
+- C. Extraer importes, fechas, IDs y estados a un bloque de case facts que va en cada prompt, fuera del resumen.
+- D. Eliminar la sumarización y truncar los mensajes más antiguos cuando la conversación se acerque al límite.
 
 <details>
 <summary>Paso 4 · Respuesta</summary>
 
-**B.** El riesgo de la sumarización progresiva es justo condensar importes y fechas en expresiones vagas (TS 5.1-K1), y el remedio es un bloque persistente de hechos transaccionales fuera del resumen (TS 5.1-S1), con una capa por asunto si hay varios (TS 5.1-S2). C sigue confiando en la prosa; D pierde los datos antiguos sin más. Al escalar, esos mismos hechos van en un handoff estructurado (TS 1.4-K3, 1.4-S3).
+**C.** El riesgo de la sumarización progresiva es justo condensar importes y fechas en expresiones vagas (TS 5.1-K1), y el remedio es un bloque persistente de hechos transaccionales fuera del resumen (TS 5.1-S1), con una capa por asunto si hay varios (TS 5.1-S2). A no cambia que el resumen condense los datos; B sigue confiando en la prosa; D pierde los datos antiguos sin más. Al escalar, esos mismos hechos van en un handoff estructurado (TS 1.4-K3, 1.4-S3).
 </details>
 
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
@@ -676,15 +678,15 @@ Con estos datos, la proporción es del 33 %, así que la decisión es reanudar.
 
 Ayer un desarrollador analizó un módulo con Claude Code en una sesión con nombre. Hoy un compañero ha modificado dos de los archivos analizados. ¿Cuál es la mejor forma de continuar?
 
-- A. Reanudar la sesión con `--resume` y pedir que continúe donde lo dejó.
-- B. Reanudar la sesión e indicar qué dos archivos cambiaron, para que los vuelva a analizar.
-- C. Empezar una sesión nueva y pedir que vuelva a explorar todo el módulo desde cero.
-- D. Usar `fork_session` para crear una rama y continuar en ella.
+- A. Reanudar la sesión e indicar qué dos archivos cambiaron, para que vuelva a analizar solo esos.
+- B. Reanudar la sesión con `--resume` y pedir que continúe el trabajo en el punto donde lo dejó.
+- C. Empezar una sesión nueva y pedir que vuelva a explorar todo el módulo desde el principio.
+- D. Usar `fork_session` para crear una rama de la sesión de ayer y continuar el trabajo en ella.
 
 <details>
 <summary>Paso 4 · Respuesta</summary>
 
-**B.** Con la mayor parte del contexto aún válida, se reanuda (TS 1.7-S3) informando de los cambios concretos para un reanálisis dirigido (TS 1.7-K3, 1.7-S4). A responde con resultados obsoletos; C desperdicia el análisis válido (empezar de nuevo con un resumen conviene cuando lo obsoleto es la mayoría, TS 1.7-K4); D sirve para explorar enfoques divergentes desde una base común (TS 1.7-K2, 1.7-S2), no para incorporar cambios.
+**A.** Con la mayor parte del contexto aún válida, se reanuda (TS 1.7-S3) informando de los cambios concretos para un reanálisis dirigido (TS 1.7-K3, 1.7-S4). B responde con resultados obsoletos; C desperdicia el análisis válido (empezar de nuevo con un resumen conviene cuando lo obsoleto es la mayoría, TS 1.7-K4); D sirve para explorar enfoques divergentes desde una base común (TS 1.7-K2, 1.7-S2), no para incorporar cambios.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).

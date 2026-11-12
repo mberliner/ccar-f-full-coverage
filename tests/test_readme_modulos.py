@@ -319,6 +319,62 @@ def test_pending_predictions_really_fail(name):
     assert prediction_problems(sections[name]), f"{name} ya cumple: bórralo de PENDING_PREDICTIONS"
 
 
+# La opción correcta no debe reconocerse por ser la más larga: como mucho, un 25 % más que la media de las otras.
+MAX_CORRECT_RATIO = 1.25
+# Ni por su posición: dentro de una app, ninguna letra es la correcta en más del 40 % de las de respuesta única.
+MAX_LETTER_SHARE = 0.40
+
+
+def single_answer(section: str) -> tuple[str, dict[str, int]] | None:
+    """La primera pregunta de respuesta única de la sección: (letra correcta, {letra: longitud de la opción})."""
+    start = section.find("### Pregunta tipo examen")
+    if start < 0:
+        return None
+    question = section[start:]
+    lengths = {letter: len(text) for letter, text in re.findall(r"^- ([A-F])\. (.*)$", question.split("<details>", 1)[0], re.MULTILINE)}
+    block = ANSWER_BLOCK.search(question)
+    head = re.match(r"\s*\*\*([A-F])\.\*\*", block.group(1)) if block else None
+    if not head or head.group(1) not in lengths:
+        return None
+    return head.group(1), lengths
+
+
+def correct_ratio(correct: str, lengths: dict[str, int]) -> float:
+    """Cuánto más larga es la opción correcta que la media de las demás."""
+    others = [length for letter, length in lengths.items() if letter != correct]
+    return lengths[correct] / (sum(others) / len(others))
+
+
+def test_single_answer_reads_letter_and_lengths():
+    section = "### Pregunta tipo examen\n\nEnunciado.\n\n- A. uno\n- B. dos más\n\n<details>\n<summary>Paso 4 · Respuesta</summary>\n\n**B.** Porque sí.\n</details>\n"
+    assert single_answer(section) == ("B", {"A": 3, "B": 7})
+    assert single_answer("sin pregunta") is None
+    assert correct_ratio("B", {"A": 10, "B": 20, "C": 10}) == 2.0
+
+
+def test_correct_option_is_not_recognisable_by_length():
+    failing = {}
+    for name, body in all_sections().items():
+        found = single_answer(body)
+        if found and correct_ratio(*found) > MAX_CORRECT_RATIO:
+            failing[name] = round(correct_ratio(*found), 2)
+    assert not failing, f"la opción correcta es mucho más larga que las demás (máximo ×{MAX_CORRECT_RATIO}): {failing}"
+
+
+def test_correct_letter_is_spread_within_each_app():
+    by_app: dict[str, list[str]] = {}
+    for name, body in all_sections().items():
+        found = single_answer(body)
+        if found:
+            by_app.setdefault(name.split(" ")[0], []).append(found[0])
+    failing = {
+        app: {letter: letters.count(letter) for letter in sorted(set(letters))}
+        for app, letters in by_app.items()
+        if max(letters.count(letter) for letter in set(letters)) / len(letters) > MAX_LETTER_SHARE
+    }
+    assert not failing, f"una misma letra es la correcta en más del {MAX_LETTER_SHARE:.0%} de las preguntas de la app: {failing}"
+
+
 def assigned_counts() -> dict[str, int]:
     """{destino de `CONCEPTOS.md`: nº de viñetas que le asigna}, contando las ya introducidas y las pendientes."""
     counts: dict[str, int] = {}
