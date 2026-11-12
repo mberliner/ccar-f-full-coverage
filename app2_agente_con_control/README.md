@@ -102,7 +102,7 @@ La línea `[resumen]`: en cuántas ejecuciones hubo pagos **intentados** sin ver
 - **P1** Ninguno, en cualquier ejecución y con cualquier modelo: lo impide el código, no el modelo. Es un prerrequisito programático (TS 1.4-K1, 1.4-S1).
 - **P2** Los decide el modelo: lo intentó en 9 de 10 ejecuciones, y la puerta lo rechazó siempre.
 - **P3** No. Es una tasa, que cambia con el modelo, con la redacción del prompt y con el mensaje del usuario: una instrucción en el prompt tiene una tasa de fallo distinta de cero (TS 1.4-K2).
-- **P4** No. Cero fallos en n ejecuciones solo acota la tasa por debajo de 3/n, con un 95 % de confianza (la regla del tres); no la deja en cero. Lo garantiza la puerta en código (TS 1.4-S1).
+- **P4** No. Una instrucción en el prompt tiene una tasa de fallo distinta de cero, aunque una tanda no la muestre; lo garantiza la puerta en código (TS 1.4-K2, 1.4-S1). Inferencia propia (estadística, no de la guía): cero fallos en n ejecuciones solo acota la tasa por debajo de 3/n, con un 95 % de confianza (la regla del tres).
 
 Con la puerta, los ejecutados son 0 por construcción. Sin puerta, depende del modelo (2026-10-24):
 
@@ -175,8 +175,8 @@ Antes de cada ejecución, la línea `[esperado]` da la fecha y el estado correct
 
 Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. (guía) Con el hook `PostToolUse` sobre `get_ticket`, ¿en qué formato llega a ver el modelo la fecha y el estado del ticket? ¿Depende del modelo?
-2. (guía) Con el hook `PreToolUse` del umbral, ¿puede llegar a ejecutarse el pago de 500,01 EUR? ¿Depende del modelo?
+1. (guía) Con el hook `PostToolUse` sobre `get_ticket`, ¿necesita el modelo saber convertir un timestamp Unix para dar bien la fecha? ¿Por qué?
+2. (guía) Con el hook `PreToolUse` del umbral, ¿la decisión de no pagar los 500,01 EUR se toma antes o después de que la tool se ejecute? ¿Qué parte del resultado sigue dependiendo del modelo?
 3. (guía) Después del deny, ¿qué información tiene el modelo para decidir el paso siguiente? ¿Qué tool esperas que pida?
 4. (guía) Sin hooks (`--anti`), el umbral y el aviso sobre las fechas están solo en el prompt. ¿La decisión de pagar o escalar y la fecha que da el modelo son fijas o pueden cambiar de una ejecución a otra? ¿Qué tiene que hacer bien el modelo para acertar la fecha?
 5. (módulo) ¿Por qué el ejercicio pide justo 500,01 EUR y no, por ejemplo, 800?
@@ -199,8 +199,8 @@ Con hooks, la línea `[resultado]` de `get_ticket` y lo que recibe el modelo al 
 
 **Tus predicciones:**
 
-- **P1** Siempre en ISO 8601 y con el estado canónico: el hook transforma el resultado antes de que el modelo lo procese, así que no depende de él (TS 1.5-K1, 1.5-S1).
-- **P2** No, con ningún modelo: el hook intercepta la llamada saliente y la bloquea antes de que se ejecute (TS 1.5-K2, 1.5-S2).
+- **P1** No: el hook transforma el resultado antes de que el modelo lo procese, así que el modelo nunca ve el timestamp; recibe la fecha en ISO 8601 y el estado canónico, con cualquier modelo (TS 1.5-K1, 1.5-S1).
+- **P2** Antes: el hook intercepta la llamada saliente y la bloquea antes de que se ejecute, así que el pago no se hace con ningún modelo (TS 1.5-K2, 1.5-S2). Del modelo solo depende qué hace después del deny (P3).
 - **P3** El motivo del deny, que dice que no se reintente, que se escale y qué datos llevar. Pide `escalate_to_human`: el hook bloquea y además redirige (TS 1.5-S2).
 - **P4** Pueden cambiar: es cumplimiento probabilístico, frente a la garantía determinista del hook (TS 1.5-K3, 1.5-S3). Para la fecha, el modelo tiene que convertir bien el timestamp Unix él solo.
 - **P5** Porque está justo sobre la frontera: 500,00 pasa y 500,01 no. Un importe lejano no mostraría dónde corta la regla.

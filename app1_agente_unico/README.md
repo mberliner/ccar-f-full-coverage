@@ -92,7 +92,7 @@ La causa de la parada de cada variante y, en la base, cuántas iteraciones hubo 
 - **P3** No: varía entre 2 y 4. Depende de qué llamadas independientes agrupe el modelo en una misma iteración, y eso lo decide él.
 - **P4** Trae `end_turn` y ninguna petición de tool (TS 1.1-K1).
 - **P5** Si el modelo necesita más de dos iteraciones, el bucle se corta a mitad del trabajo, sin respuesta final. Un tope solo es una red de seguridad contra un bucle sin fin, nunca la parada principal (TS 1.1-S3).
-- **P6** Repite la misma primera llamada una y otra vez, hasta la red de seguridad (12): la API no guarda estado y, sin el historial, el modelo no ve sus resultados (TS 5.1-K4, 1.1-K2).
+- **P6** Repite la misma primera llamada una y otra vez, hasta la red de seguridad (12): sin el historial, el modelo no ve sus resultados (TS 5.1-K4, 1.1-K2). Producto observado (no evaluable): la API no guarda estado entre peticiones, así que lo que no va en el historial no existe para el modelo.
 - **P7** Falla `get_user`, que se llama sin `user_id`. El modelo, al ver ese error en el historial, podría buscar por nombre; la secuencia fija no tiene esa rama (TS 1.1-K3).
 
 | Variante | Parada | Qué se rompe |
@@ -182,7 +182,7 @@ Términos comunes en el [glosario](../docs/glosario.md): Agent SDK, tool, tools 
 - **El sistema:** el agente ya no atiende tickets: explora un repositorio. Es `repo_mesa/`, un paquete Python pequeño de la mesa de ayuda (generado por `datos/generar_sinteticos.py`), y el agente trabaja sobre una **copia temporal** que se crea de nuevo para cada petición: `Edit` y `Write` escriben en la copia y los datos sintéticos originales no se tocan nunca. Solo tiene tools integradas del Agent SDK, aprobadas sin preguntar (`permission_mode="dontAsk"`).
 - **Cuatro partes independientes** (`--parte`), cada una con su petición. `--anti` solo vale con la parte a la que pertenece.
 - **Ancla (`old_string`):** el texto que `Edit` busca en el archivo para sustituirlo por `new_string`.
-- **Módulo *wrapper* (reexportación):** un módulo que importa una función y la ofrece con otro nombre (`from x import f as g`). Quien importa desde el *wrapper* usa el nombre nuevo y nunca escribe el original. En `repo_mesa/`, `api.py` reexporta `calcular_sla` con otro nombre, y otro módulo la reimporta con un tercero.
+- **Módulo *wrapper* (reexportación):** un módulo que importa una función y la ofrece con otro nombre (`from x import f as g`). En `repo_mesa/`, `api.py` reexporta `calcular_sla` con otro nombre, y otro módulo la reimporta con un tercero.
 - **Punto de entrada:** el archivo por el que empieza un flujo (la función que se llama desde fuera) y desde el que se siguen sus imports.
 - **`[comprobación]`:** lo que el módulo calcula en código para contrastar la respuesta. Los llamadores esperados salen de analizar el código con `ast` (siguiendo los alias encadenados y sin contar la definición ni la reexportación), los tests esperados de buscar `test_*.py`, y en `edicion` se compara el archivo final con el esperado.
 
@@ -206,7 +206,7 @@ Qué se le pide al agente en cada parte y qué cambia en su variante `--anti`:
   - **`sin_grep`:** las mismas peticiones, con `Grep` quitado de la lista de tools; le quedan `Read` y `Glob`.
 - **`incremental`:** explicar cómo se calcula el SLA de un ticket, citando los archivos que intervienen.
   - **`leer_todo`:** el prompt añade «Antes de responder, lee todos los archivos .py del repositorio».
-- **`wrapper`:** encontrar todos los usos de `calcular_sla` y listar los archivos que la llaman. El *system prompt* de la variante correcta dice que, si una función se reexporta con otro nombre, primero se identifican todos los nombres exportados y después se busca cada uno.
+- **`wrapper`:** encontrar todos los usos de `calcular_sla` y listar los archivos que la llaman. El *system prompt* de la variante base añade una instrucción para las funciones que se reexportan con otro nombre; `solo_nombre` la quita.
   - **`solo_nombre`:** el *system prompt* dice en su lugar que busque solo el nombre original con `Grep` y liste los archivos que lo contienen.
 - **`edicion`** (sin `--anti`): `config.py` tiene dos asignaciones `TIMEOUT = 30` y hay que cambiar solo la segunda (la del cliente de notificaciones) a 60. El prompt pide un único `Edit` con `old_string` exactamente `TIMEOUT = 30` y, si no funciona, deja libre cómo resolverlo: no nombra `Read` ni `Write`. La comprobación mira el archivo final, no el camino, y registra qué tools usó el agente para llegar a él.
 
@@ -665,7 +665,7 @@ En `scoping`, el acierto, si la elección cambia entre repeticiones y el coste p
 
 **Tus predicciones:**
 
-- **P1** Con demasiadas tools, la selección se vuelve menos fiable (TS 2.3-K1). Se notaría con peticiones ambiguas, que encajan en varias tools.
+- **P1** Con demasiadas tools, la selección se vuelve menos fiable (TS 2.3-K1). Inferencia propia: se notaría con peticiones ambiguas, que encajan en varias tools; la guía no dice con cuáles.
 - **P2** El coste: cada petición carga 13 definiciones de más. El acierto no bajó con estas peticiones.
 - **P3** `auto` deja contestar con texto. `any` y el forzado obligan a empezar por una tool (TS 2.3-K4, 2.3-S5).
 - **P4** Con `any`, el modelo: se garantiza una llamada, no cuál. Con el forzado se llama la tool que fija el código (TS 2.3-K4; sus usos, en 2.3-S4 y 2.3-S5).
@@ -769,8 +769,6 @@ Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan
 3. (guía) En `recursos`, el índice de artículos está publicado como resource (`kb://catalogo`). ¿Qué gana el agente con eso frente a averiguar qué artículos hay con `search_kb` y `get_article`?
 4. (módulo) Con `sin_recursos` (ni las tools de resources ni la frase del prompt que las anuncia), ¿esperas que el agente necesite unas pocas llamadas exploratorias o decenas para listar todos los artículos?
 5. (guía) En `descripcion`, el agente puede buscar el artículo con `Grep` sobre los archivos o con `search_kb`, que además ordena por relevancia y filtra los obsoletos. Con `descripcion_minima` («Busca en la base de conocimiento.»), ¿qué riesgo corre la elección entre las dos? ¿Qué debería contar la descripción para evitarlo?
-6. (guía) Una persona añade al `.mcp.json` del proyecto un servidor experimental que solo quiere probar ella. ¿Qué le pasa al resto del equipo? ¿Dónde tenía que haberlo declarado?
-
 ### Ejecutar
 
 ```bash
@@ -797,8 +795,6 @@ En `conexion`, las tools por servidor y `token_recibido`. En `recursos`, cuánta
 - **P3** Ve qué hay sin tener que explorarlo con llamadas (TS 2.4-K4, 2.4-S5): con el resource bastaron 2 llamadas y ninguna exploratoria.
 - **P4** Decenas: entre 19 y 31, con búsquedas y lecturas por ID, incluidos IDs que no existen.
 - **P5** Que el agente prefiera la tool integrada, `Grep`, aunque la tool MCP sea más capaz. La descripción debería contar qué sabe hacer y qué devuelve: el ranking y el filtro de obsoletos (TS 2.4-S3). Con el modelo de la medida esa preferencia no se vio (ver notas); en el examen manda la guía.
-- **P6** Que el servidor les aparece a todos, porque ese archivo viaja con el repositorio. Lo personal o experimental va en `~/.claude.json`, en el ámbito de usuario; el `.mcp.json` del proyecto es para lo que comparte el equipo (TS 2.4-K1, 2.4-S2).
-
 Haiku 5.5:
 
 | Parte / variante | Señal observada | Qué dice |

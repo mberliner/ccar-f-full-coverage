@@ -233,9 +233,9 @@ El módulo tiene cuatro partes independientes que se eligen con `--parte`, cada 
 
 Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. (guía) En el modo secuencial de `paralelo`, el coordinador emite una llamada `Agent` por respuesta. ¿Por qué eso impide que los subagentes trabajen a la vez? ¿Qué tiene que cambiar en lo que emite?
-2. (módulo) ¿Qué modo de `paralelo` debería tardar menos? ¿Esperas la misma aceleración en dos ejecuciones?
-3. (guía) En `refinamiento`, el comprobador devuelve al coordinador solo los subtemas que faltan en la síntesis. ¿Qué debería hacer el coordinador con ellos? ¿Cuándo debería terminar ese bucle?
+1. (guía) En el modo secuencial de `paralelo`, ¿a qué se parece más el tiempo total: a la suma de lo que tarda cada subagente o a lo que tarda el más lento? ¿Por qué?
+2. (módulo) ¿Esperas que el modo paralelo acelere lo mismo en dos ejecuciones? ¿De qué depende?
+3. (guía) Según la guía, en un bucle de refinamiento, ¿quién evalúa si a la síntesis le faltan temas y hasta cuándo se sigue? ¿Qué cambia que aquí lo detecte un comprobador en código con un tope de 2 rondas?
 4. (módulo) El comprobador de `refinamiento` solo busca palabras en la síntesis. ¿Qué clase de síntesis le haría dar por cubierto un subtema que no se investigó?
 5. (guía) En `descomposicion`, ¿puede cambiar el número de pasos de la cadena fija según lo que vaya encontrando? ¿Para qué clase de trabajo conviene la cadena y para cuál la descomposición adaptativa?
 6. (guía) En la descomposición adaptativa, ¿de dónde deberían salir las subtareas de la segunda ronda?
@@ -262,9 +262,9 @@ En `paralelo`, cómo se agrupan las llamadas `Agent` por respuesta y la latencia
 
 **Tus predicciones:**
 
-- **P1** Porque con una llamada por turno espera cada resultado antes de emitir la siguiente. Para que trabajen a la vez, las tres llamadas van en una misma respuesta (TS 1.3-S3): en el modo paralelo salieron juntas en `r1`; en el secuencial, una por respuesta (`r1`, `r3`, `r5`).
-- **P2** El paralelo. La aceleración no se repite: ×1,66 en una ejecución y ×1,37 en otra.
-- **P3** Volver a delegar con consultas dirigidas a esas brechas y sintetizar otra vez, hasta que la cobertura baste (TS 1.2-S3); el módulo añade un tope de 2 rondas. En la ejecución de referencia no hubo brechas en la ronda 1 y el bucle no llegó a actuar.
+- **P1** A la suma: con una llamada por respuesta, el coordinador espera cada resultado antes de emitir la siguiente. Para que los subagentes trabajen a la vez, las llamadas van en una misma respuesta (TS 1.3-S3); entonces el total se acerca más al del subagente más lento (inferencia propia). En el registro: en el modo paralelo salieron juntas en `r1`; en el secuencial, una por respuesta (`r1`, `r3`, `r5`).
+- **P2** No: ×1,66 en una ejecución y ×1,37 en otra. Depende de lo que tarde cada subagente en esa ejecución, que el módulo no fija.
+- **P3** El coordinador: evalúa la síntesis, vuelve a delegar con consultas dirigidas a lo que falta y sintetiza otra vez, hasta que la cobertura baste (TS 1.2-S3). Aquí la detección la hace código, que solo busca palabras (P4), y el tope de 2 rondas es una red de seguridad del módulo: el bucle puede acabar con huecos. En la ejecución de referencia no hubo brechas en la ronda 1 y el bucle no llegó a actuar.
 - **P4** Una que nombre el subtema sin haberlo investigado, por ejemplo para decir que no lo buscó. El comprobador mira la palabra, no el trabajo.
 - **P5** No: son siempre tres pasos. La cadena fija conviene cuando el trabajo es predecible; la descomposición dinámica, cuando depende de lo que se va descubriendo, como una investigación abierta (TS 1.6-K1, 1.6-S1).
 - **P6** De los hallazgos de la primera ronda (TS 1.6-K3): aquí, los tickets del 19 al 22 de septiembre y los bloqueos de cuenta.
@@ -390,7 +390,7 @@ Antes de las medidas, cada ejecución imprime una línea `[esperado]` con la hip
 Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
 1. (guía) Sin `--anti`, cada subagente tiene solo las tools de su rol. ¿Qué no puede hacer el sintetizador, decida lo que decida el modelo? ¿Qué sigue dependiendo del modelo?
-2. (guía) Con `todas` (el sintetizador recibe las cinco tools del servidor), ¿qué riesgo hay? ¿Qué lo haría más probable: que su prompt traiga todo lo que necesita o que le falte algo?
+2. (guía) Con `todas` (el sintetizador recibe las cinco tools del servidor), ¿qué riesgo hay? ¿Esperas verlo en este ejercicio, donde su prompt trae todo lo que necesita?
 3. (guía) Con `fetch_url` (abre cualquier URL) en lugar de `load_document` (comprueba que la URL es un documento), ¿de quién depende que no entren en los hallazgos páginas que no son documentos? ¿Esperas el mismo resultado en todas las repeticiones?
 4. (guía) `verify_fact` solo resuelve las afirmaciones simples y devuelve las complejas al coordinador. ¿Por qué no dar al sintetizador las tools de búsqueda, para que resuelva también las complejas?
 5. (módulo) Con `sin_verify` (el sintetizador no tiene ninguna tool), ¿esperas más delegaciones o menos que sin `--anti`? ¿Quién verificará las afirmaciones?
@@ -419,7 +419,7 @@ Por variante, las llamadas fuera de rol, las URLs que no son documentos abiertas
 **Tus predicciones:**
 
 - **P1** Ni buscar ni cargar documentos: no tiene esas tools, y eso lo fija la configuración (TS 2.3-S1). Del modelo depende que llame a `verify_fact` y lo que haga el coordinador con lo que le vuelve.
-- **P2** Que use mal tools ajenas a su especialidad, como un agente de síntesis que se pone a buscar (TS 2.3-K2). Que sea más probable cuando le falta información es una hipótesis sin comprobar. Aquí no hubo señal: recibe todo en su prompt y no las tocó. En el examen manda la guía.
+- **P2** Que use mal tools ajenas a su especialidad, como un agente de síntesis que se pone a buscar (TS 2.3-K2). Aquí no hubo señal: recibe todo en su prompt y no las tocó. En el examen manda la guía.
 - **P3** Del modelo: la tool genérica ya no rechaza nada. No fue igual: en 2 de 3 repeticiones abrió las cuatro páginas que no son documentos y en la otra, ninguna. Por eso se cambia la tool genérica por una restringida (TS 2.3-S2).
 - **P4** Porque cada rol recibe solo lo que necesita: la tool acotada cubre lo frecuente y lo complejo sigue pasando por el coordinador (TS 2.3-K3, 2.3-S3). Con las tools de búsqueda volvería el riesgo de P2. Aquí, 5 llamadas a `verify_fact` y 2 devueltas por complejas.
 - **P5** Menos: sin tool con la que verificar, el coordinador casi nunca invoca al sintetizador (1 de 6) y resuelve las afirmaciones él. La hipótesis de partida del módulo era la contraria.
@@ -441,6 +441,8 @@ Notas:
 - **Barrera del coordinador (revisión independiente):** `tools=["Agent"]` solo limita las tools integradas; las del servidor MCP seguían visibles para el coordinador, y «no busques tú» en su prompt es una petición. Comprobado: sin barrera y **pidiéndoselo expresamente**, el coordinador llamó él mismo a `verify_fact` y obtuvo el resultado. Ahora un hook `PreToolUse` (`coordinator_gate`) deniega esas tools al agente principal y deja pasar a los subagentes (traen `agent_id`): con él, la misma petición recibió el rechazo del hook y los subagentes siguieron usando las suyas. En 5 ejecuciones normales con la barrera, el coordinador no intentó ninguna (0 intentos), así que no se ha visto que la intente por su cuenta: la barrera garantiza la medida, no corrige una señal observada.
 - **`tools=[]` en un subagente significa «ninguna tool»:** forzando la delegación en `sin_verify`, el sintetizador respondió «SIN TOOLS» (2 de 2) y no llamó a ninguna.
 - Las tools por rol, las medidas sobre el registro y las opciones del coordinador se prueban sin modelo en `tests/test_app3_03_tools_entre_roles.py`.
+
+**Para pensar (sin evaluación):** con `todas`, ¿sería más probable que el sintetizador se pusiera a buscar si su prompt no trajera todo lo que necesita? Es una hipótesis sin comprobar: el módulo no trae una variante con información incompleta, así que no cuenta como predicción.
 </details>
 
 ### Pregunta tipo examen
@@ -518,12 +520,13 @@ Cada ejecución imprime una línea `[esperado]` con la hipótesis escrita en el 
 
 Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. (guía) Sin `--anti`, un informe `failed` trae `error_context` con sus cuatro campos. ¿Qué puede decidir el coordinador con ellos que no podría con un `failed` a secas? ¿Por qué importa que una fuente vacía llegue como `empty` y no como `failed`?
-2. (guía) `SRC-REDES` falla solo la primera vez que se consulta. ¿Qué debe hacer el subagente con ese fallo? ¿Qué le llega de él al coordinador?
-3. (guía) Con `generico`, al coordinador solo le llega «búsqueda no disponible». ¿Qué información pierde para decidir cómo recuperarse?
-4. (módulo) Aquí solo hay una fuente caída y ninguna alternativa que consultar. Con `generico`, ¿esperas que el coordinador haga algo distinto que sin `--anti`?
-5. (guía) Con `silenciar`, el *handler* convierte el *timeout* en un resultado vacío antes de que lo vea el subagente. ¿Qué sabe entonces el coordinador de esa fuente? ¿Puede anotar la brecha?
-6. (guía) Con `abortar`, el coordinador no entrega nada si una fuente falla. ¿Qué se pierde, sabiendo que las demás fuentes ya habían respondido?
+1. (guía) Sin `--anti`, un informe `failed` trae `error_context` con sus cuatro campos. ¿Qué puede decidir el coordinador con ellos que no podría con un `failed` a secas?
+2. (guía) Una fuente que responde sin resultados llega como `empty`, no como `failed`. ¿Por qué importa esa distinción para el coordinador?
+3. (guía) `SRC-REDES` falla solo la primera vez que se consulta. ¿Qué debe hacer el subagente con ese fallo? ¿Qué le llega de él al coordinador?
+4. (guía) Con `generico`, al coordinador solo le llega «búsqueda no disponible». ¿Qué información pierde para decidir cómo recuperarse?
+5. (módulo) Aquí solo hay una fuente caída y ninguna alternativa que consultar. Con `generico`, ¿esperas que el coordinador haga algo distinto que sin `--anti`?
+6. (guía) Con `silenciar`, el *handler* convierte el *timeout* en un resultado vacío antes de que lo vea el subagente. ¿Qué sabe entonces el coordinador de esa fuente? ¿Puede anotar la brecha?
+7. (guía) Con `abortar`, el coordinador no entrega nada si una fuente falla. ¿Qué se pierde, sabiendo que las demás fuentes ya habían respondido?
 
 ### Ejecutar
 
@@ -546,12 +549,13 @@ Las consultas por fuente y los reintentos locales, la cobertura según los infor
 
 **Tus predicciones:**
 
-- **P1** Cómo recuperarse: repetir con otra consulta, probar una vía alternativa o seguir con lo parcial y anotar la brecha. Para eso necesita la clase de fallo, qué se consultó, qué se llegó a obtener y qué otras vías quedan (TS 5.3-K1, 5.3-S1). Y un vacío no es un fallo: una consulta que funcionó y no encontró nada ya es una respuesta, y no hay nada que recuperar (TS 5.3-K2, 5.3-S2).
-- **P2** Reintentarlo en local y, si se recupera, no propagarlo (TS 5.3-S3). Al coordinador le llegó un informe `ok`, sin brecha, en 3 de 3.
-- **P3** Qué se intentó, qué se obtuvo y qué alternativas hay: justo el contexto que necesitaba (TS 5.3-K3).
-- **P4** No hizo nada distinto: una delegación y la brecha anotada, igual que sin `--anti`. Con una sola fuente caída no había decisión que ese contexto pudiera mejorar. En el examen manda la guía.
-- **P5** Que respondió vacía: para él el fallo no existe. La brecha solo salió anotada en 1 de 3, y mal diagnosticada. Devolver un vacío como si fuera un éxito es uno de los dos anti-patrones (TS 5.3-K4).
-- **P6** Todo el trabajo de las fuentes que sí respondieron: es el anti-patrón opuesto, terminar el flujo entero por un solo fallo (TS 5.3-K4). Lo adecuado es entregar el resultado parcial con la cobertura anotada (TS 5.3-S4).
+- **P1** Cómo recuperarse: repetir con otra consulta, probar una vía alternativa o seguir con lo parcial y anotar la brecha. Para eso necesita la clase de fallo, qué se consultó, qué se llegó a obtener y qué otras vías quedan (TS 5.3-K1, 5.3-S1).
+- **P2** Porque un vacío no es un fallo: una consulta que funcionó y no encontró nada ya es una respuesta, y no hay nada que recuperar ni reintentar (TS 5.3-K2, 5.3-S2).
+- **P3** Reintentarlo en local y, si se recupera, no propagarlo (TS 5.3-S3). Al coordinador le llegó un informe `ok`, sin brecha, en 3 de 3.
+- **P4** Qué se intentó, qué se obtuvo y qué alternativas hay: justo el contexto que necesitaba (TS 5.3-K3).
+- **P5** No hizo nada distinto: una delegación y la brecha anotada, igual que sin `--anti`. Con una sola fuente caída no había decisión que ese contexto pudiera mejorar. En el examen manda la guía.
+- **P6** Que respondió vacía: para él el fallo no existe. La brecha solo salió anotada en 1 de 3, y mal diagnosticada. Devolver un vacío como si fuera un éxito es uno de los dos anti-patrones (TS 5.3-K4).
+- **P7** Todo el trabajo de las fuentes que sí respondieron: es el anti-patrón opuesto, terminar el flujo entero por un solo fallo (TS 5.3-K4). Lo adecuado es entregar el resultado parcial con la cobertura anotada (TS 5.3-S4).
 
 Coordinador Sonnet 5.5, subagente Haiku 5.5, 3 ejecuciones por variante (`--repeat 3`), ~0,26 $ las cuatro variantes:
 
@@ -703,7 +707,7 @@ Las afirmaciones estructuradas sin problemas, las fuentes que llegan al sintetiz
 - **P1** La atribución: qué afirmación viene de qué fuente (TS 5.6-K1). Ese emparejamiento es una estructura que el sintetizador tiene que recibir y conservar (TS 5.6-K2, 5.6-S1). Aquí, las 40 afirmaciones llegaron con ubicación y fragmento válidos.
 - **P2** En lo que devuelve el investigador: 0 afirmaciones estructuradas. En el informe final casi no se notó, porque la prosa del modelo ya nombraba la fuente y la fecha.
 - **P3** El promedio (22 horas; 3,85 sobre 5). Debería anotar las dos cifras, cada una con su fuente, en vez de quedarse con una o fundirlas (TS 5.6-K3). La fusión apareció en 1 de 3.
-- **P4** Presentarlas con su contexto, para que la diferencia no parezca una contradicción. Con cada cifra tienen que viajar la fecha, la ubicación en la fuente y el contexto metodológico (TS 5.6-K4, 5.6-S4, 5.1-S5).
+- **P4** Presentarlas con su contexto, para que la diferencia no parezca una contradicción. Con cada cifra tiene que viajar su fecha, para que una diferencia temporal no se lea como contradicción (TS 5.6-K4, 5.6-S4), y el contexto de su fuente, como el método o la muestra, con la ubicación de donde sale (TS 5.6-S2, 5.1-S5).
 - **P5** Dejarlo como disputado, separado de lo bien establecido y respetando cómo lo describe cada fuente (TS 5.6-S2). Delataría un informe que inventa una causa.
 - **P6** Los dos valores en conflicto, incluidos y anotados: el análisis no elige, y el coordinador decide cómo reconciliarlos antes de pasarlos a la síntesis (TS 5.6-S3). Si el investigador eligiera, el conflicto desaparecería antes de que nadie pudiera verlo. Su decisión fue acertada en 9 de 9 pares.
 - **P7** La tabla: salió en 0 de 3. Cada clase de contenido se presenta a su manera, las cifras en tabla, en vez de pasarlo todo a un formato único (TS 5.6-S5).
@@ -925,7 +929,7 @@ Notas:
 
 ### Pregunta tipo examen
 
-Una investigación en tres fases se corta durante la tercera. Al terminar cada fase, los agentes habían guardado su estado en un sitio acordado. ¿Cómo debe retomarse?
+Una investigación en tres fases se corta durante la tercera, con las dos primeras ya terminadas. El sistema se diseñó para poder retomar el trabajo tras una caída. ¿Cómo debe retomarse?
 
 - A. Cargar el estado guardado y pasar a la fase pendiente lo que ya está hecho y el resumen de las anteriores.
 - B. Reanudar la conversación anterior completa, que conserva el detalle de cada consulta aunque ya sea muy larga.
@@ -1036,7 +1040,7 @@ Cinco partes (`--parte`) y variantes `--anti` en la primera y en la última:
 Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
 1. (guía) Un documento no menciona ningún número de pedido. Si `po_number` es obligatorio y de tipo `string` (`sin_nullable`), ¿qué opciones le quedan al modelo para ese campo?
-2. (guía) Con `po_number` opcional y *nullable*, ¿qué devolverá el modelo para ese mismo documento? ¿Garantiza el esquema que el valor de un campo sea verdadero?
+2. (guía) Con `po_number` opcional y *nullable*, ¿qué devolverá el modelo para ese mismo documento? ¿Esperas que desaparezcan del todo los valores rellenados?
 3. (guía) En `enum_cerrado`, `doc_type` solo admite `invoice` y `delivery_note`, y la llamada va con `tool_choice` forzado: el modelo tiene que escribir algo en ese campo. Llega un certificado de garantía. ¿Qué salida rechazaría un validador del esquema y cuál pasaría sin que nadie lo notara?
 4. (guía) En `tipo_desconocido` hay tres tools, una por tipo de documento. ¿Qué garantiza `any` y qué deja sin garantizar `auto`? ¿Qué le pasa a un albarán si se fuerza siempre la tool de factura?
 5. (guía) En `few_shot`, las descripciones ya no dicen cómo escribir una fecha: sin regla ni ejemplos, el modelo tiene que adivinar el formato. ¿Qué aportan tres ejemplos de documentos con estructuras distintas?
@@ -1044,8 +1048,8 @@ Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan
 7. (módulo) Algunos campos sí están en el documento, pero el modelo podría dejarlos vacíos. ¿Esperas que los ejemplos cambien cuántos deja vacíos en estos doce documentos?
 8. (guía) En `enriquecimiento`, el módulo fuerza `extract_metadata` en el primer turno y deja `auto` en los siguientes. ¿Para qué sirve ese primer turno forzado?
 9. (módulo) Con `auto_desde_inicio`, si en tus ejecuciones el modelo extrae siempre primero por su cuenta, ¿basta eso para prescindir del primer turno forzado? ¿Por qué?
-10. (guía) En `estricto`, con `strict: true` y el `enum` cerrado, ¿puede salir un valor fuera del `enum`? ¿Qué pasará entonces con el certificado de garantía?
-11. (guía) ¿Qué garantiza el modo estricto y qué no garantiza?
+10. (guía) En `estricto`, con `strict: true` y el `enum` cerrado (sin `other`), llega el certificado de garantía. ¿Qué tipo le queda al modelo? ¿Lo detectaría un validador del esquema?
+11. (guía) Con `strict: true` en producción, ¿dejaría de hacer falta comprobar los datos extraídos contra el documento? ¿Por qué?
 
 ### Ejecutar
 
@@ -1072,7 +1076,7 @@ En cada ejecución, `forma válida`, `campos ausentes rellenados`, `tipo correct
 **Tus predicciones:**
 
 - **P1** Inventar algo para cumplir el `required`: el texto `'null'`, una cadena vacía o un valor deducido. Rellenó 21 de 21 campos ausentes (TS 4.3-S4).
-- **P2** `null`, casi siempre (1 o 2 rellenados de 21). No lo garantiza: el esquema elimina los errores de sintaxis, no los de significado (TS 4.3-K3).
+- **P2** `null`, casi siempre, pero no siempre: 1 o 2 rellenados de 21. Un campo *nullable* deja de obligar a inventar (TS 4.3-S4), pero el esquema solo elimina los errores de sintaxis, no los de significado (TS 4.3-K3).
 - **P3** Rechazaría un valor fuera de la lista, como `other` (pasó en 2 de 12). Pasaría sin aviso un tipo permitido que no es el suyo: el documento ilegible salió como `invoice`. Por eso el `enum` lleva `other` con un campo de detalle, y `unclear` para lo ambiguo (TS 4.3-K4, 4.3-S5).
 - **P4** `any` obliga a llamar a alguna tool y deja elegir cuál; `auto` permite contestar con texto (TS 4.3-K2). Con la tool de factura forzada, el albarán se trata como factura (5 de 12 correctos). `any` encaja cuando no se sabe de qué tipo es el documento (TS 4.3-S2).
 - **P5** Enseñan dónde está cada dato en cada estructura, y reducen las alucinaciones en la extracción (TS 4.2-K4, 4.2-S4). Las reglas de normalización van en el prompt junto al esquema, porque los documentos no las siguen (TS 4.3-S6).
@@ -1080,8 +1084,8 @@ En cada ejecución, `forma válida`, `campos ausentes rellenados`, `tipo correct
 - **P7** No cambió: 0 campos vacíos con y sin ejemplos. La guía da los ejemplos como remedio para los campos que salen vacíos (TS 4.2-S5); aquí no había vacíos que corregir.
 - **P8** Para asegurar que la extracción se hace antes de los pasos que la enriquecen (TS 4.3-S3).
 - **P9** No basta: que hoy lo haga no garantiza el orden; el turno forzado lo garantiza por construcción. El fallo que evita no se pudo provocar (sin señal).
-- **P10** No: 0 valores fuera del `enum` y forma válida en 12 de 12. Pero el certificado de garantía cae entonces en una categoría que no es la suya, y el tipo correcto baja de 11 a 9 de 12: el esquema elimina los errores de sintaxis, no los de significado (TS 4.3-K3), y por eso el `enum` lleva `other` (TS 4.3-K4).
-- **P11** Garantiza la forma, es decir, que la salida cumple el esquema. No garantiza que el dato sea correcto (TS 4.3-K3).
+- **P10** Uno de los permitidos, aunque no sea el suyo: 0 valores fuera del `enum` y forma válida en 12 de 12, pero el tipo correcto baja de 11 a 9 de 12. Un validador del esquema no lo detecta, porque la forma es válida: el esquema elimina los errores de sintaxis, no los de significado (TS 4.3-K3), y por eso el `enum` lleva `other` (TS 4.3-K4).
+- **P11** No: el modo estricto garantiza la forma, es decir, que la salida cumple el esquema, pero no que el dato sea correcto (TS 4.3-K3). Los errores de significado, como el tipo mal elegido de P10, siguen necesitando otra comprobación.
 
 Haiku 5.5 (rol `agent`), 12 documentos, tres repeticiones salvo donde se dice:
 
@@ -1280,7 +1284,7 @@ Por documento, los fallos del primer intento agrupados por patrón, los reintent
 **Tus predicciones:**
 
 - **P1** Porque un reintento no crea un dato que la fuente no contiene; sirve para fallos de formato o de estructura (TS 4.4-K2). El bucle distingue el caso antes de reintentar y deja el campo marcado con su causa (TS 4.4-S2).
-- **P2** Un valor fabricado: el reintento no crea un dato que la fuente no contiene (TS 4.4-K2). Aquí fue un pedido inventado en las 3 repeticiones, que el validador no distingue porque tiene el formato correcto: solo lo delata la etiqueta.
+- **P2** Algo que no sale del documento: reintentar es ineficaz cuando el dato no está en la fuente (TS 4.4-K2), así que lo que devuelva lo habrá fabricado. Aquí fue un pedido inventado en las 3 repeticiones, que el validador no distingue porque tiene el formato correcto: solo lo delata la etiqueta.
 - **P3** La misma fecha: con el mensaje genérico no sabe qué falló. Con el error concreto sabe el campo, el valor que falló y la regla, y eso es lo que guía la corrección (TS 4.4-K1, 4.4-S1).
 - **P4** `reintento_generico`: 10 u 11 reintentos con solo 1 a 3 útiles, frente a 5 a 7 casi todos útiles con el error concreto.
 - **P5** El total declarado: el modelo lo cambió para que cuadrara. Se pierde la discrepancia, que era justo el dato: el conflicto desapareció sin que nadie lo marcara. Lo correcto es extraer el total declarado y el calculado y marcar `conflict_detected` (TS 4.4-K4, 4.4-S4).
@@ -1386,12 +1390,13 @@ Las peticiones llevan un `max_tokens` corto (600) a propósito, para que el lote
 
 Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. (guía) Las facturas del turno de noche tienen un plazo de 30 h, contado desde que llega cada una hasta que tiene su resultado, y llegan a lo largo de todo el día. Un lote puede tardar hasta 24 h en procesarse y el módulo reserva además 2 h de margen. ¿Cada cuántas horas hay que enviar un lote para que ninguna se pase del plazo?
-2. (módulo) Con ese mismo plazo de 30 h, si un documento falla, ¿cabe reenviarlo en un segundo lote, que puede tardar otras 24 h?
-3. (guía) Envías 12 peticiones en un lote y emparejas cada resultado con su documento por posición, como hace `por_orden`. ¿Qué da por supuesto ese código sobre el lote? ¿Qué pasa si no se cumple?
-4. (módulo) Una respuesta del lote se corta por `max_tokens`. ¿Con qué tipo de resultado crees que llega? ¿Qué tiene que mirar tu código para saber que no sirve?
-5. (guía) `--reenviar` crea un lote solo con los fallidos y trocea el documento que no cupo. ¿Qué pasaría si reenviara ese documento tal cual? ¿Qué necesita el código para saber cuáles reenviar?
-6. (guía) Antes de crear el lote, el módulo extrae una muestra de tres documentos de forma síncrona. ¿Para qué sirve?
+1. (guía) Las facturas del turno de noche tienen un plazo de 30 h, contado desde que llega cada una hasta que tiene su resultado, y llegan a lo largo de todo el día. Un lote puede tardar hasta 24 h en procesarse. ¿De qué dos datos sale cada cuánto hay que enviar un lote? ¿Basta con un envío al día?
+2. (módulo) Con ese plazo, el módulo reserva además 2 h de margen. ¿Cada cuántas horas hay que enviar un lote para que ninguna factura se pase del plazo?
+3. (módulo) Con ese mismo plazo de 30 h, si un documento falla, ¿cabe reenviarlo en un segundo lote, que puede tardar otras 24 h?
+4. (guía) Envías 12 peticiones en un lote y emparejas cada resultado con su documento por posición, como hace `por_orden`. ¿Qué da por supuesto ese código sobre el lote? ¿Qué pasa si no se cumple?
+5. (módulo) Una respuesta del lote se corta por `max_tokens`. ¿Con qué tipo de resultado crees que llega? ¿Qué tiene que mirar tu código para saber que no sirve?
+6. (guía) `--reenviar` crea un lote solo con los fallidos y trocea el documento que no cupo. ¿Qué pasaría si reenviara ese documento tal cual? ¿Qué necesita el código para saber cuáles reenviar?
+7. (guía) Antes de crear el lote, el módulo extrae una muestra de tres documentos de forma síncrona. ¿Para qué sirve?
 
 ### Ejecutar
 
@@ -1415,12 +1420,13 @@ El acierto por campo de la muestra antes de crear el lote; el orden de llegada f
 
 **Tus predicciones:**
 
-- **P1** Cada 4 h. La frecuencia de envío se calcula a partir del plazo y de la ventana de 24 h (TS 4.5-S2), y la guía da ese mismo resultado para un plazo de 30 h. El cálculo es una inferencia propia, porque la guía no lo da: una factura que llega justo después de un envío espera un intervalo entero hasta el siguiente, y después el lote puede tardar toda la ventana, así que intervalo + 24 h + 2 h de margen ≤ 30 h. El margen es una elección de este módulo; sin él saldrían 6 h.
-- **P2** No: un segundo lote añade otras 24 h y se pasa del plazo. Ese trabajo cabe en batch, pero sin margen para reenviar lo que falle. Es una inferencia de este módulo a partir de la ventana de hasta 24 h sin garantía de latencia (TS 4.5-K1); la guía no habla de reenvíos dentro del plazo.
-- **P3** Que los resultados llegan en el orden de envío. Si no se cumple, cada documento recibe los datos de otro: por eso cada resultado se empareja con su petición por `custom_id` (TS 4.5-K4). Producto observado (no evaluable): aquí llegaron en otro orden y, emparejados por posición, 11 de 11 documentos recibieron los datos de otro.
-- **P4** Como `succeeded`, igual que los buenos. Hay que mirar el `stop_reason`: `max_tokens` indica que la extracción está cortada.
-- **P5** Volvería a fallar igual: se reenvían solo los documentos que fallaron, con el cambio que haga falta, que aquí es trocear el que no cupo. Para saber cuáles son, el código los localiza por su `custom_id` (TS 4.5-S3).
-- **P6** Para afinar el prompt antes de procesar el volumen: sube el acierto a la primera y baja el coste de los reenvíos (TS 4.5-S4). Detecta fallos de prompt y de esquema, no de tamaño.
+- **P1** Del plazo y de la ventana de procesamiento de hasta 24 h: la frecuencia de envío se calcula con los dos (TS 4.5-S2). Un envío al día no basta: una factura que llega justo después esperaría casi un día hasta el siguiente envío, y el lote aún podría tardar 24 h más.
+- **P2** Cada 4 h, el mismo resultado que da la guía para un plazo de 30 h. El cálculo es una inferencia propia: una factura que llega justo después de un envío espera un intervalo entero hasta el siguiente, y después el lote puede tardar toda la ventana, así que intervalo + 24 h + 2 h de margen ≤ 30 h. El margen es una elección de este módulo; sin él saldrían 6 h.
+- **P3** No: un segundo lote añade otras 24 h y se pasa del plazo. Ese trabajo cabe en batch, pero sin margen para reenviar lo que falle. Es una inferencia de este módulo a partir de la ventana de hasta 24 h sin garantía de latencia (TS 4.5-K1); la guía no habla de reenvíos dentro del plazo.
+- **P4** Que los resultados llegan en el orden de envío. Si no se cumple, cada documento recibe los datos de otro: por eso cada resultado se empareja con su petición por `custom_id` (TS 4.5-K4). Producto observado (no evaluable): aquí llegaron en otro orden y, emparejados por posición, 11 de 11 documentos recibieron los datos de otro.
+- **P5** Como `succeeded`, igual que los buenos. Hay que mirar el `stop_reason`: `max_tokens` indica que la extracción está cortada.
+- **P6** Volvería a fallar igual: se reenvían solo los documentos que fallaron, con el cambio que haga falta, que aquí es trocear el que no cupo. Para saber cuáles son, el código los localiza por su `custom_id` (TS 4.5-S3).
+- **P7** Para refinar el prompt con una muestra antes de procesar el volumen: sube el acierto a la primera y baja el coste de los reenvíos (TS 4.5-S4). En este módulo la muestra hace además de barrera: si no llega al 85 % de acierto, el lote no se lanza (decisión del módulo). Detecta fallos de prompt y de esquema, no de tamaño.
 
 Haiku 5.5, 12 documentos:
 
@@ -1561,7 +1567,7 @@ En `poblacion`: la exactitud global frente a la del peor tipo de documento y del
 
 **Tus predicciones:**
 
-- **P1** Sí: el global es 97,7 % y el tipo raro acierta el 62,5 %. Cuanto menos pesa un segmento en el total, más puede esconder la cifra agregada (TS 5.5-K1).
+- **P1** Sí: el global es 97,7 % y el tipo raro acierta el 62,5 %. Una exactitud agregada puede ocultar un rendimiento pobre en tipos de documento o campos concretos (TS 5.5-K1). Inferencia propia: cuanto menos pesa un segmento en el total, más puede esconder la cifra agregada.
 - **P2** La estratificada: vio algún error del tipo raro en el 100 % de las muestras, frente al 53,4 % de la aleatoria simple, porque asegura un mínimo por estrato. Mide la tasa de error y deja ver patrones que no se conocían (TS 5.5-K2, 5.5-S1). Inferencia propia, que la guía no recoge: para estimar la tasa hay que ponderar cada estrato por su tamaño.
 - **P3** Si esa confianza está calibrada contra un conjunto de validación etiquetado, que es de donde salen los umbrales de revisión (TS 5.5-K3, 5.5-S3). Aquí la mayoría de los errores llegan con confianza de 0,85 o más.
 - **P4** No: sin ejemplos no hay evidencia de que acierte. La exactitud se comprueba segmento a segmento antes de dejar de revisar (TS 5.5-K4, 5.5-S2). Aquí esos segmentos quedan como `insufficient_data` y no se automatizan.
@@ -1753,7 +1759,7 @@ Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan
 5. (módulo) Con `--sin-categoria comment`, la categoría desaparece del prompt y del schema. ¿Qué puede pasar con el fallo real C, que caía en ella?
 6. (guía) Con `sin_previos`, la segunda revisión vuelve a mirar el diff completo de la rama sin la lista de lo ya publicado. ¿Qué verán los desarrolladores en el PR tras el commit nuevo? ¿Por qué?
 7. (guía) En `tests`, ¿qué se evita al poner los tests existentes en el contexto? ¿Qué aporta documentar los estándares de tests en el `CLAUDE.md`?
-8. (guía) Cada hallazgo lleva un campo `detected_pattern`. ¿Para qué sirve registrar qué construcción del código provocó el hallazgo?
+8. (módulo) El nombre del `detected_pattern` lo escribe el propio modelo en cada hallazgo. ¿Qué problema esperas al agrupar los descartados por ese nombre?
 
 ### Ejecutar
 
@@ -1786,7 +1792,7 @@ En `revision`: qué fallos sembrados encuentra (A a F, el segundo commit añade 
 - **P5** Puede perderse o salir en otra categoría: C faltó en 1 de 5. La marca falsa del comentario desaparece (0 de 5), pero a veces se va también el acierto.
 - **P6** Comentarios duplicados: el revisor no sabe qué se publicó ya, y sin la lista repitió B, C y D en 3 de 3. Por eso los hallazgos anteriores van en el contexto, con la orden de informar solo de lo nuevo o de lo no resuelto (TS 3.6-S3). Esta parte se midió antes de las últimas correcciones.
 - **P7** Se evita proponer escenarios que la suite ya cubre (TS 3.6-S4). El `CLAUDE.md` es por donde llega el contexto del proyecto en CI, y documentar ahí los estándares mejora los tests y reduce los que aportan poco (TS 3.6-K3, 3.6-S5). En la medida, sin los tests existentes no hubo repetidos (sin diferencia), y sin los estándares salieron más tests (9 a 12 frente a 7 u 8).
-- **P8** Para analizar de forma sistemática qué patrones descartan los desarrolladores (TS 4.4-K3, 4.4-S3).
+- **P8** Que el mismo patrón salga con nombres distintos y el registro lo disperse: el comentario del cambio correcto salió como `misleading_comment`, `dubious_comment`, `comment_does_not_match_code`… El campo sirve para analizar qué patrones se descartan (TS 4.4-K3, 4.4-S3), pero solo agrupa bien si el nombre es estable; `normalize_pattern` solo iguala mayúsculas y separadores.
 
 Sonnet 5.5 (rol `reviewer`), `claude -p` aislado. **Las cifras de referencia son las de después de las correcciones C4** (2026-11-07, 5 ejecuciones por variante, la misma puntuación en toda la batería): cada revisión corre sobre el árbol del commit que revisa, un escenario de test se compara con lo que espera y el símbolo se compara por nombre completo. Las cifras anteriores están más abajo, rotuladas «antes», y **no son comparables**: el revisor del primer commit leía el árbol del segundo, donde A ya estaba arreglado, la puntuación era otra, el prompt de todas las variantes era otro (la línea de `bug` citaba el docstring y el ejemplo de `minor` era otro) y los datos tenían `TIMEOUT` duplicado (ahora `NOTIF_TIMEOUT`).
 
@@ -1928,17 +1934,17 @@ Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregu
 **C.** Un criterio explícito precisa más que una instrucción vaga (TS 4.1-K1), y las instrucciones generales del tipo «sé conservador» no mejoran la precisión como los criterios categóricos (TS 4.1-K2). Los criterios dicen qué se informa y qué se deja, en vez de filtrar por confianza (TS 4.1-S1), que es lo que hace D. A y B son las instrucciones vagas.
 </details>
 
-**C5 · TS 4.1-K3, S2.** Una categoría de hallazgos se equivoca a menudo, y los desarrolladores empiezan a ignorar todos los comentarios del revisor. ¿Qué se hace?
+**C5 · TS 4.1-K3, S2.** Hace dos meses, un equipo apagó la categoría de su revisor automático que daba muchos falsos positivos, y desde entonces nadie la ha vuelto a tocar. ¿Qué falta?
 
-- A. Mantenerla, con un aviso de que sus hallazgos pueden no ser del todo fiables.
-- B. Subir la severidad de las demás categorías, para que destaquen sobre ella.
-- C. Pedir a los desarrolladores que contesten cada comentario antes de fusionar.
-- D. Apagarla por un tiempo, mientras se mejora el prompt de esa categoría.
+- A. Apagar también las demás categorías con algún falso positivo, para no arriesgar más la confianza.
+- B. Subir el umbral de confianza de todas las categorías, para compensar la que se apagó.
+- C. Mejorar el prompt de esa categoría y reactivarla cuando deje de dar tantos falsos positivos.
+- D. Pedir a los desarrolladores que revisen a mano los PR de esos meses, por si se escapó algo.
 
 <details>
 <summary>Comprobación C5 · Respuesta</summary>
 
-**D.** Los falsos positivos de una categoría hacen que se desconfíe también de las que aciertan (TS 4.1-K3), así que esa categoría se apaga por un tiempo mientras se mejora su prompt (TS 4.1-S2). A y B dejan el ruido; C traslada el coste a las personas.
+**C.** Apagar una categoría con muchos falsos positivos es una medida temporal: recupera la confianza mientras se mejora su prompt (TS 4.1-S2). Y la confianza importa porque los falsos positivos de una categoría hacen desconfiar también de las que aciertan (TS 4.1-K3). A pierde los aciertos de categorías útiles; B filtra por confianza en vez de corregir el criterio; D no arregla la categoría.
 </details>
 
 **C6 · TS 4.1-S3.** Un revisor clasifica el mismo tipo de fallo como grave en un PR y como menor en otro. ¿Qué cambio da una clasificación consistente?
@@ -2003,8 +2009,8 @@ Los términos comunes (autorrevisión, instancia independiente, pasada por archi
   - **Pasadas encadenadas:** la pasada por archivo va sin tools y con solo el diff de ese archivo; la de integración recibe el diff completo y los hallazgos locales, puede leer el repositorio y no debe repetir lo que ya salió.
   - **Una pasada:** la revisión de todo el diff de una vez, con lectura del repositorio y los mismos criterios, sin pasadas por archivo ni de integración.
   - **Fusión:** dos hallazgos de pasadas distintas se cuentan como uno si caen en el mismo sitio y describen el mismo problema (mismo `detected_pattern` o palabras en común). El mismo problema dicho con otras palabras cuenta dos veces.
-  - **Verificación:** una pasada que da, con el diff delante, una confianza de 0 a 1 a cada hallazgo. La que cuenta para enrutar es esta, no la que el hallazgo trae al nacer.
-  - **Enrutar:** los hallazgos con confianza desde 0,8 se publican; el resto y los que no tienen confianza van a una persona. El umbral es una elección propia.
+  - **Verificación:** una pasada que da, con el diff delante, una confianza de 0 a 1 a cada hallazgo, aparte de la que el hallazgo trae al nacer.
+  - **Enrutar:** decidir si un hallazgo se publica o va a una persona. El criterio y su umbral, que es una elección propia, están en el Paso 3.
   - **Coste acumulado:** el `total_cost_usd` de una sesión reanudada incluye el de la sesión de origen; el coste de cada revisión es la diferencia, y el tope de la rama lo lleva `headless.Ledger`.
 
 ### El ejercicio
@@ -2023,7 +2029,7 @@ El cambio lleva los fallos A, B, C, D y F del módulo 11 (E es del segundo commi
 Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
 1. (guía) La sesión que escribió un cambio lo revisa en esa misma sesión. ¿Qué conserva que no tiene una instancia nueva? ¿Cómo afecta eso a su revisión?
-2. (guía) Para detectar problemas sutiles, ¿qué es más eficaz: pedirle a la misma sesión que revise su trabajo con más cuidado o una instancia independiente, sin el contexto del generador?
+2. (módulo) Con estos cinco fallos sembrados, ¿esperas que la correcta encuentre más que `autorrevision`? ¿Por qué podría no notarse aquí?
 3. (módulo) Con `autorrevision_explicita` se añade la frase «revisa críticamente tu propio cambio». ¿Qué cambia con ella en lo que la sesión sabe?
 4. (guía) La revisión se reparte en una pasada por archivo y otra de integración. ¿Qué problema de revisar un cambio grande en una sola pasada evita ese reparto? ¿Para qué clase de fallo existe la pasada de integración?
 5. (módulo) El cambio de este módulo es pequeño: 93 líneas en cuatro archivos. Con `una_pasada`, ¿esperas que la revisión pierda los fallos entre archivos D y F?
@@ -2051,11 +2057,11 @@ Por repetición: qué fallos sembrados encontró cada pasada, cuáles faltan, fa
 **Tus predicciones:**
 
 - **P1** El razonamiento con el que generó el código. Con él, es menos probable que ponga en duda sus propias decisiones: la sesión que generó el código revisa sus cambios peor que una instancia independiente (TS 4.6-K1, 3.6-K4).
-- **P2** La instancia independiente (TS 4.6-K2, 4.6-S1). Aquí no hubo señal: en la batería anterior a las últimas correcciones, las tres ramas encontraron los cinco fallos, así que la medida está en su techo. En el examen manda la guía.
+- **P2** No se notó: en la batería anterior a las últimas correcciones, las tres ramas encontraron los cinco fallos, así que la medida está en su techo. La guía dice que una instancia independiente detecta mejor los problemas sutiles (TS 4.6-K2, 4.6-S1); inferencia propia: con fallos que todas las ramas encuentran, no queda margen para verlo. En el examen manda la guía.
 - **P3** Nada: tiene el mismo contexto que antes. La frase no cambió lo que encontró.
 - **P4** La atención diluida: partir así una revisión grande la evita (TS 4.6-K3, 4.6-S2, 1.6-K2, 1.6-S2). La de integración existe para el flujo de datos entre archivos (D y F); la pasada por archivo ve lo local (A, B y C). Aquí, D salió por archivo en 3 de 5 y F en 1 de 5; la integración completó el resto.
 - **P5** No los perdió: 24 de 25 (el que faltó una vez fue C, no D ni F), con la mitad de coste. Con un diff de este tamaño no hay diferencia; la guía habla de revisiones grandes.
-- **P6** Para enrutar la revisión de forma calibrada (TS 4.6-S3). Para fiarse hay que comprobar esa confianza contra hallazgos etiquetados, como la confianza por campo del módulo 10 (inferencia propia: TS 4.6-S3 no lo dice): aquí el hueco de calibración fue de 0,129 a 0,215.
+- **P6** Para enrutar la revisión de forma calibrada (TS 4.6-S3). Aquí, los hallazgos con confianza de la verificación desde 0,8 se publican, y el resto y los que no la tienen van a una persona; cuenta la de la verificación, no la que el hallazgo trae al nacer. Para fiarse hay que comprobar esa confianza contra hallazgos etiquetados, como la confianza por campo del módulo 10 (inferencia propia: TS 4.6-S3 no lo dice): aquí el hueco de calibración fue de 0,129 a 0,215.
 
 Sonnet 5.5 (rol `reviewer`), `claude -p` aislado. Hay tres mediciones, cada una con su versión del código; **la de referencia es la última**, después de las correcciones C4 (2026-11-07). En ella la sesión generadora escribió exactamente el cambio dado (93 líneas, cuatro archivos) en las dos ramas.
 
