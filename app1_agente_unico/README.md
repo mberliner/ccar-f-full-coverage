@@ -114,6 +114,8 @@ La causa de la parada de cada variante y, en la base, cuántas iteraciones hubo 
 | Las iteraciones son como mucho las llamadas más una | |
 
 La variabilidad entre ejecuciones es parte de la lección: según la ejecución, el modelo puede no escribir texto junto a sus llamadas, y entonces `texto_asistente` no corta. Las variantes se prueban de forma determinista en `tests/test_app1_01_bucle_manual.py`.
+
+**Para pensar (sin evaluación):** el bucle sigue con `"tool_use"` y para con `"end_turn"`. ¿Qué debería hacer el código si llegara cualquier otro valor de `stop_reason`? La guía solo nombra esos dos y el módulo no provoca ningún otro, así que no cuenta como predicción.
 </details>
 
 ### Pregunta tipo examen
@@ -814,6 +816,8 @@ Notas:
 - **`init` puede traer la lista de tools incompleta:** en 2 de unas 8 ejecuciones, los servidores stdio constaban como conectados pero sus tools no estaban aún en `init`; el módulo lo avisa con `[aviso]`. Las llamadas funcionan igualmente.
 - **Sin aprobación:** con `setting_sources=["project"]` el SDK conecta los servidores de `.mcp.json` sin pedir aprobación; la CLI interactiva sí puede pedirla.
 - El `.mcp.json` generado, el comando de ámbito de usuario, los contadores y la agrupación de tools por servidor se prueban sin modelo en `tests/test_app1_06_mcp_config.py`.
+
+**Para pensar (sin evaluación):** si el agente tuviera las tools de resources pero nadie le avisara de que existen, ¿las usaría por su cuenta? La variante correcta cambia las dos cosas a la vez; lo que se vio al separarlas está en las notas, como producto observado, y no cuenta como predicción.
 </details>
 
 ### Pregunta tipo examen
@@ -982,6 +986,8 @@ Haiku 5.5 (2026-11-07, 5 ejecuciones por variante). En todas hubo 11 peticiones:
 Producto observado (no evaluable): se le pidió una consulta por turno y Haiku 5.5 lo cumplió en las 10 ejecuciones (11 peticiones en todas).
 
 Clasificación por tipo de señal en [`docs/tipos-de-senal.md`](../docs/tipos-de-senal.md): el recorte es determinista y los tokens medidos son probabilísticos con control positivo.
+
+**Para pensar (sin evaluación):** ¿qué tendría que pasar para que fuera el recorte el que rompiera la respuesta? Es la prueba del modo normal (quitar un campo de `KEEP_FIELDS`), que no se ha medido, así que no cuenta como predicción.
 </details>
 
 ### Pregunta tipo examen

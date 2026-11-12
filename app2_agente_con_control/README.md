@@ -848,6 +848,8 @@ La línea `[control]` y, en cada variante, qué `user_id` recibe la tool y si se
 - **El límite de reescribir:** el hook solo garantiza `user_id`. Que el ticket y el importe sean del verificado lo comprueba el handler. Si el modelo intentara pagar el ticket de un compañero con el ID del compañero, el hook pondría en silencio el ID verificado y solo el handler frenaría el pago. Un deny, en cambio, habría dejado ver el intento.
 
 **Por qué no se mide una tasa:** con Haiku 5.5 el modelo no escribió un ID erróneo en 6 de 6 ejecuciones, y con Haiku 4.5 el escenario de prueba se confundía con otro problema (ver `docs/hallazgos.md`). La diferencia entre deny y `updatedInput` es de estructura, no de probabilidad, y un modelo que casi no se equivoca no la muestra.
+
+**Para pensar (sin evaluación):** en el control sin hook, ¿con qué otro ID erróneo podría cambiar el resultado? El módulo solo ejecuta el caso de `EMP-1082`; el otro escenario está descrito en la nota de `[control]` y no se ha probado, así que no cuenta como predicción.
 </details>
 
 ### Pregunta tipo examen

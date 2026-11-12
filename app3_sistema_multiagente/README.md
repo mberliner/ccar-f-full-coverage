@@ -277,6 +277,8 @@ En la primera ejecución con modelo:
 - **descomposicion:** la cadena fija procesa los reembolsos en tres pasos, y cada uno recibe solo la salida del anterior. La investigación abierta delegó en 2 rondas, y las subtareas de la segunda (tickets del 19 al 22 de septiembre, bloqueos de cuenta) salieron de los hallazgos de la primera.
 - **Barrera del coordinador:** `paralelo`, `refinamiento` y la parte adaptativa de `descomposicion` usan el hook compartido del módulo 01 (la cadena fija y `legacy` no tienen coordinador). Con la sonda del módulo 01, el coordinador de este módulo también usó `search_tickets` sin barrera y recibió el rechazo con ella. Al repetir `paralelo` con la barrera (2026-10-27): 0 intentos del coordinador, 3 `Agent` en `r1` frente a uno por respuesta y ×1,37 (23,7 s frente a 32,4 s; la aceleración varía entre ejecuciones).
 - **legacy:** primero `Glob` y `Grep` y después `Read` de los siete archivos. El plan menciona la dependencia escondida: `depreciacion.valor_actual` importa `almacen` dentro de la función y lee la caché que llena `asignaciones`.
+
+**Para pensar (sin evaluación):** ¿de qué depende que la aceleración de `paralelo` se acerque o no a ×3 con tres subagentes? Y en `legacy`, ¿bastan `Glob` y `Grep` para conocer todas las dependencias entre módulos, o hace falta leerlos? El módulo no mide ninguna de las dos cosas por separado, así que no cuentan como predicción.
 </details>
 
 ### Pregunta tipo examen
