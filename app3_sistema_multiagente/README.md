@@ -220,22 +220,22 @@ Términos propios:
 
 El módulo tiene cuatro partes independientes que se eligen con `--parte`, cada una con su propio sistema:
 
-- **`paralelo`:** un coordinador con los dos analistas recibe tres peticiones independientes: tickets de licencias, tickets de hardware y artículos de la KB sobre acceso. Hay dos modos, y entre ellos solo cambia la última frase del prompt del coordinador. En el modo paralelo, si las subtareas son independientes, lanza todos los subagentes en la misma respuesta; en el secuencial, lanza uno, espera su resultado y luego el siguiente. Sin `--anti` se ejecutan los dos modos seguidos y se mide el tiempo de reloj de cada uno; con `--anti secuencial`, solo el secuencial.
+- **`paralelo`:** un coordinador con los dos analistas recibe tres peticiones independientes: tickets de licencias, tickets de hardware y artículos de la KB sobre acceso. Hay dos modos, y entre ellos solo cambia la última frase del prompt del coordinador. En el modo paralelo, la frase le pide aprovechar que las subtareas son independientes; en el secuencial, que las haga una detrás de otra. Sin `--anti` se ejecutan los dos modos seguidos y se mide el tiempo de reloj de cada uno; con `--anti secuencial`, solo el secuencial.
 - **`refinamiento`:** una conversación con `ClaudeSDKClient`. El coordinador recibe «¿Qué problemas de red tienen los empleados?» y la instrucción de hacer una primera pasada rápida, con una sola consulta por analista. Después, un comprobador escrito en código (sin modelo) busca en la síntesis las palabras de cada subtema esperado (VPN, wifi e impresora, `REQUIRED_SUBTOPICS`). Si falta alguno, envía al coordinador un mensaje con solo esos subtemas y le pide volver a delegar. Hace como mucho 2 rondas de refinamiento.
 - **`descomposicion`:** dos estrategias. Primero, una **cadena fija** (*prompt chaining*) de tres pasos sobre los tickets de gastos con importe: extraer, aplicar la política (hasta 500 EUR aprueba soporte y, por encima, Finanzas) y redactar el informe. Cada paso es una llamada aparte, sin tools y con una sola respuesta, que recibe solo la salida del anterior. Después, una **descomposición adaptativa**: un coordinador con los dos analistas investiga una pregunta abierta sobre los tickets de septiembre, sin plan fijo, y explica de dónde sale cada subtarea.
 - **`legacy`:** sin coordinador. Un solo agente, con las tools integradas de lectura `Glob`, `Grep` y `Read`, trabaja en el directorio de un paquete Python heredado (`datos/sinteticos/legacy_inventario/`) y recibe «Añade tests completos a este paquete legacy. Empieza por el plan». Su prompt le dice cómo organizar ese trabajo; qué le pide es parte de lo que vas a predecir. No puede escribir archivos.
 
 `--anti` tiene una sola variante, `secuencial`, que solo afecta a `--parte paralelo`.
 
-**Cómo se consigue el paralelo.** Ningún código lanza las tres llamadas a la vez: se le pide al coordinador en su prompt, las emite el modelo y el módulo lo comprueba después en el registro, agrupando las llamadas `Agent` por respuesta. El prompt lo pide; el código no lo garantiza.
+**Cómo se consigue el paralelo.** Ningún código lanza las tres llamadas a la vez: se le pide al coordinador en su prompt, las emite el modelo y el módulo lo comprueba después en el registro. El prompt lo pide; el código no lo garantiza.
 
 ### Predice antes de ejecutar
 
 Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. (guía) En el modo secuencial de `paralelo`, ¿a qué se parece más el tiempo total: a la suma de lo que tarda cada subagente o a lo que tarda el más lento? ¿Por qué?
+1. (guía) ¿Qué tiene que ocurrir en lo que emite el coordinador para que sus subagentes trabajen a la vez? ¿Por qué no basta con que las subtareas sean independientes?
 2. (módulo) ¿Esperas que el modo paralelo acelere lo mismo en dos ejecuciones? ¿De qué depende?
-3. (guía) Según la guía, en un bucle de refinamiento, ¿quién evalúa si a la síntesis le faltan temas y hasta cuándo se sigue? ¿Qué cambia que aquí lo detecte un comprobador en código con un tope de 2 rondas?
+3. (guía) Según la guía, en un bucle de refinamiento, ¿quién evalúa si a la síntesis le faltan temas y hasta cuándo se sigue?
 4. (módulo) El comprobador de `refinamiento` solo busca palabras en la síntesis. ¿Qué clase de síntesis le haría dar por cubierto un subtema que no se investigó?
 5. (guía) En `descomposicion`, ¿puede cambiar el número de pasos de la cadena fija según lo que vaya encontrando? ¿Para qué clase de trabajo conviene la cadena y para cuál la descomposición adaptativa?
 6. (guía) En la descomposición adaptativa, ¿de dónde deberían salir las subtareas de la segunda ronda?
@@ -262,7 +262,7 @@ En `paralelo`, cómo se agrupan las llamadas `Agent` por respuesta y la latencia
 
 **Tus predicciones:**
 
-- **P1** A la suma: con una llamada por respuesta, el coordinador espera cada resultado antes de emitir la siguiente. Para que los subagentes trabajen a la vez, las llamadas van en una misma respuesta (TS 1.3-S3); entonces el total se acerca más al del subagente más lento (inferencia propia). En el registro: en el modo paralelo salieron juntas en `r1`; en el secuencial, una por respuesta (`r1`, `r3`, `r5`).
+- **P1** Las llamadas `Agent` tienen que ir todas en una misma respuesta; emitidas en turnos separados, cada una espera el resultado de la anterior (TS 1.3-S3). Que las subtareas sean independientes lo hace posible, pero no lo produce: depende de cómo se emitan las llamadas. En el registro: en el modo paralelo salieron juntas en `r1`; en el secuencial, una por respuesta (`r1`, `r3`, `r5`).
 - **P2** No: ×1,66 en una ejecución y ×1,37 en otra. Depende de lo que tarde cada subagente en esa ejecución, que el módulo no fija.
 - **P3** El coordinador: evalúa la síntesis, vuelve a delegar con consultas dirigidas a lo que falta y sintetiza otra vez, hasta que la cobertura baste (TS 1.2-S3). Aquí la detección la hace código, que solo busca palabras (P4), y el tope de 2 rondas es una red de seguridad del módulo: el bucle puede acabar con huecos. En la ejecución de referencia no hubo brechas en la ronda 1 y el bucle no llegó a actuar.
 - **P4** Una que nombre el subtema sin haberlo investigado, por ejemplo para decir que no lo buscó. El comprobador mira la palabra, no el trabajo.
@@ -390,7 +390,7 @@ Antes de las medidas, cada ejecución imprime una línea `[esperado]` con la hip
 Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
 1. (guía) Sin `--anti`, cada subagente tiene solo las tools de su rol. ¿Qué no puede hacer el sintetizador, decida lo que decida el modelo? ¿Qué sigue dependiendo del modelo?
-2. (guía) Con `todas` (el sintetizador recibe las cinco tools del servidor), ¿qué riesgo hay? ¿Esperas verlo en este ejercicio, donde su prompt trae todo lo que necesita?
+2. (guía) Con `todas` (el sintetizador recibe las cinco tools del servidor), ¿qué riesgo hay?
 3. (guía) Con `fetch_url` (abre cualquier URL) en lugar de `load_document` (comprueba que la URL es un documento), ¿de quién depende que no entren en los hallazgos páginas que no son documentos? ¿Esperas el mismo resultado en todas las repeticiones?
 4. (guía) `verify_fact` solo resuelve las afirmaciones simples y devuelve las complejas al coordinador. ¿Por qué no dar al sintetizador las tools de búsqueda, para que resuelva también las complejas?
 5. (módulo) Con `sin_verify` (el sintetizador no tiene ninguna tool), ¿esperas más delegaciones o menos que sin `--anti`? ¿Quién verificará las afirmaciones?
@@ -933,7 +933,7 @@ Una investigación en tres fases se corta durante la tercera, con las dos primer
 
 - A. Cargar el estado guardado y pasar a la fase pendiente lo que ya está hecho y el resumen de las anteriores.
 - B. Reanudar la conversación anterior completa, que conserva el detalle de cada consulta aunque ya sea muy larga.
-- C. Empezar de nuevo desde la primera fase con un contexto limpio, por si el estado guardado quedó a medias.
+- C. Empezar de nuevo desde la primera fase con un contexto limpio, sin apoyarse en nada de lo anterior.
 - D. Relanzar solo la tercera fase con la petición original y dejar que vuelva a consultar las fuentes que necesite.
 
 <details>
@@ -941,7 +941,7 @@ Una investigación en tres fases se corta durante la tercera, con las dos primer
 
 **A.** Para recuperarse de una caída, cada agente exporta su estado a un sitio conocido, y al retomar el coordinador carga el manifest y lo pasa a los prompts (TS 5.4-K4, S4). El resumen de las fases hechas va en el contexto inicial de la siguiente (TS 5.4-S3).
 
-- **B** arrastra un contexto largo, que es lo que favorece la degradación (TS 5.4-K1), en vez de usar el estado que se guardó para esto (TS 5.4-K4).
+- **B** arrastra un contexto largo, que es lo que favorece la degradación (TS 5.4-K1), en vez de recuperar desde un estado exportado a un sitio conocido (TS 5.4-K4).
 - **C** tira el trabajo que el estado guardado permite no repetir (TS 5.4-K4, S4).
 - **D** no repite las fases hechas, pero la tercera arranca sin lo descubierto: no recibe ni el manifest ni el resumen (TS 5.4-S3, S4).
 
@@ -1040,7 +1040,7 @@ Cinco partes (`--parte`) y variantes `--anti` en la primera y en la última:
 Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
 1. (guía) Un documento no menciona ningún número de pedido. Si `po_number` es obligatorio y de tipo `string` (`sin_nullable`), ¿qué opciones le quedan al modelo para ese campo?
-2. (guía) Con `po_number` opcional y *nullable*, ¿qué devolverá el modelo para ese mismo documento? ¿Esperas que desaparezcan del todo los valores rellenados?
+2. (guía) Con `po_number` opcional y *nullable*, ¿qué devolverá el modelo para ese mismo documento? ¿Por qué?
 3. (guía) En `enum_cerrado`, `doc_type` solo admite `invoice` y `delivery_note`, y la llamada va con `tool_choice` forzado: el modelo tiene que escribir algo en ese campo. Llega un certificado de garantía. ¿Qué salida rechazaría un validador del esquema y cuál pasaría sin que nadie lo notara?
 4. (guía) En `tipo_desconocido` hay tres tools, una por tipo de documento. ¿Qué garantiza `any` y qué deja sin garantizar `auto`? ¿Qué le pasa a un albarán si se fuerza siempre la tool de factura?
 5. (guía) En `few_shot`, las descripciones ya no dicen cómo escribir una fecha: sin regla ni ejemplos, el modelo tiene que adivinar el formato. ¿Qué aportan tres ejemplos de documentos con estructuras distintas?
@@ -1048,7 +1048,7 @@ Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan
 7. (módulo) Algunos campos sí están en el documento, pero el modelo podría dejarlos vacíos. ¿Esperas que los ejemplos cambien cuántos deja vacíos en estos doce documentos?
 8. (guía) En `enriquecimiento`, el módulo fuerza `extract_metadata` en el primer turno y deja `auto` en los siguientes. ¿Para qué sirve ese primer turno forzado?
 9. (módulo) Con `auto_desde_inicio`, si en tus ejecuciones el modelo extrae siempre primero por su cuenta, ¿basta eso para prescindir del primer turno forzado? ¿Por qué?
-10. (guía) En `estricto`, con `strict: true` y el `enum` cerrado (sin `other`), llega el certificado de garantía. ¿Qué tipo le queda al modelo? ¿Lo detectaría un validador del esquema?
+10. (guía) En `estricto`, con `strict: true` y el `enum` cerrado (sin `other`), llega el certificado de garantía. ¿Qué tipo le queda al modelo?
 11. (guía) Con `strict: true` en producción, ¿dejaría de hacer falta comprobar los datos extraídos contra el documento? ¿Por qué?
 
 ### Ejecutar
@@ -1076,7 +1076,7 @@ En cada ejecución, `forma válida`, `campos ausentes rellenados`, `tipo correct
 **Tus predicciones:**
 
 - **P1** Inventar algo para cumplir el `required`: el texto `'null'`, una cadena vacía o un valor deducido. Rellenó 21 de 21 campos ausentes (TS 4.3-S4).
-- **P2** `null`, casi siempre, pero no siempre: 1 o 2 rellenados de 21. Un campo *nullable* deja de obligar a inventar (TS 4.3-S4), pero el esquema solo elimina los errores de sintaxis, no los de significado (TS 4.3-K3).
+- **P2** `null`: un campo opcional y *nullable* evita que el modelo invente un valor para cumplir el esquema cuando el documento no lo trae (TS 4.3-S4). Aquí, `null` en casi todos; 1 o 2 rellenados de 21 (observado en el módulo).
 - **P3** Rechazaría un valor fuera de la lista, como `other` (pasó en 2 de 12). Pasaría sin aviso un tipo permitido que no es el suyo: el documento ilegible salió como `invoice`. Por eso el `enum` lleva `other` con un campo de detalle, y `unclear` para lo ambiguo (TS 4.3-K4, 4.3-S5).
 - **P4** `any` obliga a llamar a alguna tool y deja elegir cuál; `auto` permite contestar con texto (TS 4.3-K2). Con la tool de factura forzada, el albarán se trata como factura (5 de 12 correctos). `any` encaja cuando no se sabe de qué tipo es el documento (TS 4.3-S2).
 - **P5** Enseñan dónde está cada dato en cada estructura, y reducen las alucinaciones en la extracción (TS 4.2-K4, 4.2-S4). Las reglas de normalización van en el prompt junto al esquema, porque los documentos no las siguen (TS 4.3-S6).
@@ -1390,7 +1390,7 @@ Las peticiones llevan un `max_tokens` corto (600) a propósito, para que el lote
 
 Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. (guía) Las facturas del turno de noche tienen un plazo de 30 h, contado desde que llega cada una hasta que tiene su resultado, y llegan a lo largo de todo el día. Un lote puede tardar hasta 24 h en procesarse. ¿De qué dos datos sale cada cuánto hay que enviar un lote? ¿Basta con un envío al día?
+1. (guía) Las facturas del turno de noche tienen un plazo de 30 h, contado desde que llega cada una hasta que tiene su resultado, y llegan a lo largo de todo el día. Un lote puede tardar hasta 24 h en procesarse. ¿Basta con enviar un lote al día? ¿Por qué?
 2. (módulo) Con ese plazo, el módulo reserva además 2 h de margen. ¿Cada cuántas horas hay que enviar un lote para que ninguna factura se pase del plazo?
 3. (módulo) Con ese mismo plazo de 30 h, si un documento falla, ¿cabe reenviarlo en un segundo lote, que puede tardar otras 24 h?
 4. (guía) Envías 12 peticiones en un lote y emparejas cada resultado con su documento por posición, como hace `por_orden`. ¿Qué da por supuesto ese código sobre el lote? ¿Qué pasa si no se cumple?
@@ -1420,7 +1420,7 @@ El acierto por campo de la muestra antes de crear el lote; el orden de llegada f
 
 **Tus predicciones:**
 
-- **P1** Del plazo y de la ventana de procesamiento de hasta 24 h: la frecuencia de envío se calcula con los dos (TS 4.5-S2). Un envío al día no basta: una factura que llega justo después esperaría casi un día hasta el siguiente envío, y el lote aún podría tardar 24 h más.
+- **P1** No. La frecuencia de envío se calcula a partir del plazo y de la ventana de procesamiento de hasta 24 h (TS 4.5-S2). Inferencia propia, coherente con el ejemplo de la guía (4 h para un plazo de 30 h): un envío al día no basta, porque una factura que llega justo después esperaría casi un día hasta el siguiente envío, y el lote aún podría tardar 24 h más.
 - **P2** Cada 4 h, el mismo resultado que da la guía para un plazo de 30 h. El cálculo es una inferencia propia: una factura que llega justo después de un envío espera un intervalo entero hasta el siguiente, y después el lote puede tardar toda la ventana, así que intervalo + 24 h + 2 h de margen ≤ 30 h. El margen es una elección de este módulo; sin él saldrían 6 h.
 - **P3** No: un segundo lote añade otras 24 h y se pasa del plazo. Ese trabajo cabe en batch, pero sin margen para reenviar lo que falle. Es una inferencia de este módulo a partir de la ventana de hasta 24 h sin garantía de latencia (TS 4.5-K1); la guía no habla de reenvíos dentro del plazo.
 - **P4** Que los resultados llegan en el orden de envío. Si no se cumple, cada documento recibe los datos de otro: por eso cada resultado se empareja con su petición por `custom_id` (TS 4.5-K4). Producto observado (no evaluable): aquí llegaron en otro orden y, emparejados por posición, 11 de 11 documentos recibieron los datos de otro.
@@ -1934,7 +1934,7 @@ Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregu
 **C.** Un criterio explícito precisa más que una instrucción vaga (TS 4.1-K1), y las instrucciones generales del tipo «sé conservador» no mejoran la precisión como los criterios categóricos (TS 4.1-K2). Los criterios dicen qué se informa y qué se deja, en vez de filtrar por confianza (TS 4.1-S1), que es lo que hace D. A y B son las instrucciones vagas.
 </details>
 
-**C5 · TS 4.1-K3, S2.** Hace dos meses, un equipo apagó la categoría de su revisor automático que daba muchos falsos positivos, y desde entonces nadie la ha vuelto a tocar. ¿Qué falta?
+**C5 · TS 4.1-S2.** Hace dos meses, un equipo apagó la categoría de su revisor automático que daba muchos falsos positivos. ¿Qué debería hacer ahora con ella?
 
 - A. Apagar también las demás categorías con algún falso positivo, para no arriesgar más la confianza.
 - B. Subir el umbral de confianza de todas las categorías, para compensar la que se apagó.
@@ -2029,7 +2029,7 @@ El cambio lleva los fallos A, B, C, D y F del módulo 11 (E es del segundo commi
 Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
 1. (guía) La sesión que escribió un cambio lo revisa en esa misma sesión. ¿Qué conserva que no tiene una instancia nueva? ¿Cómo afecta eso a su revisión?
-2. (módulo) Con estos cinco fallos sembrados, ¿esperas que la correcta encuentre más que `autorrevision`? ¿Por qué podría no notarse aquí?
+2. (módulo) Con estos cinco fallos sembrados, ¿esperas que la correcta encuentre más fallos que `autorrevision`? ¿Por qué?
 3. (módulo) Con `autorrevision_explicita` se añade la frase «revisa críticamente tu propio cambio». ¿Qué cambia con ella en lo que la sesión sabe?
 4. (guía) La revisión se reparte en una pasada por archivo y otra de integración. ¿Qué problema de revisar un cambio grande en una sola pasada evita ese reparto? ¿Para qué clase de fallo existe la pasada de integración?
 5. (módulo) El cambio de este módulo es pequeño: 93 líneas en cuatro archivos. Con `una_pasada`, ¿esperas que la revisión pierda los fallos entre archivos D y F?

@@ -176,7 +176,7 @@ Antes de cada ejecución, la línea `[esperado]` da la fecha y el estado correct
 Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
 1. (guía) Con el hook `PostToolUse` sobre `get_ticket`, ¿necesita el modelo saber convertir un timestamp Unix para dar bien la fecha? ¿Por qué?
-2. (guía) Con el hook `PreToolUse` del umbral, ¿la decisión de no pagar los 500,01 EUR se toma antes o después de que la tool se ejecute? ¿Qué parte del resultado sigue dependiendo del modelo?
+2. (guía) Con el hook `PreToolUse` del umbral, si el modelo insiste y vuelve a pedir el mismo pago de 500,01 EUR, ¿puede llegar a hacerse? ¿Por qué?
 3. (guía) Después del deny, ¿qué información tiene el modelo para decidir el paso siguiente? ¿Qué tool esperas que pida?
 4. (guía) Sin hooks (`--anti`), el umbral y el aviso sobre las fechas están solo en el prompt. ¿La decisión de pagar o escalar y la fecha que da el modelo son fijas o pueden cambiar de una ejecución a otra? ¿Qué tiene que hacer bien el modelo para acertar la fecha?
 5. (módulo) ¿Por qué el ejercicio pide justo 500,01 EUR y no, por ejemplo, 800?
@@ -200,7 +200,7 @@ Con hooks, la línea `[resultado]` de `get_ticket` y lo que recibe el modelo al 
 **Tus predicciones:**
 
 - **P1** No: el hook transforma el resultado antes de que el modelo lo procese, así que el modelo nunca ve el timestamp; recibe la fecha en ISO 8601 y el estado canónico, con cualquier modelo (TS 1.5-K1, 1.5-S1).
-- **P2** Antes: el hook intercepta la llamada saliente y la bloquea antes de que se ejecute, así que el pago no se hace con ningún modelo (TS 1.5-K2, 1.5-S2). Del modelo solo depende qué hace después del deny (P3).
+- **P2** No: el hook intercepta cada llamada saliente y la bloquea antes de que se ejecute, la pida el modelo una vez o varias, así que el pago no se hace con ningún modelo (TS 1.5-K2, 1.5-S2).
 - **P3** El motivo del deny, que dice que no se reintente, que se escale y qué datos llevar. Pide `escalate_to_human`: el hook bloquea y además redirige (TS 1.5-S2).
 - **P4** Pueden cambiar: es cumplimiento probabilístico, frente a la garantía determinista del hook (TS 1.5-K3, 1.5-S3). Para la fecha, el modelo tiene que convertir bien el timestamp Unix él solo.
 - **P5** Porque está justo sobre la frontera: 500,00 pasa y 500,01 no. Un importe lejano no mostraría dónde corta la regla.
