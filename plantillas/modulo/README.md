@@ -7,7 +7,8 @@ El orden sigue el ciclo de §13 y los 5 pasos de «Empieza aquí» del README ra
 se predice antes de ver los comandos y la salida, y cada bloque plegado dice a qué paso pertenece.
 `tests/test_readme_modulos.py` exige la ficha, «Antes de empezar», el orden Predice → Ejecutar,
 los `summary` de los pasos 3 y 4, la línea del paso 5, «Pregunta tipo examen» y la forma de las
-predicciones (marca `(guía)` o `(módulo)`, dos interrogantes como máximo y su `**Pn**` en el Paso 3).
+predicciones (marca `(guía)` o `(módulo)`, dos interrogantes como máximo y su `**Pn**` en el Paso 3,
+con al menos una viñeta «TS x.y-Kn» en la misma línea si la predicción es `(guía)`).
 Borra estos comentarios al rellenar.
 -->
 

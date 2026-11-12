@@ -7,7 +7,8 @@ la plantilla en lo que es determinista: «Predice antes de ejecutar» antes de
 referencia» y la indicación de ejecución obligatoria o ligera, la ficha del
 principio y los pasos 3–5 con nombre (prueba de usabilidad del Hito T). También
 la forma de las predicciones: cada una marcada `(guía)` o `(módulo)`, con dos
-interrogantes como máximo y con su contraste `**Pn**` en el Paso 3.
+interrogantes como máximo y con su contraste `**Pn**` en el Paso 3, que en una
+`(guía)` nombra la viñeta en que se apoya.
 
 POR QUÉ EXISTE: la incorporación de quien llega de cero se quedó sin dueño y solo
 `app1/01` la cumplía. Un test barato impide que un módulo nuevo nazca sin ella.
@@ -124,6 +125,8 @@ CONTRAST_BLOCK = re.compile(r"<summary>Paso 3 · Contrastar[^<]*</summary>(.*?)<
 LANES = ("(guía)", "(módulo)")
 # Una predicción pregunta una cosa; dos interrogantes admiten «qué pasa y por qué».
 MAX_QUESTIONS = 2
+# El contraste de una predicción `(guía)` nombra al menos una viñeta completa: «TS 1.1-K1».
+VIGNETTE = re.compile(r"TS \d\.\d-[KS]\d")
 
 
 def predictions(section: str) -> list[tuple[int, str]]:
@@ -139,6 +142,7 @@ def prediction_problems(section: str) -> list[str]:
 
     Cada predicción dice si evalúa la guía o un detalle del módulo, pregunta una sola cosa
     y tiene su contraste `**Pn**` dentro del Paso 3, para que ninguna quede sin respuesta.
+    El contraste de una `(guía)` cita su viñeta: sin ella no se sabe qué concepto se falló.
     """
     problems = []
     contrast = CONTRAST_BLOCK.search(section)
@@ -148,8 +152,11 @@ def prediction_problems(section: str) -> list[str]:
             problems.append(f"la predicción {number} no empieza por (guía) o (módulo)")
         if text.count("¿") > MAX_QUESTIONS:
             problems.append(f"la predicción {number} junta {text.count('¿')} preguntas (máximo {MAX_QUESTIONS})")
-        if not re.search(rf"\*\*P{number}\b", answers):
+        entry = re.search(rf"\*\*P{number}\*\*([^\n]*)", answers)
+        if not entry:
             problems.append(f"el Paso 3 no contrasta la predicción {number} (falta «**P{number}**»)")
+        elif text.startswith("(guía)") and not VIGNETTE.search(entry.group(1)):
+            problems.append(f"el contraste **P{number}** de una predicción (guía) no cita ninguna viñeta")
     return problems
 
 
@@ -249,7 +256,7 @@ Con tus palabras:
 <details>
 <summary>Paso 3 · Contrastar: lo que se observó</summary>
 
-- **P1** pasa esto.
+- **P1** pasa esto (TS 1.1-K1).
 - **P2** esta línea.
 </details>
 """
@@ -268,6 +275,11 @@ def test_prediction_problems_detects_each_deviation():
     assert prediction_problems(crowded) == ["la predicción 1 junta 3 preguntas (máximo 2)"]
     unanswered = GOOD_PREDICTIONS.replace("- **P2** esta línea.\n", "")
     assert prediction_problems(unanswered) == ["el Paso 3 no contrasta la predicción 2 (falta «**P2**»)"]
+    uncited = GOOD_PREDICTIONS.replace(" (TS 1.1-K1)", "")
+    assert prediction_problems(uncited) == ["el contraste **P1** de una predicción (guía) no cita ninguna viñeta"]
+    # Una (módulo) no la necesita, y la viñeta de otra entrada no vale para esta.
+    swapped = GOOD_PREDICTIONS.replace("pasa esto (TS 1.1-K1).", "pasa esto.").replace("esta línea.", "esta línea (TS 1.1-K1).")
+    assert prediction_problems(swapped) == ["el contraste **P1** de una predicción (guía) no cita ninguna viñeta"]
     # «**P1**» no vale como contraste de la predicción 10.
     ten = GOOD_PREDICTIONS.replace("2. (módulo)", "10. (módulo)").replace("**P2**", "**P1**")
     assert "el Paso 3 no contrasta la predicción 10 (falta «**P10**»)" in prediction_problems(ten)
