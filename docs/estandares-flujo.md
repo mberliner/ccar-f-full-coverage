@@ -45,7 +45,7 @@ Se separa lo que es del proyecto (versionado y igual para todos) de lo que es de
 **Versionado:**
 - `NOTAS.md`: avance de todos los hitos (el roadmap es una plantilla y no lo lleva) y notas de construcción.
 - `docs/hallazgos.md`: notas de producto no evaluables y hallazgos de esta implementación.
-- Mejoras para el roadmap: una nota que le pasaría también a otra persona, con otra máquina y otra cuenta, se marca `→ roadmap`. Al llevarla al roadmap (sección afectada o §4.3, más una línea en §14) se reduce en `docs/hallazgos.md` a un puntero `✓ roadmap YYYY-MM-DD §x`, para no duplicarla. Las que dependen de esta implementación o aún no se han comprobado se quedan solo allí (criterio en roadmap §12, «Mantener la plantilla al día»).
+- Mejoras para el roadmap: una nota que le pasaría también a otra persona, con otra máquina y otra cuenta, se marca `→ roadmap`. Al llevarla al roadmap (a la sección afectada o a §4.3, actualizando la fecha de revisión de su cabecera) se reduce en `docs/hallazgos.md` a un puntero `✓ roadmap YYYY-MM-DD §x`, para no duplicarla. Las que dependen de esta implementación o aún no se han comprobado se quedan solo allí (criterio en roadmap §12, «Mantener la plantilla al día»).
 - Estos documentos son siempre agnósticos: rutas relativas al proyecto o genéricas (`~/.claude/…`), sin rutas absolutas, sin nombres de personas, cuentas ni perfiles.
 
 **Personal, fuera de git** (`estado/<perfil>/`, ignorado; plantillas en `plantillas/estado/`):
