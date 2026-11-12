@@ -421,7 +421,7 @@ Un agente de soporte dispone de dos tools, `analyze_content` y `analyze_document
 <details>
 <summary>Paso 4 · Respuesta</summary>
 
-**D.** La descripción es el mecanismo con el que el modelo elige (TS 2.1-K1), y las ambiguas o solapadas causan *misrouting* (TS 2.1-K3). La corrección es describir con propósito, entradas y límites (TS 2.1-K2, TS 2.1-S1) y renombrar para quitar el solapamiento (TS 2.1-S2). A es una instrucción por palabra clave que puede anular las descripciones (TS 2.1-K4, TS 2.1-S4): arregla un caso y crea otros. B va al revés de la guía, que divide las tools genéricas en otras de contrato definido (TS 2.1-S3). C añade una pieza para compensar un defecto que se arregla en la descripción; ninguna viñeta de la guía lo propone.
+**D.** La descripción es el mecanismo con el que el modelo elige (TS 2.1-K1), y las ambiguas o solapadas causan *misrouting* (TS 2.1-K3). La corrección es describir con propósito, entradas y límites (TS 2.1-K2, TS 2.1-S1) y renombrar para quitar el solapamiento (TS 2.1-S2). A es una instrucción por palabra clave que puede anular las descripciones (TS 2.1-K4, TS 2.1-S4): arregla un caso y crea otros. B no arregla las descripciones y deja una tool más genérica todavía, cuando lo que la guía enseña para las genéricas es dividirlas en otras de contrato definido (TS 2.1-S3). C añade una pieza para compensar un defecto que se arregla en la descripción; ninguna viñeta de la guía lo propone.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
@@ -652,7 +652,7 @@ Un flujo de soporte necesita extraer los metadatos de cada ticket nuevo antes de
 <details>
 <summary>Paso 4 · Respuesta</summary>
 
-**B.** La selección forzada asegura que una tool concreta se llame primero y los pasos siguientes se procesan en turnos posteriores (TS 2.3-S4, TS 2.3-K4). A fuerza una llamada en cada turno, así que el asistente nunca podría dar su respuesta final, y `"any"` además no fija cuál es la tool (garantiza una llamada, no esa llamada, TS 2.3-S5). C intenta suplir en prosa lo que debe garantizar la configuración: con `"auto"` el modelo puede seguir contestando con texto. D va en contra de TS 2.3-K1: más tools degradan la selección y no aseguran que se llame a la de extracción.
+**B.** La selección forzada asegura que una tool concreta se llame primero y los pasos siguientes se procesan en turnos posteriores (TS 2.3-S4, TS 2.3-K4). A no fija cuál es la tool: `"any"` garantiza una llamada, no esa llamada (TS 2.3-S5). Además, enviado en todos los turnos, obligaría a llamar a una tool también cuando toca responder (inferencia propia a partir de TS 2.3-S4, que deja los pasos siguientes para turnos posteriores). C intenta suplir en prosa lo que debe garantizar la configuración: con `"auto"` el modelo puede seguir contestando con texto. D va en contra de TS 2.3-K1: más tools degradan la selección y no aseguran que se llame a la de extracción.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
@@ -801,7 +801,7 @@ Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregu
 
 **C2 · TS 2.4-K2, S1.** El `.mcp.json` del proyecto, que se versiona, necesita un token para uno de sus servidores. ¿Cómo se escribe?
 
-- A. Con una referencia como `${GITHUB_TOKEN}`, que se expande desde el entorno al lanzar el servidor.
+- A. Con una referencia como `${GITHUB_TOKEN}`, que se expande con el valor que tenga en el entorno.
 - B. Con el valor del token en el archivo, y el archivo añadido a `.gitignore` en cada clon.
 - C. Con el token cifrado en el archivo y la clave para descifrarlo guardada en el `CLAUDE.md`.
 - D. Con el valor en el *system prompt* del agente, para que él se lo pase al servidor al llamarlo.
@@ -809,7 +809,7 @@ Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregu
 <details>
 <summary>Comprobación C2 · Respuesta</summary>
 
-**A.** `.mcp.json` admite referencias a variables de entorno que se expanden al lanzar el servidor: el repositorio guarda el nombre de la variable y nunca el secreto (TS 2.4-K2, 2.4-S1). B deja de compartir la configuración; C y D ponen el secreto donde lo lee quien no debe.
+**A.** `.mcp.json` admite referencias a variables de entorno, que se expanden con su valor: el repositorio guarda el nombre de la variable y nunca el secreto (TS 2.4-K2, 2.4-S1). B deja de compartir la configuración; C y D ponen el secreto donde lo lee quien no debe.
 </details>
 
 **C3 · TS 2.4-K3.** Un agente tiene configurados tres servidores MCP. ¿Qué tools tiene disponibles al empezar?

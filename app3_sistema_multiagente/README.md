@@ -261,7 +261,7 @@ Un coordinador debe investigar tres temas independientes con tres subagentes. Ho
 <details>
 <summary>Paso 4 · Respuesta</summary>
 
-**A.** Los subagentes en paralelo se lanzan con varias llamadas a Task en la misma respuesta (TS 1.3-S3). B pierde la especialización y el reparto del alcance; C es usar un tope como mecanismo de control (el anti-patrón de TS 1.1-S3); D rompe el hub-and-spoke, en el que toda la comunicación pasa por el coordinador.
+**A.** Los subagentes en paralelo se lanzan con varias llamadas a Task en la misma respuesta (TS 1.3-S3). B pierde la especialización y el reparto del alcance; C no lanza nada en paralelo: un tope de turnos corta el trabajo, no lo acelera (sobre los topes, ver TS 1.1-S3); D rompe el hub-and-spoke, en el que toda la comunicación pasa por el coordinador.
 </details>
 
 ### Comprobaciones cortas
@@ -423,7 +423,7 @@ Un agente de síntesis recibe todas las tools del sistema y, aunque su cometido 
 <details>
 <summary>Paso 4 · Respuesta</summary>
 
-**C.** Un agente con tools fuera de su especialización tiende a malusarlas (TS 2.3-K2); la solución es el acceso acotado, con las tools de su rol (TS 2.3-S1) y una tool cross-role muy limitada para las necesidades de alta frecuencia, con los casos complejos por el coordinador (TS 2.3-K3, TS 2.3-S3). A pide por prosa lo que la configuración debería garantizar, y el agente conserva las tools que malusa; B deja un agente con todas las tools, lo contrario del acceso acotado (TS 2.3-K3); D elimina la tool acotada, y cada verificación simple pasa a depender del coordinador (el anti-patrón de TS 2.3-S3).
+**C.** Un agente con tools fuera de su especialización tiende a malusarlas (TS 2.3-K2); la solución es el acceso acotado, con las tools de su rol (TS 2.3-S1) y una tool cross-role muy limitada para las necesidades de alta frecuencia, con los casos complejos por el coordinador (TS 2.3-K3, TS 2.3-S3). A pide por prosa lo que la configuración debería garantizar, y el agente conserva las tools que malusa; B deja un agente con todas las tools, lo contrario del acceso acotado (TS 2.3-K3); D elimina la tool acotada, y cada verificación simple pasa a depender del coordinador: es el coste que la tool acotada de TS 2.3-S3 evita.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
@@ -1050,7 +1050,7 @@ Notas:
 
 **D.** Un campo obligatorio que el documento puede no traer obliga al modelo a fabricar un valor para cumplir el esquema. La forma de decir «puede no estar» es declararlo opcional y *nullable* (TS 4.3-K4, S4). Que todo el JSON sea válido no prueba nada: el esquema elimina los errores de sintaxis, no los de significado (TS 4.3-K3).
 
-- **A** pide por escrito lo contrario de lo que exige el esquema, y gana el esquema.
+- **A** deja el campo obligatorio: el modelo sigue teniendo que escribir algo en él para cumplir el esquema (TS 4.3-S4).
 - **B** no detecta el problema: el número inventado tiene el formato correcto y pasa la expresión regular. Además, reintentar no sirve cuando el dato no está en el documento (módulo 08).
 - **C** sacrifica la garantía de salida estructurada (TS 4.3-K2) para resolver algo que el esquema resuelve por sí solo.
 </details>
@@ -1298,7 +1298,7 @@ Las peticiones llevan un `max_tokens` corto (600) a propósito, para que el lote
 Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
 1. (guía) Las facturas del turno de noche tienen un plazo de 30 h, contado desde que llega cada una hasta que tiene su resultado, y llegan a lo largo de todo el día. Un lote puede tardar hasta 24 h en procesarse y el módulo reserva además 2 h de margen. ¿Cada cuántas horas hay que enviar un lote para que ninguna se pase del plazo?
-2. (guía) Con ese mismo plazo de 30 h, si un documento falla, ¿cabe reenviarlo en un segundo lote, que puede tardar otras 24 h?
+2. (módulo) Con ese mismo plazo de 30 h, si un documento falla, ¿cabe reenviarlo en un segundo lote, que puede tardar otras 24 h?
 3. (guía) Envías 12 peticiones en un lote. ¿Llegarán los resultados en el orden de envío? ¿Con qué debe emparejar el código cada resultado con su documento?
 4. (módulo) Una respuesta del lote se corta por `max_tokens`. ¿Con qué tipo de resultado crees que llega? ¿Qué tiene que mirar tu código para saber que no sirve?
 5. (guía) Al reenviar, ¿se reenvía el lote entero o solo lo que falló? ¿Qué hay que cambiar en un documento que no cupo en la respuesta?
@@ -1326,8 +1326,8 @@ El acierto por campo de la muestra antes de crear el lote; el orden de llegada f
 
 **Tus predicciones:**
 
-- **P1** Cada 4 h. Una factura que llega justo después de un envío espera un intervalo entero hasta el siguiente, y después el lote puede tardar toda la ventana: intervalo + 24 h + 2 h de margen ≤ 30 h. La frecuencia sale del plazo (TS 4.5-S2); el margen es una elección de este módulo, y sin él saldrían 6 h.
-- **P2** No: un segundo lote añade otras 24 h y se pasa del plazo. Ese trabajo cabe en batch, pero sin margen para reenviar lo que falle. La ventana es de hasta 24 h, sin garantía de latencia (TS 4.5-K1).
+- **P1** Cada 4 h. La frecuencia de envío se calcula a partir del plazo y de la ventana de 24 h (TS 4.5-S2), y la guía da ese mismo resultado para un plazo de 30 h. El cálculo es una inferencia propia, porque la guía no lo da: una factura que llega justo después de un envío espera un intervalo entero hasta el siguiente, y después el lote puede tardar toda la ventana, así que intervalo + 24 h + 2 h de margen ≤ 30 h. El margen es una elección de este módulo; sin él saldrían 6 h.
+- **P2** No: un segundo lote añade otras 24 h y se pasa del plazo. Ese trabajo cabe en batch, pero sin margen para reenviar lo que falle. Es una inferencia de este módulo a partir de la ventana de hasta 24 h sin garantía de latencia (TS 4.5-K1); la guía no habla de reenvíos dentro del plazo.
 - **P3** No hay que contar con el orden: cada resultado se empareja con su petición por `custom_id` (TS 4.5-K4). Producto observado (no evaluable): aquí llegaron en otro orden y, emparejados por posición, 11 de 11 documentos recibieron los datos de otro.
 - **P4** Como `succeeded`, igual que los buenos. Hay que mirar el `stop_reason`: `max_tokens` indica que la extracción está cortada.
 - **P5** Solo los documentos que fallaron, localizados por su `custom_id`, y con el cambio que haga falta: aquí, trocear el que no cupo (TS 4.5-S3).
@@ -1443,7 +1443,7 @@ En `poblacion`: la exactitud global frente a la del peor tipo de documento y del
 **Tus predicciones:**
 
 - **P1** Sí: el global es 97,7 % y el tipo raro acierta el 62,5 %. Cuanto menos pesa un segmento en el total, más puede esconder la cifra agregada (TS 5.5-K1).
-- **P2** La estratificada: vio algún error del tipo raro en el 100 % de las muestras, frente al 53,4 % de la aleatoria simple, porque asegura un mínimo por estrato. Mide la tasa de error y deja ver patrones que no se conocían (TS 5.5-K2, 5.5-S1). Para estimar la tasa hay que ponderar cada estrato por su tamaño.
+- **P2** La estratificada: vio algún error del tipo raro en el 100 % de las muestras, frente al 53,4 % de la aleatoria simple, porque asegura un mínimo por estrato. Mide la tasa de error y deja ver patrones que no se conocían (TS 5.5-K2, 5.5-S1). Inferencia propia, que la guía no recoge: para estimar la tasa hay que ponderar cada estrato por su tamaño.
 - **P3** Si esa confianza está calibrada contra un conjunto de validación etiquetado, que es de donde salen los umbrales de revisión (TS 5.5-K3, 5.5-S3). Aquí la mayoría de los errores llegan con confianza de 0,85 o más.
 - **P4** No: sin ejemplos no hay evidencia de que acierte. La exactitud se comprueba segmento a segmento antes de dejar de revisar (TS 5.5-K4, 5.5-S2). Aquí esos segmentos quedan como `insufficient_data` y no se automatizan.
 - **P5** La media del documento deja pasar el campo dudoso (2 errores más); la confianza por campo lo manda a revisión. La diferencia es pequeña con esta población simulada.
@@ -1544,7 +1544,7 @@ Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregu
 <details>
 <summary>Comprobación C2 · Respuesta</summary>
 
-**D.** La confianza por campo sirve para decidir dónde mirar solo después de calibrarla contra un conjunto de validación etiquetado, que es de donde salen los umbrales de revisión (TS 5.5-K3, 5.5-S3). A la toma sin calibrar; B la descarta del todo; C confunde formato con fiabilidad.
+**D.** La confianza por campo sirve para decidir dónde mirar solo después de calibrarla contra un conjunto de validación etiquetado, que es de donde salen los umbrales de revisión (TS 5.5-K3, 5.5-S3). A la toma sin calibrar; B la descarta del todo, cuando lo que la guía da por poco fiable es usar la confianza autodeclarada como medida de la complejidad de un caso (TS 5.2-K3, en `app2/04`), no la confianza por campo ya calibrada; C confunde formato con fiabilidad.
 </details>
 
 **C3 · TS 5.5-K4, S2.** La exactitud global es del 98 % y se propone dejar de revisar las extracciones de confianza alta. ¿Qué se comprueba antes?
@@ -1807,20 +1807,33 @@ Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregu
 **C.** Un criterio explícito precisa más que una instrucción vaga (TS 4.1-K1), y las instrucciones generales del tipo «sé conservador» no mejoran la precisión como los criterios categóricos (TS 4.1-K2). Los criterios dicen qué se informa y qué se deja, en vez de filtrar por confianza (TS 4.1-S1), que es lo que hace D. A y B son las instrucciones vagas.
 </details>
 
-**C5 · TS 4.1-S2, S3.** Una categoría de hallazgos se equivoca a menudo, y los desarrolladores empiezan a ignorar todos los comentarios del revisor. ¿Qué se hace?
+**C5 · TS 4.1-K3, S2.** Una categoría de hallazgos se equivoca a menudo, y los desarrolladores empiezan a ignorar todos los comentarios del revisor. ¿Qué se hace?
 
 - A. Mantenerla, con un aviso de que sus hallazgos pueden no ser del todo fiables.
 - B. Subir la severidad de las demás categorías, para que destaquen sobre ella.
 - C. Pedir a los desarrolladores que contesten cada comentario antes de fusionar.
-- D. Apagarla mientras se mejora su prompt, y definir cada severidad con ejemplos.
+- D. Apagarla por un tiempo, mientras se mejora el prompt de esa categoría.
 
 <details>
 <summary>Comprobación C5 · Respuesta</summary>
 
-**D.** Los falsos positivos de una categoría hacen que se desconfíe también de las que aciertan (TS 4.1-K3), así que esa categoría se apaga por un tiempo mientras se mejora su prompt (TS 4.1-S2), y cada severidad se define con ejemplos de código concretos (TS 4.1-S3). A y B dejan el ruido; C traslada el coste a las personas.
+**D.** Los falsos positivos de una categoría hacen que se desconfíe también de las que aciertan (TS 4.1-K3), así que esa categoría se apaga por un tiempo mientras se mejora su prompt (TS 4.1-S2). A y B dejan el ruido; C traslada el coste a las personas.
 </details>
 
-**C6 · TS 4.2-S2, S3.** ¿Qué aportan unos ejemplos *few-shot* al prompt de una revisión de código?
+**C6 · TS 4.1-S3.** Un revisor clasifica el mismo tipo de fallo como grave en un PR y como menor en otro. ¿Qué cambio da una clasificación consistente?
+
+- A. Pedirle que piense dos veces la severidad antes de asignarla a cada hallazgo.
+- B. Definir cada nivel de severidad con un criterio explícito y un ejemplo de código.
+- C. Dejar una sola severidad para todos los hallazgos y que una persona decida después.
+- D. Asignar la severidad según la confianza que el modelo declare en cada hallazgo.
+
+<details>
+<summary>Comprobación C6 · Respuesta</summary>
+
+**B.** La severidad sale consistente cuando cada nivel tiene un criterio explícito y ejemplos de código concretos (TS 4.1-S3). A es una instrucción vaga; C renuncia a clasificar; D confunde la confianza con la severidad.
+</details>
+
+**C7 · TS 4.2-S2, S3.** ¿Qué aportan unos ejemplos *few-shot* al prompt de una revisión de código?
 
 - A. Fijan el formato de cada hallazgo y enseñan a separar un patrón aceptable de un problema real.
 - B. Sustituyen a los criterios de revisión, que dejan de hacer falta cuando ya hay ejemplos.
@@ -1828,12 +1841,12 @@ Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregu
 - D. Limitan la revisión a los casos idénticos a los ejemplos, sin generalizar a otros nuevos.
 
 <details>
-<summary>Comprobación C6 · Respuesta</summary>
+<summary>Comprobación C7 · Respuesta</summary>
 
 **A.** Los *few-shot* fijan el formato de cada hallazgo (ubicación, problema, severidad y arreglo propuesto) (TS 4.2-S2) y enseñan a distinguir un patrón aceptable de un problema real, lo que reduce los falsos positivos sin impedir generalizar (TS 4.2-S3). B y C prometen de más; D dice lo contrario de S3.
 </details>
 
-**C7 · TS 4.4-K3, S3.** Se quiere saber qué tipo de hallazgos descartan los desarrolladores una y otra vez. ¿Qué lo permite?
+**C8 · TS 4.4-K3, S3.** Se quiere saber qué tipo de hallazgos descartan los desarrolladores una y otra vez. ¿Qué lo permite?
 
 - A. Preguntar al modelo, al acabar cada revisión, qué hallazgos cree que se van a descartar.
 - B. Un campo `detected_pattern` en cada hallazgo, con la construcción de código que lo provocó.
@@ -1841,7 +1854,7 @@ Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregu
 - D. Pedir a cada desarrollador un informe mensual con los comentarios que no le han servido.
 
 <details>
-<summary>Comprobación C7 · Respuesta</summary>
+<summary>Comprobación C8 · Respuesta</summary>
 
 **B.** Un campo `detected_pattern` en cada hallazgo registra qué construcción del código lo provocó y permite analizar de forma sistemática los patrones que los desarrolladores descartan (TS 4.4-K3, 4.4-S3). C cuenta sin decir qué; A y D no dejan un dato que se pueda agrupar.
 </details>
@@ -1921,7 +1934,7 @@ Por repetición: qué fallos sembrados encontró cada pasada, cuáles faltan, fa
 - **P3** Nada: tiene el mismo contexto que antes. La frase no cambió lo que encontró.
 - **P4** La pasada por archivo ve lo local (A, B y C); el flujo de datos entre archivos (D y F) necesita la de integración. Partir así una revisión grande evita diluir la atención (TS 4.6-K3, 4.6-S2, 1.6-K2, 1.6-S2). Aquí, D salió por archivo en 3 de 5 y F en 1 de 5; la integración completó el resto.
 - **P5** No los perdió: 24 de 25 (el que faltó una vez fue C, no D ni F), con la mitad de coste. Con un diff de este tamaño no hay diferencia; la guía habla de revisiones grandes.
-- **P6** Para enrutar la revisión de forma calibrada (TS 4.6-S3). Para fiarse hay que comprobar esa confianza contra hallazgos etiquetados: aquí el hueco de calibración fue de 0,129 a 0,215.
+- **P6** Para enrutar la revisión de forma calibrada (TS 4.6-S3). Para fiarse hay que comprobar esa confianza contra hallazgos etiquetados, como la confianza por campo del módulo 10 (inferencia propia: TS 4.6-S3 no lo dice): aquí el hueco de calibración fue de 0,129 a 0,215.
 
 Sonnet 5.5 (rol `reviewer`), `claude -p` aislado. Hay tres mediciones, cada una con su versión del código; **la de referencia es la última**, después de las correcciones C4 (2026-11-07). En ella la sesión generadora escribió exactamente el cambio dado (93 líneas, cuatro archivos) en las dos ramas.
 
