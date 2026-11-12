@@ -220,7 +220,7 @@ Por parte, qué tools usa el agente y cuántos `Read` hace; en `wrapper`, cuánt
 - **P4** El número de `Read` (uno por cada `.py`) y el coste. La explicación sale parecida.
 - **P5** Los que importan la función por su alias: nunca escriben el nombre original. Antes de buscar hay que reunir todos los nombres con que se exporta y buscar cada uno (TS 2.5-S5).
 - **P6** No. Devuelve 2 de 4 llamadores y presenta la lista como completa: nada en la búsqueda le dice que existen otros nombres.
-- **P7** Un error, porque el ancla no es única («Found 2 matches») (TS 2.5-K3). El respaldo que nombra la guía es leer el archivo con `Read` y guardarlo entero con `Write` (TS 2.5-K4, 2.5-S3), con cuidado de no tocar la primera asignación. Repetir el mismo `Edit` sería un error, porque el fallo no es pasajero (inferencia propia: la guía solo nombra el respaldo).
+- **P7** Un error, porque el ancla no es única («Found 2 matches») (TS 2.5-K3). El respaldo que nombra la guía es leer el archivo con `Read` y guardarlo entero con `Write` (TS 2.5-K4, 2.5-S3), con cuidado de no tocar la primera asignación. Inferencia propia, que la guía no recoge: repetir el mismo `Edit` sería un error, porque el fallo no es pasajero.
 
 | Parte / variante | Señal | Qué se rompe |
 | :--- | :--- | :--- |
@@ -270,7 +270,9 @@ Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregu
 <details>
 <summary>Comprobación C1 · Respuesta</summary>
 
-**B.** `Edit` hace un cambio localizado que depende de que el texto de referencia aparezca una sola vez (TS 2.5-K3). Cuando se repite y falla, el respaldo es cargar el archivo con `Read` y guardarlo entero con `Write` (TS 2.5-K4, 2.5-S3). A repite una llamada que fallará igual; C confunde `Glob`, que casa rutas; D confunde `Grep`, que busca y no edita.
+**B.** `Edit` hace un cambio localizado que depende de que el texto de referencia aparezca una sola vez (TS 2.5-K3). Cuando se repite y falla, el respaldo es cargar el archivo con `Read` y guardarlo entero con `Write` (TS 2.5-K4, 2.5-S3). A no es ese respaldo; C confunde `Glob`, que casa rutas; D confunde `Grep`, que busca y no edita.
+
+**Inferencia propia:** repetir el mismo `Edit` fallará igual, porque el texto sigue apareciendo dos veces; la guía solo nombra el respaldo.
 </details>
 
 **C2 · TS 2.5-S2.** Un agente necesita la lista de todos los archivos de configuración `.yaml` de un repositorio, estén en la carpeta que estén. ¿Qué tool le corresponde?
@@ -949,7 +951,7 @@ Un agente de pedidos consulta una tool que devuelve más de 40 campos por pedido
 
 **D.** Los resultados de las tools se acumulan en el contexto y consumen tokens de forma desproporcionada a lo que aportan (TS 5.1-K3); la destreza es recortarlos a los campos relevantes antes de que se acumulen (TS 5.1-S3).
 
-- **A** deja los 40 campos en el historial: el modelo los sigue leyendo en cada petición, así que no reduce el consumo (inferencia a partir de 5.1-K3).
+- **A** deja los 40 campos en el historial, donde los resultados se siguen acumulando y consumiendo tokens (TS 5.1-K3); la guía pide recortarlos antes de que se acumulen (TS 5.1-S3).
 - **B** actúa cuando los resultados ya se han acumulado, y resumir arriesga condensar cifras, fechas y estados en frases vagas (TS 5.1-K1).
 - **C** no corrige el consumo desproporcionado: solo retrasa el momento de llegar al límite.
 - **D** recorta en el punto que pide la guía, antes de que el resultado entre en el contexto.

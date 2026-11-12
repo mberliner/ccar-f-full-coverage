@@ -417,13 +417,13 @@ Un agente de síntesis recibe todas las tools del sistema y, aunque su cometido 
 
 - A. Reforzar su *system prompt* con «no hagas búsquedas, solo redacta» y mantener todas las tools, por si alguna vez las necesita.
 - B. Fusionar al investigador y al sintetizador en un único agente con todas las tools, para que nadie duplique el trabajo del otro.
-- C. Dejarle solo las tools de su rol más una de verificación acotada para lo simple, y enviar las comprobaciones complejas al coordinador.
+- C. Dejarle solo las tools de su rol, con una de verificación acotada para las comprobaciones simples que necesita a menudo.
 - D. Quitarle todas las tools y hacer que cada comprobación, simple o compleja, pase por el coordinador para centralizar el control.
 
 <details>
 <summary>Paso 4 · Respuesta</summary>
 
-**C.** Un agente con tools fuera de su especialización tiende a malusarlas (TS 2.3-K2); la solución es el acceso acotado, con las tools de su rol (TS 2.3-S1) y una tool cross-role muy limitada para las necesidades de alta frecuencia, con los casos complejos por el coordinador (TS 2.3-K3, TS 2.3-S3). A pide por prosa lo que la configuración debería garantizar, y el agente conserva las tools que malusa; B deja un agente con todas las tools, lo contrario del acceso acotado (TS 2.3-K3); D elimina la tool acotada, y cada verificación simple pasa a depender del coordinador: es el coste que la tool acotada de TS 2.3-S3 evita.
+**C.** Un agente con tools fuera de su especialización tiende a malusarlas (TS 2.3-K2); la solución es el acceso acotado, con las tools de su rol (TS 2.3-S1) y una tool cross-role muy limitada para las necesidades de alta frecuencia (TS 2.3-K3, TS 2.3-S3); los casos complejos siguen pasando por el coordinador. A pide por prosa lo que la configuración debería garantizar, y el agente conserva las tools que malusa; B deja un agente con todas las tools, lo contrario del acceso acotado (TS 2.3-K3); D elimina la tool acotada, y cada verificación simple pasa a depender del coordinador: es el coste que la tool acotada de TS 2.3-S3 evita.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
@@ -534,17 +534,21 @@ Un coordinador delega búsquedas en dos subagentes. Tras su recuperación local,
 
 - A. Que los subagentes reintenten hasta que la fuente responda, para que el coordinador no reciba nunca un fallo que decidir.
 - B. Que los subagentes devuelvan una lista vacía en esos casos, para que el coordinador siga con las demás fuentes sin pararse.
-- C. Que cada subagente devuelva tipo de fallo, consulta, lo obtenido y alternativas, y que el informe anote la brecha.
+- C. Que cada subagente devuelva el tipo de fallo, la consulta que intentó, lo que llegó a obtener y las alternativas.
 - D. Que el coordinador repita las dos delegaciones con el mismo encargo y cancele la investigación si vuelven a fallar.
 
 <details>
 <summary>Paso 4 · Respuesta</summary>
 
-**C.** El mensaje genérico esconde justo la diferencia que importa (TS 5.3-K3): un *timeout* puede merecer otro intento o una fuente alternativa, y una consulta mal formada no se arregla repitiéndola. Con el tipo de fallo, lo intentado, lo obtenido y las alternativas, el coordinador decide en cada caso (TS 5.3-K1, S1), y el informe dice qué queda sin cubrir (TS 5.3-S4). La recuperación local ya se hizo y no hay que repetirla (TS 5.3-S3, TS 2.2-S3). En este módulo, con una sola fuente caída, el mensaje genérico no cambió lo que hizo el coordinador (Paso 3): la pregunta plantea el caso en que sí hay que elegir.
+**C.** Un estado genérico esconde al coordinador el contexto que necesita (TS 5.3-K3). Con el tipo de fallo, lo intentado, lo obtenido y las alternativas, puede decidir cómo recuperarse en cada caso (TS 5.3-K1, S1), y el informe puede anotar qué queda sin cubrir en vez de un «faltan datos» (TS 5.3-S4). La recuperación local ya se hizo: al coordinador solo se propaga lo que el subagente no pudo resolver (TS 5.3-S3, TS 2.2-S3).
 
-- **A** quita el límite al reintento, y la consulta mal formada no va a responder nunca.
+- **A** sigue sin dar al coordinador el contexto que le falta (TS 5.3-K3), y el subagente ya había hecho su recuperación local.
 - **B** convierte dos fallos en vacíos válidos (TS 5.3-K2, K4): el informe dirá que esas fuentes no tenían nada.
 - **D** repite a ciegas lo que ya falló y, si vuelve a fallar, tira el trabajo de las demás fuentes (TS 5.3-K4).
+
+**Inferencia propia:** que el *timeout* pueda merecer otro intento o una fuente alternativa y la consulta mal formada no se arregle repitiéndola es la lectura de este módulo, a partir de la diferencia entre errores reintentables y no reintentables (TS 2.2-K4, en `app1/04`). La guía no resuelve este caso concreto.
+
+**Producto observado (no evaluable):** en este módulo, con una sola fuente caída, el mensaje genérico no cambió lo que hizo el coordinador (Paso 3). No cambia la respuesta de examen: la pregunta plantea el caso en que sí hay que elegir.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
@@ -857,7 +861,7 @@ Notas:
 
 Una investigación en tres fases se corta durante la tercera. Al terminar cada fase, los agentes habían guardado su estado en un sitio acordado. ¿Cómo debe retomarse?
 
-- A. Leer el estado guardado, comprobar que está completo y pasar a la fase pendiente lo hecho y su resumen.
+- A. Cargar el estado guardado y pasar a la fase pendiente lo que ya está hecho y el resumen de las anteriores.
 - B. Reanudar la conversación anterior completa, que conserva el detalle de cada consulta aunque ya sea muy larga.
 - C. Empezar de nuevo desde la primera fase con un contexto limpio, por si el estado guardado quedó a medias.
 - D. Relanzar solo la tercera fase con la petición original y dejar que vuelva a consultar las fuentes que necesite.
@@ -865,11 +869,13 @@ Una investigación en tres fases se corta durante la tercera. Al terminar cada f
 <details>
 <summary>Paso 4 · Respuesta</summary>
 
-**A.** Para recuperarse de una caída, cada agente exporta su estado a un sitio conocido, y al retomar el coordinador carga el manifest y lo pasa a los prompts (TS 5.4-K4, S4). El resumen de las fases hechas va en el contexto inicial de la siguiente (TS 5.4-S3). Comprobar el estado antes de usarlo evita retomar desde uno roto o ajeno (inferencia de este módulo).
+**A.** Para recuperarse de una caída, cada agente exporta su estado a un sitio conocido, y al retomar el coordinador carga el manifest y lo pasa a los prompts (TS 5.4-K4, S4). El resumen de las fases hechas va en el contexto inicial de la siguiente (TS 5.4-S3).
 
-- **B** arrastra un contexto largo, que es lo que favorece la degradación (TS 5.4-K1), y tras una caída puede no haber conversación que reanudar.
-- **C** tira el trabajo que se guardó precisamente para no repetirlo. Un estado dudoso se comprueba; no se descarta por defecto.
-- **D** no repite las fases hechas, pero la tercera arranca sin lo descubierto: vuelve a consultar fuentes y puede contradecir lo que ya se resumió (TS 5.4-S3, S4).
+- **B** arrastra un contexto largo, que es lo que favorece la degradación (TS 5.4-K1), en vez de usar el estado que se guardó para esto (TS 5.4-K4).
+- **C** tira el trabajo que el estado guardado permite no repetir (TS 5.4-K4, S4).
+- **D** no repite las fases hechas, pero la tercera arranca sin lo descubierto: no recibe ni el manifest ni el resumen (TS 5.4-S3, S4).
+
+**Inferencia de este módulo:** comprobar el estado antes de usarlo (versión, claves y coherencia con el scratchpad) evita retomar desde uno roto o ajeno, y tras una caída puede no quedar conversación que reanudar. La guía no dice ninguna de las dos cosas, y la respuesta no depende de ellas.
 </details>
 
 ### Comprobaciones cortas
@@ -1504,17 +1510,19 @@ Un sistema extrae campos de facturas, albaranes y un tipo de documento de compra
 
 - A. Elegir un único umbral de confianza con el que la exactitud global de lo aceptado llegue al 99 % y no revisar lo que lo supere.
 - B. Pedir al modelo una confianza por documento, la media de las de sus campos, y no revisar los documentos que superen un umbral.
-- C. Medir con documentos etiquetados cuánto acierta cada tipo y campo, fijar un umbral para cada uno y vigilar lo aceptado tipo a tipo.
+- C. Medir con documentos etiquetados cuánto acierta cada tipo de documento y cada campo, y fijar con ellos un umbral por segmento.
 - D. Mantener el 97 % como criterio de aceptación y revisar cada mes una muestra aleatoria simple de lo que se acepta sin revisión.
 
 <details>
 <summary>Paso 4 · Respuesta</summary>
 
-**C.** Una exactitud agregada alta puede esconder un tipo de documento o un campo que rinde mal (TS 5.5-K1), así que antes de automatizar se comprueba la exactitud por tipo y por campo (K4, S2). La confianza por campo solo sirve para enrutar después de calibrarla con un conjunto etiquetado, que fija los umbrales (K3, S3), y lo aceptado se sigue vigilando con una muestra aleatoria estratificada (K2, S1).
+**C.** Una exactitud agregada alta puede esconder un tipo de documento o un campo que rinde mal (TS 5.5-K1), así que antes de automatizar se comprueba la exactitud por tipo y por campo (K4, S2). La confianza por campo solo sirve para enrutar después de calibrarla con un conjunto etiquetado, que fija los umbrales (K3, S3). Después, lo aceptado se sigue vigilando con una muestra aleatoria estratificada (K2, S1).
 
 - **A** elige el umbral mirando la cifra global, que es justo la que puede esconder el segmento malo (K1, K4).
-- **B** junta los campos de un documento en una sola cifra: la guía habla de confianza por campo (K3), y la media esconde el campo dudoso detrás de los buenos (inferencia propia).
-- **D** decide por el titular y vigila con una muestra simple, que apenas toca un tipo poco frecuente; la guía pide estratificarla (K2, S1).
+- **B** junta los campos de un documento en una sola cifra, cuando la guía habla de confianza por campo (K3), y no mide nada por tipo ni por campo (K4).
+- **D** decide por el titular (K1) y vigila con una muestra simple, cuando la guía pide estratificarla (K2, S1).
+
+**Inferencia propia:** la media de un documento esconde el campo dudoso detrás de los buenos, y una muestra simple apenas toca un tipo poco frecuente. Son las lecturas de este módulo (`confianza_global` y el experimento de muestreo del Paso 3); la guía no las formula así.
 </details>
 
 ### Comprobaciones cortas
@@ -1715,14 +1723,14 @@ Avisos sobre las cifras y la ejecución:
 **Pregunta 1 (una respuesta).** Un equipo ejecuta Claude Code en CI para revisar cada *pull request* y publica los hallazgos como comentarios en línea. La categoría «comentario inexacto» marca a menudo comentarios del código que son correctos, y los desarrolladores han empezado a ignorar también los hallazgos de seguridad. ¿Qué debe hacer el equipo?
 
 - A. Añadir al prompt que informe solo de lo que tenga alta confianza y mantener activas todas las categorías mientras tanto.
-- B. Apagar esa categoría por ahora, reescribir su criterio para marcar solo un comentario que contradiga al código y añadir `detected_pattern`.
+- B. Apagar esa categoría por ahora y reescribir su criterio, para que marque solo un comentario que contradiga lo que hace el código.
 - C. Pedir una puntuación de confianza por hallazgo y publicar solo los que pasen de un umbral, sin tocar el criterio de ninguna categoría.
 - D. Mantener todas las categorías y juntar los hallazgos en un único comentario de resumen al final del PR, para que molesten menos.
 
 <details>
 <summary>Paso 4 · Respuesta</summary>
 
-**B.** Una categoría con muchos falsos positivos hace desconfiar también de las que aciertan (TS 4.1-K3), así que se desactiva temporalmente mientras se mejora su prompt (4.1-S2). El arreglo es un criterio explícito, que marque un comentario solo cuando lo que dice no coincide con lo que hace el código (4.1-K1, S1), y el campo `detected_pattern` permite analizar qué patrones se descartan (4.4-K3, S3).
+**B.** Una categoría con muchos falsos positivos hace desconfiar también de las que aciertan (TS 4.1-K3), así que se desactiva temporalmente mientras se mejora su prompt (4.1-S2). El arreglo es un criterio explícito, que marque un comentario solo cuando lo que dice no coincide con lo que hace el código (4.1-K1, S1). Para seguirla después, un campo `detected_pattern` en cada hallazgo permite analizar qué patrones se descartan (4.4-K3, S3).
 
 - **A** es la instrucción general que la guía descarta: «solo alta confianza» no mejora la precisión frente a criterios categóricos (4.1-K2), y la categoría que resta confianza sigue publicando.
 - **C** filtra por la confianza en vez de definir qué se informa y qué no (4.1-S1); el criterio vago sigue igual.
@@ -1982,18 +1990,18 @@ Notas:
 
 Un equipo hace que Claude Code genere un cambio de varios archivos y, en la misma sesión, le pide que lo revise. La revisión encuentra poco, y después una persona detecta un fallo en cómo un archivo usa el valor que devuelve otro. ¿Qué debe cambiar el equipo?
 
-- A. Pedir a la misma sesión que revise de nuevo el cambio, con una instrucción explícita de cuestionar cada decisión que tomó.
-- B. Activar el razonamiento extendido en la sesión que generó el código, para que piense más a fondo antes de dar su veredicto.
+- A. Seguir en la misma sesión, con una pasada por archivo y otra de integración, y la orden de cuestionar cada decisión que tomó.
+- B. Activar el razonamiento extendido en la sesión que generó el código y pedirle una única revisión más a fondo de todo el cambio.
 - C. Revisar con una instancia nueva todos los archivos a la vez en una sola pasada larga, para que tenga el cambio completo delante.
-- D. Revisar con una instancia nueva sin el contexto de la generación, con una pasada por archivo y otra de integración entre archivos.
+- D. Revisar con una instancia nueva, sin el contexto de la generación, en una pasada por archivo y otra de integración entre archivos.
 
 <details>
 <summary>Paso 4 · Respuesta</summary>
 
 **D.** La sesión que generó el código conserva su razonamiento y cuestiona menos sus decisiones (TS 4.6-K1, 3.6-K4); una instancia independiente encuentra mejor los problemas sutiles (4.6-K2, S1). Una revisión de varios archivos se encadena en pasadas por archivo y una de integración para el flujo de datos entre archivos, que evita diluir la atención y los hallazgos contradictorios (4.6-K3, S2; 1.6-K2, S2).
 
-- **A** deja la revisión en la misma sesión: la guía pone las instrucciones de autorrevisión por debajo de una instancia independiente (4.6-K2).
-- **B** es el razonamiento extendido de la misma sesión, que la guía tampoco da por mejor que una instancia independiente (4.6-K2).
+- **A** reparte bien las pasadas, pero deja la revisión en la misma sesión: la guía pone las instrucciones de autorrevisión por debajo de una instancia independiente (4.6-K2).
+- **B** es el razonamiento extendido de la misma sesión, que la guía tampoco da por mejor que una instancia independiente (4.6-K2), y además en una sola pasada (4.6-K3).
 - **C** acierta con la instancia nueva, pero una sola pasada sobre muchos archivos diluye la atención; el fallo entre archivos pide su propia pasada de integración (4.6-K3, S2).
 
 **Producto observado (no evaluable):** en este módulo, ni la autorrevisión encontró menos que la instancia nueva ni la pasada única (la opción C, medida como `--anti una_pasada`) encontró menos que el reparto en pasadas, con un diff de 93 líneas (Paso 3). No cambia la respuesta de examen.
