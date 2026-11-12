@@ -225,6 +225,23 @@ Varias tools MCP de un agente devuelven fechas en formatos distintos (timestamps
 **D.** `PostToolUse` intercepta el resultado y lo transforma antes de que lo vea el modelo (TS 1.5-K1, 1.5-S1). B actúa sobre la llamada saliente, no sobre el resultado (el uso de `PreToolUse` es bloquear o redirigir, TS 1.5-K2, 1.5-S2). A y C dejan la corrección en manos del modelo, que es cumplimiento probabilístico (TS 1.5-K3).
 </details>
 
+### Comprobaciones cortas
+
+Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregunta principal no toca. Responde antes de abrir cada respuesta; un fallo también se anota en tu `FALLOS.md`.
+
+**C1 · TS 1.5-S3.** Una regla de negocio dice que ningún descuento superior al 30 % puede aplicarse sin aprobación, sin excepciones. ¿Cómo se hace cumplir?
+
+- A. Con un hook que intercepta la llamada y bloquea los descuentos que pasan del límite.
+- B. Con la regla en el *system prompt*, escrita en mayúsculas y repetida al final.
+- C. Con tres ejemplos *few-shot* en los que el agente pide la aprobación antes de aplicar.
+- D. Con una revisión semanal de los descuentos aplicados, para corregir los indebidos.
+
+<details>
+<summary>Comprobación C1 · Respuesta</summary>
+
+**A.** Cuando una regla de negocio exige cumplimiento garantizado, se elige un hook y no una instrucción en el prompt (TS 1.5-S3): el hook es determinista y el prompt, probabilístico (TS 1.5-K3). B y C mejoran la probabilidad sin garantizar nada; D llega cuando el descuento ya se aplicó.
+</details>
+
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
@@ -497,6 +514,23 @@ Clasificación por tipo de señal en [`docs/tipos-de-senal.md`](../docs/tipos-de
 - **D** Se escala: la política calla sobre esa petición, y decidir no le corresponde al agente (TS 5.2-S4).
 </details>
 
+### Comprobaciones cortas
+
+Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregunta principal no toca. Responde antes de abrir cada respuesta; un fallo también se anota en tu `FALLOS.md`.
+
+**C1 · TS 4.2-K3.** Un prompt de escalamiento enumera ocho casos concretos y qué hacer en cada uno. Llega un caso que no está en la lista y el agente no sabe tratarlo. ¿Qué aportan unos ejemplos *few-shot* razonados frente a esa lista?
+
+- A. Cubren más casos, porque cada ejemplo sustituye a varias entradas de la lista.
+- B. Obligan al agente a escalar cualquier caso que no coincida con ningún ejemplo.
+- C. Permiten generalizar el criterio a casos nuevos, en vez de casar solo los previstos.
+- D. Garantizan que el agente decida igual en todas las ejecuciones del mismo caso.
+
+<details>
+<summary>Comprobación C1 · Respuesta</summary>
+
+**C.** Los ejemplos *few-shot* permiten al modelo generalizar su juicio a patrones nuevos, en vez de reconocer solo los casos especificados de antemano (TS 4.2-K3). A los trata como otra lista; B inventa una regla; D promete un determinismo que los ejemplos no dan.
+</details>
+
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
@@ -580,6 +614,23 @@ Un agente de soporte resume la conversación cada pocos turnos para no llenar el
 <summary>Paso 4 · Respuesta</summary>
 
 **C.** El riesgo de la sumarización progresiva es justo condensar importes y fechas en expresiones vagas (TS 5.1-K1), y el remedio es un bloque persistente de hechos transaccionales fuera del resumen (TS 5.1-S1), con una capa por asunto si hay varios (TS 5.1-S2). A no cambia que el resumen condense los datos; B sigue confiando en la prosa; D pierde los datos antiguos sin más. Al escalar, esos mismos hechos van en un handoff estructurado (TS 1.4-K3, 1.4-S3).
+</details>
+
+### Comprobaciones cortas
+
+Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregunta principal no toca. Responde antes de abrir cada respuesta; un fallo también se anota en tu `FALLOS.md`.
+
+**C1 · TS 1.4-S2.** Un cliente escribe un solo mensaje con tres asuntos: un cargo duplicado, un cambio de dirección y un pedido que no llega. ¿Cómo debe tratarlo el agente?
+
+- A. Atender el primero y pedir al cliente que abra una conversación para cada uno de los otros.
+- B. Separarlos, investigar cada uno en paralelo con el contexto común y dar una respuesta unificada.
+- C. Escalar a una persona, porque un mensaje con varios asuntos supera lo que el agente resuelve.
+- D. Responder a los tres en bloque con una única búsqueda que mezcle las palabras de todos ellos.
+
+<details>
+<summary>Comprobación C1 · Respuesta</summary>
+
+**B.** Una petición con varios asuntos se descompone en elementos distintos, cada uno se investiga en paralelo con el contexto compartido y al final se sintetiza una resolución unificada (TS 1.4-S2). A traslada el trabajo al cliente; C escala sin motivo; D no separa los asuntos.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).

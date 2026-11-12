@@ -131,6 +131,36 @@ Un agente de soporte construido con la Messages API a veces deja tareas a medias
 **B.** La parada la decide `stop_reason` (TS 1.1-K1, 1.1-S1) y los resultados vuelven al historial con su `tool_use_id` (TS 1.1-K2, 1.1-S2). A intenta arreglar en prosa un error del código de control; C es el anti-patrón de interpretar lenguaje natural y D el de usar un tope como parada principal (TS 1.1-S3). El texto junto a un `tool_use` es comentario, no una señal de fin.
 </details>
 
+### Comprobaciones cortas
+
+Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregunta principal no toca. Responde antes de abrir cada respuesta; un fallo también se anota en tu `FALLOS.md`.
+
+**C1 · TS 1.1-K3.** Un equipo sustituye el bucle de su agente por un código que llama siempre a las mismas tres tools, en el mismo orden, y después pide una respuesta al modelo. ¿Qué pierde?
+
+- A. Nada: el resultado es el mismo y el orden de las llamadas pasa a ser predecible.
+- B. La parada por `stop_reason`, que solo existe cuando las tools van en orden fijo.
+- C. Que el modelo decida la siguiente tool según lo que va viendo en cada resultado.
+- D. El historial de la conversación, que una secuencia fija de pasos no puede guardar.
+
+<details>
+<summary>Comprobación C1 · Respuesta</summary>
+
+**C.** En un bucle agéntico es el modelo quien razona qué tool llamar a continuación según el contexto; una secuencia o un árbol de decisión preconfigurados lo fijan de antemano (TS 1.1-K3). A pasa por alto esa diferencia; B y D atribuyen a la secuencia fija cosas que no dependen de ella.
+</details>
+
+**C2 · TS 5.1-K4.** Un asistente construido con la Messages API contesta bien la primera pregunta y, en la segunda, no tiene en cuenta lo que el usuario dijo antes. El código envía en cada petición solo el último mensaje. ¿Qué falta?
+
+- A. Un *system prompt* que le pida recordar lo que se ha dicho en la conversación.
+- B. Enviar en cada petición el historial completo de la conversación hasta ese punto.
+- C. Un modelo con más ventana de contexto, para que le quepan los turnos anteriores.
+- D. Subir `max_tokens`, para que la respuesta pueda incluir lo que se dijo antes.
+
+<details>
+<summary>Comprobación C2 · Respuesta</summary>
+
+**B.** Para que la conversación sea coherente, cada petición lleva el historial completo (TS 5.1-K4). A pide recordar algo que no se le ha enviado; C y D cambian límites que no son el problema.
+</details>
+
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
@@ -534,6 +564,23 @@ Una tool MCP de reembolsos devuelve «Operation failed» ante cualquier fallo. E
 <summary>Paso 4 · Respuesta</summary>
 
 **A.** El fallo se comunica con el flag de error y metadatos estructurados (TS 2.2-K1, TS 2.2-S1): la categoría distingue una regla de negocio de un fallo transitorio (TS 2.2-K2; la guía no da nombre al valor de esa categoría), la marca de no reintentable evita el reintento inútil (TS 2.2-K4; la guía la escribe `retriable: false` en S2 e `isRetryable` en S1) y la explicación de la política permite al agente informar bien (TS 2.2-S2). B pone un tope arbitrario en vez de dar al agente la información, y seguirá reintentando lo que no tiene arreglo; C intenta suplir en prosa lo que debería salir de la tool, y no distingue unos errores de otros; D empeora el problema: invita a reintentar justo lo que no es reintentable. Un mensaje genérico es el anti-patrón (TS 2.2-K3).
+</details>
+
+### Comprobaciones cortas
+
+Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregunta principal no toca. Responde antes de abrir cada respuesta; un fallo también se anota en tu `FALLOS.md`.
+
+**C1 · TS 2.2-S4.** Una tool de búsqueda devuelve una lista vacía tanto cuando no hay coincidencias como cuando el servicio no responde, y el agente informa «no hay resultados» en los dos casos. ¿Qué se cambia?
+
+- A. Que el agente repita siempre la búsqueda dos veces antes de aceptar un vacío.
+- B. Que la tool devuelva el texto «sin resultados» en lugar de una lista vacía.
+- C. Que el *system prompt* avise de que una lista vacía puede esconder un fallo.
+- D. Que el fallo de acceso llegue como error y el vacío, como resultado correcto.
+
+<details>
+<summary>Comprobación C1 · Respuesta</summary>
+
+**D.** Un fallo de acceso pide decidir si se reintenta; un vacío válido es una consulta que funcionó y no encontró nada. La tool tiene que distinguir los dos (TS 2.2-S4). A reintenta también los vacíos válidos; B sigue sin distinguirlos; C deja al agente adivinar.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).

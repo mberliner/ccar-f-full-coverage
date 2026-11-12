@@ -162,6 +162,36 @@ Notas:
 - **D** No reparte el alcance: los tres buscan lo mismo y se duplican, sin garantizar cobertura. Dividir el alcance es trabajo del coordinador (TS 1.2-S2, 1.2-K3).
 </details>
 
+### Comprobaciones cortas
+
+Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregunta principal no toca. Responde antes de abrir cada respuesta; un fallo también se anota en tu `FALLOS.md`.
+
+**C1 · TS 1.3-K3.** Al definir un tipo de subagente con `AgentDefinition`, ¿qué se configura en ella?
+
+- A. Su descripción, su *system prompt* y las tools a las que queda restringido.
+- B. El historial del coordinador que recibirá al arrancar, cada vez que se le invoque.
+- C. La memoria que compartirá con los demás subagentes entre una invocación y otra.
+- D. El orden fijo en que el coordinador tendrá que invocarlo dentro del pipeline.
+
+<details>
+<summary>Comprobación C1 · Respuesta</summary>
+
+**A.** La `AgentDefinition` de cada tipo de subagente lleva su descripción, su *system prompt* y sus restricciones de tools (TS 1.3-K3). B y C contradicen que un subagente no hereda el contexto ni comparte memoria entre invocaciones (TS 1.3-K2); D no es de la definición: a quién invocar lo decide el coordinador.
+</details>
+
+**C2 · TS 1.3-S4.** ¿Cómo conviene escribir el prompt de un coordinador para que sus subagentes puedan adaptarse a lo que encuentran?
+
+- A. Con una receta numerada de pasos, cada uno con la consulta exacta que hay que lanzar.
+- B. Con la lista de tools de cada subagente y el orden en que debe llamar a cada una.
+- C. Con los objetivos de la investigación y los criterios de calidad que debe cumplir.
+- D. Con un único ejemplo de informe terminado, que los subagentes tienen que imitar.
+
+<details>
+<summary>Comprobación C2 · Respuesta</summary>
+
+**C.** El prompt del coordinador fija objetivos de investigación y criterios de calidad, no instrucciones procedimentales paso a paso, para que los subagentes puedan adaptarse (TS 1.3-S4). A y B son procedimiento; D da un formato, no un objetivo.
+</details>
+
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
@@ -426,6 +456,23 @@ Un agente de síntesis recibe todas las tools del sistema y, aunque su cometido 
 **C.** Un agente con tools fuera de su especialización tiende a malusarlas (TS 2.3-K2); la solución es el acceso acotado, con las tools de su rol (TS 2.3-S1) y una tool cross-role muy limitada para las necesidades de alta frecuencia (TS 2.3-K3, TS 2.3-S3); los casos complejos siguen pasando por el coordinador. A pide por prosa lo que la configuración debería garantizar, y el agente conserva las tools que malusa; B deja un agente con todas las tools, lo contrario del acceso acotado (TS 2.3-K3); D elimina la tool acotada, y cada verificación simple pasa a depender del coordinador: es el coste que la tool acotada de TS 2.3-S3 evita.
 </details>
 
+### Comprobaciones cortas
+
+Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregunta principal no toca. Responde antes de abrir cada respuesta; un fallo también se anota en tu `FALLOS.md`.
+
+**C1 · TS 2.3-S2.** Un agente de documentación tiene una tool `fetch_url` que abre cualquier dirección, y a veces carga páginas de inicio de sesión como si fueran documentos. ¿Qué cambio encaja?
+
+- A. Añadir al prompt la lista de las direcciones que no debe abrir en ningún caso.
+- B. Darle además una tool de búsqueda web, para que compruebe antes cada dirección.
+- C. Dejarle `fetch_url` y pedirle que descarte después lo que no parezca un documento.
+- D. Sustituirla por una tool acotada, como `load_document`, que valide la dirección.
+
+<details>
+<summary>Comprobación C1 · Respuesta</summary>
+
+**D.** Una tool genérica se sustituye por una alternativa restringida que valida su entrada, como `load_document` en lugar de `fetch_url` (TS 2.3-S2). A y C dejan el filtro en manos del modelo; B añade otra tool fuera de su rol.
+</details>
+
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
@@ -549,6 +596,23 @@ Un coordinador delega búsquedas en dos subagentes. Tras su recuperación local,
 **Inferencia propia:** que el *timeout* pueda merecer otro intento o una fuente alternativa y la consulta mal formada no se arregle repitiéndola es la lectura de este módulo, a partir de la diferencia entre errores reintentables y no reintentables (TS 2.2-K4, en `app1/04`). La guía no resuelve este caso concreto.
 
 **Producto observado (no evaluable):** en este módulo, con una sola fuente caída, el mensaje genérico no cambió lo que hizo el coordinador (Paso 3). No cambia la respuesta de examen: la pregunta plantea el caso en que sí hay que elegir.
+</details>
+
+### Comprobaciones cortas
+
+Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregunta principal no toca. Responde antes de abrir cada respuesta; un fallo también se anota en tu `FALLOS.md`.
+
+**C1 · TS 5.3-S2.** Un subagente consulta dos fuentes: una responde sin resultados y la otra da *timeout*. ¿Cómo debe informar al coordinador?
+
+- A. Las dos como «sin datos», para que el informe final no se alargue con detalles.
+- B. Las dos como fallo, para que el coordinador vuelva a delegar ambas consultas.
+- C. Separando el vacío válido del fallo de acceso, para que decida sobre cada una.
+- D. Solo la que respondió, y omitir la otra para no detener la investigación.
+
+<details>
+<summary>Comprobación C1 · Respuesta</summary>
+
+**C.** El informe de errores distingue un fallo de acceso de un resultado vacío válido, para que el coordinador tome la decisión adecuada en cada caso (TS 5.3-S2, K2). A y B los igualan, en un sentido o en el otro; D esconde el fallo.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
@@ -1257,6 +1321,23 @@ Un proceso extrae datos de facturas y los valida con reglas de código. Cuando u
 - **D** renuncia a la salida estructurada para ese campo y deja el dato ausente igual de ausente.
 </details>
 
+### Comprobaciones cortas
+
+Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregunta principal no toca. Responde antes de abrir cada respuesta; un fallo también se anota en tu `FALLOS.md`.
+
+**C1 · TS 4.4-K4, S4.** Una extracción con tool y JSON Schema devuelve siempre una salida bien formada, pero en algunas facturas las líneas no suman el total que la factura declara. ¿Qué diseño lo trata bien?
+
+- A. Reintentar hasta que el modelo devuelva un total que coincida con la suma de las líneas.
+- B. Activar el modo estricto del esquema, que impide que el total y las líneas discrepen.
+- C. Dar por buena la salida, porque cumplir el esquema ya garantiza que el dato es correcto.
+- D. Extraer el total declarado y el calculado, y marcar la discrepancia en un campo propio.
+
+<details>
+<summary>Comprobación C1 · Respuesta</summary>
+
+**D.** Que los valores no sumen es un error semántico de validación, distinto de los errores de sintaxis del esquema, que el uso de la tool ya elimina (TS 4.4-K4). El flujo extrae el total calculado junto al declarado para señalar la discrepancia, y marca con un booleano los datos de origen incoherentes (TS 4.4-S4). A empuja al modelo a cambiar un dato; B y C confunden la forma con el significado.
+</details>
+
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).
 
 ---
@@ -1378,6 +1459,36 @@ Un equipo usa Claude para dos trabajos. El primero revisa cada *pull request* an
 - **B** deja a quien quiere fusionar esperando hasta 24 h y paga otra vez las 20 000 facturas por unas decenas.
 - **C** renuncia al 50 % en un trabajo que nadie espera.
 - **D** invierte el reparto. Además, dentro de una petición del lote no hay tool calling de varios turnos (TS 4.5-K3).
+</details>
+
+### Comprobaciones cortas
+
+Opcionales: cada una mira, desde otro ángulo, una idea del módulo que la pregunta principal no toca. Responde antes de abrir cada respuesta; un fallo también se anota en tu `FALLOS.md`.
+
+**C1 · TS 4.5-S2.** Los documentos tienen que estar procesados, como mucho, 30 horas después de llegar, y un lote puede tardar hasta 24. ¿Qué decide cada cuánto se envía un lote?
+
+- A. El tamaño del lote: se envía cuando reúne un número fijo de documentos.
+- B. El precio: se envía una vez al día, para aprovechar mejor el descuento.
+- C. El plazo: la espera hasta el envío y la ventana del lote tienen que caber en él.
+- D. La carga de la API: se envía cuando hay menos peticiones en curso.
+
+<details>
+<summary>Comprobación C1 · Respuesta</summary>
+
+**C.** La frecuencia de envío se calcula a partir del plazo comprometido y de la ventana de proceso de hasta 24 h; la guía pone el ejemplo de ventanas de 4 h para un plazo de 30 h (TS 4.5-S2). A, B y D eligen la frecuencia por algo que no es el plazo, y con un envío diario un documento puede esperar casi dos días.
+</details>
+
+**C2 · TS 4.5-S4.** Antes de enviar 50 000 documentos a la Message Batches API con un prompt nuevo, ¿qué conviene hacer?
+
+- A. Enviarlos todos ya, y reenviar después los que fallen con el prompt corregido.
+- B. Afinar el prompt con una muestra, para que el lote acierte más a la primera.
+- C. Partirlos en cincuenta lotes iguales, para que cada uno termine mucho antes.
+- D. Subir `max_tokens` al máximo, para que ninguna respuesta pueda quedar cortada.
+
+<details>
+<summary>Comprobación C2 · Respuesta</summary>
+
+**B.** El prompt se refina sobre una muestra antes de procesar el volumen: sube el acierto a la primera y baja el coste de los reenvíos (TS 4.5-S4). A paga el error en todo el volumen; C y D no mejoran el prompt.
 </details>
 
 **Paso 5 ·** Si fallaste una predicción `(guía)` o la pregunta, anótalo en tu `FALLOS.md` ([estado personal](../README.md#5-crear-tu-estado-personal)).

@@ -27,20 +27,10 @@ CHECK = re.compile(r"^\*\*C(\d+) · (TS [^*]+?)\.\*\* ", re.MULTILINE)
 CHECK_ANSWER = re.compile(r"<details>\s*<summary>Comprobación C(\d+) · Respuesta</summary>\s*\*\*([A-D])\.\*\*(.*?)</details>", re.DOTALL)
 OPTION = re.compile(r"^- ([A-D])\. (.+)$", re.MULTILINE)
 VIGNETTE_RUN = re.compile(r"TS (\d\.\d)-([KS]\d)((?:(?:, | y )(?:\d\.\d-)?[KS]\d)*)")
-# Viñetas que un módulo introduce y que aún no tienen respuesta evaluable en su sección. Se vacía según
-# se añaden comprobaciones; `test_pending_coverage_is_really_missing` obliga a borrar las que ya están.
-PENDING_COVERAGE: dict[str, set[str]] = {
-    "app1/01": {"TS 1.1-K3", "TS 5.1-K4"},
-    "app1/04": {"TS 2.2-S4"},
-    "app2/02": {"TS 1.5-S3"},
-    "app2/04": {"TS 4.2-K3"},
-    "app2/05": {"TS 1.4-S2"},
-    "app3/01": {"TS 1.3-K3", "TS 1.3-S4"},
-    "app3/03": {"TS 2.3-S2"},
-    "app3/04": {"TS 5.3-S2"},
-    "app3/08": {"TS 4.4-K4", "TS 4.4-S4"},
-    "app3/09": {"TS 4.5-S2", "TS 4.5-S4"},
-}
+# Viñetas que un módulo introduce y que aún no tienen respuesta evaluable en su sección. Vacía desde la fase 2b
+# (R4); se conserva por si un módulo nuevo necesita entrar por fases, con la forma {"app1/01": {"TS 1.1-K3"}}.
+# `test_pending_coverage_is_really_missing` obliga a borrar las que ya están.
+PENDING_COVERAGE: dict[str, set[str]] = {}
 
 
 def cited(text: str) -> set[str]:
