@@ -162,7 +162,7 @@ Términos comunes en el [glosario](../docs/glosario.md): Agent SDK, tool, tools 
 | `Glob` | un patrón de ruta, como `**/test_*.py` | los archivos cuya **ruta** casa con el patrón |
 | `Read` | la ruta de un archivo | su contenido completo, con números de línea |
 | `Write` | una ruta y el contenido | escribe el archivo entero: lo crea o lo sustituye |
-| `Edit` | una ruta, `old_string` y `new_string` | el archivo con el ancla sustituida; si el ancla no aparece exactamente una vez, un error |
+| `Edit` | una ruta, `old_string` y `new_string` | el archivo con el ancla sustituida, o un error si no puede aplicar el cambio |
 
 `busqueda`, `incremental` y `wrapper` tienen `Read`, `Grep` y `Glob` (nunca `Write` ni `Edit`); `edicion` tiene `Read`, `Write`, `Edit` y `Grep`.
 
@@ -184,7 +184,7 @@ La salida muestra `[contexto]`, cada llamada con su resultado y, al final de cad
 
 Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. (guía) `busqueda` hace dos peticiones: en qué archivo se lanza un mensaje de error y cuáles son todos los archivos de tests. ¿Cuál se resuelve buscando en el contenido de los archivos y cuál en sus rutas? ¿Qué tool corresponde a cada una?
+1. (guía) `busqueda` hace dos peticiones: en qué archivo se lanza un mensaje de error y cuáles son todos los archivos de tests. ¿Qué tool pide cada una? ¿Qué devolvería `Glob` si se usara para la primera?
 2. (módulo) Con `sin_grep` (las mismas peticiones, solo con `Read` y `Glob`), ¿qué camino le queda al agente para dar con el mensaje de error? ¿Cómo crecería su número de `Read` con el tamaño del repositorio?
 3. (guía) `incremental` pide explicar cómo se calcula el SLA en un repositorio que el agente no conoce. ¿Por qué clase de archivo tiene sentido empezar y qué decide qué se lee después?
 4. (módulo) Con `leer_todo` (el prompt manda leer antes todos los `.py`), ¿qué esperas que cambie más frente a `incremental` sin `--anti`: la calidad de la explicación, el número de `Read` o el coste?
@@ -214,7 +214,7 @@ Por parte, qué tools usa el agente y cuántos `Read` hace; en `wrapper`, cuánt
 
 **Tus predicciones:**
 
-- **P1** El mensaje de error está en el contenido: `Grep` (TS 2.5-K1, 2.5-S1). Los archivos de tests se reconocen por su ruta: `Glob` (TS 2.5-K2, 2.5-S2).
+- **P1** El mensaje de error está en el contenido: `Grep` (TS 2.5-K1, 2.5-S1). Los archivos de tests se reconocen por su ruta: `Glob` (TS 2.5-K2, 2.5-S2). `Glob` no encontraría el mensaje: casa rutas, y el texto del error no está en ninguna.
 - **P2** Listar con `Glob` y abrir archivos con `Read` hasta dar con el mensaje. El número de `Read` crece con el número de archivos; con `Grep` no.
 - **P3** Por un punto de entrada, que se localiza con `Grep`; después se lee solo lo que ese archivo importa y lo que sigue el flujo, en lugar de leer todo por adelantado (TS 2.5-S4).
 - **P4** El número de `Read` (uno por cada `.py`) y el coste. La explicación sale parecida.
@@ -472,7 +472,7 @@ La salida muestra, por tool, los reintentos idénticos (y cuántos son inútiles
 
 Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
-1. (guía) Sin `--anti`, cada error llega con su `errorCategory` y su `isRetryable`. De las cuatro tools que fallan, ¿qué llamada tiene sentido repetir con la misma entrada? ¿Qué le dice al agente que no repita las demás?
+1. (guía) Sin `--anti`, cada error llega con su `errorCategory` y su `isRetryable`. El agente no ve la tabla de arriba, solo lo que devuelve cada llamada. ¿En qué se apoya para repetir la del histórico y ninguna otra? ¿Por qué no le bastaría un mensaje de texto?
 2. (guía) La reasignación falla por una regla de negocio (el cupo) y la exportación, por falta de permiso. ¿En qué partes del error se apoyará el agente para distinguir un fallo del otro y explicárselo a la persona?
 3. (módulo) El perfil se pide con «1001», mal formado, y la descripción de `get_user_profile` da el formato `EMP-1001`. ¿Llegará a producirse el error de validación? ¿De qué depende?
 4. (guía) Con `generico`, todo error llega como «Operation failed», sin categoría ni `isRetryable`. ¿Qué deja de poder distinguir el agente? ¿Qué error puede cometer al decidir si reintenta?
@@ -498,7 +498,7 @@ Por variante, qué tools se repiten con la misma entrada y cuántos de esos rein
 
 **Tus predicciones:**
 
-- **P1** Solo `fetch_ticket_history`: su error es `transient` y reintentable, y al segundo intento responde. En los demás, la categoría y la marca de no reintentable dicen que repetir no arregla nada (TS 2.2-K2, 2.2-K4, 2.2-S1).
+- **P1** En los metadatos del error: el del histórico es `transient` y reintentable, y al segundo intento responde; en los demás, la categoría y la marca de no reintentable dicen que repetir no arregla nada (TS 2.2-K2, 2.2-K4, 2.2-S1). Un texto habría que interpretarlo; los metadatos estructurados son los que evitan los reintentos inútiles.
 - **P2** En la categoría, que separa la regla de negocio de la falta de permiso, y en el mensaje legible, que explica el cupo o a quién pedir la exportación, para que el agente pueda informar bien (TS 2.2-K2, 2.2-S1; para la regla de negocio, 2.2-S2).
 - **P3** No llegó a producirse: el modelo corrige «1001» a `EMP-1001` antes de llamar. Depende de que la descripción de la tool diga el formato.
 - **P4** Lo reintentable de lo que no lo es. Puede repetir lo que no tiene arreglo (aquí, `export_audit_log`) o rendirse ante lo pasajero. Un mensaje genérico es el anti-patrón (TS 2.2-K3).
@@ -714,11 +714,11 @@ Tres partes, cada una con su petición y sus tools. `--anti` solo vale con la pa
 Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
 1. (guía) En `conexion` hay tres servidores configurados: dos en el `.mcp.json` y uno en proceso. ¿Tendrá el agente las tools de los tres a la vez o solo las del que esté usando?
-2. (guía) El `.mcp.json` se versiona y lo comparte todo el equipo, y aquí lleva `${CCARF_DEMO_TOKEN}` en lugar del valor del token. ¿Qué problema evita eso? ¿En qué momento se sustituye la variable por su valor?
+2. (guía) El `.mcp.json` se versiona y lo comparte todo el equipo, y aquí lleva `${CCARF_DEMO_TOKEN}` en lugar del valor del token. ¿Qué problema evita eso? ¿Quién tiene que aportar el valor para que el servidor funcione en cada máquina?
 3. (guía) En `recursos`, el índice de artículos está publicado como resource (`kb://catalogo`). ¿Qué gana el agente con eso frente a averiguar qué artículos hay con `search_kb` y `get_article`?
 4. (módulo) Con `sin_recursos` (ni las tools de resources ni la frase del prompt que las anuncia), ¿esperas que el agente necesite unas pocas llamadas exploratorias o decenas para listar todos los artículos?
 5. (guía) En `descripcion`, el agente puede buscar el artículo con `Grep` sobre los archivos o con `search_kb`, que además ordena por relevancia y filtra los obsoletos. Con `descripcion_minima` («Busca en la base de conocimiento.»), ¿qué riesgo corre la elección entre las dos? ¿Qué debería contar la descripción para evitarlo?
-6. (guía) ¿Dónde declararías un servidor experimental que solo usa una persona, y dónde uno que debe tener todo el equipo?
+6. (guía) Una persona añade al `.mcp.json` del proyecto un servidor experimental que solo quiere probar ella. ¿Qué le pasa al resto del equipo? ¿Dónde tenía que haberlo declarado?
 
 ### Ejecutar
 
@@ -742,11 +742,11 @@ En `conexion`, las tools por servidor y `token_recibido`. En `recursos`, cuánta
 **Tus predicciones:**
 
 - **P1** Las de los tres a la vez: al conectar, el agente descubre las tools de todos los servidores configurados (TS 2.4-K3). Se distinguen por el prefijo `mcp__<servidor>__`.
-- **P2** Que el secreto quede escrito en el repositorio: el archivo guarda el nombre de la variable y nunca su valor. Se expande al lanzar el servidor (TS 2.4-K2, 2.4-S1).
+- **P2** Que el secreto quede escrito en el repositorio: el archivo guarda el nombre de la variable y nunca su valor (TS 2.4-K2, 2.4-S1). El valor lo aporta el entorno de cada máquina (la de cada persona o la de CI), y el archivo compartido no cambia.
 - **P3** Ve qué hay sin tener que explorarlo con llamadas (TS 2.4-K4, 2.4-S5): con el resource bastaron 2 llamadas y ninguna exploratoria.
 - **P4** Decenas: entre 19 y 31, con búsquedas y lecturas por ID, incluidos IDs que no existen.
 - **P5** Que el agente prefiera la tool integrada, `Grep`, aunque la tool MCP sea más capaz. La descripción debería contar qué sabe hacer y qué devuelve: el ranking y el filtro de obsoletos (TS 2.4-S3). Con el modelo de la medida esa preferencia no se vio (ver notas); en el examen manda la guía.
-- **P6** El personal o experimental, en `~/.claude.json`, en el ámbito de usuario. El del equipo, en el `.mcp.json` del proyecto (TS 2.4-K1, 2.4-S2).
+- **P6** Que el servidor les aparece a todos, porque ese archivo viaja con el repositorio. Lo personal o experimental va en `~/.claude.json`, en el ámbito de usuario; el `.mcp.json` del proyecto es para lo que comparte el equipo (TS 2.4-K1, 2.4-S2).
 
 Haiku 5.5:
 
@@ -886,7 +886,7 @@ Se hacen dos preguntas en la misma conversación. La primera pide el equipo con 
 Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
 1. (guía) Cada petición lleva el historial completo, y cada consulta de equipo añade un resultado. Petición a petición, ¿qué forma tiene la curva de tokens de entrada? ¿Dónde esperas el máximo de la conversación?
-2. (guía) Para reducir ese consumo, ¿en qué momento hay que quitar los campos que sobran: antes de que el resultado entre en el historial, o después, pidiendo al modelo que los ignore? ¿Por qué?
+2. (guía) Otra forma de intentar reducir ese consumo sería dejar los 40 campos y pedir al modelo, en el prompt, que ignore los que sobran. ¿Bajarían así los tokens de entrada? ¿Por qué?
 3. (módulo) Cada resultado recortado tiene 8 veces menos campos (5 frente a 40). ¿Esperas que el total de tokens de entrada baje en esa misma proporción, en más o en menos? ¿Qué partes de cada petición no cambian al recortar?
 4. (módulo) Con `sin_recorte`, el modelo tiene delante 35 campos que las preguntas no usan. ¿Crees que eso cambia si acierta las dos respuestas?
 5. (módulo) De lo que mide el módulo, ¿qué esperas que salga casi igual en cada ejecución y qué puede variar? Piensa en quién decide cuántas peticiones se hacen.
@@ -913,7 +913,7 @@ La línea `[medida]`: cuántas peticiones hubo, los tokens de entrada en total y
 **Tus predicciones:**
 
 - **P1** Crece en cada petición, porque los resultados se acumulan en el historial y este se reenvía entero (TS 5.1-K3, 5.1-K4). El máximo llega al final: la petición de la segunda pregunta lleva todo lo acumulado en la primera.
-- **P2** Antes de que entre en el historial (TS 5.1-S3). Una instrucción de ignorarlos deja los campos en el contexto: el modelo los sigue leyendo en cada petición y el consumo no baja.
+- **P2** No. La instrucción deja los campos en el contexto: los resultados se siguen acumulando y consumiendo tokens en cada petición (TS 5.1-K3). Hay que quitarlos antes de que el resultado entre en el historial (TS 5.1-S3).
 - **P3** En menos: unas 3,4 veces en el total. El *system prompt*, las definiciones de las tools, las preguntas y las respuestas pesan igual en las dos variantes.
 - **P4** No: las dos respuestas fueron correctas con y sin recorte. La señal de este módulo es de tokens, no de calidad.
 - **P5** Casi igual, el recorte (lo hace el código) y la proporción de tokens entre variantes. Puede variar el número de peticiones, que lo decide el modelo.

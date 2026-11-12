@@ -60,7 +60,7 @@ Cada módulo se hace en 5 pasos: orientarte con su ficha, predecir, ejecutar o n
 - **Términos propios:**
   - **Puerta en el handler:** aquí la puerta vive dentro del código de `process_reimbursement`. Antes de pagar, comprueba si el `user_id` está entre los verificados de esa ejecución y, si no, devuelve un error de categoría `prerequisite` sin pagar. La otra forma de enforcement, los hooks, llega en el módulo 02.
   - **Intentado frente a ejecutado:** el módulo cuenta por separado los pagos que el modelo *pidió* sin una verificación con éxito previa del mismo empleado (los saca del [registro de la ejecución](../docs/glosario.md#el-repositorio-y-el-ejercicio)) y los que el servidor *ejecutó* sin verificación (los saca del estado del servidor).
-  - **Regla del tres:** si un fallo no aparece en ninguna de n ejecuciones, con un 95 % de confianza su tasa real es menor que 3/n. El módulo imprime esa cota cuando la variante sin puerta no paga sin verificar ninguna vez.
+  - **Regla del tres:** la cota estadística que el módulo imprime cuando la variante sin puerta no paga sin verificar ninguna vez. Qué dice esa cota está en el Paso 3.
   - **Rol `enforcement`:** el [rol de modelo](../docs/glosario.md#el-repositorio-y-el-ejercicio) propio de este módulo. Las dos variantes usan el mismo modelo, para que la diferencia entre ellas solo pueda venir de la puerta.
 
 ### El ejercicio
@@ -102,7 +102,7 @@ La línea `[resumen]`: en cuántas ejecuciones hubo pagos **intentados** sin ver
 - **P1** Ninguno, en cualquier ejecución y con cualquier modelo: lo impide el código, no el modelo. Es un prerrequisito programático (TS 1.4-K1, 1.4-S1).
 - **P2** Los decide el modelo: lo intentó en 9 de 10 ejecuciones, y la puerta lo rechazó siempre.
 - **P3** No. Es una tasa, que cambia con el modelo, con la redacción del prompt y con el mensaje del usuario: una instrucción en el prompt tiene una tasa de fallo distinta de cero (TS 1.4-K2).
-- **P4** No. Cero fallos en n ejecuciones solo acota la tasa por debajo de 3/n; no la deja en cero. Lo garantiza la puerta en código (TS 1.4-S1).
+- **P4** No. Cero fallos en n ejecuciones solo acota la tasa por debajo de 3/n, con un 95 % de confianza (la regla del tres); no la deja en cero. Lo garantiza la puerta en código (TS 1.4-S1).
 
 Con la puerta, los ejecutados son 0 por construcción. Sin puerta, depende del modelo (2026-10-24):
 
@@ -151,7 +151,7 @@ Un agente de soporte debe verificar la identidad del cliente con `get_customer` 
   - **ISO 8601:** el formato estándar de fecha y hora (`aaaa-mm-ddThh:mm:ss+00:00`).
   - **Estado canónico:** uno de tres valores fijos (`open`, `in_progress`, `resolved`) al que el hook traduce las variantes del sistema de origen («en curso», `in-progress`, «resuelto»…). Un valor que no conoce lo marca como `unknown:<valor>` en lugar de adivinarlo.
   - ***Matcher*:** el nombre de la tool a la que se engancha un [hook](../docs/glosario.md#control-del-agente). Aquí es el nombre MCP completo, por ejemplo `mcp__helpdesk__process_reimbursement`.
-  - **`updatedMCPToolOutput`:** la respuesta de un hook `PostToolUse` que sustituye el resultado de una tool MCP antes de que lo lea el modelo.
+  - **`updatedMCPToolOutput`:** la respuesta con la que el hook `PostToolUse` de este módulo reescribe el resultado de una tool MCP.
 
 ### Las tools y los hooks del ejercicio
 
@@ -159,7 +159,7 @@ Tools pre-aprobadas: `verify_employee`, `get_ticket`, `process_reimbursement` y 
 
 | Hook | Sobre qué tool | Qué hace el código |
 | :--- | :--- | :--- |
-| `PreToolUse` (umbral) | `process_reimbursement` | Lee `amount_eur`. Hasta 500,00 deja pasar la llamada; por encima, la deniega ([deny con motivo](../docs/glosario.md#control-del-agente)) con un motivo que dice que no se reintente y que se escale con `escalate_to_human` y qué datos llevar. Un importe que falta o no es un número también se deniega. |
+| `PreToolUse` (umbral) | `process_reimbursement` | Lee `amount_eur` y lo compara con el umbral de 500,00 EUR. Si lo supera, o si el importe falta o no es un número, responde con un [deny con motivo](../docs/glosario.md#control-del-agente); el texto del motivo está en el Paso 3. |
 | `PostToolUse` (normalización) | `get_ticket` | Reescribe el resultado: `created_at` pasa a ISO 8601 en UTC y `status`, a su valor canónico. Un resultado de error lo deja tal cual. |
 
 ### El ejercicio
@@ -537,7 +537,7 @@ Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan
 
 1. (guía) En un resumen de 25 palabras de un caso con tres asuntos, ¿qué tipos de dato esperas que sobrevivan peor: los IDs, el asunto, los importes o las fechas? ¿Por qué?
 2. (módulo) Con `resumen` (el modelo solo ve el resumen del turno anterior), ¿esperas que el dato que se pierde sea el mismo en cada ejecución? ¿Quién decide qué se pierde?
-3. (guía) Con el bloque `CASE FACTS` (lo construye el código y va en cada prompt, fuera del resumen), ¿qué datos tiene el modelo delante en el turno 3, diga lo que diga el resumen? ¿Qué sigue dependiendo de él?
+3. (guía) El bloque `CASE FACTS` va en cada prompt, fuera del resumen. Si el resumen del turno 2 pierde una fecha, ¿la pierde también el modelo en el turno 3? ¿Qué sigue dependiendo de él?
 4. (guía) Con `handoff_libre`, el escalamiento es un único campo de texto libre, y la persona que recibe el caso no ve la conversación. ¿Qué puede comprobar el código sobre lo que le llega? ¿Cambiaría si el modelo escribiera un párrafo excelente?
 
 ### Ejecutar
@@ -561,7 +561,7 @@ La línea `[medida]` compara el handoff con los case facts: qué campos faltan o
 
 - **P1** Los importes y las fechas: la sumarización progresiva tiende a condensarlos en expresiones vagas (TS 5.1-K1). Aquí el resumen conservó el importe y perdió la fecha de compra y el año de los plazos.
 - **P2** No tiene por qué: qué dato cae lo decide el modelo al redactar cada resumen. Lo estructural es que en 25 palabras no caben todos los datos de tres asuntos. Solo hay una ejecución observada, así que no se sabe cuánto varía.
-- **P3** Todos los importes, fechas e IDs que el código extrajo, con una capa por asunto (TS 5.1-S1, 5.1-S2). De él sigue dependiendo usarlos bien al responder y al escalar.
+- **P3** No: tiene delante todos los importes, fechas e IDs que el código extrajo, con una capa por asunto, diga lo que diga el resumen (TS 5.1-S1, 5.1-S2). De él sigue dependiendo usarlos bien al responder y al escalar.
 - **P4** Nada campo a campo: con texto libre faltan los cinco campos que la persona necesita. Un párrafo excelente no lo cambia, porque nada garantiza que traiga el empleado, el ticket, la causa raíz, el importe y la acción recomendada; por eso el handoff es estructurado (TS 1.4-K3, 1.4-S3).
 
 En la primera ejecución con modelo, el resumen conservó el importe pero perdió la fecha de compra y el año de los plazos («hasta el 30/10»); con case facts, el handoff llegó completo. Con `handoff_libre`, faltan todos los campos que la persona necesita.
@@ -599,8 +599,8 @@ Un agente de soporte resume la conversación cada pocos turnos para no llenar el
 - **El sistema:** una [sesión](../docs/glosario.md#control-del-agente) base analiza los tickets de un empleado y recomienda un artículo de la KB para cada uno abierto. Después, el código cambia dos datos del servidor y sigue el trabajo por tres caminos: sesión nueva, [bifurcar](../docs/glosario.md#control-del-agente) y [reanudar](../docs/glosario.md#control-del-agente). El agente solo analiza: no paga ni escala.
 - **Términos propios:**
   - **Cambio entre fases:** entre la sesión base y las ramas, el código modifica el estado del servidor de esa ejecución: un ticket pasa a resuelto y un artículo queda marcado como obsoleto, con un texto de retirada. Los datos sintéticos no cambian.
-  - **Proporción obsoleta:** de los resultados de tools de la sesión base, la fracción que menciona algún elemento que cambió. El código decide con ella: a partir del 50 %, sesión nueva; por debajo, reanudar. La línea `[obsoletos]` la imprime.
-  - **Aviso de cambios:** un texto que genera el código con la lista concreta de lo que cambió (antes → después) y la instrucción de volver a consultar solo eso.
+  - **Proporción obsoleta:** de los resultados de tools de la sesión base, la fracción que menciona algún elemento que cambió. El código decide con ella entre reanudar y empezar una sesión nueva, con un umbral del 50 %. La línea `[obsoletos]` la imprime.
+  - **Aviso de cambios:** un texto que genera el código con la lista concreta de lo que cambió (antes → después).
   - **Resumen estructurado:** un texto que genera el código, no el modelo, a partir de los resultados de la base: lo que sigue valiendo, separado de lo que cambió.
   - **`resume` y `fork_session`:** en el SDK se reanuda pasando `resume=<session_id>` en las opciones; con `fork_session=True` además, se bifurca. La CLI reanuda también por nombre (`claude --resume <nombre>`) y el módulo imprime el comando equivalente.
   - **Directorio temporal:** cada ejecución usa un `cwd` nuevo, para que sus sesiones no se mezclen con las del proyecto ni con las de otras ejecuciones.
