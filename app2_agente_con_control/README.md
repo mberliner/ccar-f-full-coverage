@@ -342,9 +342,9 @@ Términos comunes en el [glosario](../docs/glosario.md): tool, `system prompt`, 
 | Tipo | Qué dice el mensaje | Casos | Acción esperada |
 | :--- | :--- | :---: | :--- |
 | **T1** · pide un humano | pide expresamente hablar con una persona | 3 | escalar de inmediato |
-| **T2** · frustración sencilla | el cliente está enfadado, pero el problema entra en lo que el agente resuelve | 3 | no escalar en la primera respuesta; si el cliente insiste en una persona (el módulo le contesta con esa frase), escalar de inmediato |
-| **T3** · vacío de política | pide algo que la política ni permite ni prohíbe | 3 | escalar, de inmediato o tras buscar en la base de conocimiento |
-| **T4** · el caso no avanza | ya probó lo que ofrece la base de conocimiento y sigue igual | 2 | escalar, de inmediato o tras buscar |
+| **T2** · frustración sencilla | el cliente está enfadado, pero el problema entra en lo que el agente resuelve | 3 | no escalar en la primera respuesta; si el cliente insiste en una persona (el módulo responde por él con una frase que lo pide), escalar de inmediato |
+| **T3** · vacío de política | pide, en tono neutro, algo que la política ni permite ni prohíbe | 3 | escalar, de inmediato o tras buscar en la base de conocimiento |
+| **T4** · el caso no avanza | cuenta, en tono neutro, que ya probó lo que ofrece la base de conocimiento y sigue igual | 2 | escalar, de inmediato o tras buscar |
 | **T5** · homónimos | firma «Laura Gómez», nombre que comparten dos empleadas | 2 | ni escalar ni elegir a una: pedir un identificador |
 
 En T2, «no escalar» incluye ofrecer resolver, pedir un dato o no decir nada; no se comprueba que se ofreciera resolver.
@@ -382,7 +382,7 @@ Con tus palabras; no hay un número que acertar. Usa las etiquetas T1 a T5 y V1 
 
 1. (guía) Con V3 (escalar cuando el mensaje muestre enfado), ¿qué tipos de caso esperas que resuelva mal? ¿En qué dirección falla cada uno: escala de más o de menos?
 2. (módulo) `--parte proxy` aplica una lista de palabras de enfado, sin modelo. ¿Esperas que falle en los mismos tipos que V3?
-3. (guía) V1 y V2 solo se diferencian en los cuatro ejemplos razonados. ¿En qué tipos de caso esperarías que V1 acierte más que V2? ¿De qué depende que unos ejemplos se noten?
+3. (guía) V1 y V2 solo se diferencian en los cuatro ejemplos razonados. ¿En qué clase de casos esperarías que unos ejemplos razonados ayuden más? ¿De qué depende que se noten?
 4. (guía) Con V4, el agente escala cuando su «CONFIANZA: N» es menor que 70. ¿Crees que esa N separará los casos que acierta de los que falla? ¿Por qué?
 5. (módulo) Con V4, ¿qué tipos de caso esperas que escale y cuáles que resuelva?
 6. (módulo) ¿Hay algún tipo de caso que esperes que salga bien con las cuatro variantes? ¿Por qué ese?
@@ -562,7 +562,7 @@ La línea `[medida]` compara el handoff con los case facts: qué campos faltan o
 - **P1** Los importes y las fechas: la sumarización progresiva tiende a condensarlos en expresiones vagas (TS 5.1-K1). Aquí el resumen conservó el importe y perdió la fecha de compra y el año de los plazos.
 - **P2** No tiene por qué: qué dato cae lo decide el modelo al redactar cada resumen. Lo estructural es que en 25 palabras no caben todos los datos de tres asuntos. Solo hay una ejecución observada, así que no se sabe cuánto varía.
 - **P3** Todos los importes, fechas e IDs que el código extrajo, con una capa por asunto (TS 5.1-S1, 5.1-S2). De él sigue dependiendo usarlos bien al responder y al escalar.
-- **P4** Nada campo a campo: con texto libre faltan los cinco campos que la persona necesita. Un párrafo excelente no lo cambia, porque nada garantiza que traiga el ID, la causa raíz, el importe y la acción recomendada; por eso el handoff es estructurado (TS 1.4-K3, 1.4-S3).
+- **P4** Nada campo a campo: con texto libre faltan los cinco campos que la persona necesita. Un párrafo excelente no lo cambia, porque nada garantiza que traiga el empleado, el ticket, la causa raíz, el importe y la acción recomendada; por eso el handoff es estructurado (TS 1.4-K3, 1.4-S3).
 
 En la primera ejecución con modelo, el resumen conservó el importe pero perdió la fecha de compra y el año de los plazos («hasta el 30/10»); con case facts, el handoff llegó completo. Con `handoff_libre`, faltan todos los campos que la persona necesita.
 </details>
@@ -652,7 +652,7 @@ La línea `[obsoletos]` y la decisión que toma el código; la `[respuesta compl
 
 - **P1** Los trata como actuales: no hizo ninguna llamada y respondió con la foto vieja. Una sesión reanudada no sabe que sus resultados caducaron si nadie se lo dice (TS 1.7-K3).
 - **P2** Consultar solo lo que cambió: dos llamadas, sin repetir las siete del análisis base. Es el reanálisis dirigido (TS 1.7-K3, 1.7-S4).
-- **P3** Reanudar, cuando la mayor parte del contexto sigue valiendo (TS 1.7-S3); empezar de nuevo con un resumen estructurado, cuando lo obsoleto es la mayoría (TS 1.7-K4). Aquí es el 33 %: reanudar.
+- **P3** Reanudar, cuando la mayor parte del contexto sigue valiendo; empezar de nuevo, cuando los resultados previos están obsoletos (TS 1.7-S3). Una sesión nueva con un resumen estructurado es más fiable que reanudar con resultados obsoletos (TS 1.7-K4). Aquí es el 33 %: reanudar.
 - **P4** No: cada fork es una rama independiente. Bifurcar sirve para explorar enfoques divergentes desde una base común (TS 1.7-K2, 1.7-S2).
 - **P5** Al reanudar, el mismo que la base: no crea una sesión, añade su turno a la original. Cada fork tiene uno propio.
 - **P6** Mayor: su coste es acumulado, suma el de la historia de la base y el suyo. La sesión nueva es la que menos cuesta. Es Producto observado (no evaluable).

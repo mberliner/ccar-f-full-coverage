@@ -46,7 +46,7 @@ Términos comunes en el [glosario](../docs/glosario.md#el-agente-y-su-bucle): Me
 
 El agente atiende el ticket ambiguo «Soy Laura Gómez y necesito que me restablezcáis la contraseña», que no trae `user_id`. Hay dos empleadas con ese nombre, así que lo razonable es leer el ticket, buscar a la persona, consultar la base de conocimiento y pedir un identificador.
 
-La **variante base** (sin `--anti`) es el bucle bien construido: sigue mientras `stop_reason` vale `"tool_use"`, devuelve cada resultado al historial y para con `"end_turn"`. Además trae cinco variantes construidas mal a propósito (`--anti`), para ver cómo falla cada error. Esto es lo que cambia en el código de cada una:
+La **variante base** (sin `--anti`) es el bucle construido como pide la guía; cuándo sigue y cuándo para es parte de lo que vas a predecir. Además trae cinco variantes construidas mal a propósito (`--anti`), para ver cómo falla cada error. Esto es lo que cambia en el código de cada una:
 
 - **`texto`:** el bucle para la primera vez que el texto de la respuesta contiene «terminado», «listo» o «hecho».
 - **`texto_asistente`:** el bucle para en cuanto una respuesta trae un bloque de texto, pida o no una tool.
@@ -89,9 +89,9 @@ La causa de la parada de cada variante y, en la base, cuántas iteraciones hubo 
 
 - **P1** No. El texto que acompaña a un `tool_use` es un comentario, no la respuesta final. El bucle mira `stop_reason`: sigue con `"tool_use"` y para con `"end_turn"` (TS 1.1-K1, 1.1-S1, 1.1-S3). Es lo que rompen `texto` y `texto_asistente`.
 - **P2** `get_user` depende de `get_ticket`, porque hasta leer el ticket no se sabe de quién se trata. `search_kb` no depende de ninguna: puede ir con cualquiera de las dos o al final.
-- **P3** No: varía entre 2 y 4. Depende de qué llamadas independientes agrupe el modelo en una misma iteración, y eso lo decide él (TS 1.1-K3).
+- **P3** No: varía entre 2 y 4. Depende de qué llamadas independientes agrupe el modelo en una misma iteración, y eso lo decide él.
 - **P4** Trae `end_turn` y ninguna petición de tool (TS 1.1-K1).
-- **P5** Se corta a mitad del trabajo, sin respuesta final. Un tope solo es una red de seguridad contra un bucle sin fin, nunca la parada principal (TS 1.1-S3).
+- **P5** Si el modelo necesita más de dos iteraciones, el bucle se corta a mitad del trabajo, sin respuesta final. Un tope solo es una red de seguridad contra un bucle sin fin, nunca la parada principal (TS 1.1-S3).
 - **P6** Repite la misma primera llamada una y otra vez, hasta la red de seguridad (12): la API no guarda estado y, sin el historial, el modelo no ve sus resultados (TS 5.1-K4, 1.1-K2).
 - **P7** Falla `get_user`, que se llama sin `user_id`. El modelo, al ver ese error en el historial, podría buscar por nombre; la secuencia fija no tiene esa rama (TS 1.1-K3).
 
@@ -190,7 +190,7 @@ Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan
 4. (módulo) Con `leer_todo` (el prompt manda leer antes todos los `.py`), ¿qué esperas que cambie más frente a `incremental` sin `--anti`: la calidad de la explicación, el número de `Read` o el coste?
 5. (guía) En `wrapper`, `api.py` reexporta `calcular_sla` con otro nombre, y hay módulos que importan ese nombre nuevo. Con `solo_nombre` (buscar solo el nombre original), ¿qué llamadores no puede encontrar la búsqueda, por construcción? ¿Qué habría que hacer antes de buscar?
 6. (módulo) ¿Esperas que la respuesta de `solo_nombre` avise de que le faltan llamadores? ¿Por qué?
-7. (guía) En `edicion`, el ancla `TIMEOUT = 30` aparece dos veces en el archivo y solo hay que cambiar la segunda. ¿Qué devuelve un `Edit` con esa ancla? ¿Qué respaldo tiene el agente con `Read` y `Write`, y qué sería un error volver a intentar?
+7. (guía) En `edicion`, el ancla `TIMEOUT = 30` aparece dos veces en el archivo y solo hay que cambiar la segunda. ¿Qué devuelve un `Edit` con esa ancla? ¿Qué respaldo tiene el agente con `Read` y `Write`?
 
 ### Ejecutar
 
@@ -220,7 +220,7 @@ Por parte, qué tools usa el agente y cuántos `Read` hace; en `wrapper`, cuánt
 - **P4** El número de `Read` (uno por cada `.py`) y el coste. La explicación sale parecida.
 - **P5** Los que importan la función por su alias: nunca escriben el nombre original. Antes de buscar hay que reunir todos los nombres con que se exporta y buscar cada uno (TS 2.5-S5).
 - **P6** No. Devuelve 2 de 4 llamadores y presenta la lista como completa: nada en la búsqueda le dice que existen otros nombres.
-- **P7** Un error, porque el ancla no es única («Found 2 matches») (TS 2.5-K3). El respaldo que nombra la guía es leer el archivo con `Read` y guardarlo entero con `Write` (TS 2.5-K4, 2.5-S3), con cuidado de no tocar la primera asignación. Repetir el mismo `Edit` es el error: el fallo no es pasajero.
+- **P7** Un error, porque el ancla no es única («Found 2 matches») (TS 2.5-K3). El respaldo que nombra la guía es leer el archivo con `Read` y guardarlo entero con `Write` (TS 2.5-K4, 2.5-S3), con cuidado de no tocar la primera asignación. Repetir el mismo `Edit` sería un error, porque el fallo no es pasajero (inferencia propia: la guía solo nombra el respaldo).
 
 | Parte / variante | Señal | Qué se rompe |
 | :--- | :--- | :--- |
@@ -353,9 +353,9 @@ La salida da, por petición, la tool esperada y la elegida, y al final la tasa d
 Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de este ejercicio:
 
 1. (guía) Sin `--anti`, el agente tiene las cuatro tools de la primera tabla, cada una descrita con su propósito, su entrada con un ejemplo, sus casos borde y sus diferencias con las demás. ¿En qué se apoya el modelo para elegir entre ellas? ¿Qué tendría que tener una petición para confundirlo aun así?
-2. (guía) Con `minimas` solo hay `analyze_content` («Analiza contenido.») y `analyze_document` («Analiza un documento.»). ¿En qué peticiones de la tabla podrá el modelo guiarse por las palabras de la propia petición y en cuáles no tendrá ninguna pista?
+2. (módulo) Con `minimas` solo hay `analyze_content` («Analiza contenido.») y `analyze_document` («Analiza un documento.»). ¿En qué peticiones de la tabla podrá el modelo guiarse por las palabras de la propia petición y en cuáles no tendrá ninguna pista?
 3. (guía) Con `palabra_clave`, las descripciones son las buenas y el prompt añade «si la petición menciona un documento, usa siempre `summarize_article`». Cuando la descripción y la regla apuntan a tools distintas, ¿qué puede pasar? ¿Qué peticiones de la tabla lo ponen a prueba?
-4. (módulo) Entre `minimas` y `palabra_clave`, ¿en cuál esperas un resultado más parecido de una repetición a otra? ¿Por qué?
+4. (módulo) Con `palabra_clave`, ¿esperas que la regla desvíe las mismas peticiones en todas las repeticiones o que cambie de una a otra? ¿Por qué?
 5. (módulo) Con `nombre_enganoso`, la tool de verificación se llama `get_ticket_status`, pero su descripción sigue diciendo que verifica afirmaciones. ¿Se guiará el modelo por el nombre o por la descripción?
 
 ### Ejecutar
@@ -381,9 +381,9 @@ La tasa de acierto y las peticiones falladas de cada variante; si repites con `-
 **Tus predicciones:**
 
 - **P1** En la descripción de cada tool, que es el mecanismo principal de selección (TS 2.1-K1); por eso una buena descripción dice propósito, entradas, ejemplos y límites (TS 2.1-K2, 2.1-S1). Para confundirlo, la petición tendría que encajar en dos descripciones a la vez. Con estas cuatro, acierta todas.
-- **P2** Tiene pista cuando la petición dice «documento» o «artículo» y eso coincide con el nombre de una tool; no la tiene en las de tickets, donde ninguna de las dos descripciones dice qué tipo de ID atiende. Descripciones ambiguas o solapadas causan *misrouting* (TS 2.1-K3).
+- **P2** Tiene pista cuando la petición dice «documento», que coincide con el nombre de `analyze_document`. No la tiene en las de tickets ni en la que pide un «artículo»: ninguna de las dos descripciones dice qué tipo de ID atiende. Es lo que la guía llama descripciones ambiguas o solapadas, que causan *misrouting* (TS 2.1-K3); cuánto falla depende del modelo (ver notas).
 - **P3** La regla del prompt puede imponerse a la descripción (TS 2.1-K4, 2.1-S4). La ponen a prueba las dos peticiones que dicen «documento» y no piden un resumen: los pasos de KB-109 y la verificación con KB-114.
-- **P4** En `palabra_clave`: la regla desvía siempre las mismas dos peticiones. En `minimas` el modelo adivina, y el resultado cambia de una repetición a otra.
+- **P4** Las mismas: con el modelo de la medida, la regla desvía en todas las repeticiones las dos peticiones que dicen «documento» y deja intacto el resto, porque es una regla fija sobre una palabra.
 - **P5** Por la descripción: acertó todas. Es una variante propia, sin respaldo en la guía, y no dio señal.
 
 Cada variante se mide con el modelo en que su señal se ve (el módulo es un banco de pruebas del mecanismo, no una comparación entre modelos):
@@ -499,7 +499,7 @@ Por variante, qué tools se repiten con la misma entrada y cuántos de esos rein
 **Tus predicciones:**
 
 - **P1** Solo `fetch_ticket_history`: su error es `transient` y reintentable, y al segundo intento responde. En los demás, la categoría y la marca de no reintentable dicen que repetir no arregla nada (TS 2.2-K2, 2.2-K4, 2.2-S1).
-- **P2** En la categoría, que separa la regla de negocio de la falta de permiso, y en el mensaje legible, que explica el cupo o a quién pedir la exportación, para que el agente pueda informar bien (TS 2.2-S2).
+- **P2** En la categoría, que separa la regla de negocio de la falta de permiso, y en el mensaje legible, que explica el cupo o a quién pedir la exportación, para que el agente pueda informar bien (TS 2.2-K2, 2.2-S1; para la regla de negocio, 2.2-S2).
 - **P3** No llegó a producirse: el modelo corrige «1001» a `EMP-1001` antes de llamar. Depende de que la descripción de la tool diga el formato.
 - **P4** Lo reintentable de lo que no lo es. Puede repetir lo que no tiene arreglo (aquí, `export_audit_log`) o rendirse ante lo pasajero. Un mensaje genérico es el anti-patrón (TS 2.2-K3).
 - **P5** Lo da por un dato: «no hay histórico». No hay segundo intento, porque nada le dice que fue un fallo. Un fallo de acceso no debe llegar como un vacío válido (TS 2.2-S4).
@@ -592,7 +592,7 @@ Con tus palabras; no hay un número que acertar. Las marcadas `(guía)` evalúan
 2. (módulo) Las seis peticiones de `scoping` son claras y cada una encaja en una sola tool básica. Con ellas, ¿qué esperas que cambie más entre 5 y 18 tools: el acierto, la tool elegida de una repetición a otra o el coste por petición?
 3. (guía) En `tool_choice`, la petición es de opinión y no necesita ninguna tool. De `auto`, `any` y el forzado, ¿qué modo deja al modelo contestar solo con texto? ¿Cuáles obligan a que la primera respuesta empiece por una tool?
 4. (guía) Con `any`, ¿quién decide qué tool se llama? ¿Y con el forzado?
-5. (guía) El módulo envía `any` o el forzado solo en el primer turno, y `auto` en los siguientes. ¿Qué pasaría si los enviara en todos los turnos?
+5. (módulo) El módulo envía `any` o el forzado solo en el primer turno, y `auto` en los siguientes. ¿Qué pasaría si los enviara en todos los turnos?
 
 ### Ejecutar
 
@@ -617,8 +617,8 @@ En `scoping`, el acierto, si la elección cambia entre repeticiones y el coste p
 - **P1** Con demasiadas tools, la selección se vuelve menos fiable (TS 2.3-K1). Se notaría con peticiones ambiguas, que encajan en varias tools.
 - **P2** El coste: cada petición carga 13 definiciones de más. El acierto no bajó con estas peticiones.
 - **P3** `auto` deja contestar con texto. `any` y el forzado obligan a empezar por una tool (TS 2.3-K4, 2.3-S5).
-- **P4** Con `any`, el modelo: se garantiza una llamada, no cuál. Con el forzado se llama la tool que fija el código (TS 2.3-S4, 2.3-S5).
-- **P5** El modelo estaría obligado a llamar a una tool también después de recibir los resultados y no podría dar su respuesta final. Por eso la tool fijada va primero y el resto sigue en turnos posteriores (TS 2.3-S4).
+- **P4** Con `any`, el modelo: se garantiza una llamada, no cuál. Con el forzado se llama la tool que fija el código (TS 2.3-K4; sus usos, en 2.3-S4 y 2.3-S5).
+- **P5** El modelo estaría obligado a llamar a una tool también después de recibir los resultados y no podría dar su respuesta final. Es una inferencia propia a partir de TS 2.3-S4, que solo dice que la tool forzada va primero y lo demás sigue en turnos posteriores.
 
 Haiku 5.5:
 

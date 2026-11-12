@@ -37,11 +37,12 @@ ni qué valor toma una señal que se pide predecir. -->
 
 Qué se le pide al agente y qué cambia en cada variante `--anti` (descripción del código de cada variante, sin su resultado):
 
-<!-- Da a cada variante y a cada tipo de caso una etiqueta corta (V1, V2…; T1, T2…) y úsala después.
-«La correcta» nunca es un nombre: suena a «la respuesta correcta». Si una predicción menciona una
+<!-- Si las predicciones comparan varios tipos de caso o más de dos variantes, dales una etiqueta corta
+(V1, V2…; T1, T2…) y úsala después (como en `app2/04`); con una o dos variantes basta el nombre de su opción.
+En una predicción, evita «la correcta» como nombre: suena a «la respuesta correcta». Si una predicción menciona una
 línea de la salida, lista aquí esas líneas con una frase cada una. -->
 
-- **V1 · `variante_a`:** qué hace distinto el código.
+- **`variante_a`:** qué hace distinto el código.
 
 ### Predice antes de ejecutar
 

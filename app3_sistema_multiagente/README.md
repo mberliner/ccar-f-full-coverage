@@ -71,7 +71,7 @@ Hay dos preguntas: la amplia por defecto («¿Qué problemas de red están tenie
 
 La salida imprime la respuesta y varias líneas `[medida]`: los subagentes invocados; las llamadas por agente y los intentos del coordinador que denegó la barrera; si hubo sintetizador, cuántos de los IDs que encontraron los analistas llegaron a su prompt, y cuáles faltan; y qué subtemas aparecen en la respuesta. Esta última línea busca las palabras en el texto final: no comprueba si el subtema se investigó.
 
-**El papel del sintetizador.** Invocarlo no es obligatorio: el coordinador puede redactar él mismo la respuesta final o encargársela al `synthesizer`, que separa la redacción de la investigación. Si lo invoca, el sintetizador solo sabe lo que el coordinador escriba en su prompt.
+**El papel del sintetizador.** Invocarlo no es obligatorio: el coordinador decide, según la pregunta, si lo necesita. Sirve para separar la redacción de la investigación.
 
 ### Predice antes de ejecutar
 
@@ -105,7 +105,7 @@ Las líneas `[medida]`: qué subagentes se invocan, cuántos hallazgos llegan al
 
 - **P1** Por el coordinador: toda la comunicación entre subagentes pasa por él (TS 1.2-K1, 1.2-S4). El sintetizador no lo ve por su cuenta: su contexto está aislado y los hallazgos hay que incluirlos en su prompt (TS 1.2-K2, 1.3-K2, 1.3-S1).
 - **P2** Solo `kb_analyst`. El coordinador elige según la pregunta en vez de recorrer siempre todo el pipeline (TS 1.2-K3, 1.2-S1), y aquí redactó él mismo.
-- **P3** La wifi y la impresora. Ningún subagente puede recuperarlas: cada uno solo recibe la consulta que le delegan. Una descomposición demasiado estrecha deja sin cubrir partes de un tema amplio (TS 1.2-K4).
+- **P3** Todo lo que no es VPN (en la medida, la wifi no apareció). Ningún subagente puede recuperarlo: cada uno solo recibe la consulta que le delegan. Una descomposición demasiado estrecha deja sin cubrir partes de un tema amplio (TS 1.2-K4).
 - **P4** De las consultas delegadas. En una repetición, la línea de subtemas dio `wifi: True` porque la respuesta decía que no había buscado la wifi: mira la palabra, no si se investigó.
 - **P5** Nada con datos: recibió 0 de 33 hallazgos y dijo que no tenía datos. No hereda lo que encontraron los analistas (TS 1.2-K2, 1.3-S1).
 - **P6** El coordinador, que sí tiene los hallazgos.
@@ -126,7 +126,7 @@ Notas:
 - **Barrera del coordinador (2026-10-27, Sonnet 5.5 + Haiku 5.5):** como en el módulo 03, `tools=["Agent"]` no oculta al coordinador las tools del servidor, y hasta ahora solo el prompt («No busques tú») le impedía usarlas. Sonda: pidiéndoselo expresamente, sin barrera llamó él mismo a `search_tickets` y obtuvo los 7 tickets; con el hook compartido (`coordinator_gate.py`) recibió el rechazo, delegó en `tickets_analyst` y el subagente buscó con normalidad. Al repetir la medida con la barrera (correcta, `estrecha` y `--pregunta simple`, una ejecución cada una), el coordinador no intentó ninguna tool del servidor (`intentos del coordinador, denegados: 0`): la barrera asegura la medida, no corrige una señal que se hubiera visto.
 - **`estrecha` y el detector de subtemas:** en esa repetición las tres consultas fueron solo de VPN (la descomposición estrecha se mantuvo), pero la línea de subtemas dio `wifi: True`, porque la respuesta decía «No he buscado otros problemas de red… como wifi o DNS». El detector busca la palabra, no si se investigó: es aproximado, y la señal fiable está en las consultas delegadas (`[llamada rN]`).
 
-**Para pensar (sin evaluación):** ¿qué cambiaría con `--pregunta simple` en `pipeline_completo`, y qué pierde `procedimental` frente a un prompt con objetivos (TS 1.3-S4)? Esas dos variantes no están en el resultado de referencia, así que no cuentan como predicción.
+**Para pensar (sin evaluación):** ¿qué cambiaría con `--pregunta simple` en `pipeline_completo`, y qué pierde `procedimental` frente a un prompt con objetivos (TS 1.3-S4)? Esas dos variantes no están en las medidas de este Paso 3, así que no cuentan como predicción.
 </details>
 
 ### Pregunta tipo examen
@@ -386,8 +386,8 @@ Por variante, las llamadas fuera de rol, las URLs que no son documentos abiertas
 
 **Tus predicciones:**
 
-- **P1** Buscar ni cargar documentos: no tiene esas tools, y eso lo fija la configuración (TS 2.3-S1). Del modelo depende que llame a `verify_fact` y lo que haga el coordinador con lo que le vuelve.
-- **P2** Que use mal tools ajenas a su especialidad, como un agente de síntesis que se pone a buscar (TS 2.3-K2). Sería más probable si le faltara información. Aquí no hubo señal: recibe todo en su prompt y no las tocó. En el examen manda la guía.
+- **P1** Ni buscar ni cargar documentos: no tiene esas tools, y eso lo fija la configuración (TS 2.3-S1). Del modelo depende que llame a `verify_fact` y lo que haga el coordinador con lo que le vuelve.
+- **P2** Que use mal tools ajenas a su especialidad, como un agente de síntesis que se pone a buscar (TS 2.3-K2). Que sea más probable cuando le falta información es una hipótesis sin comprobar. Aquí no hubo señal: recibe todo en su prompt y no las tocó. En el examen manda la guía.
 - **P3** Del modelo: la tool genérica ya no rechaza nada. No fue igual: en 2 de 3 repeticiones abrió las cuatro páginas que no son documentos y en la otra, ninguna. Por eso se cambia la tool genérica por una restringida (TS 2.3-S2).
 - **P4** Vuelven al coordinador: la tool acotada cubre lo frecuente y lo complejo sigue pasando por él (TS 2.3-K3, 2.3-S3). Aquí, 5 llamadas a `verify_fact` y 2 devueltas por complejas.
 - **P5** Menos: sin tool con la que verificar, el coordinador casi nunca invoca al sintetizador (1 de 6) y resuelve las afirmaciones él. La hipótesis de partida del módulo era la contraria.
@@ -825,7 +825,7 @@ Los caracteres de resultados de tools en el contexto del coordinador (por fase y
 
 **Tus predicciones:**
 
-- **P1** Llega lo que cada subagente devuelve y lo que el coordinador relee del scratchpad; la exploración verbosa se queda en el subagente, fuera del hilo principal (TS 5.4-K3, 5.4-S1), y los hallazgos clave sobreviven fuera del contexto (TS 5.4-K2, 5.4-S2). Como mucho, 4.106 caracteres en una fase.
+- **P1** Llega lo que cada subagente devuelve y lo que el coordinador relee del scratchpad; la exploración verbosa se queda en el subagente, fuera del hilo principal (TS 5.4-K3, 5.4-S1), y los hallazgos clave sobreviven fuera del contexto (TS 5.4-K2, 5.4-S2). Como mucho, unos 4.300 caracteres en una fase.
 - **P2** Que se degrade: respuestas menos coherentes y «patrones típicos» en lugar de lo concreto que se había descubierto (TS 5.4-K1).
 - **P3** No los perdió: 5 de 5 hechos y ningún patrón típico. La acumulación aparece (11.134 caracteres en un solo hilo); la degradación, con este tamaño, no.
 - **P4** Del estado que cada agente dejó escrito: el coordinador lee el manifest y pasa su contenido a los prompts (TS 5.4-K4, 5.4-S4). Con el manifest y el scratchpad, la reanudación hizo 0 consultas repetidas.
@@ -1003,12 +1003,12 @@ En cada ejecución, `forma válida`, `campos ausentes rellenados`, `tipo correct
 - **P2** `null`, casi siempre (1 o 2 rellenados de 21). No lo garantiza: el esquema elimina los errores de sintaxis, no los de significado (TS 4.3-K3).
 - **P3** Rechazaría un valor fuera de la lista, como `other` (pasó en 2 de 12). Pasaría sin aviso un tipo permitido que no es el suyo: el documento ilegible salió como `invoice`. Por eso el `enum` lleva `other` con un campo de detalle, y `unclear` para lo ambiguo (TS 4.3-K4, 4.3-S5).
 - **P4** `any` obliga a llamar a alguna tool y deja elegir cuál; `auto` permite contestar con texto (TS 4.3-K2). Con la tool de factura forzada, el albarán se trata como factura (5 de 12 correctos). `any` encaja cuando no se sabe de qué tipo es el documento (TS 4.3-S2).
-- **P5** Enseñan dónde está cada dato en cada estructura y con qué formato se espera, y reducen las alucinaciones en la extracción (TS 4.2-K4, 4.2-S4). Las reglas de normalización van en el prompt junto al esquema, porque los documentos no las siguen (TS 4.3-S6).
+- **P5** Enseñan dónde está cada dato en cada estructura, y reducen las alucinaciones en la extracción (TS 4.2-K4, 4.2-S4). Las reglas de normalización van en el prompt junto al esquema, porque los documentos no las siguen (TS 4.3-S6).
 - **P6** No: solo se notan si el modelo falla sin ellos. Con el modelo por defecto no hubo fechas mal con ni sin ejemplos; con `--rol-modelo enforcement`, 5 o 6 de 12 sin ejemplos y ninguna con ellos.
 - **P7** No cambió: 0 campos vacíos con y sin ejemplos. La guía da los ejemplos como remedio para los campos que salen vacíos (TS 4.2-S5); aquí no había vacíos que corregir.
 - **P8** Para asegurar que la extracción se hace antes de los pasos que la enriquecen (TS 4.3-S3).
 - **P9** No basta: que hoy lo haga no garantiza el orden; el turno forzado lo garantiza por construcción. El fallo que evita no se pudo provocar (sin señal).
-- **P10** No: 0 valores fuera del `enum` y forma válida en 12 de 12. Pero la garantía cae entonces en una categoría que no es la suya, y el tipo correcto baja de 11 a 9 de 12.
+- **P10** No: 0 valores fuera del `enum` y forma válida en 12 de 12. Pero el certificado de garantía cae entonces en una categoría que no es la suya, y el tipo correcto baja de 11 a 9 de 12: el esquema elimina los errores de sintaxis, no los de significado (TS 4.3-K3), y por eso el `enum` lleva `other` (TS 4.3-K4).
 - **P11** Garantiza la forma, es decir, que la salida cumple el esquema. No garantiza que el dato sea correcto (TS 4.3-K3).
 
 Haiku 5.5 (rol `agent`), 12 documentos, tres repeticiones salvo donde se dice:
@@ -1208,7 +1208,7 @@ Por documento, los fallos del primer intento agrupados por patrón, los reintent
 **Tus predicciones:**
 
 - **P1** No: un reintento no crea un dato que la fuente no contiene; sirve para fallos de formato o de estructura (TS 4.4-K2). El bucle distingue el caso antes de reintentar y deja el campo marcado con su causa (TS 4.4-S2).
-- **P2** Un pedido inventado, en las 3 repeticiones. El validador no lo distingue, porque tiene el formato correcto: solo lo delata la etiqueta.
+- **P2** Un valor fabricado: el reintento no crea un dato que la fuente no contiene (TS 4.4-K2). Aquí fue un pedido inventado en las 3 repeticiones, que el validador no distingue porque tiene el formato correcto: solo lo delata la etiqueta.
 - **P3** Con el error concreto sabe el campo, el valor que falló y la regla (TS 4.4-K1, 4.4-S1). Con el genérico no sabe qué falló, y repite la misma fecha.
 - **P4** `reintento_generico`: 10 u 11 reintentos con solo 1 a 3 útiles, frente a 5 a 7 casi todos útiles con el error concreto.
 - **P5** No sirve: el modelo cambió el total declarado para que cuadrara, y el conflicto desapareció sin que nadie lo marcara. Lo correcto es extraer el total declarado y el calculado y marcar `conflict_detected` (TS 4.4-K4, 4.4-S4).
@@ -1328,7 +1328,7 @@ El acierto por campo de la muestra antes de crear el lote; el orden de llegada f
 
 - **P1** Cada 4 h. Una factura que llega justo después de un envío espera un intervalo entero hasta el siguiente, y después el lote puede tardar toda la ventana: intervalo + 24 h + 2 h de margen ≤ 30 h. La frecuencia sale del plazo (TS 4.5-S2); el margen es una elección de este módulo, y sin él saldrían 6 h.
 - **P2** No: un segundo lote añade otras 24 h y se pasa del plazo. Ese trabajo cabe en batch, pero sin margen para reenviar lo que falle. La ventana es de hasta 24 h, sin garantía de latencia (TS 4.5-K1).
-- **P3** No llegan en orden. Se emparejan por `custom_id` (TS 4.5-K4): por posición, 11 de 11 documentos recibieron los datos de otro.
+- **P3** No hay que contar con el orden: cada resultado se empareja con su petición por `custom_id` (TS 4.5-K4). Producto observado (no evaluable): aquí llegaron en otro orden y, emparejados por posición, 11 de 11 documentos recibieron los datos de otro.
 - **P4** Como `succeeded`, igual que los buenos. Hay que mirar el `stop_reason`: `max_tokens` indica que la extracción está cortada.
 - **P5** Solo los documentos que fallaron, localizados por su `custom_id`, y con el cambio que haga falta: aquí, trocear el que no cupo (TS 4.5-S3).
 - **P6** Para afinar el prompt antes de procesar el volumen: sube el acierto a la primera y baja el coste de los reenvíos (TS 4.5-S4). Detecta fallos de prompt y de esquema, no de tamaño.
@@ -1447,7 +1447,7 @@ En `poblacion`: la exactitud global frente a la del peor tipo de documento y del
 - **P3** Si esa confianza está calibrada contra un conjunto de validación etiquetado, que es de donde salen los umbrales de revisión (TS 5.5-K3, 5.5-S3). Aquí la mayoría de los errores llegan con confianza de 0,85 o más.
 - **P4** No: sin ejemplos no hay evidencia de que acierte. La exactitud se comprueba segmento a segmento antes de dejar de revisar (TS 5.5-K4, 5.5-S2). Aquí esos segmentos quedan como `insufficient_data` y no se automatizan.
 - **P5** La media del documento deja pasar el campo dudoso (2 errores más); la confianza por campo lo manda a revisión. La diferencia es pequeña con esta población simulada.
-- **P6** Las de documentos ambiguos o contradictorios, aunque su confianza sea alta. Se prioriza porque la capacidad de revisión es limitada (TS 5.5-S4).
+- **P6** Los ambiguos o contradictorios, aunque su confianza sea alta. Se prioriza porque la capacidad de revisión es limitada (TS 5.5-S4).
 - **P7** Errores: si el modelo no falla, no hay nada que calibrar. Con el modelo por defecto hubo 0 errores en 153 valores.
 - **P8** En las fechas: casi todos los errores son de formato de fecha y llegan con confianza de 0,85 o más; la banda más alta acierta el 82,9 % y declara el 100 %.
 
@@ -1665,7 +1665,7 @@ En `revision`: qué fallos sembrados encuentra (A a F, el segundo commit añade 
 - **P5** Puede perderse o salir en otra categoría: C faltó en 1 de 5. La marca falsa del comentario desaparece (0 de 5), pero a veces se va también el acierto.
 - **P6** Lo que ya se publicó: sin la lista repitió B, C y D en 3 de 3. Hay que darle los hallazgos anteriores con la orden de informar solo de lo nuevo o de lo no resuelto (TS 3.6-S3). Esta parte se midió antes de las últimas correcciones.
 - **P7** Se evita proponer escenarios que la suite ya cubre (TS 3.6-S4). El `CLAUDE.md` es por donde llega el contexto del proyecto en CI, y documentar ahí los estándares mejora los tests y reduce los que aportan poco (TS 3.6-K3, 3.6-S5). En la medida, sin los tests existentes no hubo repetidos (sin diferencia), y sin los estándares salieron más tests (9 a 12 frente a 7 u 8).
-- **P8** Para analizar de forma sistemática qué patrones descartan los desarrolladores, y mejorar los criterios con eso (TS 4.4-K3, 4.4-S3).
+- **P8** Para analizar de forma sistemática qué patrones descartan los desarrolladores (TS 4.4-K3, 4.4-S3).
 
 Sonnet 5.5 (rol `reviewer`), `claude -p` aislado. **Las cifras de referencia son las de después de las correcciones C4** (2026-11-07, 5 ejecuciones por variante, la misma puntuación en toda la batería): cada revisión corre sobre el árbol del commit que revisa, un escenario de test se compara con lo que espera y el símbolo se compara por nombre completo. Las cifras anteriores están más abajo, rotuladas «antes», y **no son comparables**: el revisor del primer commit leía el árbol del segundo, donde A ya estaba arreglado, la puntuación era otra, el prompt de todas las variantes era otro (la línea de `bug` citaba el docstring y el ejemplo de `minor` era otro) y los datos tenían `TIMEOUT` duplicado (ahora `NOTIF_TIMEOUT`).
 
@@ -1917,10 +1917,10 @@ Por repetición: qué fallos sembrados encontró cada pasada, cuáles faltan, fa
 **Tus predicciones:**
 
 - **P1** El razonamiento con el que generó el código. Con él, es menos probable que ponga en duda sus propias decisiones: la sesión que generó el código revisa sus cambios peor que una instancia independiente (TS 4.6-K1, 3.6-K4).
-- **P2** La instancia independiente (TS 4.6-K2, 4.6-S1). Aquí no hubo señal: las tres ramas encontraron los cinco fallos, así que la medida está en su techo. En el examen manda la guía.
+- **P2** La instancia independiente (TS 4.6-K2, 4.6-S1). Aquí no hubo señal: en la batería anterior a las últimas correcciones, las tres ramas encontraron los cinco fallos, así que la medida está en su techo. En el examen manda la guía.
 - **P3** Nada: tiene el mismo contexto que antes. La frase no cambió lo que encontró.
 - **P4** La pasada por archivo ve lo local (A, B y C); el flujo de datos entre archivos (D y F) necesita la de integración. Partir así una revisión grande evita diluir la atención (TS 4.6-K3, 4.6-S2, 1.6-K2, 1.6-S2). Aquí, D salió por archivo en 3 de 5 y F en 1 de 5; la integración completó el resto.
-- **P5** No los perdió: 24 de 25, con la mitad de coste. Con un diff de este tamaño no hay diferencia; la guía habla de revisiones grandes.
+- **P5** No los perdió: 24 de 25 (el que faltó una vez fue C, no D ni F), con la mitad de coste. Con un diff de este tamaño no hay diferencia; la guía habla de revisiones grandes.
 - **P6** Para enrutar la revisión de forma calibrada (TS 4.6-S3). Para fiarse hay que comprobar esa confianza contra hallazgos etiquetados: aquí el hueco de calibración fue de 0,129 a 0,215.
 
 Sonnet 5.5 (rol `reviewer`), `claude -p` aislado. Hay tres mediciones, cada una con su versión del código; **la de referencia es la última**, después de las correcciones C4 (2026-11-07). En ella la sesión generadora escribió exactamente el cambio dado (93 líneas, cuatro archivos) en las dos ramas.
