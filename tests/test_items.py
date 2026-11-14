@@ -143,9 +143,30 @@ def test_item_for_prefers_the_short_check_that_names_the_vignette():
     assert item_for("TS 2.5-K3", "app1/02").id == "app1/02:C1"
 
 
-def test_item_for_falls_back_to_the_first_question_of_the_module():
-    # Una viñeta que el módulo indicado no cita (la persona anotó otro módulo): se repasa con su pregunta.
-    assert item_for("TS 2.5-K3", "app1/01").id == "app1/01:P1"
+def test_item_for_goes_to_the_destination_when_the_noted_module_does_not_cover_the_vignette():
+    # La persona anotó un módulo que no trata la viñeta (un despiste, o el fallo salió en otra práctica).
+    # Repasarla con la pregunta de ese módulo sería preguntar otra cosa: se usa el módulo que la introduce.
+    assert item_for("TS 2.5-K3", "app1/01").id == "app1/02:C1"
+    item = item_for("TS 5.3-K1", "app1/01")
+    assert item.source == "app3/04" and "TS 5.3-K1" in item.vignettes
+
+
+def test_item_for_d3_only_keeps_vignettes_of_domain_three():
+    # Una viñeta de otro dominio anotada con módulo «D3»: la comprobación «de su TS» en D3 sería de otro
+    # tema (TS 1.2 → d3:C2, que trata de comandos y skills). Se repasa con su destino.
+    item = item_for("TS 1.2-K1", "D3")
+    assert item.source == "app3/01" and "TS 1.2-K1" in item.vignettes
+
+
+@pytest.mark.parametrize("vignette, noted", sorted((v, s) for v in destinations() for s in ("app1/01", "D3", "app3/11")))
+def test_the_review_item_always_covers_the_vignette_whatever_module_was_noted(vignette, noted):
+    """Con cualquier módulo anotado, el ítem cita la viñeta o, en D3, es la comprobación de su TS."""
+    item = item_for(vignette, noted)
+    if item.source == "d3":
+        assert vignette.startswith("TS 3."), f"{vignette} acaba en {item.id}"
+        assert vignette in item.vignettes or item.id in {f"d3:C{vignette[5]}", "d3:P1", "d3:P2", "d3:P3"}
+    else:
+        assert vignette in item.vignettes, f"{vignette} anotada en {noted} acaba en {item.id}"
 
 
 def test_item_for_d3_uses_the_short_check_of_its_task_statement():

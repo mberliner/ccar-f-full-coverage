@@ -154,7 +154,7 @@ def test_cli_gives_the_context_a_question_and_its_answer(capsys):
     assert capsys.readouterr().out == case_answer("E3", 2)
 
 
-@pytest.mark.parametrize("args", [["simulacion", "E9"], ["simulacion", "E3", "99"], ["simulacion", "E3", "dos"], ["simulacion", "E3", "--respuesta"]])
+@pytest.mark.parametrize("args", [["simulacion", "E9"], ["simulacion", "E3", "99"], ["simulacion", "E3", "dos"], ["simulacion", "E3", "--respuesta"], ["simulacion", "--respuesta"]])
 def test_cli_reports_a_bad_request_without_a_traceback(args, capsys):
     # La respuesta se pide de una pregunta concreta: `--respuesta` sin número no vuelca las del caso.
     assert main(args) == 2
