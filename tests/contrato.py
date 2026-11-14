@@ -27,9 +27,15 @@ CONTRACTS: dict[str, list[tuple[str, list[str]]]] = {
     "3.2": [("harness.items", ["mixed_selection"])],
     "3.3": [("harness.narrador", ["D3_PHASES", "d3_phase"])],
     "3.4": [("harness.hojas_repaso", ["build_sheets", "main"])],
+    # De la revisión de 3.7: lo que la skill necesita del código para no revelar ni descartar filas.
+    "3.7-codigo": [
+        ("harness.repaso", ["vignette_of"]),
+        ("harness.items", ["blind_statement"]),
+        ("harness.simulaciones", ["UnknownCase", "list_cases", "case_context", "case_question", "case_answer"]),
+    ],
 }
 # Paquetes sin implementar. Al cerrar un paquete se quita de aquí, en el mismo cambio.
-PENDING: set[str] = set()
+PENDING: set[str] = {"3.7-codigo"}
 
 
 def missing(package: str) -> list[str]:
