@@ -50,6 +50,15 @@ Si prefieres ir por viñeta, `CONCEPTOS.md` dice qué módulo introduce cada una
 
 **Documentos de apoyo.** El [glosario](docs/glosario.md), cuando un término no quede claro; [tipos de señal](docs/tipos-de-senal.md), antes de decidir si ejecutas una parte en modo ligero (dice si esa ejecución enseña algo); y tu `FALLOS.md`, para repasar lo anotado al cerrar cada app y antes del examen.
 
+**Repaso y práctica con `/practica-guiada`.** Además de los módulos, la skill guía cuatro prácticas que no revelan la respuesta antes de que contestes:
+
+- `/practica-guiada repaso`: vuelve a preguntarte lo que anotaste en `FALLOS.md` cuando toca (1, 3, 7 y 14 días después del fallo o del último acierto). Al abrir la skill sin argumento te lo ofrece si hay algo pendiente.
+- `/practica-guiada mixto` (o `mixto D2`): preguntas de módulos distintos sin decir de cuál son, como en el examen. Úsala al cerrar una app o cuando ya hayas recorrido varias.
+- `/practica-guiada d3`: las comprobaciones y preguntas de [D3](d3_claude_code/README.md), por fases.
+- `/practica-guiada simulacion` (o `simulacion E3`): un caso de [simulación por escenario](docs/simulaciones-por-escenario.md), con contexto compartido y 8 a 10 preguntas cronometradas. Al final del curso, cuando quieras practicar el formato del examen.
+
+Para un vistazo rápido por dominio (viñeta, idea, trampa y módulo), están las [hojas de repaso](docs/repaso/).
+
 **Tiempo orientativo.** Unos 10 minutos por módulo sin ejecutar y unos 25 ejecutando las variantes.
 
 **Coste.** Los tests no llaman al modelo y no cuestan nada. Las ejecuciones con modelo sí, y todas llevan un tope (`max_budget_usd`); `--budget` lo baja para una prueba barata, salvo en los módulos que miden una tasa, donde un tope menor puede cortar repeticiones (lo avisa su «Ejecutar»). La credencial se prepara en [Configurar la credencial](#4-configurar-la-credencial-solo-para-ejecuciones-con-modelo).

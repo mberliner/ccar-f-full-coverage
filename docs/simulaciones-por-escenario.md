@@ -52,6 +52,7 @@ El validador comprueba la estructura (cabecera, secciones, restricciones, numera
 - **Antes de abrir ninguna respuesta,** contesta todo el caso. Después abre las respuestas y revisa cada fallo con las viñetas que cita.
 - **Informe por dominio:** el porcentaje acertado en cada dominio, que es lo que informa la guía en su informe de resultados. No se calcula la nota escalada (la guía usa una escala de 100 a 1.000 con corte en 720), porque con unas pocas preguntas no se puede reproducir.
 - **Anota los fallos** en tu `FALLOS.md`, con la viñeta de cada pregunta.
+- **Con la práctica guiada:** `/practica-guiada simulacion` lista los casos y `/practica-guiada simulacion E<n>` presenta uno con este ritmo: el contexto, todas las preguntas sin su TS y, al final, las respuestas. Por debajo usa `uv run python -m harness.narrador simulacion`.
 
 ## La simulación completa
 
@@ -68,5 +69,4 @@ Con las 240 viñetas entregadas, una simulación completa son 4 casos de examen 
 ## Qué falta
 
 - **La revisión de los casos.** Los seis casos de estudio están escritos; falta que una instancia distinta de la que los escribió los contraste con la guía (regla 6).
-- **Presentarlos con la práctica guiada.** `practica-guiada` narra módulos; para un caso hay que definir cómo se presentan varias preguntas con contexto compartido. No está hecho.
 - **Los casos de examen completo.** Ninguno escrito; ya no dependen de la cobertura.
