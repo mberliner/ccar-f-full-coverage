@@ -96,6 +96,13 @@ def test_cli_lists_item_ids_without_statements_or_answers(capsys):
     assert "narrador item" in out, "dice cómo pedir cada pregunta"
 
 
+def test_cli_does_not_name_the_vignettes_of_each_item(capsys):
+    # Mezclar sirve para reconocer de qué trata cada pregunta: la lista no puede decirlo antes de leerla.
+    assert main(["mixto", "-n", "8", "--semilla", "7"]) == 0
+    out = capsys.readouterr().out
+    assert "TS " not in out, "la lista de `mixto` solo lleva ids"
+
+
 def test_cli_keeps_the_order_of_the_selection(capsys):
     main(["mixto", "-n", "6", "--semilla", "11"])
     out = capsys.readouterr().out

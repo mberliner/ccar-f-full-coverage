@@ -15,7 +15,9 @@ formato de los README (eso es de `tests/test_readme_modulos.py`, `tests/test_com
 y `tests/test_d3_comprobaciones.py`). Cuál es la respuesta correcta lo dice el README, no este módulo.
 """
 
+import random
 import re
+from collections import Counter
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -190,6 +192,39 @@ def find_item(text: str, root: Path = ROOT) -> Item:
         if item.id == wanted:
             return item
     raise UnknownItem(f"no existe el ítem {wanted}")
+
+
+# --- Práctica mezclada -------------------------------------------------------------------
+
+def mixed_selection(n: int = 10, domain: str | None = None, seed: int | None = None, root: Path = ROOT) -> list[Item]:
+    """N ítems con viñetas, sorteados con semilla y sin dos seguidos del mismo origen mientras se pueda.
+
+    El sorteo es uniforme entre los ítems disponibles (de un dominio, si se pide). Si hay menos de N,
+    se entregan todos. Un ítem sin viñetas (`app2/03:P1`) no practica la guía y nunca entra.
+    """
+    if n < 1:
+        raise ValueError(f"-n tiene que ser al menos 1 (recibido {n})")
+    wanted = None
+    if domain is not None:
+        wanted = domain.strip().upper()
+        if not re.fullmatch(r"D[1-5]", wanted):
+            raise ValueError(f"«{domain}» no es un dominio: usa D1 a D5")
+    pool = [item for item in all_items(root) if item.vignettes and (wanted is None or wanted in item.domains)]
+    rng = random.Random(seed)
+    chosen = rng.sample(pool, min(n, len(pool)))
+
+    # Orden: en cada paso, del origen con más ítems por colocar que no sea el anterior (así nunca se
+    # queda un origen grande para el final); si solo queda el anterior, se repite antes que recortar.
+    ordered: list[Item] = []
+    while chosen:
+        remaining = Counter(item.source for item in chosen)
+        previous = ordered[-1].source if ordered else None
+        options = [item for item in chosen if item.source != previous] or chosen
+        top = max(remaining[item.source] for item in options)
+        pick = next(item for item in options if remaining[item.source] == top)
+        chosen.remove(pick)
+        ordered.append(pick)
+    return ordered
 
 
 def source_of(text: str | None) -> str | None:

@@ -393,6 +393,28 @@ def repaso_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def mixto_command(args: argparse.Namespace) -> int:
+    """`mixto [--dominio Dn] [-n N] [--semilla S]`: ids de preguntas de módulos distintos, sin enunciados."""
+    import random
+
+    from harness.items import mixed_selection
+
+    seed = args.semilla if args.semilla is not None else random.randrange(1_000_000)
+    try:
+        selection = mixed_selection(n=args.n, domain=args.dominio, seed=seed)
+    except ValueError as error:
+        print(f"[narrador] {error}", file=sys.stderr)
+        return 2
+    scope = f" · {args.dominio.upper()}" if args.dominio else ""
+    print(f"# Práctica mezclada{scope}\n")
+    print(f"semilla: {seed}\n")
+    for item in selection:
+        # Solo el id: las viñetas delatarían el tema antes de leer la pregunta.
+        print(f"- {item.id}")
+    print("\nCada pregunta: `uv run python -m harness.narrador item <id>`; su respuesta, con `--respuesta`.")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     # La salida ya va en UTF-8: lo fija `harness/__init__.py` al importar el paquete.
     parser =argparse.ArgumentParser(description="Fases de los módulos para /practica-guiada.")
@@ -407,11 +429,16 @@ def main(argv: list[str] | None = None) -> int:
     item_parser = commands.add_parser("item", help="una pregunta o comprobación corta por id, p. ej. app1/02:C1")
     item_parser.add_argument("id")
     item_parser.add_argument("--respuesta", action="store_true", help="muestra su respuesta en vez del enunciado")
+    mixto_parser = commands.add_parser("mixto", help="práctica mezclada: ids de preguntas de módulos distintos")
+    mixto_parser.add_argument("--dominio", help="solo un dominio, D1 a D5")
+    mixto_parser.add_argument("-n", type=int, default=10, help="cuántas (por defecto 10)")
+    mixto_parser.add_argument("--semilla", type=int, help="repite una tanda anterior")
     args = parser.parse_args(argv)
 
-    if args.command in ("repaso", "item"):
+    if args.command in ("repaso", "item", "mixto"):
         # Lazy: `harness.items` importa este módulo, así que no puede importarse arriba.
-        return item_command(args) if args.command == "item" else repaso_command(args)
+        handlers = {"item": item_command, "repaso": repaso_command, "mixto": mixto_command}
+        return handlers[args.command](args)
     if args.command == "menu":
         print(menu(), end="")
         return 0
