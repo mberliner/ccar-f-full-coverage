@@ -35,7 +35,7 @@ CONTRACTS: dict[str, list[tuple[str, list[str]]]] = {
     ],
 }
 # Paquetes sin implementar. Al cerrar un paquete se quita de aquí, en el mismo cambio.
-PENDING: set[str] = {"3.7-codigo"}
+PENDING: set[str] = set()
 
 
 def missing(package: str) -> list[str]:

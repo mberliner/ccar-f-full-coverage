@@ -18,9 +18,12 @@ persona), no escribe nada y no guarda copia del contenido: lo lee cada vez de
 los README, que siguen siendo la única fuente. Del `.env` solo mira si existe;
 nunca muestra su contenido ni el de `ANTHROPIC_API_KEY`. D3 no tiene formato de
 módulo: expone solo las cuatro fases de la sección 4 de su README (`d3_phase`).
-Además lee `FALLOS.md` para `repaso`, saca ítems sueltos con `item` y sortea
-preguntas de módulos distintos con `mixto`; la respuesta de un ítem sale solo
-con `--respuesta`, y `repaso` y `mixto` listan ids, nunca enunciados.
+Además lee `FALLOS.md` para `repaso`, saca ítems sueltos con `item` (con `--ciego`,
+sin el rótulo de viñeta, para la práctica mezclada), sortea preguntas de módulos
+distintos con `mixto` y entrega los casos de `simulaciones/` por partes con
+`simulacion` (contexto, una pregunta, su respuesta aparte). La respuesta de un
+ítem sale solo con `--respuesta`, y `repaso` y `mixto` listan ids, nunca
+enunciados; `mixto` ni siquiera las viñetas.
 """
 
 import argparse
@@ -354,6 +357,10 @@ def menu(root: Path = ROOT) -> str:
             )
         lines.append("")
     lines.append(
+        "Simulaciones por escenario: `simulacion` lista los casos; `simulacion E<n>` da el contexto, "
+        "`simulacion E<n> <N>` una pregunta y `--respuesta` su respuesta.\n"
+    )
+    lines.append(
         "D3 (configuración de Claude Code): `fase d3 <fase>` con comprobaciones, soluciones, pregunta y respuesta "
         "(sección 4). Las secciones 1 a 3 no se narran: se leen en `d3_claude_code/README.md`."
     )
@@ -393,14 +400,42 @@ def setup_report(root: Path = ROOT, environ: Mapping[str, str] | None = None) ->
 
 def item_command(args: argparse.Namespace) -> int:
     """`item <id> [--respuesta]`: el enunciado solo, o su respuesta; la revelación la decide este código."""
-    from harness.items import find_item
+    from harness.items import blind_statement, find_item
 
     try:
         item = find_item(args.id)
     except ValueError as error:
         print(f"[narrador] {error}. Los ids salen de `repaso` y `mixto`.", file=sys.stderr)
         return 2
-    print(item.answer if args.respuesta else item.statement, end="" if (item.answer if args.respuesta else item.statement).endswith("\n") else "\n")
+    # `--ciego` solo recorta el enunciado: con la respuesta la viñeta ya no es un secreto.
+    text = item.answer if args.respuesta else (blind_statement(item) if args.ciego else item.statement)
+    print(text, end="" if text.endswith("\n") else "\n")
+    return 0
+
+
+def simulacion_command(args: argparse.Namespace) -> int:
+    """`simulacion [E<n> [N] [--respuesta]]`: lista de casos, contexto de un caso, una pregunta o su respuesta."""
+    from harness.simulaciones import UnknownCase, case_answer, case_context, case_question, list_cases
+
+    try:
+        if args.caso is None:
+            for code, title, size in list_cases():
+                print(f"- {code} · {title} · {size} preguntas")
+            print("\nContexto: `simulacion E<n>`; una pregunta: `simulacion E<n> <N>`; su respuesta: `simulacion E<n> <N> --respuesta`.")
+            return 0
+        if args.numero is None:
+            if args.respuesta:
+                raise UnknownCase("la respuesta se pide de una pregunta concreta: simulacion E<n> <N> --respuesta")
+            print(case_context(args.caso), end="")
+            return 0
+        try:
+            number = int(args.numero)
+        except ValueError:
+            raise UnknownCase(f"«{args.numero}» no es un número de pregunta") from None
+        print((case_answer if args.respuesta else case_question)(args.caso, number), end="")
+    except UnknownCase as error:
+        print(f"[narrador] {error}", file=sys.stderr)
+        return 2
     return 0
 
 
@@ -478,15 +513,20 @@ def main(argv: list[str] | None = None) -> int:
     item_parser = commands.add_parser("item", help="una pregunta o comprobación corta por id, p. ej. app1/02:C1")
     item_parser.add_argument("id")
     item_parser.add_argument("--respuesta", action="store_true", help="muestra su respuesta en vez del enunciado")
+    item_parser.add_argument("--ciego", action="store_true", help="enunciado sin el rótulo de viñeta (práctica mezclada)")
+    sim_parser = commands.add_parser("simulacion", help="casos de simulaciones/: sin argumentos, la lista; con E<n>, su contexto; con N, la pregunta")
+    sim_parser.add_argument("caso", nargs="?", help="E1 a E6")
+    sim_parser.add_argument("numero", nargs="?", help="número de pregunta")
+    sim_parser.add_argument("--respuesta", action="store_true", help="la respuesta de esa pregunta, con su TS")
     mixto_parser = commands.add_parser("mixto", help="práctica mezclada: ids de preguntas de módulos distintos")
     mixto_parser.add_argument("--dominio", help="solo un dominio, D1 a D5")
     mixto_parser.add_argument("-n", type=int, default=10, help="cuántas (por defecto 10)")
     mixto_parser.add_argument("--semilla", type=int, help="repite una tanda anterior")
     args = parser.parse_args(argv)
 
-    if args.command in ("repaso", "item", "mixto"):
+    if args.command in ("repaso", "item", "mixto", "simulacion"):
         # Lazy: `harness.items` importa este módulo, así que no puede importarse arriba.
-        handlers = {"item": item_command, "repaso": repaso_command, "mixto": mixto_command}
+        handlers = {"item": item_command, "repaso": repaso_command, "mixto": mixto_command, "simulacion": simulacion_command}
         return handlers[args.command](args)
     if args.command == "menu":
         print(menu(), end="")

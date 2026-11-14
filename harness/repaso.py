@@ -1,6 +1,7 @@
 """Repaso de fallos: lee la tabla de `FALLOS.md`, calcula cuándo vence cada fila y arma la cola de repaso.
 
-PROPÓSITO: leer las filas de `FALLOS.md` (con las columnas «Fecha» y «Repasos» si las tiene), decidir
+PROPÓSITO: leer las filas de `FALLOS.md` (con las columnas «Fecha» y «Repasos» si las tiene; de la celda
+«Viñeta» escrita a mano sale una sola viñeta, `vignette_of`), decidir
 qué filas ☐ tocan hoy con intervalos crecientes (1, 3, 7 y 14 días) y asociar cada viñeta con el ítem
 de `harness/items.py` con el que se repasa.
 
@@ -8,7 +9,7 @@ POR QUÉ EXISTE: hasta ahora nada leía `FALLOS.md`. El repaso espaciado necesit
 sin que la persona lo calcule. Se guardan fechas y no un contador para contar cada intervalo desde el
 último repaso real.
 
-QUÉ NO HACE: no escribe en `FALLOS.md` (quien anota es la persona o la skill), no migra una tabla
+QUÉ NO HACE: no reparte una fila entre varias viñetas (se repasa con la primera), no escribe en `FALLOS.md` (quien anota es la persona o la skill), no migra una tabla
 antigua (la lee tal cual, con las columnas que tenga: sin «Fecha» la fila vence ya) y no muestra
 enunciados ni respuestas: de eso se encarga `narrador item`.
 """
@@ -24,6 +25,8 @@ INTERVALS = (1, 3, 7, 14)
 DONE_MARK = "☑"
 ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
 RULE_CELL = re.compile(r":?-{3,}:?")
+FULL_VIGNETTE = re.compile(r"TS \d\.\d-[KS]\d")
+TASK_STATEMENT = re.compile(r"TS \d\.\d")
 
 
 @dataclass(frozen=True)
@@ -55,6 +58,19 @@ def _read_date(text: str) -> date | None:
         return None
 
 
+def vignette_of(cell: str) -> str:
+    """La viñeta que se repasa de una celda «Viñeta» escrita a mano.
+
+    La primera viñeta completa (`TS 3.5-K4 / S5` → `TS 3.5-K4`); si solo hay task statements
+    (`TS 5.5 (afín…)` → `TS 5.5`), la primera; si no hay ninguna, la celda tal cual.
+    """
+    full = FULL_VIGNETTE.search(cell)
+    if full:
+        return full.group(0)
+    ts = TASK_STATEMENT.search(cell)
+    return ts.group(0) if ts else cell.strip()
+
+
 def _cells(line: str) -> list[str]:
     return [cell.strip() for cell in line.strip().strip("|").split("|")]
 
@@ -81,7 +97,7 @@ def parse_failures(text: str) -> list[Failure]:
             parsed for parsed in (_read_date(value) for value in ISO_DATE.findall(cell("Repasos"))) if parsed
         )
         failures.append(
-            Failure(cell("Viñeta"), cell("Módulo"), _read_date(cell("Fecha")), reviews, DONE_MARK in cell("Estado"))
+            Failure(vignette_of(cell("Viñeta")), cell("Módulo"), _read_date(cell("Fecha")), reviews, DONE_MARK in cell("Estado"))
         )
     return failures
 

@@ -10,7 +10,8 @@ mezclar preguntas de módulos distintos hace falta sacar una sola pregunta, sin 
 demás. Los README siguen siendo la única fuente: el ítem se lee de ellos y no se guarda copia (solo
 una caché en memoria que se invalida cuando cambia algún README).
 
-QUÉ NO HACE: no llama al modelo, no escribe nada y no juzga el contenido de las preguntas ni el
+QUÉ NO HACE: no llama al modelo, no escribe nada, no quita el rótulo de viñeta salvo en
+`blind_statement` (para la práctica mezclada) y no juzga el contenido de las preguntas ni el
 formato de los README (eso es de `tests/test_readme_modulos.py`, `tests/test_comprobaciones_cortas.py`
 y `tests/test_d3_comprobaciones.py`). Cuál es la respuesta correcta lo dice el README, no este módulo.
 """
@@ -32,6 +33,7 @@ CHECK_TITLE = re.compile(r"^\*\*C(\d+) · (TS [^*]+?)\.\*\* ", re.MULTILINE)
 ITEM_ID = re.compile(r"(app\d+/\d{1,2}|d3):([pc])(\d+)")
 SOURCE = re.compile(r"(app\d+)[/ ](\d{1,2})|\bd3\b")
 VIGNETTE_RUN = re.compile(r"TS (\d\.\d)-([KS]\d)((?:(?:, | y )(?:\d\.\d-)?[KS]\d)*)")
+TASK_ONLY = re.compile(r"TS \d\.\d")
 CONCEPT_ROW = re.compile(r"^\| (TS \d\.\d-[KS]\d) \| (\S+) \| ☑ \|", re.MULTILINE)
 
 
@@ -194,6 +196,23 @@ def find_item(text: str, root: Path = ROOT) -> Item:
     raise UnknownItem(f"no existe el ítem {wanted}")
 
 
+LABEL = re.compile(r"^\*\*([CP]\d+) · [^*]+?\.\*\* ")
+D3_CHECK_TITLE = re.compile(r"\A(?:TS \d\.\d · [^\n]*)\n+")
+D3_QUESTION_TITLE = re.compile(r"\A(Pregunta \d+) \(TS [^)\n]*\)")
+
+
+def blind_statement(item: Item) -> str:
+    """El enunciado sin el rótulo de viñeta, para la práctica mezclada.
+
+    `**C1 · TS 2.5-K3, K4, S3.** …` → `**C1.** …`; en D3, sin la línea de título `TS 3.x · …` de una
+    comprobación y con `Pregunta N` a secas en una integrada. La prosa de la pregunta no se toca.
+    """
+    text = item.statement
+    if item.source == "d3":
+        return D3_QUESTION_TITLE.sub(r"\1", D3_CHECK_TITLE.sub("", text, count=1), count=1)
+    return LABEL.sub(r"**\1.** ", text, count=1)
+
+
 # --- Práctica mezclada -------------------------------------------------------------------
 
 def mixed_selection(n: int = 10, domain: str | None = None, seed: int | None = None, root: Path = ROOT) -> list[Item]:
@@ -235,6 +254,11 @@ def source_of(text: str | None) -> str | None:
     return "d3" if match.group(1) is None else f"{match.group(1)}/{int(match.group(2)):02d}"
 
 
+def introduced(root: Path = ROOT) -> list[str]:
+    """Las viñetas introducidas (☑) de `CONCEPTOS.md`, en su orden."""
+    return [found for found, _ in CONCEPT_ROW.findall((root / "CONCEPTOS.md").read_text(encoding="utf-8"))]
+
+
 def destination(vignette: str, root: Path = ROOT) -> str | None:
     """El origen que `CONCEPTOS.md` asigna a una viñeta introducida (`appN/NN` o `d3`)."""
     rows = dict(CONCEPT_ROW.findall((root / "CONCEPTOS.md").read_text(encoding="utf-8")))
@@ -247,8 +271,15 @@ def item_for(vignette: str, source: str | None = None, root: Path = ROOT) -> Ite
 
     Por este orden: la comprobación corta del origen cuyo título la nombra; un ítem del origen cuya
     respuesta la cita; la primera pregunta del origen (en D3, la comprobación de su TS). Sin origen,
-    o con uno ilegible o desconocido, se usa el destino de `CONCEPTOS.md`.
+    o con uno ilegible o desconocido, se usa el destino de `CONCEPTOS.md`. Una TS a secas (`TS 5.5`) se resuelve como su primera
+    viñeta introducida.
     """
+    if TASK_ONLY.fullmatch(vignette.strip()):
+        # Solo la task statement: se resuelve como su primera viñeta introducida en CONCEPTOS.md.
+        first = next((found for found in introduced(root) if found.startswith(vignette.strip() + "-")), None)
+        if first is None:
+            raise UnknownItem(f"la task statement «{vignette}» no tiene viñetas introducidas en CONCEPTOS.md")
+        vignette = first
     items = all_items(root)
     sources = {item.source for item in items}
     fallback = destination(vignette, root)
