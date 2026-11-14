@@ -17,7 +17,10 @@ QUÉ NO HACE: no llama al modelo ni ejecuta los módulos (el gasto lo decide la
 persona), no escribe nada y no guarda copia del contenido: lo lee cada vez de
 los README, que siguen siendo la única fuente. Del `.env` solo mira si existe;
 nunca muestra su contenido ni el de `ANTHROPIC_API_KEY`. D3 no tiene formato de
-módulo y queda fuera de las fases.
+módulo: expone solo las cuatro fases de la sección 4 de su README (`d3_phase`).
+Además lee `FALLOS.md` para `repaso`, saca ítems sueltos con `item` y sortea
+preguntas de módulos distintos con `mixto`; la respuesta de un ítem sale solo
+con `--respuesta`, y `repaso` y `mixto` listan ids, nunca enunciados.
 """
 
 import argparse
@@ -268,6 +271,49 @@ def phase(module: Module, name: str) -> str:
     )
 
 
+# --- D3 -------------------------------------------------------------------------------
+
+D3_PHASES = ("comprobaciones", "soluciones", "pregunta", "respuesta")
+
+
+def d3_blocks(root: Path = ROOT) -> list[tuple[str, str]]:
+    """[(título del `####`, cuerpo)] de la sección 4 del README de D3, en orden."""
+    text = (root / "d3_claude_code" / "README.md").read_text(encoding="utf-8").split("\n## 4 · ", 1)[1]
+    blocks: list[tuple[str, str]] = []
+    collecting = False
+    for line in text.splitlines():
+        if line.startswith("#### "):
+            blocks.append((line[5:].strip(), ""))
+            collecting = True
+        elif line.startswith("## ") or line.startswith("### "):
+            collecting = False
+        elif collecting:
+            title, body = blocks[-1]
+            blocks[-1] = (title, body + line + "\n")
+    return blocks
+
+
+def d3_phase(name: str, root: Path = ROOT) -> str:
+    """Una fase de D3: `comprobaciones` y `soluciones` (4.1, una por TS) o `pregunta` y `respuesta` (4.2)."""
+    if name not in D3_PHASES:
+        raise ValueError(f"D3 no tiene la fase «{name}»: usa una de {', '.join(D3_PHASES)}")
+    short = name in ("comprobaciones", "soluciones")
+    answers = name in ("soluciones", "respuesta")
+    out = []
+    for title, body in d3_blocks(root):
+        if title.startswith("TS ") != short:
+            continue
+        if answers:
+            # Cada respuesta lleva el título de su pregunta: sin él, varias letras seguidas no se pueden cotejar.
+            # Solo el texto de la respuesta, sin las etiquetas del plegado (como la fase `respuesta` de un módulo).
+            block = DETAILS.search(body)
+            out.append(f"### {title}\n\n{block.group(2).strip() if block else ''}\n")
+        else:
+            question = "\n".join(line for line in strip_details(body).splitlines() if line.strip() != "---")
+            out.append(f"### {title}\n\n{question.strip()}\n")
+    return "\n".join(out)
+
+
 # --- Menú y puesta en marcha ----------------------------------------------------
 
 def menu(root: Path = ROOT) -> str:
@@ -307,7 +353,10 @@ def menu(root: Path = ROOT) -> str:
                 f"  Viñetas: {module.vignettes}"
             )
         lines.append("")
-    lines.append("D3 (configuración de Claude Code) no es un módulo narrado: se lee en `d3_claude_code/README.md`.")
+    lines.append(
+        "D3 (configuración de Claude Code): `fase d3 <fase>` con comprobaciones, soluciones, pregunta y respuesta "
+        "(sección 4). Las secciones 1 a 3 no se narran: se leen en `d3_claude_code/README.md`."
+    )
     return "\n".join(lines) + "\n"
 
 
@@ -448,6 +497,9 @@ def main(argv: list[str] | None = None) -> int:
     if len(args.args) < 2:
         parser.error("faltan el módulo y la fase: fase app1/01 ficha")
     try:
+        if len(args.args) == 2 and args.args[0].lower() == "d3":
+            print(d3_phase(args.args[1]), end="")
+            return 0
         print(phase(resolve(" ".join(args.args[:-1])), args.args[-1]), end="")
     except ValueError as error:
         # Un id o una fase mal escritos son errores de uso: mensaje y pista, no traza.

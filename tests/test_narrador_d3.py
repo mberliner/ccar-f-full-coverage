@@ -12,6 +12,8 @@ QUÉ NO HACE: no narra las secciones 1 a 3 de D3 (ruta por archivos, guion y pr�
 leen en el README. No comprueba el formato de la sección 4: eso es de `tests/test_d3_comprobaciones.py`.
 """
 
+from pathlib import Path
+
 import pytest
 
 from tests.contrato import require
@@ -21,6 +23,7 @@ require("3.3")  # se salta entero mientras falte `harness.narrador.d3_phase`
 from harness.narrador import D3_PHASES, EXTRA_PHASES, PHASES, d3_phase, main, menu  # noqa: E402
 from tests.test_d3_comprobaciones import ANSWER, question_blocks  # noqa: E402
 
+ROOT = Path(__file__).resolve().parent.parent
 MIN_LEAK_LINE = 25
 
 
@@ -30,7 +33,8 @@ def answer_lines(short: bool) -> list[str]:
     for title, block in question_blocks().items():
         if title.startswith("TS ") == short:
             body = ANSWER.search(block).group(0)
-            lines += [line.strip() for line in body.splitlines() if len(line.strip()) >= MIN_LEAK_LINE]
+            # Sin las etiquetas del plegado (`<summary>Respuesta</summary>`): son idénticas en 4.1 y 4.2 y no delatan nada.
+            lines += [line.strip() for line in body.splitlines() if len(line.strip()) >= MIN_LEAK_LINE and not line.strip().startswith("<")]
     return lines
 
 
@@ -76,6 +80,24 @@ def test_answer_phase_brings_the_three_integrated_answers():
         assert line in text
     for number in (1, 2, 3):
         assert f"Pregunta {number}" in text
+
+
+@pytest.mark.parametrize("name", ["soluciones", "respuesta"])
+def test_answer_phases_give_the_text_without_the_fold_tags(name):
+    # El plegado es del README, para quien lo lee en un visor. El narrador entrega el texto, como en la
+    # fase `respuesta` de un módulo: las etiquetas HTML solo estorban a quien narra.
+    text = d3_phase(name)
+    assert "<details>" not in text and "</details>" not in text and "<summary>" not in text
+
+
+def test_d3_phase_reads_the_readme_of_the_given_root(tmp_path):
+    # Como el resto del narrador (`route`, `menu`): con `root` se prueba sobre una copia sin tocar el repositorio.
+    readme = (ROOT / "d3_claude_code" / "README.md").read_text(encoding="utf-8")
+    assert "monorepo" in readme
+    (tmp_path / "d3_claude_code").mkdir()
+    (tmp_path / "d3_claude_code" / "README.md").write_text(readme.replace("monorepo", "repositorio-de-prueba"), encoding="utf-8")
+    assert "repositorio-de-prueba" in d3_phase("comprobaciones", root=tmp_path)
+    assert "repositorio-de-prueba" not in d3_phase("comprobaciones")
 
 
 @pytest.mark.parametrize("name", sorted(set(PHASES + EXTRA_PHASES) - {"comprobaciones", "soluciones", "pregunta", "respuesta"}) + ["todo"])
