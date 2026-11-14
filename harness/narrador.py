@@ -340,6 +340,59 @@ def setup_report(root: Path = ROOT, environ: Mapping[str, str] | None = None) ->
     return "\n".join(lines) + "\n"
 
 
+# --- Repaso e ítems -------------------------------------------------------------------
+
+def item_command(args: argparse.Namespace) -> int:
+    """`item <id> [--respuesta]`: el enunciado solo, o su respuesta; la revelación la decide este código."""
+    from harness.items import find_item
+
+    try:
+        item = find_item(args.id)
+    except ValueError as error:
+        print(f"[narrador] {error}. Los ids salen de `repaso` y `mixto`.", file=sys.stderr)
+        return 2
+    print(item.answer if args.respuesta else item.statement, end="" if (item.answer if args.respuesta else item.statement).endswith("\n") else "\n")
+    return 0
+
+
+def repaso_command(args: argparse.Namespace) -> int:
+    """`repaso [--hoy] [--todas]`: la cola de repaso como lista de ids. Solo lee `FALLOS.md`."""
+    from datetime import date
+
+    from harness.repaso import parse_failures, review_queue, unreadable_rows
+
+    try:
+        today = date.fromisoformat(args.hoy) if args.hoy else date.today()
+    except ValueError:
+        print(f"[narrador] «{args.hoy}» no es una fecha AAAA-MM-DD", file=sys.stderr)
+        return 2
+    try:
+        target, _ = state_dir()
+    except ValueError as error:
+        print(f"[narrador] {error}", file=sys.stderr)
+        return 2
+    fallos = target / "FALLOS.md"
+    if not fallos.exists():
+        print(f"No hay {fallos}. Créalo con `uv run python -m harness.estado init`.")
+        return 0
+
+    failures = parse_failures(fallos.read_text(encoding="utf-8"))
+    queue = review_queue(failures, today, include_future=args.todas)
+    skipped = unreadable_rows(failures)
+    print(f"# Repaso · {today.isoformat()}\n")
+    if not queue:
+        print("Nada que repasar.")
+    for entry in queue:
+        due = f"vence {entry.due.isoformat()}" if entry.due else "sin fecha"
+        rows = f" · {entry.rows} filas" if entry.rows > 1 else ""
+        print(f"- {entry.item.id} · {entry.vignette} · {due} · repasos {entry.reviews}{rows}")
+    if queue:
+        print("\nCada pregunta: `uv run python -m harness.narrador item <id>`; su respuesta, con `--respuesta`.")
+    if skipped:
+        print(f"\n{skipped} fila{'s' if skipped > 1 else ''} de FALLOS.md sin viñeta reconocible: no entra en el repaso.")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     # La salida ya va en UTF-8: lo fija `harness/__init__.py` al importar el paquete.
     parser =argparse.ArgumentParser(description="Fases de los módulos para /practica-guiada.")
@@ -348,8 +401,17 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("setup", help="comprobaciones de puesta en marcha")
     phase_parser = commands.add_parser("fase", help="el texto de una fase de un módulo")
     phase_parser.add_argument("args", nargs="+", metavar="MÓDULO… FASE", help=f"p. ej. app1/01 ficha; fases: {', '.join(PHASES + EXTRA_PHASES)}")
+    repaso_parser = commands.add_parser("repaso", help="filas de FALLOS.md que tocan repasar hoy (ids, sin enunciados)")
+    repaso_parser.add_argument("--hoy", help="fecha de hoy AAAA-MM-DD (por defecto, la del sistema)")
+    repaso_parser.add_argument("--todas", action="store_true", help="incluye también las filas que aún no vencen")
+    item_parser = commands.add_parser("item", help="una pregunta o comprobación corta por id, p. ej. app1/02:C1")
+    item_parser.add_argument("id")
+    item_parser.add_argument("--respuesta", action="store_true", help="muestra su respuesta en vez del enunciado")
     args = parser.parse_args(argv)
 
+    if args.command in ("repaso", "item"):
+        # Lazy: `harness.items` importa este módulo, así que no puede importarse arriba.
+        return item_command(args) if args.command == "item" else repaso_command(args)
     if args.command == "menu":
         print(menu(), end="")
         return 0

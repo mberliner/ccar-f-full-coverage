@@ -185,6 +185,17 @@ def test_each_entry_names_the_item_to_review_it_with():
     assert items["TS 3.1-K3"].startswith("d3:")
 
 
+def test_a_d3_vignette_noted_with_the_wrong_origin_is_still_reviewed(state, capsys):
+    # TS 3.6 anotada con «D3» (vive en `app3/11`): entra en la cola y no se cuenta como ilegible.
+    failures = parse_failures(table(row("TS 3.6-K1", "D3")))
+    (entry,) = review_queue(failures, date(2026, 12, 1))
+    assert entry.item.source == "app3/11"
+    (state / "FALLOS.md").write_text(table(row("TS 3.6-K1", "D3")), encoding="utf-8")
+    assert main(["repaso", "--hoy", "2026-12-01"]) == 0
+    out = capsys.readouterr().out
+    assert "TS 3.6-K1" in out and "sin viñeta reconocible" not in out
+
+
 def test_queue_skips_rows_whose_vignette_cannot_be_read():
     # Una fila con texto libre o con una viñeta que no existe no rompe el repaso de las demás.
     failures = parse_failures(table(row("la del bucle"), row("TS 9.9-K9"), row("TS 1.1-K1")))

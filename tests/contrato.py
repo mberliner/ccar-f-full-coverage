@@ -29,7 +29,7 @@ CONTRACTS: dict[str, list[tuple[str, list[str]]]] = {
     "3.4": [("harness.hojas_repaso", ["build_sheets", "main"])],
 }
 # Paquetes sin implementar. Al cerrar un paquete se quita de aquí, en el mismo cambio.
-PENDING = {"3.1", "3.2", "3.3", "3.4"}
+PENDING = {"3.2", "3.3", "3.4"}
 
 
 def missing(package: str) -> list[str]:

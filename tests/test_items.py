@@ -154,6 +154,13 @@ def test_item_for_d3_uses_the_short_check_of_its_task_statement():
     assert item_for("TS 3.4-K1").source == "d3"
 
 
+def test_item_for_d3_goes_to_the_destination_when_d3_has_no_check_for_that_task_statement():
+    # TS 3.6 es del dominio 3, pero la introduce `app3/11` y D3 solo tiene comprobaciones de 3.1 a 3.5.
+    # Anotarla con módulo «D3» es un error fácil: se repasa con el ítem de su destino, no se descarta.
+    item = item_for("TS 3.6-K1", "D3")
+    assert item.source == "app3/11" and "TS 3.6-K1" in item.vignettes
+
+
 def test_item_for_rejects_an_unknown_vignette():
     with pytest.raises(UnknownItem):
         item_for("TS 9.9-K9")
