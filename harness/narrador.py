@@ -419,6 +419,8 @@ def simulacion_command(args: argparse.Namespace) -> int:
 
     try:
         if args.caso is None:
+            if args.respuesta:
+                raise UnknownCase("la respuesta se pide de una pregunta concreta: simulacion E<n> <N> --respuesta")
             for code, title, size in list_cases():
                 print(f"- {code} · {title} · {size} preguntas")
             print("\nContexto: `simulacion E<n>`; una pregunta: `simulacion E<n> <N>`; su respuesta: `simulacion E<n> <N> --respuesta`.")

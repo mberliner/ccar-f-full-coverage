@@ -270,9 +270,10 @@ def item_for(vignette: str, source: str | None = None, root: Path = ROOT) -> Ite
     """El ítem con el que se repasa una viñeta.
 
     Por este orden: la comprobación corta del origen cuyo título la nombra; un ítem del origen cuya
-    respuesta la cita; la primera pregunta del origen (en D3, la comprobación de su TS). Sin origen,
-    o con uno ilegible o desconocido, se usa el destino de `CONCEPTOS.md`. Una TS a secas (`TS 5.5`) se resuelve como su primera
-    viñeta introducida.
+    respuesta la cita. Si el origen anotado no nombra ni cita la viñeta, o es ilegible o desconocido,
+    se repasa con el destino de `CONCEPTOS.md` (mismo orden). Solo si el destino tampoco la nombra ni
+    la cita se usa su primera pregunta (en D3, la comprobación de su TS: vale únicamente para viñetas
+    `TS 3.x` con destino D3). Una TS a secas (`TS 5.5`) se resuelve como su primera viñeta introducida.
     """
     if TASK_ONLY.fullmatch(vignette.strip()):
         # Solo la task statement: se resuelve como su primera viñeta introducida en CONCEPTOS.md.
@@ -297,13 +298,12 @@ def item_for(vignette: str, source: str | None = None, root: Path = ROOT) -> Ite
     for item in candidates:
         if vignette in item.vignettes:
             return item
+    if origin != fallback:
+        # El origen anotado no nombra ni cita la viñeta: preguntar otra cosa de ese módulo no la repasa.
+        # Se usa el destino de CONCEPTOS.md, con el mismo orden (comprobación que la nombra, ítem que la cita).
+        return item_for(vignette, fallback, root)
     if origin == "d3":
-        # «TS 3.4-K1» → la comprobación C4: cada TS de D3 tiene la suya. Sin comprobación (TS 3.6,
-        # que vive en otro módulo), se repasa con el ítem del destino de CONCEPTOS.md.
-        try:
-            return find_item(f"d3:C{vignette[5]}", root)
-        except UnknownItem:
-            if fallback in sources and fallback != "d3":
-                return item_for(vignette, fallback, root)
-            raise
+        # «TS 3.4-K1» → la comprobación C4: cada TS de D3 tiene la suya. Solo vale para viñetas TS 3.x
+        # cuyo destino es D3 (el origen y el destino coinciden aquí).
+        return find_item(f"d3:C{vignette[5]}", root)
     return find_item(f"{origin}:P1", root)
