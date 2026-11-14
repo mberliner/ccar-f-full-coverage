@@ -1,6 +1,6 @@
 """Tests del formato de las simulaciones por escenario (`docs/simulaciones-por-escenario.md`, `plantillas/simulacion/`). Sin modelo.
 
-PROPÓSITO: definir y comprobar el formato antes de escribir ningún caso. Un caso (`simulaciones/E<n>_*.md`) agrupa
+PROPÓSITO: definir y comprobar el formato de los casos. Un caso (`simulaciones/E<n>_*.md`) agrupa
 8 a 10 preguntas sobre un mismo escenario de la guía, con un contexto y unas restricciones compartidas, y mezcla las
 preguntas de respuesta única y las multiple-response. El validador `case_problems` comprueba esa estructura; la
 especificación se comprueba contra los seis escenarios de la guía y los pesos del blueprint de `CONCEPTOS.md`.
@@ -10,7 +10,7 @@ comparten contexto, y la práctica era solo de preguntas sueltas por módulo. Fi
 tandas C y D lo tengan en cuenta, y que los casos nazcan ya comprobados.
 
 QUÉ NO HACE: no escribe ningún caso ni comprueba que una pregunta evalúe bien su viñeta (lo hace la revisión contra
-la guía). Hoy `simulaciones/` no existe, así que la comprobación sobre casos reales no se ejerce hasta que haya uno.
+la guía). La comprobación sobre casos reales recorre los seis casos de `simulaciones/`.
 """
 
 import math

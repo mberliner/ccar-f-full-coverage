@@ -1,8 +1,8 @@
 # Simulaciones por escenario: formato
 
-Cómo se practica con varias preguntas que comparten un mismo contexto, como en el examen. Este documento fija el formato; todavía no hay ningún caso escrito. La plantilla está en [`plantillas/simulacion/ESCENARIO.md`](../plantillas/simulacion/ESCENARIO.md) y el formato lo comprueba `tests/test_simulaciones_formato.py`.
+Cómo se practica con varias preguntas que comparten un mismo contexto, como en el examen. Este documento fija el formato. Los casos de estudio de los seis escenarios están en `simulaciones/`. La plantilla está en [`plantillas/simulacion/ESCENARIO.md`](../plantillas/simulacion/ESCENARIO.md) y el formato lo comprueba `tests/test_simulaciones_formato.py`.
 
-> **Dónde encaja.** Esto es un complemento propio y opcional, no una entrega del roadmap. Lo propuso la auditoría (G-07). El roadmap prevé, tras la entrega 3, un repaso sin código nuevo (`S-1`, roadmap §10) con las filas pendientes de `FALLOS.md` y las preguntas tipo examen de los módulos y de D3 mezcladas; no menciona escenarios. Los simulacros de examen completo del plan de estudio son externos (mocks y simulacros del propio plan), y ahí es donde se practican varias preguntas de un mismo escenario. Todavía no se ha escrito ninguno; el formato queda definido para cuando se escriban, por ejemplo dentro de `S-1`.
+> **Dónde encaja.** Esto es un complemento propio y opcional, no una entrega del roadmap. Lo propuso la auditoría (G-07). El roadmap prevé, tras la entrega 3, un repaso sin código nuevo (`S-1`, roadmap §10) con las filas pendientes de `FALLOS.md` y las preguntas tipo examen de los módulos y de D3 mezcladas; no menciona escenarios. Los simulacros de examen completo del plan de estudio son externos (mocks y simulacros del propio plan), y ahí es donde se practican varias preguntas de un mismo escenario. Los casos de estudio de `simulaciones/` sirven para ese repaso (`S-1`); los de examen completo siguen sin escribir.
 
 ## Por qué
 
@@ -12,16 +12,16 @@ Una simulación no sustituye a los módulos: los usa. Se hace cuando los módulo
 
 ## Los seis escenarios
 
-Los dominios principales son los que la guía asigna a cada escenario. El estado de preparación dice si el repositorio ya tiene el material para escribir el caso; es una instantánea (240 de 240 viñetas, 2026-11-07) que se actualiza al cerrar cada tanda.
+Los dominios principales son los que la guía asigna a cada escenario. El estado de preparación dice si el repositorio ya tiene el material para escribir el caso; es una instantánea (240 de 240 viñetas y los seis casos de estudio escritos, 2026-11-14) que se actualiza al cerrar cada tanda. Ningún caso ha pasado aún la revisión contra la guía por una instancia distinta de la que lo escribió.
 
 | Caso | Escenario de la guía | Dominios principales | Qué cubre del repositorio | Estado de preparación |
 | :--- | :--- | :--- | :--- | :--- |
-| E1 | Customer Support Resolution Agent (agente de resolución de soporte) | D1 · D2 · D5 | `app2/01`–`03`, `05`–`07`; `app1/03`–`04` | Listo: el escalamiento (TS 5.2), centro del escenario, está entregado en `app2/04` |
-| E2 | Code Generation with Claude Code (generación de código con Claude Code) | D3 · D5 | Sección D3 (TS 3.1 a 3.5) | Listo: D3 3.1–3.5 está completo y en D5 están entregados TS 5.2 y 5.5 |
-| E3 | Multi-Agent Research System (sistema multiagente de investigación) | D1 · D2 · D5 | `app3/01`–`06`; `app1/03`–`04` | Listo: D1, D2 y D5 (5.1, 5.3, 5.4 y 5.6) están entregados |
-| E4 | Developer Productivity with Claude (productividad de desarrollo) | D1 · D2 · D3 | `app1/02`, `03`, `06`; `app3/02` (legacy); sección D3 | Listo: D1, D2 y D3 3.1–3.5 completos |
-| E5 | Claude Code for Continuous Integration (Claude Code en CI) | D3 · D4 | Sección D3; `app3/11` y `app3/12` | Listo: TS 3.6, 4.1 y 4.6 están entregados con `app3/11` y `app3/12` |
-| E6 | Structured Data Extraction (extracción estructurada) | D4 · D5 | `app3/07`–`09`; `app2/04`, `app3/10` y `app3/11` | Listo: la extracción (4.2 a 4.5) y la confianza (5.5) están entregadas |
+| E1 | Customer Support Resolution Agent (agente de resolución de soporte) | D1 · D2 · D5 | `app2/01`–`03`, `05`–`07`; `app1/03`–`04` | Listo: caso escrito (`simulaciones/E1_agente_soporte.md`); el escalamiento (TS 5.2), centro del escenario, está entregado en `app2/04` |
+| E2 | Code Generation with Claude Code (generación de código con Claude Code) | D3 · D5 | Sección D3 (TS 3.1 a 3.5) | Listo: caso escrito (`simulaciones/E2_generacion_codigo.md`), que usa también TS 5.4; D3 3.1–3.5 está completo y en D5 están entregados TS 5.2 y 5.5 |
+| E3 | Multi-Agent Research System (sistema multiagente de investigación) | D1 · D2 · D5 | `app3/01`–`06`; `app1/03`–`04` | Listo: caso escrito (`simulaciones/E3_investigacion_multiagente.md`); D1, D2 y D5 (5.1, 5.3, 5.4 y 5.6) están entregados |
+| E4 | Developer Productivity with Claude (productividad de desarrollo) | D1 · D2 · D3 | `app1/02`, `03`, `06`; `app3/02` (legacy); sección D3 | Listo: caso escrito (`simulaciones/E4_productividad_desarrollo.md`); D1, D2 y D3 3.1–3.5 completos |
+| E5 | Claude Code for Continuous Integration (Claude Code en CI) | D3 · D4 | Sección D3; `app3/11` y `app3/12` | Listo: caso escrito (`simulaciones/E5_integracion_continua.md`); TS 3.6, 4.1 y 4.6 están entregados con `app3/11` y `app3/12` |
+| E6 | Structured Data Extraction (extracción estructurada) | D4 · D5 | `app3/07`–`09`; `app2/04`, `app3/10` y `app3/11` | Listo: caso escrito (`simulaciones/E6_extraccion_estructurada.md`); la extracción (4.2 a 4.5) y la confianza (5.5) están entregadas |
 
 Las etiquetas E1, E3 y E4 ya se usan en los README de las apps. Qué módulos cubren cada escenario es una propuesta del proyecto a partir de los dominios, no algo que diga la guía.
 
@@ -67,6 +67,6 @@ Con las 240 viñetas entregadas, una simulación completa son 4 casos de examen 
 
 ## Qué falta
 
-- **Los casos.** Ninguno escrito. Los seis escenarios tienen ya su material entregado (tabla de arriba), así que cualquiera puede escribirse.
+- **La revisión de los casos.** Los seis casos de estudio están escritos; falta que una instancia distinta de la que los escribió los contraste con la guía (regla 6).
 - **Presentarlos con la práctica guiada.** `practica-guiada` narra módulos; para un caso hay que definir cómo se presentan varias preguntas con contexto compartido. No está hecho.
 - **Los casos de examen completo.** Ninguno escrito; ya no dependen de la cobertura.
