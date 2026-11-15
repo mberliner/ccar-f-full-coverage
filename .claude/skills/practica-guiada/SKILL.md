@@ -5,7 +5,7 @@ argument-hint: "[appN/NN | puesta en marcha | repaso | mixto [Dn] | d3 | simulac
 allowed-tools: Bash(uv run python -m harness.narrador:*), Bash(uv run python -m harness.estado where:*)
 # PROPÓSITO: acompañar a quien estudia por el ciclo de 5 pasos de «Empieza aquí»
 # (README.md raíz), narrado de principio a fin; el objetivo son los conceptos del
-# examen y el módulo es el medio (docs/encargo-asistente-narrador.md). Además,
+# examen y el módulo es el medio (docs/historico/encargo-asistente-narrador.md). Además,
 # presenta el repaso de FALLOS.md, la práctica mezclada, D3 y las simulaciones.
 # POR QUÉ ASÍ:
 # - Sin `context: fork`: el narrador tiene que conversar (esperar predicciones,
@@ -42,6 +42,7 @@ Todos se ejecutan **exactamente** como `uv run python -m harness.narrador <subco
 
 - `menu` y `setup`: el menú de módulos y la puesta en marcha.
 - `fase <módulo> <fase>`: una fase de un módulo (`fase app2/03 ficha`) o de D3 (`fase d3 comprobaciones`). Las fases no son subcomandos: `harness.narrador ficha app2/03` da error.
+- `fase appN contexto`: el contexto común de una app (`fase app2 contexto`): introducción, equivalencias, servidor y tools. Se entrega una vez por app, aparte de la `ficha` de cada módulo.
 - `repaso [--todas]`: las entradas de `FALLOS.md` que tocan hoy, una por línea, con su id de ítem, su viñeta, su fecha y cuántos repasos lleva.
 - `item <id> [--ciego] [--respuesta]`: el enunciado de un ítem (una pregunta o una comprobación corta), sin su viñeta con `--ciego`, o su respuesta con `--respuesta`.
 - `mixto [--dominio Dn] [-n N] [--semilla S]`: una tanda de ids de ítems de módulos distintos.
@@ -64,8 +65,9 @@ Todos se ejecutan **exactamente** como `uv run python -m harness.narrador <subco
 ### Paso 1 · Orientarse
 
 1. Pide `ficha`. Si «Necesitas antes» nombra otro módulo, pregunta si ya lo hizo y ofrece ir a él primero o seguir. Nunca bloquea: ningún script depende de otro para ejecutarse.
-2. Narra la ficha: qué va a hacer, el Modo (explica qué significa ligera u obligatoria), el sistema, los términos propios y las tools. Del «Contexto común de la app» cuenta solo lo que este módulo usa.
-3. Pide `ejercicio` y narra «El ejercicio»: qué se le pide al agente y qué cambia en cada variante `--anti`.
+2. **Contexto de la app.** La primera vez en esta sesión que la persona hace un módulo de una app, pide también `fase appN contexto` (por ejemplo, `fase app2 contexto`; la ficha termina con esa línea) y narra de él lo que este módulo usa. En los módulos siguientes de la misma app no lo repitas: recuérdalo en una frase solo si hace falta.
+3. Narra la ficha: qué va a hacer, el Modo (explica qué significa ligera u obligatoria), el sistema, los términos propios y las tools.
+4. Pide `ejercicio` y narra «El ejercicio»: qué se le pide al agente y qué cambia en cada variante `--anti`.
 
 ### Paso 2 · Predecir
 

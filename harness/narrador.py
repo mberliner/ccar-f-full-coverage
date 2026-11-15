@@ -18,6 +18,8 @@ persona), no escribe nada y no guarda copia del contenido: lo lee cada vez de
 los README, que siguen siendo la única fuente. Del `.env` solo mira si existe;
 nunca muestra su contenido ni el de `ANTHROPIC_API_KEY`. D3 no tiene formato de
 módulo: expone solo las cuatro fases de la sección 4 de su README (`d3_phase`).
+El «Contexto común de la app» es una fase propia por app (`fase appN contexto`,
+`app_phase`): la `ficha` de cada módulo ya no lo trae, solo dice cómo pedirlo.
 Además lee `FALLOS.md` para `repaso`, saca ítems sueltos con `item` (con `--ciego`,
 sin el rótulo de viñeta, para la práctica mezclada), sortea preguntas de módulos
 distintos con `mixto` y entrega los casos de `simulaciones/` por partes con
@@ -41,6 +43,10 @@ from harness.estado import state_dir
 PHASES = ("ficha", "ejercicio", "ejecutar", "contraste", "pregunta", "respuesta")
 # Fases opcionales, fuera del ciclo: las comprobaciones cortas de un módulo y sus respuestas.
 EXTRA_PHASES = ("comprobaciones", "soluciones")
+# Fases de app, no de módulo: el contexto común se entrega una vez por app (`fase appN contexto`).
+APP_PHASES = ("contexto",)
+CONTEXT_HEADING = "## Contexto común de la app"
+APP_ID = re.compile(r"app\d+", re.IGNORECASE)
 CHECKS_HEADING = "Comprobaciones cortas"
 CHECK_SUMMARY = "Comprobación C"
 NO_CHECKS = "Este módulo no tiene comprobaciones cortas.\n"
@@ -157,6 +163,17 @@ def app_context(text: str) -> str:
     return "\n".join(lines[1:] if lines and lines[0].startswith("# ") else lines).strip() + "\n"
 
 
+def app_phase(app: str, name: str) -> str:
+    """El contexto común de una app (fase propia, fuera de la ficha de cada módulo)."""
+    if name not in APP_PHASES:
+        raise ValueError(f"fase de app «{name}» desconocida: usa {', '.join(APP_PHASES)}")
+    app_id = app.strip().lower()
+    readme = next(iter(sorted(ROOT.glob(f"{app_id}_*/README.md"))), None) if APP_ID.fullmatch(app_id) else None
+    if readme is None:
+        raise ValueError(f"app «{app}» desconocida")
+    return f"{CONTEXT_HEADING}\n\n" + app_context(readme_text(readme.parent))
+
+
 def plain(text: str) -> str:
     """Quita los enlaces Markdown y deja su texto: el menú es para leer en la terminal."""
     return MARKDOWN_LINK.sub(r"\1", text).strip()
@@ -252,8 +269,9 @@ def phase(module: Module, name: str) -> str:
 
     if name == "ficha":
         head = f"# {module.id} · {module.label}\n\nViñetas: {module.vignettes}\nScript: {script}\n\n"
-        context = app_context(readme_text(module.app_dir))
-        return head + render(parts[:exercise]) + "\n## Contexto común de la app\n\n" + context
+        # El contexto común va aparte, una vez por app: la ficha solo dice cómo pedirlo.
+        pointer = f"\n_Contexto común de la app: `uv run python -m harness.narrador fase {module.app} contexto`._\n"
+        return head + render(parts[:exercise]) + pointer
     if name == "ejercicio":
         return render(parts[exercise:run])
     if name == "ejecutar":
@@ -508,7 +526,7 @@ def main(argv: list[str] | None = None) -> int:
     commands.add_parser("menu", help="todo lo disponible, con el módulo recomendado")
     commands.add_parser("setup", help="comprobaciones de puesta en marcha")
     phase_parser = commands.add_parser("fase", help="el texto de una fase de un módulo")
-    phase_parser.add_argument("args", nargs="+", metavar="MÓDULO… FASE", help=f"p. ej. app1/01 ficha; fases: {', '.join(PHASES + EXTRA_PHASES)}")
+    phase_parser.add_argument("args", nargs="+", metavar="MÓDULO… FASE", help=f"p. ej. app1/01 ficha; fases: {', '.join(PHASES + EXTRA_PHASES)}; de app: app2 contexto")
     repaso_parser = commands.add_parser("repaso", help="filas de FALLOS.md que tocan repasar hoy (ids, sin enunciados)")
     repaso_parser.add_argument("--hoy", help="fecha de hoy AAAA-MM-DD (por defecto, la del sistema)")
     repaso_parser.add_argument("--todas", action="store_true", help="incluye también las filas que aún no vencen")
@@ -541,6 +559,9 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if len(args.args) == 2 and args.args[0].lower() == "d3":
             print(d3_phase(args.args[1]), end="")
+            return 0
+        if len(args.args) == 2 and APP_ID.fullmatch(args.args[0]):
+            print(app_phase(args.args[0], args.args[1]), end="")
             return 0
         print(phase(resolve(" ".join(args.args[:-1])), args.args[-1]), end="")
     except ValueError as error:

@@ -88,7 +88,7 @@ Cada módulo introduce las viñetas que `CONCEPTOS.md` le asigna, así que una a
 | `NOTAS.md` / `docs/hallazgos.md` | Registros versionados del proyecto (qué va en cada uno: [registro entre sesiones](docs/estandares-flujo.md#registro-entre-sesiones)) |
 | `plantillas/estado/` | Plantillas de tu estado personal ([registro entre sesiones](docs/estandares-flujo.md#registro-entre-sesiones)) |
 | `estado/<perfil>/` | **Tu** estado de estudio, fuera de git ([cómo se crea](#5-crear-tu-estado-personal)) |
-| `docs/` | Estándares de código y de flujo de trabajo |
+| `docs/` | Documentos de estudio, de construcción y el histórico (índice en [`docs/README.md`](docs/README.md)) |
 
 ## Instalación (una vez)
 

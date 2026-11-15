@@ -178,7 +178,7 @@ El Exercise 2 de la guía pide probar las dos formas en tres tareas de complejid
 | Una migración que toca muchos archivos | Subir de versión `claude-agent-sdk`, que está fijado en `pyproject.toml` y «solo se actualiza de forma deliberada»: afecta a `harness/options.py`, al recorder y a todos los módulos (caso hipotético, aún no se ha hecho) | Plan mode | Hay que localizar todos los usos antes de tocar ninguno; `Explore` hace ese recorrido (TS 3.4-K1, TS 3.4-S1, TS 3.4-S3) |
 | Una funcionalidad con varios enfoques válidos | `app1/02 --parte edicion`: `Edit` no fallaba. Opciones: bajar de modelo, provocar el fallo en el prompt o aceptar que no se ve | Plan mode | Se comparan enfoques antes de elegir (se eligió el prompt, `NOTAS.md`); elegir mal cuesta rehacer código y README (TS 3.4-K3) |
 
-Y la propia entrega 2 es el caso de la combinación (TS 3.4-S4): el diseño se hizo y se aprobó en plan mode (`docs/diseno-entrega-2.md`) y cada módulo se construyó después en ejecución directa.
+Y la propia entrega 2 es el caso de la combinación (TS 3.4-S4): el diseño se hizo y se aprobó en plan mode (`docs/historico/diseno-entrega-2.md`) y cada módulo se construyó después en ejecución directa.
 
 ---
 
