@@ -203,7 +203,7 @@ Un resultado que no coincide con «lo esperado» no es un fallo tuyo: es un hall
 | :--- | :--- | :--- |
 | Estás en la rama que quieres comprobar y sin cambios sin guardar | `git branch --show-current` y `git status --short` | Cambia de rama o guarda lo pendiente: un cambio a medias confunde las lecturas del paso 2 |
 | El entorno funciona (los hooks usan `uv run --no-sync`) | `uv sync` y después `uv run pytest -q` | Sin entorno, los hooks fallan en cerrado y bloquean todo |
-| Hay `CLAUDE.md` de directorios **padre** del clon | Bash: `d=$(pwd); while [ "$d" != "/" ]; do d=$(dirname "$d"); ls "$d/CLAUDE.md" 2>/dev/null; done` · PowerShell: `$d=(Get-Location).Path; while ($d = Split-Path $d -Parent) { if (Test-Path (Join-Path $d 'CLAUDE.md')) { Join-Path $d 'CLAUDE.md' } }` | **Sin salida:** no hay padres y no necesitas nada más. **Con salida:** copia `.claude/settings.local.example.json` a `.claude/settings.local.json` y deja el patrón con negación `!**/<carpeta-del-clon>/**`, que excluye todo lo que queda fuera del proyecto, también la memoria de usuario (ese archivo no se versiona) |
+| Hay `CLAUDE.md` de directorios **padre** del clon | Bash: `d=$(pwd); while [ "$d" != "/" ]; do d=$(dirname "$d"); ls "$d/CLAUDE.md" 2>/dev/null; done` · PowerShell: `$d=(Get-Location).Path; while ($d = Split-Path $d -Parent) { if (Test-Path (Join-Path $d 'CLAUDE.md')) { Join-Path $d 'CLAUDE.md' } }` | **Sin salida:** no hay padres y no necesitas nada más. **Con salida:** crea `.claude/settings.local.json` (no se versiona) como dice `CLAUDE.md`, «Contexto heredado»: su patrón excluye todo lo que queda fuera del proyecto, también la memoria de usuario |
 | Qué contiene la configuración de **usuario** de tu cuenta | Mira el directorio de configuración de la cuenta con la que abrirás `claude` (`~/.claude/` o el que indique `CLAUDE_CONFIG_DIR`): `CLAUDE.md`, `rules/`, `skills/` y `commands/` | Si tiene alguno, se cargará en toda sesión y aparecerá en `/memory`: no es del proyecto, pero hay que saberlo antes de interpretar el paso 1 |
 
 #### Abrir la sesión
@@ -308,7 +308,7 @@ Si 4a, 4b o 4c **no** son rechazados, es un hallazgo grave de la capa meta: dete
 
 #### Paso 5 · Aislamiento del entorno (`.claude/settings.local.json`)
 
-Es parte del buen funcionamiento del repositorio: la sesión que construye debe ver solo lo del proyecto. El archivo local (no versionado) tiene tres partes: `claudeMdExcludes` (negación `!**/<carpeta-del-clon>/**`), `enabledPlugins` (apaga los plugins sincronizados de tu cuenta) y `skillOverrides` (apaga por nombre las skills sincronizadas). **Se aplica al abrir una sesión nueva**: haz esta comprobación en una que arranques después de crearlo.
+Es parte del buen funcionamiento del repositorio: la sesión que construye debe ver solo lo del proyecto. Cómo se crea el archivo local (no versionado) y qué hace cada una de sus tres partes (`claudeMdExcludes`, `enabledPlugins` y `skillOverrides`) está en `CLAUDE.md`, «Contexto heredado»; las cinco skills estándar de claude.ai ya las apaga `.claude/settings.json`. Aquí solo se comprueba. **Se aplica al abrir una sesión nueva**: haz esta comprobación en una que arranques después de crearlo.
 
 | Escribes | Debe verse | Qué demuestra |
 | :--- | :--- | :--- |
