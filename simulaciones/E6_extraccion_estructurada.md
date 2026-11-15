@@ -12,12 +12,12 @@ Pendiente de revisión por una instancia distinta de la que lo escribió (paquet
 
 ## Contexto
 
-La mesa de ayuda recibe cada día cientos de incidencias de facturación con documentos adjuntos: facturas de proveedores, albaranes y notas de abono, escaneados o en PDF, con formatos muy distintos según el emisor. El equipo de operaciones monta con la API de Claude un extractor que lee cada adjunto y devuelve sus datos (tipo de documento, emisor, fecha, líneas, importes y total) como JSON validado con un esquema. Ese JSON alimenta el sistema contable, que lo concilia sin intervención. Hay tres tools de extracción, una por tipo de documento, y un equipo de revisión de tres personas que no da abasto para mirarlo todo. Además de las incidencias del día, cada noche se reprocesa el archivo histórico de adjuntos para completar campos nuevos.
+La mesa de ayuda recibe cada día cientos de incidencias de facturación con documentos adjuntos: facturas de proveedores, albaranes y notas de abono, escaneados o en PDF, con formatos muy distintos según el emisor. El equipo de operaciones monta con la API de Claude un extractor que lee cada adjunto y devuelve sus datos (tipo de documento, emisor, fecha, líneas, importes y total) como JSON validado con un esquema. Ese JSON alimenta el sistema contable, que lo concilia sin intervención. Hay tres tools de extracción, una por tipo de documento, y un equipo de revisión de tres personas que no da abasto para mirarlo todo. Además de las incidencias del día, el archivo histórico de adjuntos se reprocesa para completar campos nuevos.
 
 ## Restricciones compartidas
 
 - R1: el sistema contable rechaza un JSON que no cumpla el esquema; un dato que el documento no trae no se puede inventar.
-- R2: el reprocesado nocturno tiene que estar listo, como mucho, 30 horas después de que entre cada adjunto en el archivo.
+- R2: el reprocesado del archivo histórico tiene que estar listo, como mucho, 36 horas después de que entre cada adjunto en el archivo.
 - R3: la revisión humana es escasa y se dedica primero a lo que más probablemente esté mal.
 
 ## Plan de preguntas
@@ -118,22 +118,22 @@ Las instrucciones del prompt ya explican con detalle dónde suele estar cada dat
 
 ### Pregunta 6 (TS 4.5 · una respuesta)
 
-El reprocesado nocturno se pasa a la Message Batches API para ahorrar coste. Cada lote puede tardar hasta 24 horas en procesarse, y se tiene que cumplir R2. ¿Con qué frecuencia hay que enviar lotes?
+El reprocesado del archivo histórico se pasa a la Message Batches API para ahorrar coste. Cada lote puede tardar hasta 24 horas en procesarse, y se tiene que cumplir R2. ¿Con qué frecuencia hay que enviar lotes?
 
-- A. Una vez al día, a medianoche, con todo lo que entró durante las últimas 24 horas.
+- A. Una vez al día, con todo lo que entró en el archivo en las 24 horas anteriores.
 - B. Una vez por semana, para aprovechar al máximo el descuento por volumen del lote.
-- C. Cada 12 horas, porque es la mitad de la ventana máxima de procesamiento del lote.
-- D. Cada 4 horas, para que la espera más el procesamiento no superen nunca 30 horas.
+- C. Cada 14 horas, con todo lo que entró en el archivo desde el envío anterior.
+- D. Cada 10 horas, con todo lo que entró en el archivo desde el envío anterior.
 
 <details>
 <summary>Respuesta</summary>
 
-**D.** La frecuencia se calcula a partir del SLA: si el procesamiento puede durar 24 horas y el límite es 30, un adjunto no puede esperar más de 6 horas al siguiente envío; enviar cada 4 horas lo garantiza con margen (TS 4.5-S2, TS 4.5-K1). A deja que un adjunto espere casi 24 horas, que con otras 24 de lote suma casi 48. B incumple R2 con mucha más holgura. C puede llegar a 36 horas.
+**D.** La frecuencia se calcula a partir del SLA: si el procesamiento puede durar 24 horas y el límite es 36, un adjunto no puede esperar más de 12 horas al siguiente envío. Cada 10 horas, la espera más larga (casi 10) más el lote (24) suman como mucho 34 horas, dentro de R2 (TS 4.5-S2, TS 4.5-K1). A deja que un adjunto espere casi 24 horas, que con otras 24 de lote suma casi 48. B incumple R2 con mucha más holgura. C suma casi 14 más 24, unas 38 horas, por encima de 36.
 </details>
 
 ### Pregunta 7 (TS 4.5 · multiple-response)
 
-En el primer lote nocturno con el archivo completo, un 8 % de las solicitudes falla: unas por documentos demasiado largos para el contexto y otras por un prompt que todavía se equivoca con las notas de abono. **Selecciona dos** prácticas que reducen el coste de volver a procesar. Evalúa cada opción por separado.
+En el primer lote con el archivo completo, un 8 % de las solicitudes falla: unas por documentos demasiado largos para el contexto y otras por un prompt que todavía se equivoca con las notas de abono. **Selecciona dos** prácticas que reducen el coste de volver a procesar. Evalúa cada opción por separado.
 
 - A. Reenviar el lote completo con el prompt corregido para tener un resultado uniforme.
 - B. Reenviar solo las solicitudes fallidas, por su `custom_id`, partiendo las demasiado largas.
@@ -153,11 +153,11 @@ En el primer lote nocturno con el archivo completo, un 8 % de las solicitudes fa
 
 ### Pregunta 8 (TS 5.5 · una respuesta)
 
-Tras un mes, el extractor acierta el 97 % de los campos en el conjunto de validación etiquetado, y dirección propone dejar de revisar las extracciones de alta confianza. ¿Qué hay que comprobar antes de aceptarlo?
+Tras un mes, el extractor acierta el 94 % de los campos en el conjunto de validación etiquetado, y dirección propone dejar de revisar las extracciones de alta confianza. ¿Qué hay que comprobar antes de aceptarlo?
 
 - A. Que la precisión se mantenga por tipo de documento y por campo, no solo en conjunto.
-- B. Que el 97 % se repita durante un segundo mes con el mismo conjunto de validación.
-- C. Que el modelo declare una confianza alta en al menos el 97 % de las extracciones.
+- B. Que el 94 % se repita durante un segundo mes con el mismo conjunto de validación.
+- C. Que el modelo declare una confianza alta en al menos el 94 % de las extracciones.
 - D. Que el sistema contable no haya rechazado ningún JSON por incumplir el esquema.
 
 <details>
