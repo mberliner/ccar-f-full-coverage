@@ -32,10 +32,11 @@ CONTRACTS: dict[str, list[tuple[str, list[str]]]] = {
         ("harness.repaso", ["vignette_of"]),
         ("harness.items", ["blind_statement"]),
         ("harness.simulaciones", ["UnknownCase", "list_cases", "case_context", "case_question", "case_answer"]),
-    ],
+    ],    # Fase 4 (paquete 4.3): el «Contexto común de la app» como fase propia, fuera de la ficha.
+    "4.3": [("harness.narrador", ["APP_PHASES", "app_phase"])],
 }
 # Paquetes sin implementar. Al cerrar un paquete se quita de aquí, en el mismo cambio.
-PENDING: set[str] = set()
+PENDING: set[str] = {"4.3"}
 
 
 def missing(package: str) -> list[str]:

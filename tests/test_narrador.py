@@ -210,11 +210,11 @@ def test_phase_order_follows_the_cycle():
     assert PHASES == ("ficha", "ejercicio", "ejecutar", "contraste", "pregunta", "respuesta")
 
 
-def test_ficha_brings_vignettes_and_app_context():
+def test_ficha_brings_vignettes():
+    # El contexto común de la app ya no va en la ficha: `fase appN contexto` (tests/test_narrador_contexto.py).
     module = resolve("app2/02")
     text = phase(module, "ficha")
     assert "TS 1.5-K1" in text
-    assert "El servidor `helpdesk` y sus tools" in text
     assert "### El ejercicio" not in text
 
 
