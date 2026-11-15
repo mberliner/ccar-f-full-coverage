@@ -60,7 +60,6 @@ INTRODUCE: TS 4.4-K1, TS 4.4-K2, TS 4.4-K4, TS 4.4-S1, TS 4.4-S2, TS 4.4-S4
 Uso: `uv run python app3_sistema_multiagente/08_validacion_reintento.py [--anti reintento_generico|insistir] [--rol-modelo agent|enforcement] [--repeat N]`
 """
 
-import importlib.util
 import re
 import sys
 from collections import Counter
@@ -72,24 +71,13 @@ from typing import Any
 # Los módulos se ejecutan como script: la raíz del repositorio va al path para importar `harness`.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from harness import credentials  # noqa: E402
-from harness.budget import BudgetExceeded, CostGuard, cost_of  # noqa: E402
-from harness.cli import build_parser, report_budget  # noqa: E402
-from harness.config import report_model  # noqa: E402
+from harness.budget import CostGuard, cost_of, run_guarded  # noqa: E402
+from harness.cargar import load_sibling  # noqa: E402
+from harness.cli import build_parser, preamble  # noqa: E402
 
-
-def load_sibling(filename: str) -> Any:
-    """Carga otro módulo de esta carpeta (su nombre empieza por un dígito y no admite `import`)."""
-    path = Path(__file__).resolve().parent / filename
-    spec = importlib.util.spec_from_file_location("_app3_" + path.stem, path)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
-
-
-# `07` define el esquema, la petición y la puntuación sobre los que trabaja este módulo.
-ext = load_sibling("07_extraccion_schema.py")
+# `07` define el esquema, la petición y la puntuación sobre los que trabaja este módulo
+# (su nombre empieza por un dígito y no admite `import`).
+ext = load_sibling(__file__, "07_extraccion_schema.py")
 
 ANTI_VARIANTS = ["reintento_generico", "insistir"]
 ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -377,14 +365,16 @@ def summarize_outcomes(outcomes: list[Outcome]) -> dict[str, int]:
 
 
 def main() -> int:
-    parser = build_parser(__doc__.splitlines()[0], anti_variants=ANTI_VARIANTS)
-    # Haiku 5.5 no falló el formato en 36 intentos: sin fallos no hay qué reintentar. Por defecto, Haiku 4.5.
-    parser.add_argument("--rol-modelo", choices=["agent", "enforcement"], default="enforcement", help="`enforcement` es Haiku 4.5 (por defecto)")
+    parser = build_parser(
+        __doc__.splitlines()[0],
+        anti_variants=ANTI_VARIANTS,
+        # Haiku 5.5 no falló el formato en 36 intentos: sin fallos no hay qué reintentar. Por defecto, Haiku 4.5.
+        model_roles=["agent", "enforcement"],
+        default_role="enforcement",
+        role_help="`enforcement` es Haiku 4.5 (por defecto)",
+    )
     args = parser.parse_args()
-    print(credentials.describe())
-    credentials.require_api_key()
-    model = report_model(args.rol_modelo)
-    budget = report_budget(args.budget, args.rol_modelo)
+    (model,), budget = preamble(args.budget, args.rol_modelo, require_api_key=True)
     import anthropic
 
     # Las descripciones sin regla de fecha dejan que aparezcan fallos de formato reales en el primer intento.
@@ -394,7 +384,8 @@ def main() -> int:
     mode = args.anti
     print(f"\n=== validación y reintento · variante {mode or 'correcta'} · {len(ext.DOCS)} documentos × {args.repeat} ===")
     print("[esperado] el reintento con error concreto corrige los fallos de formato; no hay nada que corregir en un dato que no está en el documento")
-    try:
+
+    def run_all() -> None:
         for run in range(1, args.repeat + 1):
             outcomes = []
             for doc_id, text in ext.DOCS.items():
@@ -412,11 +403,8 @@ def main() -> int:
                 f"(útiles {summary['utiles']} · inútiles {summary['inutiles']} · inventaron {summary['inventaron']} · dejaron vacío {summary['faltan']}) · "
                 f"marcados sin dato {summary['marcados']} · remiten a otro documento {summary['remiten_a_otro_documento']} · conflictos {summary['conflictos']} · coste de los reintentos ${cost:.4f}"
             )
-    except BudgetExceeded as exc:
-        print(f"[corte] {exc}")
-        return 1
-    print(f"\n[fin] coste=${guard.spent:.4f} de ${budget}")
-    return 0
+
+    return run_guarded(guard, run_all)
 
 
 if __name__ == "__main__":

@@ -70,9 +70,7 @@ from claude_agent_sdk import AgentDefinition, ClaudeAgentOptions, query  # noqa:
 # La barrera es compartida con 01 y 02; aquí se importa (y queda accesible como `coordinator_gate`).
 from app3_sistema_multiagente.coordinator_gate import coordinator_attempts, coordinator_gate, coordinator_hooks  # noqa: E402, F401
 from app3_sistema_multiagente.servers.investigacion import SERVER_NAME, build_server, tool_name  # noqa: E402
-from harness import credentials  # noqa: E402
-from harness.cli import build_parser, report_budget  # noqa: E402
-from harness.config import report_model  # noqa: E402
+from harness.cli import build_parser, preamble  # noqa: E402
 from harness.data import load  # noqa: E402
 from harness.options import isolated_options  # noqa: E402
 from harness.recorder import SUBAGENT_TOOLS, RunRecord, record  # noqa: E402
@@ -248,10 +246,7 @@ def expectation(anti: str | None) -> str:
 async def main_async() -> int:
     parser = build_parser(__doc__.splitlines()[0], anti_variants=ANTI_VARIANTS)
     args = parser.parse_args()
-    print(credentials.describe())
-    model = report_model("coordinator")
-    subagent_model = report_model("subagent")
-    budget = report_budget(args.budget, "multiagent")
+    (model, subagent_model), budget = preamble(args.budget, "coordinator", "subagent", budget_kind="multiagent")
 
     for run in range(1, args.repeat + 1):
         # El tope es de toda la ejecución del script, repartido entre repeticiones.

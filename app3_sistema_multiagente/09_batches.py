@@ -64,7 +64,6 @@ INTRODUCE: TS 4.5-K1, TS 4.5-K2, TS 4.5-K3, TS 4.5-K4, TS 4.5-S1, TS 4.5-S2, TS 
 Uso: `uv run python app3_sistema_multiagente/09_batches.py [--ventanas] [--enviar [--sin-muestra]] [--batch-id ID [--reenviar] [--esperar SEGUNDOS] [--anti por_orden]]`
 """
 
-import importlib.util
 import json
 import re
 import sys
@@ -78,24 +77,13 @@ from typing import Any
 # Los módulos se ejecutan como script: la raíz del repositorio va al path para importar `harness`.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from harness import credentials  # noqa: E402
 from harness.budget import BudgetExceeded, CostGuard, cost_of  # noqa: E402
-from harness.cli import build_parser, report_budget  # noqa: E402
-from harness.config import report_model  # noqa: E402
+from harness.cargar import load_sibling  # noqa: E402
+from harness.cli import build_parser, preamble  # noqa: E402
 
-
-def load_sibling(filename: str) -> Any:
-    """Carga otro módulo de esta carpeta (su nombre empieza por un dígito y no admite `import`)."""
-    path = Path(__file__).resolve().parent / filename
-    spec = importlib.util.spec_from_file_location("_app3_" + path.stem, path)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
-
-
-# `07` define el esquema, la petición de extracción y la puntuación; este módulo solo cambia cómo se envía.
-ext = load_sibling("07_extraccion_schema.py")
+# `07` define el esquema, la petición de extracción y la puntuación; este módulo solo cambia cómo se envía
+# (su nombre empieza por un dígito y no admite `import`).
+ext = load_sibling(__file__, "07_extraccion_schema.py")
 
 ANTI_VARIANTS = ["por_orden"]
 # Salida corta a propósito: solo el albarán largo (40 líneas) no cabe, y esa respuesta truncada es el fallido
@@ -601,10 +589,7 @@ def main() -> int:
     if args.ventanas or not (args.enviar or args.batch_id):
         print_windows()
         return 0
-    print(credentials.describe())
-    credentials.require_api_key()
-    model = report_model("agent")
-    budget = report_budget(args.budget, "agent")
+    (model,), budget = preamble(args.budget, "agent", require_api_key=True)
     import anthropic
 
     client = anthropic.Anthropic()

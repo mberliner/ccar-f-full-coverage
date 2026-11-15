@@ -69,7 +69,6 @@ Uso: `uv run python app3_sistema_multiagente/12_revision_independiente.py [--par
 """
 
 import copy
-import importlib.util
 import re
 import sys
 from dataclasses import dataclass
@@ -79,25 +78,15 @@ from typing import Any
 # Los módulos se ejecutan como script: la raíz del repositorio va al path para importar `harness`.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from harness import credentials, headless  # noqa: E402
-from harness.cli import build_parser, report_budget  # noqa: E402
-from harness.config import report_model  # noqa: E402
+from harness import headless  # noqa: E402
+from harness.cargar import load_sibling  # noqa: E402
+from harness.cli import build_parser, preamble  # noqa: E402
 from harness.data import load  # noqa: E402
 
-
-def load_sibling(filename: str) -> Any:
-    """Carga otro módulo de esta carpeta (su nombre empieza por un dígito y no admite `import`)."""
-    path = Path(__file__).resolve().parent / filename
-    spec = importlib.util.spec_from_file_location("_app3_" + path.stem, path)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
-
-
-# `11` da el diff, el repositorio temporal, el schema de hallazgos y la puntuación contra lo sembrado; `10`, la calibración.
-m11 = load_sibling("11_criterios_y_ci.py")
-m10 = load_sibling("10_confianza_y_revision.py")
+# `11` da el diff, el repositorio temporal, el schema de hallazgos y la puntuación contra lo sembrado; `10`, la calibración
+# (sus nombres empiezan por un dígito y no admiten `import`).
+m11 = load_sibling(__file__, "11_criterios_y_ci.py")
+m10 = load_sibling(__file__, "10_confianza_y_revision.py")
 
 PARTS = ["plan", "revision"]
 ANTI_VARIANTS = ["autorrevision", "autorrevision_explicita", "una_pasada"]
@@ -454,14 +443,16 @@ def run_revision(args: Any, model: str, budget: float) -> None:
 
 
 def main() -> int:
-    parser = build_parser(__doc__.splitlines()[0], anti_variants=ANTI_VARIANTS)
-    parser.add_argument("--parte", choices=PARTS, default="plan", help="`plan` muestra las pasadas y la orden sin ejecutar nada; `revision` genera y revisa con `claude -p`")
+    parser = build_parser(
+        __doc__.splitlines()[0],
+        parts=PARTS,
+        # `--parte plan` acepta solo una_pasada, para ver su única pasada; el resto de variantes son de `revision`.
+        anti_by_part={"plan": ["una_pasada"], "revision": ANTI_VARIANTS},
+        default_part="plan",
+        part_help="`plan` muestra las pasadas y la orden sin ejecutar nada; `revision` genera y revisa con `claude -p`",
+    )
     args = parser.parse_args()
-    if args.anti and args.parte != "revision" and not (args.parte == "plan" and args.anti == "una_pasada"):
-        parser.error("--anti es de la parte revision (`--parte plan` acepta solo una_pasada, para ver su única pasada)")
-    print(credentials.describe())
-    model = report_model("reviewer")
-    budget = report_budget(args.budget, "multiagent")
+    (model,), budget = preamble(args.budget, "reviewer", budget_kind="multiagent")
     if args.parte == "plan":
         run_plan(model, budget, args.anti)
         return 0

@@ -69,9 +69,7 @@ from app3_sistema_multiagente.servers.investigacion import (  # noqa: E402
     build_server,
     tool_name,
 )
-from harness import credentials  # noqa: E402
-from harness.cli import build_parser, report_budget  # noqa: E402
-from harness.config import report_model  # noqa: E402
+from harness.cli import build_parser, preamble  # noqa: E402
 from harness.options import isolated_options  # noqa: E402
 from harness.recorder import SUBAGENT_TOOLS, RunRecord, record  # noqa: E402
 
@@ -241,10 +239,7 @@ async def main_async() -> int:
     parser = build_parser(__doc__.splitlines()[0], anti_variants=ANTI_VARIANTS)
     parser.add_argument("--pregunta", choices=list(QUESTIONS), default="amplia")
     args = parser.parse_args()
-    print(credentials.describe())
-    model = report_model("coordinator")
-    subagent_model = report_model("subagent")
-    budget = report_budget(args.budget, "multiagent")
+    (model, subagent_model), budget = preamble(args.budget, "coordinator", "subagent", budget_kind="multiagent")
 
     question = QUESTIONS[args.pregunta]
     for run in range(1, args.repeat + 1):

@@ -58,7 +58,6 @@ INTRODUCE: TS 5.5-K1, TS 5.5-K2, TS 5.5-K3, TS 5.5-K4, TS 5.5-S1, TS 5.5-S2, TS 
 Uso: `uv run python app3_sistema_multiagente/10_confianza_y_revision.py [--parte poblacion|confianza_modelo] [--anti confianza_global|precision_agregada] [--rol-modelo agent|enforcement] [--repeat N]`
 """
 
-import importlib.util
 import random
 import sys
 from collections import Counter, defaultdict
@@ -69,25 +68,14 @@ from typing import Any, Callable
 # Los módulos se ejecutan como script: la raíz del repositorio va al path para importar `harness`.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from harness import credentials  # noqa: E402
-from harness.budget import BudgetExceeded, CostGuard  # noqa: E402
-from harness.cli import build_parser, report_budget  # noqa: E402
-from harness.config import report_model  # noqa: E402
+from harness.budget import CostGuard, run_guarded  # noqa: E402
+from harness.cargar import load_sibling  # noqa: E402
+from harness.cli import build_parser, preamble  # noqa: E402
 from harness.data import load  # noqa: E402
 
-
-def load_sibling(filename: str) -> Any:
-    """Carga otro módulo de esta carpeta (su nombre empieza por un dígito y no admite `import`)."""
-    path = Path(__file__).resolve().parent / filename
-    spec = importlib.util.spec_from_file_location("_app3_" + path.stem, path)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
-
-
-# `07` define el esquema, la petición y la puntuación sobre los que trabaja la parte con modelo.
-ext = load_sibling("07_extraccion_schema.py")
+# `07` define el esquema, la petición y la puntuación sobre los que trabaja la parte con modelo
+# (su nombre empieza por un dígito y no admite `import`).
+ext = load_sibling(__file__, "07_extraccion_schema.py")
 
 PARTS = ["poblacion", "confianza_modelo"]
 ANTI_VARIANTS = ["confianza_global", "precision_agregada"]
@@ -617,31 +605,27 @@ def run_confianza_modelo(args: Any, create: Callable[..., Any], model: str) -> N
 
 
 def main() -> int:
-    parser = build_parser(__doc__.splitlines()[0], anti_variants=ANTI_VARIANTS)
-    parser.add_argument("--parte", choices=PARTS, default="poblacion", help="`poblacion` no usa modelo; `confianza_modelo` extrae con confianza por campo")
-    parser.add_argument("--rol-modelo", choices=["agent", "enforcement"], default="agent", help="rol del modelo de `confianza_modelo`; `enforcement` es Haiku 4.5")
+    parser = build_parser(
+        __doc__.splitlines()[0],
+        parts=PARTS,
+        anti_by_part={"poblacion": ANTI_VARIANTS},
+        default_part="poblacion",
+        part_help="`poblacion` no usa modelo; `confianza_modelo` extrae con confianza por campo",
+        model_roles=["agent", "enforcement"],
+        default_role="agent",
+        role_help="rol del modelo de `confianza_modelo`; `enforcement` es Haiku 4.5",
+    )
     parser.add_argument("--sin-reglas-de-formato", action="store_true", help="quita de las descripciones las reglas de formato, para provocar errores que calibrar")
     args = parser.parse_args()
     if args.parte == "poblacion":
         run_poblacion(args.anti)
         return 0
-    if args.anti:
-        parser.error("--anti es de la parte poblacion")
-    print(credentials.describe())
-    credentials.require_api_key()
-    model = report_model(args.rol_modelo)
-    budget = report_budget(args.budget, args.rol_modelo)
+    (model,), budget = preamble(args.budget, args.rol_modelo, require_api_key=True)
     import anthropic
 
     guard = CostGuard(model, budget)
     create = ext.make_create(anthropic.Anthropic(), guard)
-    try:
-        run_confianza_modelo(args, create, model)
-    except BudgetExceeded as exc:
-        print(f"[corte] {exc}")
-        return 1
-    print(f"\n[fin] coste=${guard.spent:.4f} de ${budget}")
-    return 0
+    return run_guarded(guard, lambda: run_confianza_modelo(args, create, model))
 
 
 if __name__ == "__main__":

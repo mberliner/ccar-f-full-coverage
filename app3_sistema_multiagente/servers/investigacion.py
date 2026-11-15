@@ -32,6 +32,7 @@ from typing import Any
 from claude_agent_sdk import SdkMcpTool, create_sdk_mcp_server, tool
 
 from harness.data import load
+from harness.results import ok  # noqa: F401  (se reexporta: otros módulos y tests lo importan de aquí)
 
 SERVER_NAME = "investigacion"
 MAX_RESULTS = 8
@@ -42,10 +43,6 @@ NETWORK_SUBTOPICS = {"vpn": ["vpn"], "wifi": ["wifi", "wi-fi"], "impresora": ["i
 
 def tool_name(name: str) -> str:
     return f"mcp__{SERVER_NAME}__{name}"
-
-
-def ok(data: Any) -> dict[str, Any]:
-    return {"content": [{"type": "text", "text": json.dumps(data, ensure_ascii=False)}]}
 
 
 def words_of(query: str) -> set[str]:

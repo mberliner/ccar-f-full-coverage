@@ -98,10 +98,8 @@ from typing import Any
 # Los módulos se ejecutan como script: la raíz del repositorio va al path para importar `harness`.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from harness import credentials  # noqa: E402
-from harness.budget import BudgetExceeded, CostGuard  # noqa: E402
-from harness.cli import build_parser, report_budget  # noqa: E402
-from harness.config import report_model  # noqa: E402
+from harness.budget import CostGuard, make_create, run_guarded  # noqa: E402
+from harness.cli import build_parser, preamble  # noqa: E402
 from harness.data import load  # noqa: E402
 
 PARTS = ["forzada", "estricto", "tipo_desconocido", "few_shot", "enriquecimiento"]
@@ -462,15 +460,6 @@ def print_scores(title: str, results: dict, schema: dict) -> list[Score]:
     return scores
 
 
-def make_create(client: Any, guard: CostGuard) -> Callable[..., Any]:
-    def create(**request: Any) -> Any:
-        response = client.messages.create(**request)
-        guard.add(response.usage)
-        return response
-
-    return create
-
-
 # --- Enriquecimiento (4.3-S3): primero la extracción forzada, después las demás tools ----------------------
 
 ORDERS = load("pedidos_compra.json")
@@ -678,30 +667,26 @@ def run_enriquecimiento(args: Any, create: Callable[..., Any], model: str) -> No
 
 
 def main() -> int:
-    parser = build_parser(__doc__.splitlines()[0], anti_variants=ANTI_VARIANTS)
-    parser.add_argument("--parte", choices=PARTS, required=True)
-    # Con Haiku 5.5 el *few-shot* no cambió nada (ya escribe bien las fechas sin ejemplos); Haiku 4.5 sí necesita ayuda.
-    parser.add_argument("--rol-modelo", choices=["agent", "enforcement"], default="agent", help="rol del modelo; `enforcement` es Haiku 4.5")
+    parser = build_parser(
+        __doc__.splitlines()[0],
+        parts=PARTS,
+        anti_by_part=ANTI_BY_PART,
+        part_help="",
+        # Con Haiku 5.5 el *few-shot* no cambió nada (ya escribe bien las fechas sin ejemplos); Haiku 4.5 sí necesita ayuda.
+        model_roles=["agent", "enforcement"],
+        default_role="agent",
+        role_help="rol del modelo; `enforcement` es Haiku 4.5",
+    )
     args = parser.parse_args()
-    if args.anti and args.anti not in ANTI_BY_PART.get(args.parte, []):
-        parser.error("--anti sin_nullable y enum_cerrado son de la parte forzada; auto_desde_inicio, de la parte enriquecimiento")
-    print(credentials.describe())
     # La Messages API solo admite API key. Rol `agent` (Haiku 5.5): Sonnet 5.5 devuelve 400 con `any` y forzado.
-    credentials.require_api_key()
-    model = report_model(args.rol_modelo)
-    budget = report_budget(args.budget, args.rol_modelo)
+    (model,), budget = preamble(args.budget, args.rol_modelo, require_api_key=True)
     import anthropic
 
     # El tope es de toda la ejecución del script, repartido entre documentos, repeticiones y partes.
     guard = CostGuard(model, budget)
     create = make_create(anthropic.Anthropic(), guard)
-    try:
-        {"forzada": run_forzada, "estricto": run_estricto, "tipo_desconocido": run_tipo_desconocido, "few_shot": run_few_shot, "enriquecimiento": run_enriquecimiento}[args.parte](args, create, model)
-    except BudgetExceeded as exc:
-        print(f"[corte] {exc}")
-        return 1
-    print(f"\n[fin] coste=${guard.spent:.4f} de ${budget}")
-    return 0
+    handler = {"forzada": run_forzada, "estricto": run_estricto, "tipo_desconocido": run_tipo_desconocido, "few_shot": run_few_shot, "enriquecimiento": run_enriquecimiento}[args.parte]
+    return run_guarded(guard, lambda: handler(args, create, model))
 
 
 if __name__ == "__main__":

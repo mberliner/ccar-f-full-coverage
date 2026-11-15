@@ -93,9 +93,7 @@ from claude_agent_sdk import AgentDefinition, ClaudeAgentOptions, query  # noqa:
 
 from app3_sistema_multiagente.coordinator_gate import coordinator_attempts, coordinator_gate, coordinator_hooks  # noqa: E402, F401
 from app3_sistema_multiagente.servers.investigacion import SERVER_NAME, build_server, tool_name  # noqa: E402
-from harness import credentials  # noqa: E402
-from harness.cli import build_parser, report_budget  # noqa: E402
-from harness.config import report_model  # noqa: E402
+from harness.cli import build_parser, preamble  # noqa: E402
 from harness.data import load  # noqa: E402
 from harness.options import isolated_options  # noqa: E402
 from harness.recorder import SUBAGENT_TOOLS, RunRecord, record  # noqa: E402
@@ -660,22 +658,26 @@ def print_measures(rec: RunRecord, parte: str) -> None:
 
 
 def build_cli():
-    parser = build_parser(__doc__.splitlines()[0], anti_variants=ANTI_VARIANTS)
-    parser.add_argument("--parte", choices=PARTES, default="conflictos")
+    parser = build_parser(
+        __doc__.splitlines()[0],
+        anti_variants=ANTI_VARIANTS,
+        parts=PARTES,
+        default_part="conflictos",
+        part_help="",
+        # Prueba puntual con otro modelo de subagente: `enforcement` (Haiku 4.5 por defecto) ya
+        # existe para eso en `harness/config.py`, así que no hace falta tocar `.env`.
+        model_roles=["subagent", "enforcement"],
+        default_role="subagent",
+        role_flag="--rol-subagente",
+        role_help="rol del modelo de los subagentes; `enforcement` es Haiku 4.5",
+    )
     parser.add_argument("--texto", choices=TEXTOS, default="sin_resumen", help="técnica de 5.1 sobre el informe largo; solo con --parte medio")
-    # Prueba puntual con otro modelo de subagente: `enforcement` (Haiku 4.5 por defecto) ya
-    # existe para eso en `harness/config.py`, así que no hace falta tocar `.env`.
-    parser.add_argument("--rol-subagente", choices=["subagent", "enforcement"], default="subagent",
-                        help="rol del modelo de los subagentes; `enforcement` es Haiku 4.5")
     return parser
 
 
 async def main_async() -> int:
     args = build_cli().parse_args()
-    print(credentials.describe())
-    model = report_model("coordinator")
-    subagent_model = report_model(args.rol_subagente)
-    budget = report_budget(args.budget, "multiagent")
+    (model, subagent_model), budget = preamble(args.budget, "coordinator", args.rol_subagente, budget_kind="multiagent")
 
     for run in range(1, args.repeat + 1):
         # El tope es de toda la ejecución del script, repartido entre repeticiones.

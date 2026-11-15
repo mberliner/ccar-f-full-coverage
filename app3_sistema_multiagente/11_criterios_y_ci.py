@@ -109,9 +109,8 @@ from typing import Any
 # Los módulos se ejecutan como script: la raíz del repositorio va al path para importar `harness`.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from harness import credentials, headless  # noqa: E402
-from harness.cli import build_parser, report_budget  # noqa: E402
-from harness.config import report_model  # noqa: E402
+from harness import headless  # noqa: E402
+from harness.cli import build_parser, preamble  # noqa: E402
 from harness.data import copy_to_temp, load  # noqa: E402
 
 PARTS = ["orden", "revision", "rerevision", "tests"]
@@ -782,17 +781,18 @@ def run_tests(repo: ReviewRepo, args: Any, model: str, budget: float, ledger: he
 
 
 def main() -> int:
-    parser = build_parser(__doc__.splitlines()[0], anti_variants=ANTI_VARIANTS)
-    parser.add_argument("--parte", choices=PARTS, default="orden", help="`orden` solo construye y muestra la orden; el resto ejecuta `claude -p`")
+    parser = build_parser(
+        __doc__.splitlines()[0],
+        parts=PARTS,
+        anti_by_part=ANTI_BY_PART,
+        default_part="orden",
+        part_help="`orden` solo construye y muestra la orden; el resto ejecuta `claude -p`",
+    )
     parser.add_argument("--sin-categoria", choices=CATEGORIES, help="desactiva una categoría de los criterios y del schema (4.1-S2)")
     args = parser.parse_args()
-    if args.anti and args.anti not in ANTI_BY_PART.get(args.parte, []):
-        parser.error(f"--anti {args.anti} no es de la parte {args.parte}: " + "; ".join(f"{p}: {', '.join(v)}" for p, v in ANTI_BY_PART.items()))
     if args.sin_categoria and args.parte != "revision":
         parser.error("--sin-categoria es de la parte revision")
-    print(credentials.describe())
-    model = report_model("reviewer")
-    budget = report_budget(args.budget, "multiagent")
+    (model,), budget = preamble(args.budget, "reviewer", budget_kind="multiagent")
     repo = build_review_repo()
     if args.parte == "orden":
         run_orden(repo, args, model, budget)
