@@ -34,9 +34,26 @@ CONTRACTS: dict[str, list[tuple[str, list[str]]]] = {
         ("harness.simulaciones", ["UnknownCase", "list_cases", "case_context", "case_question", "case_answer"]),
     ],    # Fase 4 (paquete 4.3): el «Contexto común de la app» como fase propia, fuera de la ficha.
     "4.3": [("harness.narrador", ["APP_PHASES", "app_phase"])],
+    # Fase 5 (paquete 5.0 escribió los tests): helpers comunes del arnés (`tests/test_fase5_helpers.py`).
+    "5.1": [
+        ("harness.cli", ["preamble", "build_parser"]),
+        ("harness.budget", ["make_create", "run_guarded"]),
+        ("harness.cargar", ["load_path", "load_sibling"]),
+        ("harness.results", ["ok", "error", "deny"]),
+        ("harness.metrics", ["rate_text", "accuracy", "fmt_usd"]),
+    ],
+    # Salida estándar y `--repeat` (`tests/test_fase5_salida.py`).
+    "5.3": [
+        (
+            "harness.salida",
+            ["CORRECT_VARIANT", "RESPONSE_LIMIT", "variant_label", "mechanism_line", "expected_line", "key_line", "measure_line", "full_response", "render"],
+        ),
+    ],
+    # Un solo lector de la sección 4 de D3 (`tests/test_fase5_d3_lector.py`).
+    "5.4": [("harness.items", ["D3Block", "d3_section4"])],
 }
 # Paquetes sin implementar. Al cerrar un paquete se quita de aquí, en el mismo cambio.
-PENDING: set[str] = set()
+PENDING: set[str] = {"5.1", "5.3", "5.4"}
 
 
 def missing(package: str) -> list[str]:
