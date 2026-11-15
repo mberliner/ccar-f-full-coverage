@@ -17,13 +17,13 @@ vive en `HelpdeskState`, uno por ejecución.
 USA: TS 1.4-K1, TS 1.4-S1, TS 2.2-K1, TS 2.2-S1
 """
 
-import json
 from dataclasses import dataclass, field
 from typing import Any
 
 from claude_agent_sdk import SdkMcpTool, create_sdk_mcp_server, tool
 
 from harness.data import load
+from harness.results import error, ok  # noqa: F401  (se reexportan: los tests y otros módulos los importan de aquí)
 
 SERVER_NAME = "helpdesk"
 
@@ -45,17 +45,6 @@ class HelpdeskState:
     escalations: list[dict[str, Any]] = field(default_factory=list)
     ticket_overrides: dict[str, dict[str, Any]] = field(default_factory=dict)
     kb_overrides: dict[str, dict[str, Any]] = field(default_factory=dict)
-
-
-def ok(data: Any) -> dict[str, Any]:
-    return {"content": [{"type": "text", "text": json.dumps(data, ensure_ascii=False)}]}
-
-
-def error(category: str, message: str, *, retryable: bool = False, **extra: Any) -> dict[str, Any]:
-    # Error como resultado con metadatos estructurados (regla mcp-servers.md),
-    # nunca como excepción: el modelo debe poder razonar sobre la causa.
-    data = {"errorCategory": category, "isRetryable": retryable, "message": message, **extra}
-    return {"content": [{"type": "text", "text": json.dumps(data, ensure_ascii=False)}], "is_error": True}
 
 
 def find_ticket(state: HelpdeskState, ticket_id: str) -> dict[str, Any] | None:

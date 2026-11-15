@@ -61,9 +61,7 @@ from app2_agente_con_control.servers.helpdesk import (  # noqa: E402
     find_ticket,
     tool_name,
 )
-from harness import credentials  # noqa: E402
-from harness.cli import build_parser, report_budget  # noqa: E402
-from harness.config import report_model  # noqa: E402
+from harness.cli import build_parser, preamble  # noqa: E402
 from harness.data import load  # noqa: E402
 from harness.options import isolated_options  # noqa: E402
 from harness.recorder import RunRecord, record  # noqa: E402
@@ -232,9 +230,7 @@ async def main_async() -> int:
     parser = build_parser(__doc__.splitlines()[0], anti_variants=["sin_aviso"])
     parser.add_argument("--rama", choices=[*BRANCHES, "todas"], default="todas")
     args = parser.parse_args()
-    print(credentials.describe())
-    model = report_model("agent")
-    budget = report_budget(args.budget, "agent")
+    (model,), budget = preamble(args.budget, "agent")
     branches = BRANCHES if args.rama == "todas" else [args.rama]
     # Reparto del tope entre la base y cada rama (los forks son dos sesiones).
     sessions = 1 + sum(2 if b == "fork" else 1 for b in branches)

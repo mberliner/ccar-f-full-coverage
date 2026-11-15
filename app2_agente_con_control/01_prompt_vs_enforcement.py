@@ -50,9 +50,7 @@ from app2_agente_con_control.servers.helpdesk import (  # noqa: E402
     reimbursement_ticket,
     tool_name,
 )
-from harness import credentials  # noqa: E402
-from harness.cli import build_parser, report_budget  # noqa: E402
-from harness.config import report_model  # noqa: E402
+from harness.cli import build_parser, preamble  # noqa: E402
 from harness.options import isolated_options  # noqa: E402
 from harness.recorder import RunRecord, record  # noqa: E402
 
@@ -175,10 +173,8 @@ async def run_once(anti: str | None, model: str, budget: float) -> tuple[int, in
 async def main_async() -> int:
     parser = build_parser(__doc__.splitlines()[0], anti_variants=["prompt"])
     args = parser.parse_args()
-    print(credentials.describe())
     # Mismo modelo en las dos variantes: si no, el 0 con puerta sería mérito del modelo.
-    model = report_model("enforcement")
-    budget = report_budget(args.budget, "enforcement")
+    (model,), budget = preamble(args.budget, "enforcement")
 
     results = []
     # El tope es de toda la ejecución del script: se reparte entre repeticiones.

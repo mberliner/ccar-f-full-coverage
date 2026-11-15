@@ -65,6 +65,7 @@ from app2_agente_con_control.servers.helpdesk import (  # noqa: E402
     tool_name,
 )
 from harness.offline import call_tool, run_hook  # noqa: E402
+from harness.results import deny  # noqa: E402
 
 PAY = tool_name("process_reimbursement")
 
@@ -73,16 +74,6 @@ OWN_USER, OWN_TICKET, OWN_AMOUNT = "EMP-1028", "TCK-4047", 120.0
 WRONG_USER, WRONG_USER_AGAIN = "EMP-1082", "EMP-1280"
 
 # --- PreToolUse: imponer el ID verificado (1.5-K2) ------------------------------
-
-
-def deny(reason: str) -> dict[str, Any]:
-    return {
-        "hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "permissionDecision": "deny",
-            "permissionDecisionReason": reason,
-        }
-    }
 
 
 def allow_with(updated_input: dict[str, Any]) -> dict[str, Any]:

@@ -99,10 +99,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from claude_agent_sdk import ClaudeSDKClient  # noqa: E402
 
 from app2_agente_con_control.servers.helpdesk import SERVER_NAME, HelpdeskState, build_server, tool_name  # noqa: E402
-from harness import credentials  # noqa: E402
-from harness.cli import build_parser, report_budget  # noqa: E402
-from harness.config import report_model  # noqa: E402
+from harness.cli import build_parser, preamble  # noqa: E402
 from harness.data import load  # noqa: E402
+from harness.metrics import rate_text as _rate_text  # noqa: E402
 from harness.options import isolated_options  # noqa: E402
 from harness.recorder import RunRecord, record  # noqa: E402
 
@@ -330,7 +329,8 @@ def overall(rows: list[tuple[str, bool]]) -> tuple[int, int]:
 
 
 def rate_text(rate: tuple[int, int]) -> str:
-    return f"{rate[0]}/{rate[1]}" if rate[1] else "sin datos"
+    # Aquí la tasa va sin porcentaje; el formato lo da el arnés.
+    return _rate_text(rate, percent=False)
 
 
 # --- Confianza autodeclarada (variante `confianza`) -----------------------------------
@@ -441,19 +441,21 @@ async def run_case(case: dict, label: dict, model: str, system_prompt: str, cap:
 
 
 async def main_async() -> int:
-    parser = build_parser(__doc__.splitlines()[0], anti_variants=ANTI_VARIANTS)
-    parser.add_argument("--parte", choices=PARTS, default="agente", help="`proxy` no usa el modelo")
-    parser.add_argument(
-        "--rol-modelo", choices=MODEL_ROLES, default="agent",
-        help="rol del modelo (por defecto agent, Haiku 5.5); enforcement usa un modelo anterior si la señal no se ve",
+    parser = build_parser(
+        __doc__.splitlines()[0],
+        anti_variants=ANTI_VARIANTS,
+        parts=PARTS,
+        default_part="agente",
+        part_help="`proxy` no usa el modelo",
+        model_roles=MODEL_ROLES,
+        default_role="agent",
+        role_help="rol del modelo (por defecto agent, Haiku 5.5); enforcement usa un modelo anterior si la señal no se ve",
     )
     args = parser.parse_args()
     if args.parte == "proxy":
         return run_proxy()
 
-    print(credentials.describe())
-    model = report_model(args.rol_modelo)
-    budget = report_budget(args.budget, args.rol_modelo)
+    (model,), budget = preamble(args.budget, args.rol_modelo)
     cases, labels = load("escalamiento_casos.json"), load("escalamiento_casos_etiquetas.json")
     system_prompt = build_system_prompt(args.anti)
     print(f"\n=== variante {args.anti or 'criterios + ejemplos'} · {len(cases)} casos × {args.repeat} ===\n[prompt]\n{system_prompt}\n")
