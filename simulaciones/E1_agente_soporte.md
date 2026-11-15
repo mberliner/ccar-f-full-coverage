@@ -73,7 +73,7 @@ Un cliente escribe en un solo mensaje que le han cobrado dos veces el pedido 441
 
 ### Pregunta 3 (TS 1.5 · una respuesta)
 
-`get_customer` devuelve la fecha de alta en segundos desde 1970, `lookup_order` devuelve las fechas como texto «día/mes/año» y el estado del pedido como un código numérico. El agente calcula mal si una devolución está dentro de plazo y confunde estados. ¿Qué cambio corrige el problema antes de que el modelo razone sobre esos datos?
+`get_customer` devuelve la fecha de alta como un número de ocho cifras con año, mes y día pegados (`20250314`), `lookup_order` devuelve las fechas como texto «mes/día/año» y el estado del pedido como una sola letra (`E`, `D`, `R`). El agente calcula mal si una devolución está dentro de plazo y confunde estados. ¿Qué cambio corrige el problema antes de que el modelo razone sobre esos datos?
 
 - A. Un hook PostToolUse que convierta fechas y estados a un formato común.
 - B. Una instrucción en el prompt que explique cómo leer cada formato de fecha.

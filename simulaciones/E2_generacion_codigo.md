@@ -12,7 +12,7 @@ Pendiente de revisión por una instancia distinta de la que lo escribió (paquet
 
 ## Contexto
 
-El equipo que mantiene la aplicación de la mesa de ayuda (un backend en Python con varios paquetes y un frontend en React cuyas pruebas `*.test.tsx` están repartidas por muchas carpetas) usa Claude Code a diario para generar código, refactorizar, depurar y documentar. Hasta ahora cada persona lo configuraba a su manera; el equipo quiere integrarlo en su flujo de trabajo con un `CLAUDE.md` bien organizado, comandos y skills propios, y un criterio común para decidir cuándo planificar antes de tocar el código y cuándo cambiarlo directamente. En las próximas semanas tiene previstas tareas de todos los tamaños, desde arreglos de una línea hasta la migración de una biblioteca que usa medio backend.
+El equipo que mantiene la aplicación de la mesa de ayuda (un backend en Python con varios paquetes, cuyas pruebas `test_*.py` están repartidas por muchas carpetas junto al código que prueban, y un frontend en React) usa Claude Code a diario para generar código, refactorizar, depurar y documentar. Hasta ahora cada persona lo configuraba a su manera; el equipo quiere integrarlo en su flujo de trabajo con un `CLAUDE.md` bien organizado, comandos y skills propios, y un criterio común para decidir cuándo planificar antes de tocar el código y cuándo cambiarlo directamente. En las próximas semanas tiene previstas tareas de todos los tamaños, desde arreglos de una línea hasta la migración de una biblioteca que usa medio backend.
 
 ## Restricciones compartidas
 
@@ -69,17 +69,17 @@ Una desarrolladora observa que Claude Code respeta la convención de nombres del
 
 ### Pregunta 3 (TS 3.3 · una respuesta)
 
-El equipo quiere que Claude Code siga unas convenciones de pruebas del frontend cada vez que edite un archivo `*.test.tsx`, que hay en decenas de carpetas distintas, sin cargarlas cuando trabaja en el backend. ¿Dónde las escribe?
+El equipo quiere que Claude Code siga unas convenciones de pruebas del backend cada vez que edite un archivo `test_*.py`, que hay en decenas de carpetas distintas, sin cargarlas cuando trabaja en el frontend. ¿Dónde las escribe?
 
-- A. En un `CLAUDE.md` dentro de cada carpeta que hoy contiene pruebas del frontend.
-- B. En un archivo de `.claude/rules/` con `paths: ["**/*.test.tsx"]` en su frontmatter.
+- A. En un `CLAUDE.md` dentro de cada carpeta que hoy contiene pruebas del backend.
+- B. En un archivo de `.claude/rules/` con `paths: ["**/test_*.py"]` en su frontmatter.
 - C. En una sección «Pruebas» del `CLAUDE.md` raíz, que se carga en todas las sesiones.
 - D. En un comando `/pruebas` de `.claude/commands/` que cada persona lance antes.
 
 <details>
 <summary>Respuesta</summary>
 
-**B.** Una regla de `.claude/rules/` con un campo `paths` de patrones glob se activa solo al editar archivos que coinciden, sea cual sea su carpeta (TS 3.3-K1, TS 3.3-K2, TS 3.3-S2). A es la alternativa que la guía descarta para convenciones repartidas por todo el código: obliga a mantener un archivo por carpeta (TS 3.3-K3, TS 3.3-S3). C carga las normas también al trabajar en el backend, en contra de R2. D depende de que cada persona se acuerde de invocarlo y no se activa por el archivo que se edita.
+**B.** Una regla de `.claude/rules/` con un campo `paths` de patrones glob se activa solo al editar archivos que coinciden, sea cual sea su carpeta (TS 3.3-K1, TS 3.3-K2, TS 3.3-S2). A es la alternativa que la guía descarta para convenciones repartidas por todo el código: obliga a mantener un archivo por carpeta (TS 3.3-K3, TS 3.3-S3). C carga las normas también al trabajar en el frontend, en contra de R2. D depende de que cada persona se acuerde de invocarlo y no se activa por el archivo que se edita.
 </details>
 
 ### Pregunta 4 (TS 3.2 · multiple-response)
@@ -99,7 +99,7 @@ El equipo versiona en `.claude/skills/analizar-paquete/` una skill que recorre u
 - **A** Correcta. `context: fork` ejecuta la skill en un contexto de subagente aislado y evita que una salida extensa, como un análisis de código, contamine la conversación principal (TS 3.2-K3, TS 3.2-S2).
 - **B** Correcta. `argument-hint` sirve para pedir a quien invoca la skill sin argumentos el parámetro que necesita (TS 3.2-S4).
 - **C** Incorrecta. `allowed-tools` restringe qué tools puede usar la skill mientras se ejecuta, por ejemplo para evitar acciones destructivas (TS 3.2-S3); no aísla su salida ni pide el argumento.
-- **D** Incorrecta. `paths` es el campo de las reglas de `.claude/rules/` para cargarlas según el archivo que se edita (TS 3.3-K1), no una opción del frontmatter de una skill de las que nombra la guía (TS 3.2-K2).
+- **D** Incorrecta. `paths` es el campo de las reglas de `.claude/rules/` para cargarlas según el archivo que se edita (TS 3.3-K1), no una opción del frontmatter de una skill de las que nombra la guía (TS 3.2-K2). Y aunque lo fuera, no consigue ninguno de los dos objetivos: decidir cuándo se carga algo no aísla la salida del análisis ni pide el paquete que falta.
 </details>
 
 ### Pregunta 5 (TS 3.2 · una respuesta)
