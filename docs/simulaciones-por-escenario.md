@@ -2,7 +2,7 @@
 
 Cómo se practica con varias preguntas que comparten un mismo contexto, como en el examen. Este documento fija el formato. Los casos de estudio de los seis escenarios están en `simulaciones/`. La plantilla está en [`plantillas/simulacion/ESCENARIO.md`](../plantillas/simulacion/ESCENARIO.md) y el formato lo comprueba `tests/test_simulaciones_formato.py`.
 
-> **Dónde encaja.** Esto es un complemento propio y opcional, no una entrega del roadmap. Lo propuso la auditoría (G-07). El roadmap prevé, tras la entrega 3, un repaso sin código nuevo (`S-1`, roadmap §10) con las filas pendientes de `FALLOS.md` y las preguntas tipo examen de los módulos y de D3 mezcladas; no menciona escenarios. Los simulacros de examen completo del plan de estudio son externos (mocks y simulacros del propio plan), y ahí es donde se practican varias preguntas de un mismo escenario. Los casos de estudio de `simulaciones/` sirven para ese repaso (`S-1`); los de examen completo siguen sin escribir.
+> **Dónde encaja.** Esto es un complemento propio y opcional, no una entrega del roadmap. Lo propuso la auditoría (G-07). El roadmap prevé, tras la entrega 3, un repaso sin código nuevo (`S-1`, roadmap §10) con las filas pendientes de `FALLOS.md` y las preguntas tipo examen de los módulos y de D3 mezcladas; no menciona escenarios. Los simulacros de examen completo del plan de estudio son externos (mocks y simulacros del propio plan), y ahí es donde se practican varias preguntas de un mismo escenario. Los casos de estudio de `simulaciones/` sirven para ese repaso (`S-1`); aquí no hay escrito ningún caso de examen completo (son opcionales; el formato los admite) y, mientras tanto, la referencia son esos simulacros externos.
 
 ## Por qué
 
@@ -68,5 +68,5 @@ Con las 240 viñetas entregadas, una simulación completa son 4 casos de examen 
 
 ## Qué falta
 
-- **La revisión de los casos.** Los seis casos de estudio están escritos; falta que una instancia distinta de la que los escribió los contraste con la guía (regla 6).
-- **Los casos de examen completo.** Ninguno escrito; ya no dependen de la cobertura.
+- **La revisión de los casos:** hecha. Una instancia independiente contrastó los seis casos con la guía (paquete 3.9, 2026-11-14) y sus correcciones se aplicaron en 3.10 (2026-11-15).
+- **Los casos de examen completo.** Opcionales y sin escribir; ya no dependen de la cobertura. Hasta que existan, el examen completo se practica con los simulacros externos.

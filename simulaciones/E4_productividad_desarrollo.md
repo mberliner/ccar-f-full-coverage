@@ -1,7 +1,7 @@
 <!--
 Caso de simulación por escenario (docs/simulaciones-por-escenario.md), escrito con plantillas/simulacion/ESCENARIO.md.
 Lo comprueba tests/test_simulaciones_formato.py. Las respuestas se apoyan solo en la guía v1.0.
-Pendiente de revisión por una instancia distinta de la que lo escribió (paquete 3.9 del plan de mejoras).
+Revisado por una instancia independiente (3.9, 2026-11-14) y corregido en 3.10 (2026-11-15).
 -->
 # E4 · Asistente para explorar un sistema heredado
 

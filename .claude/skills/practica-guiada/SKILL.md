@@ -143,7 +143,7 @@ El examen agrupa las preguntas en escenarios: un contexto y unas restricciones c
 2. Ejecuta `simulacion E<n>` y narra el contexto. Di cuántas preguntas son y el tiempo orientativo que trae la cabecera del contexto (sale de unos 2 minutos por pregunta, el ritmo del examen) y que, como en el examen, contesta todo el caso antes de ver ninguna respuesta.
 3. Para cada `N`, pide `simulacion E<n> <N>` y plantéala como en «Cómo se plantea una pregunta» (hasta cuatro por llamada). El texto no dice su viñeta: no la adivines ni la digas. Guarda sus respuestas sin comentarlas.
 4. Solo cuando haya contestado todas, pide `simulacion E<n> <N> --respuesta` para cada `N`, contrasta una a una y di la TS que trae cada respuesta. Al final, di el porcentaje de aciertos por dominio (el dominio es el primer número de la TS).
-5. Al terminar, resume cuántas acertó y propón anotar los fallos con su viñeta (la de la respuesta) y módulo `E<n>`, como en «Escribir en `FALLOS.md`».
+5. Al terminar, resume cuántas acertó y propón anotar los fallos con su viñeta (la de la respuesta) y módulo `E<n>`, como en «Escribir en `FALLOS.md`». Ese fallo se repasa después con un ítem del módulo que introduce la viñeta, no con la pregunta de la simulación.
 
 ## Escribir en `FALLOS.md`
 
