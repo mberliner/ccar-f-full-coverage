@@ -37,17 +37,17 @@ Un equipo de plataforma hereda el sistema de facturación de otra área: varios 
 
 ### Pregunta 1 (TS 2.5 · una respuesta)
 
-Una ingeniera pide al asistente que localice todos los sitios del código que llaman a la función `calcular_recargo` antes de cambiar su firma. ¿Qué tool integrada es la adecuada para empezar?
+Antes de retirar la constante `TASA_DEMORA_2017`, que dejó de aplicarse hace años, una ingeniera pide al asistente que encuentre en qué partes del código se sigue leyendo su valor. ¿Qué tool integrada es la adecuada para empezar?
 
-- A. Glob, con un patrón que encuentre los archivos cuyo nombre contenga «recargo».
-- B. Grep, buscando el nombre de la función en el contenido de todo el código.
-- C. Read sobre cada archivo del repositorio, para revisar las llamadas una a una.
+- A. Glob, con un patrón que encuentre los archivos cuyo nombre contenga «demora».
+- B. Grep, buscando el nombre de la constante en el contenido de todo el código.
+- C. Read sobre cada archivo del repositorio, para revisar sus usos uno a uno.
 - D. Bash, listando los directorios del proyecto para deducir dónde se usa.
 
 <details>
 <summary>Respuesta</summary>
 
-**B.** Buscar quién llama a una función es buscar en el contenido de los archivos, que es para lo que sirve Grep (TS 2.5-K1, TS 2.5-S1). A busca por nombre de archivo (TS 2.5-K2), y un archivo que llama a la función no tiene por qué llamarse así. C lee todo de entrada en lugar de construir la comprensión poco a poco desde los puntos de entrada (TS 2.5-S4). D no mira el contenido.
+**B.** Saber dónde se usa un identificador es buscar en el contenido de los archivos, que es para lo que sirve Grep (TS 2.5-K1, TS 2.5-S1). A busca por nombre de archivo (TS 2.5-K2), y un archivo que lee la constante no tiene por qué llamarse así. C lee todo de entrada en lugar de construir la comprensión poco a poco desde los puntos de entrada (TS 2.5-S4). D no mira el contenido.
 </details>
 
 ### Pregunta 2 (TS 2.5 · una respuesta)
@@ -102,37 +102,37 @@ En cada sesión, el asistente hace una docena de llamadas exploratorias al servi
 
 ### Pregunta 5 (TS 3.1 · una respuesta)
 
-Un ingeniero recién llegado ve que Claude Code no sigue en sus sesiones la convención de nombres del módulo de facturación, que sus compañeros sí obtienen. Esa convención la escribió hace meses la jefa del equipo. ¿Qué es lo primero que conviene comprobar?
+El responsable técnico del equipo redactó hace semanas la convención para nombrar las migraciones de la base de datos. En sus sesiones, Claude Code la sigue siempre; en las de los otros cinco ingenieros, con el mismo repositorio, nunca. ¿Qué es lo primero que conviene comprobar?
 
-- A. Si la convención está en el `~/.claude/CLAUDE.md` de la jefa y no en el del proyecto.
-- B. Si el recién llegado usa una versión de Claude Code distinta de la del resto.
+- A. Si la convención está en el `~/.claude/CLAUDE.md` del responsable y no en el del proyecto.
+- B. Si los otros cinco usan una versión de Claude Code distinta de la del responsable.
 - C. Si la convención es demasiado larga y debe resumirse en una sola línea.
-- D. Si el recién llegado ha abierto la sesión desde la raíz del repositorio clonado.
+- D. Si los otros cinco abren sus sesiones desde la raíz del repositorio clonado.
 
 <details>
 <summary>Respuesta</summary>
 
-**A.** Las instrucciones de nivel de usuario solo se aplican a esa persona y no se comparten por el control de versiones (TS 3.1-K2); diagnosticar que una persona nueva no recibe instrucciones porque están en el nivel de usuario y no en el de proyecto es el caso que describe la guía (TS 3.1-S1). Con `/memory` se ve qué archivos de memoria se cargan (TS 3.1-S4). B y C no explican que solo falle a una persona. D no explica por qué los compañeros sí la obtienen con el mismo repositorio.
+**A.** Las instrucciones de nivel de usuario solo se aplican a esa persona y no se comparten por el control de versiones (TS 3.1-K2); que unas instrucciones lleguen a quien las escribió y no al resto del equipo porque están en el nivel de usuario y no en el de proyecto es un problema de jerarquía de configuración que hay que saber diagnosticar (TS 3.1-S1). Con `/memory` se ve qué archivos de memoria se cargan en cada sesión (TS 3.1-S4). B y C no explican que funcione justo para quien la escribió. D no explica por qué a él sí le funciona con el mismo repositorio.
 </details>
 
 ### Pregunta 6 (TS 3.2 · multiple-response)
 
-El equipo crea una skill del proyecto, `analizar-modulo`, que recorre un módulo heredado y produce un análisis muy largo. Quiere que no llene la conversación principal (R3) y que, si alguien la invoca sin decir qué módulo, se le pida. **Selecciona dos** ajustes del frontmatter de su `SKILL.md`.
+El equipo quiere dar a Claude Code dos cosas: una norma que vale para todo el código de facturación («los importes se manejan con decimales exactos, nunca con coma flotante») y un flujo de varios pasos para generar el esqueleto de un adaptador de pasarela de pago, que se usa pocas veces al mes. **Selecciona dos** decisiones que encajan con cada una y respetan R2.
 
-- A. `allowed-tools` limitado a Write, para que la skill pueda guardar su análisis en disco.
-- B. `context: fork`, para que el análisis se haga en un contexto de subagente aislado.
-- C. `argument-hint`, para que pida el módulo a quien la invoque sin argumentos.
-- D. Mover la skill a `~/.claude/skills/` de cada ingeniero, para aislar su contexto.
+- A. El flujo del adaptador, en el `CLAUDE.md` del proyecto, para tenerlo en todas las sesiones.
+- B. La norma de importes, en el `CLAUDE.md` del proyecto, que se carga en todas las sesiones.
+- C. La norma de importes, como comando en el `~/.claude/commands/` de cada ingeniero.
+- D. El flujo del adaptador, como skill en el `.claude/skills/` del repositorio, invocada al usarlo.
 
 <details>
 <summary>Respuesta</summary>
 
-**B y C.** `context: fork` aísla la salida larga y `argument-hint` pide el parámetro que falta.
+**B y D.** Lo que vale siempre va en `CLAUDE.md`, que se carga siempre; un flujo para una tarea concreta va en una skill, que se invoca cuando hace falta.
 
-- **B** Correcta: `context: fork` ejecuta la skill en un subagente aislado y evita que su salida contamine la conversación principal, lo indicado para análisis de código verbosos (TS 3.2-K3, TS 3.2-S2).
-- **C** Correcta: `argument-hint` sirve para pedir los parámetros necesarios cuando se invoca la skill sin argumentos (TS 3.2-S4).
-- **A** Incorrecta: `allowed-tools` restringe las tools durante la skill (TS 3.2-S3), pero dejar solo Write le impide leer el módulo que tiene que analizar, y no aísla el contexto.
-- **D** Incorrecta: `~/.claude/skills/` es para variantes personales (TS 3.2-K4); la skill dejaría de compartirse con el equipo, contra R2, y la ubicación no aísla el contexto.
+- **A** Incorrecta: un flujo para una tarea concreta y ocasional es el caso de una skill de invocación bajo demanda, no de `CLAUDE.md`, que es para normas universales siempre cargadas (TS 3.2-S5).
+- **B** Correcta: una norma universal que debe aplicarse en todo momento va en `CLAUDE.md`, que se carga siempre (TS 3.2-S5), y el del proyecto se comparte con el equipo por el repositorio (TS 3.1-K1, TS 3.1-K2).
+- **C** Incorrecta: los comandos de `~/.claude/commands/` son personales y no se comparten por el control de versiones (TS 3.2-K1), contra R2; y una norma que vale siempre no debería depender de que alguien la invoque (TS 3.2-S5).
+- **D** Correcta: las skills viven en `.claude/skills/` con su `SKILL.md` (TS 3.2-K2) y se invocan bajo demanda para flujos de una tarea concreta (TS 3.2-S5).
 </details>
 
 ### Pregunta 7 (TS 3.4 · una respuesta)
