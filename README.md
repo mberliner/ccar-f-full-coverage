@@ -8,9 +8,9 @@ Apps agénticas de demostración para practicar, con código ejecutable, todas l
 
 **Qué es un módulo.** Un ejercicio, con dos partes: un script de una app (por ejemplo, `app1_agente_unico/05_scoping_y_tool_choice.py`) y su sección `## NN` en el `README.md` de esa app. La sección dice qué hacer en cada paso; el script no hace falta leerlo.
 
-**Qué necesitas.** Usar la terminal. Saber leer Python ayuda, pero no es imprescindible: el ciclo se sigue con los textos y la salida. Para ejecutar con modelo hace falta una API key o, en los módulos del Agent SDK, la suscripción de Claude Code ([Instalación](#instalación-una-vez)). Sin credencial puedes hacer en modo ligero los módulos que lo permiten, pero cuatro son de ejecución obligatoria: qué pide cada módulo está en [credenciales y modos](docs/credenciales-y-modos.md). Los términos están en el [glosario](docs/glosario.md).
+**Qué necesitas.** Usar la terminal. Saber leer Python ayuda, pero no es imprescindible: el ciclo se sigue con los textos y la salida. Para ejecutar con modelo hace falta una API key o, en los módulos del Agent SDK, la suscripción de Claude Code ([Instalación](#instalación-una-vez)). Sin credencial, muchos módulos se hacen en modo ligero; qué credencial y qué modo pide cada uno está en [credenciales y modos](docs/credenciales-y-modos.md). Los términos están en el [glosario](docs/glosario.md).
 
-**Qué te da cada camino.** Hacer los módulos en modo ligero es *preparación conceptual sin coste*: fija los conceptos y el vocabulario de la guía. No equivale a *competencia práctica demostrada*. La guía describe a un candidato con seis meses o más construyendo con las APIs de Claude, el Agent SDK, Claude Code y MCP, y para prepararse recomienda construir (un agente, una configuración de Claude Code, tools MCP, una extracción estructurada), no solo leer. Ejecutar los módulos y hacer la práctica propia de D3 se acerca más a eso, pero tampoco sustituye construir un sistema tuyo. Y no toda ejecución con modelo muestra el mecanismo: [tipos de señal](docs/tipos-de-senal.md) dice, parte a parte, cuáles lo enseñan y cuáles solo se explican.
+**Qué te da cada camino.** El modo ligero es *preparación conceptual sin coste*, no *competencia práctica demostrada*: ejecutar los módulos se acerca más, y solo construir algo propio la da ([qué demuestra cada camino](docs/credenciales-y-modos.md#qué-demuestra-cada-camino)). Y no toda ejecución con modelo muestra el mecanismo: [tipos de señal](docs/tipos-de-senal.md) dice, parte a parte, cuáles lo enseñan y cuáles solo se explican.
 
 ### Cómo empezar: con guía (recomendado)
 
@@ -31,7 +31,7 @@ Es el mismo ciclo con guía o sin ella; con `/practica-guiada`, el asistente te 
 
 1. **Oriéntate.** Lee la ficha del principio (qué vas a hacer, qué necesitas antes y el **Modo**), «Antes de empezar» y «El ejercicio».
 2. **Predice.** Responde por escrito, con tus palabras, las preguntas de «Predice antes de ejecutar». No hay un número que acertar. Las marcadas `(guía)` evalúan un concepto del examen; las `(módulo)`, un detalle de ese ejercicio.
-3. **Ejecuta o no, y contrasta.** Si el Modo es *ejecución ligera*, puedes hacerlo sin ejecutar nada; si es *obligatoria*, ejecuta los comandos de «Ejecutar». Después abre el bloque plegado **«Paso 3 · Contrastar»** de «Qué observar» y compáralo con lo que predijiste.
+3. **Ejecuta o no, y contrasta.** Si el Modo ([credenciales y modos](docs/credenciales-y-modos.md)) es *ejecución ligera*, puedes hacerlo sin ejecutar nada; si es *obligatoria*, ejecuta los comandos de «Ejecutar». Después abre el bloque plegado **«Paso 3 · Contrastar»** de «Qué observar» y compáralo con lo que predijiste.
 4. **Responde.** Contesta la «Pregunta tipo examen» y, después, abre **«Paso 4 · Respuesta»**.
 5. **Anota.** Cada predicción `(guía)` o respuesta fallida va en tu `FALLOS.md` ([estado personal](#5-crear-tu-estado-personal)): es lo que repasarás antes del examen.
 
@@ -85,9 +85,9 @@ Cada módulo introduce las viñetas que `CONCEPTOS.md` le asigna, así que una a
 | `datos/` | Datos **sintéticos** de una mesa de ayuda TI y su generador |
 | `tests/` | Tests sin modelo (`pytest`): una-vez-por-viñeta, perímetro, arnés, datos, hooks |
 | `CONCEPTOS.md` | Registro viñeta → módulo donde se introduce (240 viñetas) |
-| `NOTAS.md` / `docs/hallazgos.md` | Avance de construcción / hallazgos de producto (versionados) |
-| `plantillas/estado/` | Plantillas de tu estado personal (`FALLOS.md`, `NOTAS_PERSONALES.md`) |
-| `estado/<perfil>/` | **Tu** estado de estudio: fallos, sesiones, práctica. Lo crea `harness/estado.py`; git lo ignora |
+| `NOTAS.md` / `docs/hallazgos.md` | Registros versionados del proyecto (qué va en cada uno: [registro entre sesiones](docs/estandares-flujo.md#registro-entre-sesiones)) |
+| `plantillas/estado/` | Plantillas de tu estado personal ([registro entre sesiones](docs/estandares-flujo.md#registro-entre-sesiones)) |
+| `estado/<perfil>/` | **Tu** estado de estudio, fuera de git ([cómo se crea](#5-crear-tu-estado-personal)) |
 | `docs/` | Estándares de código y de flujo de trabajo |
 
 ## Instalación (una vez)
@@ -161,30 +161,22 @@ Lo que sigue no hace falta para estudiar: es para mantener y ampliar el reposito
 El repositorio se construye con las mismas prácticas que evalúa la certificación, así que también sirve de ejemplo:
 
 - **Configuración de Claude Code versionada:** `CLAUDE.md` con `@import`, reglas por tipo de archivo en `.claude/rules/`, skills, comandos de proyecto y hooks.
-- **Plan mode** para diseñar y ejecución directa para módulos acotados; subagente `Explore` para el descubrimiento verboso.
 - **Enforcement por código, no por prompt:** el presupuesto se exige en `harness/options.py` y la protección de `datos/sinteticos/` y de `.env` la aplican un hook y reglas `deny`.
-- **Tests primero** y revisión por una instancia independiente de la que escribió el código.
-- **Aislamiento de contexto** y sesiones con nombre por app.
-
-Detalle en `docs/estandares-flujo.md`.
+- **Flujo de construcción:** plan mode, tests primero, sesiones con nombre y revisión independiente, en [`docs/estandares-flujo.md`](docs/estandares-flujo.md).
 
 ### Reglas que conviene conocer
 
-- **Una vez:** cada viñeta tiene un único marcador `INTRODUCE`; después solo `USA`. Lo comprueba `tests/test_una_vez.py`.
-- **Perímetro:** solo los mecanismos que nombra la guía. Lo comprueba `tests/test_perimetro.py`.
-- **Datos siempre sintéticos:** `datos/sinteticos/` se cambia solo ejecutando el generador; un hook bloquea la edición directa.
-- **Coste acotado:** toda ejecución con modelo exige `max_budget_usd` (lo impone `harness/options.py`).
-- **Aislamiento:** los agentes de las apps no heredan `CLAUDE.md`, skills, hooks ni memoria del repositorio.
+Las reglas del proyecto (una vez, perímetro, datos sintéticos, coste acotado y aislamiento de los agentes) están en [`docs/estandares-codigo.md`](docs/estandares-codigo.md), con lo que hace cumplir cada una; `CLAUDE.md` lleva su resumen.
 
 ### Si trabajas con Claude Code en este repositorio
 
-Los `CLAUDE.md` de directorios padre contaminarían las pruebas, así que se excluyen en un archivo local que no se versiona:
+Los `CLAUDE.md` de directorios padre y la configuración de tu cuenta contaminarían las pruebas, así que se excluyen en un archivo local que no se versiona:
 
 ```bash
 cp .claude/settings.local.example.json .claude/settings.local.json
 ```
 
-Edítalo: un patrón en `claudeMdExcludes` por cada `CLAUDE.md` padre que aparezca en `/memory`, y en `enabledPlugins` los plugins de tu cuenta que deban apagarse aquí. Comprueba con `/memory` y `/plugin`.
+Qué se edita en él y cómo se comprueba está en `CLAUDE.md`, «Contexto heredado».
 
 ### Flujo de trabajo para añadir un módulo
 
@@ -194,11 +186,11 @@ Edítalo: un patrón en `claudeMdExcludes` por cada `CLAUDE.md` padre que aparez
    /nuevo-modulo app1/01_bucle_manual
    ```
 3. Escribe la lógica hasta que `uv run pytest` pase. Construye las opciones del agente con `harness.options.isolated_options(max_budget_usd=...)`.
-4. Al añadir un `INTRODUCE`, marca ☑ la fila en `CONCEPTOS.md` y actualiza su contador en el mismo cambio.
+4. Al añadir un `INTRODUCE`, sigue la [regla «una vez»](docs/estandares-codigo.md#regla-una-vez).
 5. Comprueba la viñeta con la skill `/verificar-concepto TS x.y-Kn`.
-6. Registra el avance de construcción en `NOTAS.md`, los hallazgos en `docs/hallazgos.md` y tus fallos en tu `FALLOS.md` personal.
+6. Registra lo hecho según [registro entre sesiones](docs/estandares-flujo.md#registro-entre-sesiones).
 
-Cada módulo debería poder ejecutarse con y sin `--anti` cuando la viñeta describe un error, para comparar el comportamiento correcto con el anti-patrón.
+Cómo se construye cada módulo (tests primero, un concepto, `--anti`) está en [`docs/estandares-flujo.md`](docs/estandares-flujo.md#construcción-de-módulos).
 
 ### Si la guía cambia
 
@@ -208,13 +200,8 @@ Las 240 viñetas (113 `K` y 127 `S`) corresponden a la **Exam Guide v1.0**. Si l
 - Se mueven o crean los módulos y sus marcadores `INTRODUCE` para que cada viñeta nueva tenga su destino. Los de viñetas eliminadas se retiran.
 - Se ajusta `tests/perimetro_excluido.yaml` si cambia qué mecanismos entran en la guía.
 - Los tests `test_una_vez.py` y `test_perimetro.py` fallan mientras `CONCEPTOS.md`, los marcadores y el perímetro no coincidan. Así se detecta lo que falta.
-- `claude-agent-sdk` sigue fijado y solo se actualiza de forma deliberada, por si la guía nueva lo exige.
+- `claude-agent-sdk` sigue la regla de [perímetro de la guía](docs/estandares-codigo.md#perímetro-de-la-guía), por si la guía nueva exige actualizarlo.
 
 ### Convenciones de código
 
-- Comentarios en español, identificadores en inglés.
-- Cabecera de módulo de app: `CONCEPTO` · `QUÉ DICE LA GUÍA` · `POR QUÉ IMPORTA` · `ANTI-PATRÓN / TRAMPA DEL EXAMEN`.
-- Cabecera de infraestructura: `PROPÓSITO` · `POR QUÉ EXISTE` · `QUÉ NO HACE`.
-- No se copia texto de la guía oficial ni preguntas reales del examen.
-
-Detalle en [`docs/estandares-codigo.md`](docs/estandares-codigo.md) y [`docs/estandares-flujo.md`](docs/estandares-flujo.md).
+Idioma, cabeceras de módulo y de infraestructura y lo que no se copia de la guía: [`docs/estandares-codigo.md`](docs/estandares-codigo.md). Flujo de trabajo: [`docs/estandares-flujo.md`](docs/estandares-flujo.md).

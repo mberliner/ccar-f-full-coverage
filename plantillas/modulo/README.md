@@ -91,7 +91,7 @@ Qué señal mirar en la salida, sin dar aquí el resultado.
 - **P1** Respuesta a la predicción 1, con la viñeta si es `(guía)`.
 - **P2** Respuesta a la predicción 2.
 
-Lo medido con modelo (modelo y fecha), lo estable frente a lo que varía y las notas. Clasifica cada parte por tipo de señal en `docs/tipos-de-senal.md` (determinista, probabilística con control positivo o sin señal estable). Una fila por variante y modelo, con el «modelo de la medida»: no se enfrentan dos modelos en una misma fila o cabecera (las comparaciones van a `docs/hallazgos.md`). Lo que hace hoy el producto y la guía no dice se rotula **Producto observado (no evaluable)**; una práctica adicional que la guía no nombra, **EN PRODUCCIÓN (no evaluable)** (carriles en `docs/estandares-codigo.md`).
+Lo medido con modelo (modelo y fecha), lo estable frente a lo que varía y las notas. Clasifica cada parte por tipo de señal en `docs/tipos-de-senal.md` (los tipos, en «Los cuatro tipos»). Una fila por variante y modelo, con el «modelo de la medida»: no se enfrentan dos modelos en una misma fila o cabecera (las comparaciones van a `docs/hallazgos.md`). Lo que hace hoy el producto y la guía no dice se rotula **Producto observado (no evaluable)**; una práctica adicional que la guía no nombra, **EN PRODUCCIÓN (no evaluable)** (carriles en `docs/estandares-codigo.md`).
 </details>
 
 ### Pregunta tipo examen
@@ -104,7 +104,8 @@ Enunciado, opciones de longitud y registro parejos (la correcta no siempre en la
 **X.** Por qué, con las viñetas.
 </details>
 
-<!-- Variante multiple-response (opcional; obligatoria si el módulo introduce 10 o más viñetas; el examen real mezcla los dos formatos). Se añade DESPUÉS de la
+<!-- Variante multiple-response (opcional; obligatoria si el módulo introduce 10 o más viñetas, `DENSE_MIN` en
+`tests/test_readme_modulos.py`, como `app2/04` y `app3/11`; el examen real mezcla los dos formatos). Se añade DESPUÉS de la
 pregunta de respuesta única, dentro de esta misma sección `### Pregunta tipo examen`, con su propio «Paso 4».
 Si la añades, etiqueta la primera como «**Pregunta 1 (una respuesta).**». Reglas, que comprueba
 `tests/test_readme_modulos.py`:
