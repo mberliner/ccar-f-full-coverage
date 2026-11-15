@@ -513,3 +513,15 @@ Detalle y grilla unificada en `docs/precedencia-y-nombres.md`. Producto observad
 - **Un subagente puede lanzar otros:** ✓ roadmap 2026-11-12 §4.3. Lo propio de esta implementación: `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1` en los módulos de `app3`.
 - **`allowed-tools` concede permiso, no restringe tools:** ✓ roadmap 2026-11-01 §4.3, ampliado el 2026-11-12 con lo comprobado en una skill con `context: fork`.
 - **Sin respaldo en la documentación y sin probar:** si ante una contradicción se sigue el CLAUDE.md más cercano (prueba P6 del plan).
+
+## Fase 3 · paquetes sin interacción con `claude -p` (2026-11-14 y 2026-11-15)
+
+Cada paquete de la fase 3 se lanzó con `claude -p`, sin nadie que respondiera, y lo revisó después la sesión interactiva. Comprobado en 3.10 con Claude Code 2.1.325.
+
+- **`--permission-mode acceptEdits` no deja escribir dentro de `.claude/`** (`Producto observado (no evaluable)`): lo que va ahí (una skill) se escribe como borrador fuera de `.claude/` y lo copia la sesión interactiva, con permiso de la persona. → roadmap
+- **Las órdenes de shell compuestas se deniegan** aunque cada parte esté en `--allowedTools` (`cd …; grep …`, tuberías, una variable de entorno delante de la orden), igual que las escrituras fuera del clon (`Producto observado (no evaluable)`). No cambian el resultado si el paquete no depende de ellas; una comprobación que las necesite se hace en la sesión interactiva. → roadmap
+- **Un paquete ya hecho se marca «✓ hecho, no repetir» en su fila del plan.** Sin esa marca, un agente sin interacción repitió el paquete anterior en vez del suyo. → roadmap
+- **Una revisión de solo lectura no puede ejecutar `--check` ni búsquedas compuestas**; tiene que decir en su informe qué deja sin cubrir.
+- **Los textos escritos sin interacción copian los ejemplos de la guía** (sus cifras, sus tipos de archivo, sus formatos) y la revisión 3.9 lo encontró en cuatro de los seis casos de `simulaciones/`. **Inferencia propia:** al pedir una pregunta, conviene decir que los detalles sean propios y que se cambien los del ejemplo de la guía conservando el principio. → roadmap
+- **Una atribución de viñeta puede ser plausible y no ser de la guía:** en 3.10-E5, «filtrar por confianza no mejora la precisión» se citaba con TS 4.1-K2, que habla de instrucciones del prompt y no de un filtro; la revisión lo cambió por TS 4.1-S1. Se encontró leyendo el texto de la viñeta, no con el validador, que solo comprueba que la viñeta exista.
+- **Los datos reales sacaron lo que los contratos no previeron:** la celda «Viñeta» de `FALLOS.md` se escribe a mano (varias viñetas, comentarios, solo la TS), y el repaso descartaba esas filas hasta 3.7-codigo.
