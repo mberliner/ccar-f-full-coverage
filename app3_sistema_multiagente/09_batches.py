@@ -573,14 +573,22 @@ def run_read(client: Any, model: str, budget: float, args: Any) -> int:
     return 0
 
 
-def main() -> int:
-    parser = build_parser(__doc__.splitlines()[0], anti_variants=ANTI_VARIANTS)
+def make_parser():
+    # `--repeat N>1` se rechaza: un lote se envía una vez y se lee por su id, no hay tasa que repetir.
+    parser = build_parser(
+        __doc__.splitlines()[0], anti_variants=ANTI_VARIANTS, no_repeat="un lote se envía una vez y se lee por su id"
+    )
     parser.add_argument("--ventanas", action="store_true", help="reparte unos trabajos entre batch y síncrono (sin modelo)")
     parser.add_argument("--enviar", action="store_true", help="envía el lote y escribe su id")
     parser.add_argument("--sin-muestra", action="store_true", help="con --enviar, salta la muestra síncrona previa")
     parser.add_argument("--batch-id", help="lee el estado y los resultados de un lote ya enviado")
     parser.add_argument("--reenviar", action="store_true", help="con --batch-id, reenvía los fallidos (troceando los largos)")
     parser.add_argument("--esperar", type=int, default=0, help="con --batch-id, segundos que espera a que termine (por defecto 0)")
+    return parser
+
+
+def main() -> int:
+    parser = make_parser()
     args = parser.parse_args()
     if args.anti and not args.batch_id:
         parser.error("--anti por_orden se usa al leer los resultados (--batch-id)")

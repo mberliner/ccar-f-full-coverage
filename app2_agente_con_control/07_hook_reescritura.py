@@ -64,8 +64,10 @@ from app2_agente_con_control.servers.helpdesk import (  # noqa: E402
     make_tools,
     tool_name,
 )
+from harness.cli import build_parser  # noqa: E402
 from harness.offline import call_tool, run_hook  # noqa: E402
 from harness.results import deny  # noqa: E402
+from harness.salida import variant_label  # noqa: E402
 
 PAY = tool_name("process_reimbursement")
 
@@ -212,12 +214,20 @@ def print_step(title: str, step: Step) -> None:
           f"{'error de validación' if step.is_error else 'pago ejecutado'}")
 
 
+def make_parser() -> argparse.ArgumentParser:
+    # Sin modelo y determinista: `--repeat N>1` se rechaza y no hay `--budget`, porque no hay coste que topar.
+    return build_parser(
+        __doc__.splitlines()[0],
+        anti_variants=["deny"],
+        anti_help="deny con el ID correcto en el motivo (anti-patrón); sin la opción, updatedInput",
+        no_repeat="el hook y el handler son deterministas y no usan modelo",
+        budget=False,
+    )
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--anti", nargs="?", const="deny", choices=["deny"],
-                        help="deny con el ID correcto en el motivo (anti-patrón); sin la opción, updatedInput")
-    args = parser.parse_args()
-    variant = args.anti or "updatedInput"
+    args = make_parser().parse_args()
+    variant = variant_label(args.anti)
 
     print(f"[escenario] {OWN_USER} está verificado. El modelo escribe {WRONG_USER} (dígitos cambiados) "
           f"al pagar {OWN_TICKET} ({OWN_AMOUNT:.2f} EUR). Sin modelo: se ejecutan el hook y el handler reales.")

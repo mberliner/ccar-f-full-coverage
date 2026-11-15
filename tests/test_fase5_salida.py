@@ -107,9 +107,21 @@ def test_render_without_measures_or_response():
 # --- build_parser: --verbose y --repeat sin efecto ------------------------------------------------------
 
 
-def test_verbose_is_a_common_option():
-    assert build_parser("d", anti_variants=[]).parse_args([]).verbose is False
-    assert build_parser("d", anti_variants=[]).parse_args(["--verbose"]).verbose is True
+def test_verbose_is_opt_in(capsys):
+    # Decidido en la revisión (2026-11-15): solo lo lleva el módulo que recorta su respuesta; en los demás
+    # sería una opción aceptada sin efecto, como lo era `--repeat`.
+    with_verbose = build_parser("d", anti_variants=[], verbose=True)
+    assert with_verbose.parse_args([]).verbose is False
+    assert with_verbose.parse_args(["--verbose"]).verbose is True
+    with pytest.raises(SystemExit):
+        build_parser("d", anti_variants=[]).parse_args(["--verbose"])
+    capsys.readouterr()
+
+
+def test_app1_01_is_the_only_module_with_verbose_for_now():
+    # La salida estándar se aplica en 5.3 solo a app1/01; si se extiende, esta lista crece con ella.
+    with_flag = [p.relative_to(ROOT).as_posix() for p in APP_MODULES if "verbose=True" in p.read_text(encoding="utf-8")]
+    assert with_flag == ["app1_agente_unico/01_bucle_manual.py"]
 
 
 def test_no_repeat_rejects_more_than_one_run_with_the_reason(capsys):
@@ -220,8 +232,8 @@ def test_app3_02_repeats_the_parallel_part_and_reports_each_speedup(monkeypatch,
 
 
 def test_app2_07_uses_build_parser_and_keeps_its_anti():
-    args = load("app2_agente_con_control/07_hook_reescritura.py").make_parser().parse_args(["--anti", "--verbose"])
-    assert (args.anti, args.verbose) == ("deny", True)
+    args = load("app2_agente_con_control/07_hook_reescritura.py").make_parser().parse_args(["--anti"])
+    assert args.anti == "deny"
 
 
 # --- La variante correcta se llama igual en todos los módulos ---------------------------------------------

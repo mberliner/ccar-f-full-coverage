@@ -180,6 +180,20 @@ def test_part_help_and_role_help_keep_the_module_text(capsys):
     assert "parte del módulo" not in text and "rol cuyo modelo se usa" not in text
 
 
+def test_without_budget_there_is_no_budget_option(capsys):
+    # Un módulo sin modelo (`app2/07`) no lleva `--budget`: sería una opción aceptada sin efecto.
+    parser = cli.build_parser("d", budget=False)
+    assert parser.parse_args([]).budget is None
+    parse_fails(parser, ["--budget", "0.1"], capsys)
+    assert cli.build_parser("d").parse_args(["--budget", "0.1"]).budget == 0.1
+
+
+def test_anti_help_keeps_the_module_text(capsys):
+    cli.build_parser("d", anti_variants=["deny"], anti_help="deny con el ID correcto en el motivo").print_help()
+    text = " ".join(capsys.readouterr().out.split())
+    assert "deny con el ID correcto en el motivo" in text and "ejecuta el anti-patrón" not in text
+
+
 def test_empty_part_help_leaves_the_option_without_text_like_today():
     # Un módulo cuyo `--parte` no tenía ayuda la conserva así: el `--help` no gana una línea genérica.
     import argparse

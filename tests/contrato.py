@@ -53,7 +53,7 @@ CONTRACTS: dict[str, list[tuple[str, list[str]]]] = {
     "5.4": [("harness.items", ["D3Block", "d3_section4"])],
 }
 # Paquetes sin implementar. Al cerrar un paquete se quita de aquí, en el mismo cambio.
-PENDING: set[str] = {"5.3", "5.4"}
+PENDING: set[str] = {"5.4"}
 
 
 def missing(package: str) -> list[str]:

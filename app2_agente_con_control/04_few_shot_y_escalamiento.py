@@ -104,6 +104,7 @@ from harness.data import load  # noqa: E402
 from harness.metrics import rate_text as _rate_text  # noqa: E402
 from harness.options import isolated_options  # noqa: E402
 from harness.recorder import RunRecord, record  # noqa: E402
+from harness.salida import variant_label  # noqa: E402
 
 ANTI_VARIANTS = ["sin_ejemplos", "sentimiento", "confianza"]
 # Roles de modelo que admite `--rol-modelo`: la señal de cada variante puede depender del modelo, y el nombre
@@ -458,7 +459,7 @@ async def main_async() -> int:
     (model,), budget = preamble(args.budget, args.rol_modelo)
     cases, labels = load("escalamiento_casos.json"), load("escalamiento_casos_etiquetas.json")
     system_prompt = build_system_prompt(args.anti)
-    print(f"\n=== variante {args.anti or 'criterios + ejemplos'} · {len(cases)} casos × {args.repeat} ===\n[prompt]\n{system_prompt}\n")
+    print(f"\n=== variante {variant_label(args.anti)} · {len(cases)} casos × {args.repeat} ===\n[prompt]\n{system_prompt}\n")
 
     rows: list[tuple[str, bool]] = []
     confidence_rows: list[tuple[bool, int | None]] = []

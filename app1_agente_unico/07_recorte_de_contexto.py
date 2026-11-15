@@ -92,6 +92,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from harness.budget import BudgetExceeded, CostGuard  # noqa: E402
 from harness.cli import build_parser, preamble  # noqa: E402
 from harness.data import load  # noqa: E402
+from harness.salida import variant_label  # noqa: E402
 
 ANTI_VARIANTS = ["sin_recorte"]
 # Los 5 campos de los 40 que responden a las preguntas del módulo. Es lo que
@@ -283,7 +284,7 @@ def main() -> int:
             guard.add(response.usage)  # corta con BudgetExceeded si se supera el tope
             return response
 
-        print(f"\n=== ejecución {run}/{args.repeat} · variante {args.anti or 'correcta (con recorte)'} ===")
+        print(f"\n=== ejecución {run}/{args.repeat} · variante {variant_label(args.anti)} ===")
         history: list[dict[str, Any]] = []
         requests: list[Request] = []
         answers: list[str | None] = []

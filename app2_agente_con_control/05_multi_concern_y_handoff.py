@@ -63,7 +63,9 @@ from app2_agente_con_control.servers.helpdesk import (  # noqa: E402
 from harness.cli import build_parser, preamble  # noqa: E402
 from harness.data import load  # noqa: E402
 from harness.options import isolated_options  # noqa: E402
+from harness.metrics import rate_text  # noqa: E402
 from harness.recorder import RunRecord, record  # noqa: E402
+from harness.salida import variant_label  # noqa: E402
 
 GET_TICKET = tool_name("get_ticket")
 SEARCH_KB = tool_name("search_kb")
@@ -227,11 +229,12 @@ def user_turns(ticket: dict[str, Any]) -> list[str]:
     ]
 
 
-async def main_async() -> int:
-    parser = build_parser(__doc__.splitlines()[0], anti_variants=ANTI_VARIANTS)
-    args = parser.parse_args()
-    (model,), budget = preamble(args.budget, "agent")
+def make_parser():
+    return build_parser(__doc__.splitlines()[0], anti_variants=ANTI_VARIANTS)
 
+
+async def run_once(args: Any, budget: float, model: str) -> list[str] | None:
+    """Una conversación completa. Devuelve los problemas del handoff (vacía si está completo) o `None` sin escalamiento."""
     ticket = multi_concern_ticket()
     print(f"[asuntos] {ticket['ticket_id']}: {decompose(ticket['description'])}")
     state = HelpdeskState()
@@ -260,7 +263,7 @@ async def main_async() -> int:
             disallowed_tools=[tool_name("process_reimbursement")],
             max_turns=10,  # red de seguridad
         )
-        print(f"\n=== turno {number} · variante {args.anti or 'case facts'} ===\n[prompt]\n{prompt}\n")
+        print(f"\n=== turno {number} · variante {variant_label(args.anti)} ===\n[prompt]\n{prompt}\n")
         async with ClaudeSDKClient(options=options) as client:
             await client.query(prompt)
             rec = await record(client.receive_response())
@@ -279,11 +282,25 @@ async def main_async() -> int:
     print(f"\n{render_case_facts(facts)}")
     if not state.escalations:
         print("[medida] no hubo escalamiento")
-        return 0
+        return None
     handoff = state.escalations[-1]
     problems = check_handoff(handoff, facts)
     print(f"[handoff] {json.dumps(handoff, ensure_ascii=False)}")
     print(f"[medida] handoff {'completo' if not problems else 'con problemas: ' + '; '.join(problems)} · coste≈${spent:.4f}")
+    return problems
+
+
+async def main_async(argv: list[str] | None = None) -> int:
+    args = make_parser().parse_args(argv)
+    (model,), budget = preamble(args.budget, "agent")
+    complete = 0
+    for run in range(1, args.repeat + 1):
+        print(f"\n=== ejecución {run}/{args.repeat} · variante {variant_label(args.anti)} ===")
+        # El tope es de toda la ejecución del script, repartido entre repeticiones.
+        problems = await run_once(args, budget / args.repeat, model)
+        # Sin escalamiento no hay handoff que dar por completo: cuenta como incompleto.
+        complete += problems == []
+    print(f"[clave] handoff completo {rate_text((complete, args.repeat))}")
     return 0
 
 

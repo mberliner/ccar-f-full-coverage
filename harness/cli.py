@@ -47,8 +47,16 @@ def build_parser(
     role_flag: str = "--rol-modelo",
     part_help: str | None = None,
     role_help: str | None = None,
+    verbose: bool = False,
+    no_repeat: str | None = None,
+    budget: bool = True,
+    anti_help: str | None = None,
 ) -> argparse.ArgumentParser:
-    """Parser con `--budget`, `--repeat` y, según se pida, `--anti`, `--parte` y `--rol-modelo`."""
+    """Parser con `--budget`, `--repeat` y, según se pida, `--anti`, `--parte`, `--rol-modelo` y `--verbose`.
+
+    `verbose=True` añade `--verbose` (solo lo lleva el módulo que recorta su respuesta). `no_repeat="motivo"`
+    hace que `--repeat N>1` salga con error 2 que dice el motivo; `--repeat 1` sigue valiendo.
+    """
     # Las definiciones incoherentes son errores de programación, no de uso.
     if anti_variants and anti_by_part:
         raise ValueError("anti_variants y anti_by_part son excluyentes")
@@ -104,7 +112,8 @@ def build_parser(
             nargs="?",
             const=anti_variants[0],
             choices=anti_variants,
-            help=f"ejecuta el anti-patrón ({', '.join(anti_variants)}); sin valor: {anti_variants[0]}",
+            # Como `--parte` y el rol, el módulo puede conservar su propio texto de ayuda.
+            help=f"ejecuta el anti-patrón ({', '.join(anti_variants)}); sin valor: {anti_variants[0]}" if anti_help is None else anti_help,
         )
     else:
         parser.set_defaults(anti=None)
@@ -116,8 +125,25 @@ def build_parser(
             # Igual que `--parte`: el texto propio del módulo (qué modelo es cada rol) se conserva.
             help=f"rol cuyo modelo se usa ({', '.join(model_roles)})" if role_help is None else role_help,
         )
-    parser.add_argument("--repeat", type=positive_int, default=1, help="número de ejecuciones (por defecto 1)")
-    parser.add_argument("--budget", type=positive_float, help="baja el tope en USD; nunca lo sube")
+    if no_repeat:
+
+        # El motivo viaja en el mensaje de error: `argparse` lo muestra como «argument --repeat: …» y sale con 2.
+        def single_run(text: str) -> int:
+            value = positive_int(text)
+            if value > 1:
+                raise argparse.ArgumentTypeError(f"este módulo no repite: {no_repeat}")
+            return value
+
+        parser.add_argument("--repeat", type=single_run, default=1, help=f"solo 1: {no_repeat}")
+    else:
+        parser.add_argument("--repeat", type=positive_int, default=1, help="número de ejecuciones (por defecto 1)")
+    if verbose:
+        parser.add_argument("--verbose", action="store_true", help="muestra la respuesta final entera, sin recortar")
+    if budget:
+        # Un módulo sin modelo (`budget=False`) no lleva tope: sería una opción aceptada sin efecto.
+        parser.add_argument("--budget", type=positive_float, help="baja el tope en USD; nunca lo sube")
+    else:
+        parser.set_defaults(budget=None)
     return parser
 
 

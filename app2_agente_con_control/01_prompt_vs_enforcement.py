@@ -53,6 +53,7 @@ from app2_agente_con_control.servers.helpdesk import (  # noqa: E402
 from harness.cli import build_parser, preamble  # noqa: E402
 from harness.options import isolated_options  # noqa: E402
 from harness.recorder import RunRecord, record  # noqa: E402
+from harness.salida import variant_label  # noqa: E402
 
 VERIFY = tool_name("verify_employee")
 PAY = tool_name("process_reimbursement")
@@ -180,7 +181,7 @@ async def main_async() -> int:
     # El tope es de toda la ejecución del script: se reparte entre repeticiones.
     per_run = budget / args.repeat
     for run in range(1, args.repeat + 1):
-        print(f"\n=== ejecución {run}/{args.repeat} · variante {args.anti or 'puerta'} ===")
+        print(f"\n=== ejecución {run}/{args.repeat} · variante {variant_label(args.anti)} ===")
         results.append(await run_once(args.anti, model, per_run))
     summary = summarize(results)
     print(

@@ -65,6 +65,7 @@ from harness.cli import build_parser, preamble  # noqa: E402
 from harness.data import DATA_DIR, load  # noqa: E402
 from harness.options import isolated_options  # noqa: E402
 from harness.recorder import SUBAGENT_TOOLS, RunRecord, record  # noqa: E402
+from harness.salida import variant_label  # noqa: E402
 
 PARTS = ["paralelo", "refinamiento", "descomposicion", "legacy"]
 SEARCH_TICKETS = tool_name("search_tickets")
@@ -163,7 +164,8 @@ async def timed_run(prompt: str, options: ClaudeAgentOptions) -> tuple[RunRecord
     return rec, time.monotonic() - start
 
 
-async def part_parallel(args: Any, budget: float, model: str, subagent_model: str) -> None:
+async def part_parallel(args: Any, budget: float, model: str, subagent_model: str) -> float | None:
+    """Una pasada de `paralelo`. Devuelve la aceleración, o `None` si no hay las dos medidas (p. ej. con `--anti`)."""
     modes = ["secuencial"] if args.anti else ["paralelo", "secuencial"]
     elapsed: dict[str, float] = {}
     for mode in modes:
@@ -178,6 +180,8 @@ async def part_parallel(args: Any, budget: float, model: str, subagent_model: st
         ratio = speedup(parallel_s=elapsed["paralelo"], sequential_s=elapsed["secuencial"])
         print(f"\n[resumen] paralelo {elapsed['paralelo']:.1f} s · secuencial {elapsed['secuencial']:.1f} s · "
               f"aceleración ×{ratio:.2f}" if ratio else "")
+        return ratio
+    return None
 
 
 # --- Parte refinamiento (1.2-S3) ---------------------------------------------
@@ -302,12 +306,30 @@ async def part_legacy(args: Any, budget: float, model: str, subagent_model: str)
     print(f"[respuesta completa]\n{rec.final_text}")
 
 
-async def main_async() -> int:
-    parser = build_parser(__doc__.splitlines()[0], anti_variants=["secuencial"], parts=PARTS, part_help="")
-    args = parser.parse_args()
+def make_parser():
+    return build_parser(__doc__.splitlines()[0], anti_variants=["secuencial"], parts=PARTS, part_help="")
+
+
+def check_repeat(args: Any) -> None:
+    """Solo `paralelo` repite: las demás partes son narrativas y se leen una vez (error 2 con `--repeat N>1`)."""
+    if args.parte != "paralelo" and args.repeat > 1:
+        make_parser().error(f"--repeat solo vale en la parte paralelo (la parte {args.parte} se lee una vez)")
+
+
+async def main_async(argv: list[str] | None = None) -> int:
+    args = make_parser().parse_args(argv)
+    check_repeat(args)
     (model, subagent_model), budget = preamble(args.budget, "coordinator", "subagent", budget_kind="multiagent")
-    handler = {"paralelo": part_parallel, "refinamiento": part_refinement,
-               "descomposicion": part_decomposition, "legacy": part_legacy}[args.parte]
+    if args.parte == "paralelo":
+        # El tope es de toda la ejecución del script, repartido entre repeticiones.
+        ratios = []
+        for run in range(1, args.repeat + 1):
+            print(f"\n=== ejecución {run}/{args.repeat} · paralelo · variante {variant_label(args.anti)} ===")
+            ratios.append(await part_parallel(args, budget / args.repeat, model, subagent_model))
+        shown = ", ".join(f"×{r:.2f}" if r is not None else "—" for r in ratios)
+        print(f"[clave] aceleración por ejecución: {shown}")
+        return 0
+    handler = {"refinamiento": part_refinement, "descomposicion": part_decomposition, "legacy": part_legacy}[args.parte]
     await handler(args, budget, model, subagent_model)
     return 0
 

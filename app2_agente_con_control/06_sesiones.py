@@ -226,10 +226,17 @@ async def run_session(prompt: str, options: Any, label: str) -> RunRecord:
     return rec
 
 
-async def main_async() -> int:
-    parser = build_parser(__doc__.splitlines()[0], anti_variants=["sin_aviso"])
+def make_parser():
+    # `--repeat N>1` se rechaza: las ramas de sesión son una demostración única, no una tasa.
+    parser = build_parser(
+        __doc__.splitlines()[0], anti_variants=["sin_aviso"], no_repeat="las ramas de sesión son una demostración única"
+    )
     parser.add_argument("--rama", choices=[*BRANCHES, "todas"], default="todas")
-    args = parser.parse_args()
+    return parser
+
+
+async def main_async() -> int:
+    args = make_parser().parse_args()
     (model,), budget = preamble(args.budget, "agent")
     branches = BRANCHES if args.rama == "todas" else [args.rama]
     # Reparto del tope entre la base y cada rama (los forks son dos sesiones).

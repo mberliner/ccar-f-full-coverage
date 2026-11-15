@@ -50,8 +50,20 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from harness.budget import BudgetExceeded, CostGuard  # noqa: E402
 from harness.cli import build_parser, preamble  # noqa: E402
 from harness.data import load  # noqa: E402
+from harness.metrics import fmt_usd  # noqa: E402
+from harness.salida import render, variant_label  # noqa: E402
 
 ANTI_VARIANTS = ["texto", "tope", "texto_asistente", "sin_historial", "arbol_fijo"]
+# Salida estándar (harness/salida.py): la viñeta y una frase, y lo que se espera de cada variante.
+MECHANISM = ("TS 1.1-K1", "el bucle sigue mientras stop_reason sea tool_use y termina con end_turn")
+EXPECTED = {
+    "correcta": "para con stop_reason=end_turn, tras pedir al usuario un identificador si hay homónimos",
+    "texto": "para por una frase como «listo» en el texto, no por stop_reason (parada=texto)",
+    "tope": "para tras 2 iteraciones aunque el modelo siga pidiendo tools (parada=tope)",
+    "texto_asistente": "para en cuanto el asistente escribe texto, aunque lo acompañe un tool_use (parada=texto_asistente)",
+    "sin_historial": "cada petición reenvía solo la pregunta inicial y el modelo no ve los resultados de sus tools",
+    "arbol_fijo": "el código fija get_ticket → get_user → search_kb y falla con el ticket sin user_id (parada=arbol_fijo)",
+}
 # Red de seguridad: solo evita un bucle infinito si algo va mal. No es la
 # parada del bucle correcto, que para por `stop_reason`.
 SAFETY_CAP = 12
@@ -283,8 +295,21 @@ def run_fixed_tree(
     return LoopResult("arbol_fijo", 1, history, calls, final)
 
 
+def summary(result: LoopResult, *, anti: str | None, verbose: bool, extra_measures: list[str] | None = None) -> str:
+    """Cierre de una ejecución con la salida estándar: la clave es por qué paró el bucle."""
+    return render(
+        mechanism=MECHANISM,
+        expected=EXPECTED[variant_label(anti)],
+        key=f"parada={result.stop}",
+        measures=[f"iteraciones={result.iterations}", f"llamadas={len(result.tool_calls)}", *(extra_measures or [])],
+        # Una cadena vacía (no `None`) para que, sin texto final, salga «(sin respuesta)».
+        response=result.final_text or "",
+        verbose=verbose,
+    )
+
+
 def main() -> int:
-    parser = build_parser(__doc__.splitlines()[0], anti_variants=ANTI_VARIANTS)
+    parser = build_parser(__doc__.splitlines()[0], anti_variants=ANTI_VARIANTS, verbose=True)
     args = parser.parse_args()
 
     # §11.1: credencial y versiones antes de interpretar nada. La Messages API
@@ -308,7 +333,7 @@ def main() -> int:
             guard.add(response.usage)  # corta con BudgetExceeded si se supera el tope
             return response
 
-        print(f"\n=== ejecución {run}/{args.repeat} · variante {args.anti or 'correcta'} · {ticket['ticket_id']} ===")
+        print(f"\n=== ejecución {run}/{args.repeat} · variante {variant_label(args.anti)} · {ticket['ticket_id']} ===")
         try:
             if args.anti == "arbol_fijo":
                 result = run_fixed_tree(lambda m: create(m, tools=None), ticket["ticket_id"], execute_tool)
@@ -317,9 +342,9 @@ def main() -> int:
         except BudgetExceeded as exc:
             print(f"[corte] {exc}")
             return 1
-        print(f"[final] {result.final_text or '(sin respuesta final)'}")
-        print(f"[fin] parada={result.stop} · iteraciones={result.iterations} · llamadas={len(result.tool_calls)} "
-              f"· coste=${guard.spent:.4f} (tope ${guard.max_usd:.4f})")
+        print()
+        print(summary(result, anti=args.anti, verbose=args.verbose,
+                      extra_measures=[f"coste={fmt_usd(guard.spent)} (tope {fmt_usd(guard.max_usd)})"]))
     return 0
 
 

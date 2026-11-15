@@ -120,10 +120,18 @@ async def run(config: str, budget: float, model: str, subagent_model: str) -> No
           f"pagos ejecutados: {len(state.paid)}")
 
 
-async def main_async() -> int:
-    parser = build_parser(__doc__.splitlines()[0], anti_variants=[])
+def make_parser():
+    # `--repeat N>1` se rechaza: la decisión de permisos de cada configuración es determinista y repetirla
+    # no daría una tasa con sentido.
+    parser = build_parser(
+        __doc__.splitlines()[0], anti_variants=[], no_repeat="la decisión de permisos de cada configuración es determinista"
+    )
     parser.add_argument("--config", choices=CONFIGS, help="una sola configuración (por defecto, las cuatro)")
-    args = parser.parse_args()
+    return parser
+
+
+async def main_async() -> int:
+    args = make_parser().parse_args()
     (model, subagent_model), budget = preamble(args.budget, "agent", "subagent")
     configs = [args.config] if args.config else CONFIGS
     for config in configs:
