@@ -15,7 +15,7 @@ de la API a 2026-10-06; si cambian, se actualiza esta tabla.
 """
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Callable
 
 # USD por millón de tokens: (entrada, salida).
 PRICES = {
@@ -69,3 +69,27 @@ class CostGuard:
         if self.spent > self.max_usd:
             raise BudgetExceeded(f"coste acumulado ${self.spent:.4f} supera el tope ${self.max_usd}")
         return self.spent
+
+
+def make_create(client: Any, guard: CostGuard, *, batch: bool = False) -> Callable[..., Any]:
+    """`messages.create` que suma el coste de cada respuesta al `guard` (con descuento si `batch=True`)."""
+
+    def create(**request: Any) -> Any:
+        response = client.messages.create(**request)
+        # El corte llega después de la respuesta que supera el tope, igual que en el SDK.
+        guard.add(response.usage, batch=batch)
+        return response
+
+    return create
+
+
+def run_guarded(guard: CostGuard, action: Callable[[], int | None], *, report_end: bool = True) -> int:
+    """Ejecuta `action()`: el corte por presupuesto da `[corte] …` y código 1; si no, `[fin]` y su código."""
+    try:
+        code = action()
+    except BudgetExceeded as exc:
+        print(f"[corte] {exc}")
+        return 1
+    if report_end:
+        print(f"\n[fin] coste=${guard.spent:.4f} de ${guard.max_usd}")
+    return code or 0
