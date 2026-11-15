@@ -60,9 +60,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from claude_agent_sdk import ClaudeAgentOptions, query  # noqa: E402
 
-from harness import credentials  # noqa: E402
-from harness.cli import build_parser, report_budget  # noqa: E402
-from harness.config import report_model  # noqa: E402
+from harness.cli import build_parser, preamble  # noqa: E402
 from harness.data import copy_to_temp  # noqa: E402
 from harness.options import isolated_options  # noqa: E402
 from harness.recorder import RunRecord, record  # noqa: E402
@@ -298,14 +296,16 @@ def expectation(part: str, anti: str | None) -> str:
 
 
 async def main_async() -> int:
-    parser = build_parser(__doc__.splitlines()[0], anti_variants=list(ANTI_PART))
-    parser.add_argument("--parte", choices=PARTS, required=True)
+    # `--parte` es obligatoria y sin texto de ayuda propio (`part_help=""`); `--anti` se valida contra la parte elegida.
+    anti_by_part = {part: [name for name, owner in ANTI_PART.items() if owner == part] for part in PARTS}
+    parser = build_parser(
+        __doc__.splitlines()[0],
+        parts=PARTS,
+        anti_by_part={part: names for part, names in anti_by_part.items() if names},
+        part_help="",
+    )
     args = parser.parse_args()
-    if args.anti and ANTI_PART[args.anti] != args.parte:
-        parser.error(f"--anti {args.anti} es de la parte {ANTI_PART[args.anti]}, no de {args.parte}")
-    print(credentials.describe())
-    model = report_model("agent")
-    budget = report_budget(args.budget, "agent")
+    (model,), budget = preamble(args.budget, "agent")
 
     prompts = prompts_for(args.parte, args.anti)
     for run in range(1, args.repeat + 1):

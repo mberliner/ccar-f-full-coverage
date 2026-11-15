@@ -62,9 +62,10 @@ from claude_agent_sdk import ClaudeAgentOptions, query  # noqa: E402
 from app1_agente_unico.servers.mesa import CANONICAL, SERVER_NAME, build_server, make_tools, tool_name  # noqa: E402
 from harness import credentials  # noqa: E402
 from harness.budget import BudgetExceeded, CostGuard  # noqa: E402
-from harness.cli import build_parser, report_budget  # noqa: E402
-from harness.config import report_model  # noqa: E402
+from harness.cli import build_parser, preamble  # noqa: E402
 from harness.data import load  # noqa: E402
+from harness.metrics import accuracy as _accuracy  # noqa: E402
+from harness.metrics import rate_text  # noqa: E402
 from harness.options import isolated_options  # noqa: E402
 from harness.recorder import RunRecord, record  # noqa: E402
 
@@ -109,12 +110,8 @@ def first_mesa_call(rec: RunRecord) -> str | None:
 
 
 def accuracy(results: list[tuple[str | None, str]]) -> tuple[int, int]:
-    return sum(is_correct(chosen, expected) for chosen, expected in results), len(results)
-
-
-def rate_text(rate: tuple[int, int]) -> str:
-    hits, total = rate
-    return f"{hits}/{total} ({round(100 * hits / total)} %)" if total else "sin datos"
+    # La comparación es `is_correct` (admite alias); el recuento lo hace el arnés.
+    return _accuracy(results, match=is_correct)
 
 
 def distinct_choices(results: list[tuple[str, str | None]]) -> dict[str, set[str | None]]:
@@ -342,14 +339,10 @@ def run_tool_choice(args: Any, model: str, budget: float) -> int:
 
 
 async def main_async() -> int:
-    parser = build_parser(__doc__.splitlines()[0], anti_variants=ANTI_VARIANTS)
-    parser.add_argument("--parte", choices=PARTS, required=True)
+    # `--parte` es obligatoria y sin texto de ayuda propio (`part_help=""`); `--anti` solo existe en `scoping`.
+    parser = build_parser(__doc__.splitlines()[0], parts=PARTS, anti_by_part={"scoping": ANTI_VARIANTS}, part_help="")
     args = parser.parse_args()
-    if args.anti and args.parte != "scoping":
-        parser.error("--anti amplio es de la parte scoping")
-    print(credentials.describe())
-    model = report_model("agent")
-    budget = report_budget(args.budget, "agent")
+    (model,), budget = preamble(args.budget, "agent")
     if args.parte == "scoping":
         await run_scoping(args, model, budget)
         return 0

@@ -47,10 +47,8 @@ from typing import Any
 # la raíz del repositorio va al path para importar `harness`.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from harness import credentials  # noqa: E402
 from harness.budget import BudgetExceeded, CostGuard  # noqa: E402
-from harness.cli import build_parser, report_budget  # noqa: E402
-from harness.config import report_model  # noqa: E402
+from harness.cli import build_parser, preamble  # noqa: E402
 from harness.data import load  # noqa: E402
 
 ANTI_VARIANTS = ["texto", "tope", "texto_asistente", "sin_historial", "arbol_fijo"]
@@ -291,10 +289,7 @@ def main() -> int:
 
     # §11.1: credencial y versiones antes de interpretar nada. La Messages API
     # solo admite API key.
-    print(credentials.describe())
-    credentials.require_api_key()
-    model = report_model("agent")
-    budget = report_budget(args.budget, "agent")
+    (model,), budget = preamble(args.budget, "agent", require_api_key=True)
 
     import anthropic
 

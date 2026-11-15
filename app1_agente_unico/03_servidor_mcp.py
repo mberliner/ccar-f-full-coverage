@@ -72,10 +72,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from claude_agent_sdk import ClaudeAgentOptions, query  # noqa: E402
 
 from app1_agente_unico.servers.mesa import RENAMED, SERVER_NAME, build_server, make_tools, tool_name  # noqa: E402
-from harness import credentials  # noqa: E402
-from harness.cli import build_parser, report_budget  # noqa: E402
-from harness.config import report_model  # noqa: E402
+from harness.cli import build_parser, preamble  # noqa: E402
 from harness.data import load  # noqa: E402
+from harness.metrics import accuracy, rate_text  # noqa: E402
 from harness.options import isolated_options  # noqa: E402
 from harness.recorder import RunRecord, record  # noqa: E402
 
@@ -142,16 +141,6 @@ def first_mcp_call(rec: RunRecord) -> str | None:
     return None
 
 
-def accuracy(results: list[tuple[str | None, str]]) -> tuple[int, int]:
-    """(aciertos, total) de pares (primera llamada, esperada). Sin llamada cuenta como fallo."""
-    return sum(chosen == expected for chosen, expected in results), len(results)
-
-
-def rate_text(rate: tuple[int, int]) -> str:
-    hits, total = rate
-    return f"{hits}/{total} ({round(100 * hits / total)} %)" if total else "sin datos"
-
-
 # --- Configuración ------------------------------------------------------------------
 
 BASE_SYSTEM = (
@@ -195,15 +184,15 @@ def expectation(anti: str | None) -> str:
 
 
 async def main_async() -> int:
-    parser = build_parser(__doc__.splitlines()[0], anti_variants=ANTI_VARIANTS)
-    parser.add_argument(
-        "--rol-modelo", choices=MODEL_ROLES, default="agent",
-        help="rol del modelo (por defecto agent, Haiku 5.5): `minimas` se ve mejor con enforcement (Haiku 4.5, ~15× más caro)",
+    parser = build_parser(
+        __doc__.splitlines()[0],
+        anti_variants=ANTI_VARIANTS,
+        model_roles=MODEL_ROLES,
+        default_role="agent",
+        role_help="rol del modelo (por defecto agent, Haiku 5.5): `minimas` se ve mejor con enforcement (Haiku 4.5, ~15× más caro)",
     )
     args = parser.parse_args()
-    print(credentials.describe())
-    model = report_model(args.rol_modelo)
-    budget = report_budget(args.budget, args.rol_modelo)
+    (model,), budget = preamble(args.budget, args.rol_modelo)
 
     print(f"\n=== variante {args.anti or 'correcta'} · {len(BATTERY)} peticiones × {args.repeat} ===")
     print(f"[esperado] {expectation(args.anti)}")

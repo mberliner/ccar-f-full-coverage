@@ -22,7 +22,6 @@ módulos). Los errores usan `errorCategory` e `isRetryable` (TS 2.2-S1).
 USA: TS 2.2-K1, TS 2.2-S1
 """
 
-import json
 import re
 from collections import defaultdict
 from dataclasses import dataclass, field, replace
@@ -31,6 +30,7 @@ from typing import Any, Awaitable, Callable
 from claude_agent_sdk import SdkMcpTool, create_sdk_mcp_server, tool
 
 from harness.data import load
+from harness.results import error, ok  # noqa: F401  (se reexportan: otros módulos y los tests los importan de aquí)
 
 SERVER_NAME = "mesa"
 LICENSE_QUOTA = 10  # cupo de puestos por licencia (regla de negocio de `errores`)
@@ -44,16 +44,6 @@ Handler = Callable[[dict[str, Any]], Awaitable[dict[str, Any]]]
 
 def tool_name(name: str) -> str:
     return f"mcp__{SERVER_NAME}__{name}"
-
-
-def ok(data: Any) -> dict[str, Any]:
-    return {"content": [{"type": "text", "text": json.dumps(data, ensure_ascii=False)}]}
-
-
-def error(category: str, message: str, *, retryable: bool = False, **extra: Any) -> dict[str, Any]:
-    # Error como resultado con metadatos estructurados (regla mcp-servers.md).
-    data = {"errorCategory": category, "isRetryable": retryable, "message": message, **extra}
-    return {"content": [{"type": "text", "text": json.dumps(data, ensure_ascii=False)}], "is_error": True}
 
 
 def generic_error() -> dict[str, Any]:

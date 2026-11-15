@@ -45,6 +45,8 @@ def build_parser(
     model_roles: list[str] | None = None,
     default_role: str | None = None,
     role_flag: str = "--rol-modelo",
+    part_help: str | None = None,
+    role_help: str | None = None,
 ) -> argparse.ArgumentParser:
     """Parser con `--budget`, `--repeat` y, según se pida, `--anti`, `--parte` y `--rol-modelo`."""
     # Las definiciones incoherentes son errores de programación, no de uso.
@@ -62,7 +64,13 @@ def build_parser(
     parser = argparse.ArgumentParser(description=description)
     if parts:
         parser.add_argument(
-            "--parte", choices=parts, default=default_part, required=default_part is None, help=f"parte del módulo ({', '.join(parts)})"
+            "--parte",
+            choices=parts,
+            default=default_part,
+            required=default_part is None,
+            # El módulo puede conservar su propio texto de ayuda («» = sin texto, como un `add_argument` sin
+            # `help`); si no lo da, uno genérico con las partes.
+            help=f"parte del módulo ({', '.join(parts)})" if part_help is None else part_help,
         )
     if anti_by_part:
         # La validación depende de la parte elegida: se hace tras el análisis, no con `choices`.
@@ -102,7 +110,11 @@ def build_parser(
         parser.set_defaults(anti=None)
     if model_roles:
         parser.add_argument(
-            role_flag, choices=model_roles, default=default_role or model_roles[0], help=f"rol cuyo modelo se usa ({', '.join(model_roles)})"
+            role_flag,
+            choices=model_roles,
+            default=default_role or model_roles[0],
+            # Igual que `--parte`: el texto propio del módulo (qué modelo es cada rol) se conserva.
+            help=f"rol cuyo modelo se usa ({', '.join(model_roles)})" if role_help is None else role_help,
         )
     parser.add_argument("--repeat", type=positive_int, default=1, help="número de ejecuciones (por defecto 1)")
     parser.add_argument("--budget", type=positive_float, help="baja el tope en USD; nunca lo sube")

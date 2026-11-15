@@ -89,10 +89,8 @@ from typing import Any
 # Los módulos se ejecutan como script: la raíz del repositorio va al path para importar `harness`.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from harness import credentials  # noqa: E402
 from harness.budget import BudgetExceeded, CostGuard  # noqa: E402
-from harness.cli import build_parser, report_budget  # noqa: E402
-from harness.config import report_model  # noqa: E402
+from harness.cli import build_parser, preamble  # noqa: E402
 from harness.data import load  # noqa: E402
 
 ANTI_VARIANTS = ["sin_recorte"]
@@ -270,10 +268,7 @@ def main() -> int:
     args = parser.parse_args()
     trim = args.anti != "sin_recorte"
 
-    print(credentials.describe())
-    credentials.require_api_key()
-    model = report_model("agent")
-    budget = report_budget(args.budget, "agent")
+    (model,), budget = preamble(args.budget, "agent", require_api_key=True)
     expected = load("inventario_equipos_etiquetas.json")["expected"]["team_with_most_unassigned_laptops"]
 
     import anthropic

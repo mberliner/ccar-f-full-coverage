@@ -64,9 +64,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from claude_agent_sdk import ClaudeAgentOptions, query  # noqa: E402
 
 from app1_agente_unico.servers.mesa import SERVER_NAME, ErroresState, build_server, make_tools, tool_name  # noqa: E402
-from harness import credentials  # noqa: E402
-from harness.cli import build_parser, report_budget  # noqa: E402
-from harness.config import report_model  # noqa: E402
+from harness.cli import build_parser, preamble  # noqa: E402
 from harness.options import isolated_options  # noqa: E402
 from harness.recorder import RunRecord, record  # noqa: E402
 
@@ -212,9 +210,7 @@ def report(rec: RunRecord, anti: str | None) -> None:
 async def main_async() -> int:
     parser = build_parser(__doc__.splitlines()[0], anti_variants=ANTI_VARIANTS)
     args = parser.parse_args()
-    print(credentials.describe())
-    model = report_model("agent")
-    budget = report_budget(args.budget, "agent")
+    (model,), budget = preamble(args.budget, "agent")
 
     for run in range(1, args.repeat + 1):
         # Estado nuevo por ejecución: el transitorio vuelve a fallar solo la primera vez.

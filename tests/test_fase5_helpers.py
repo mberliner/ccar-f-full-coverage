@@ -168,6 +168,30 @@ def test_role_flag_names_the_option_for_a_subagent_role(capsys):
     parse_fails(parser, ["--rol-modelo", "enforcement"], capsys)
 
 
+def test_part_help_and_role_help_keep_the_module_text(capsys):
+    # Decidido en la revisión de 5.2-app1: el `--help` conserva el texto propio de cada módulo
+    # (p. ej. qué modelo es cada rol); el orden de las opciones sí puede cambiar.
+    parser = cli.build_parser(
+        "d", parts=["p1", "p2"], part_help="qué parte ejecutar", model_roles=["agent", "enforcement"], role_help="por defecto agent, Haiku 5.5"
+    )
+    parser.print_help()
+    text = " ".join(capsys.readouterr().out.split())
+    assert "qué parte ejecutar" in text and "por defecto agent, Haiku 5.5" in text
+    assert "parte del módulo" not in text and "rol cuyo modelo se usa" not in text
+
+
+def test_empty_part_help_leaves_the_option_without_text_like_today():
+    # Un módulo cuyo `--parte` no tenía ayuda la conserva así: el `--help` no gana una línea genérica.
+    import argparse
+
+    def option_help(parser):
+        return " ".join(parser.format_help().split()).split("--parte {p1,p2}")[-1].split("--")[0].strip()
+
+    plain = argparse.ArgumentParser(description="d")
+    plain.add_argument("--parte", choices=["p1", "p2"], required=True)
+    assert option_help(cli.build_parser("d", parts=["p1", "p2"], part_help="")) == option_help(plain) == ""
+
+
 def test_without_model_roles_there_is_no_rol_modelo(capsys):
     parse_fails(cli.build_parser("d"), ["--rol-modelo", "agent"], capsys)
 
