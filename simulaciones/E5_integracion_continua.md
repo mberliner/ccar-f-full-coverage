@@ -108,13 +108,13 @@ La revisión publica hallazgos en tres categorías: seguridad, lógica y estilo.
 
 - A. Desactivar por ahora la categoría de estilo y seguir afinando su prompt aparte.
 - B. Mantener las tres categorías y añadir al prompt que sea más conservador en estilo.
-- C. Publicar los de estilo solo cuando el modelo diga que está muy seguro de ellos.
+- C. Descartar los hallazgos de estilo a los que el propio modelo da poca confianza.
 - D. Mantener las tres categorías y pedir al equipo que no ignore las de seguridad.
 
 <details>
 <summary>Respuesta</summary>
 
-**A.** Una categoría con muchos falsos positivos resta confianza también a las categorías acertadas (TS 4.1-K3), y la guía propone desactivar temporalmente esa categoría para recuperar la confianza mientras se mejora su prompt (TS 4.1-S2). B y C se apoyan en instrucciones generales del tipo «sé conservador» o «solo alta confianza», que no mejoran la precisión como lo hacen los criterios categóricos (TS 4.1-K2). D no cambia lo que se publica, que es lo que erosiona la confianza.
+**A.** Una categoría con muchos falsos positivos resta confianza también a las categorías acertadas (TS 4.1-K3), y la guía propone desactivar temporalmente esa categoría para recuperar la confianza mientras se mejora su prompt (TS 4.1-S2). B es una instrucción general del tipo «sé conservador», que no mejora la precisión como lo hacen los criterios categóricos (TS 4.1-K2). C no es una instrucción del prompt, sino un filtro por la confianza que declara el modelo; la guía pide criterios explícitos de qué se informa y qué se omite en lugar de apoyarse en filtrar por confianza (TS 4.1-S1). D no cambia lo que se publica, que es lo que erosiona la confianza.
 </details>
 
 ### Pregunta 6 (TS 4.1 · multiple-response)
@@ -164,7 +164,7 @@ Algunos hallazgos de la revisión son claros y otros dudosos, y el equipo quiere
 <details>
 <summary>Respuesta</summary>
 
-**B.** Una pasada de verificación en la que el modelo informa de su confianza junto a cada hallazgo permite encaminar la revisión de forma calibrada: los de baja confianza van a una persona y los demás se publican (TS 4.6-S3). A publica los dudosos y traslada el trabajo al equipo, en contra de R2. C es una instrucción general que no mejora la precisión (TS 4.1-K2) y no deja nada que encaminar. D descarta hallazgos reales que solo aparezcan en una ejecución.
+**B.** Una pasada de verificación en la que el modelo informa de su confianza junto a cada hallazgo permite encaminar la revisión de forma calibrada: los de baja confianza van a una persona y los demás se publican (TS 4.6-S3). Aquí la confianza solo decide a quién va cada hallazgo y no descarta ninguno, a diferencia de filtrar por confianza, que deja fuera hallazgos según la confianza declarada en lugar de aplicar criterios explícitos (TS 4.1-S1). A publica los dudosos y traslada el trabajo al equipo, en contra de R2. C es una instrucción general que no mejora la precisión (TS 4.1-K2) y no deja nada que encaminar. D descarta hallazgos reales que solo aparezcan en una ejecución.
 </details>
 
 ### Pregunta 9 (TS 4.6 · multiple-response)
