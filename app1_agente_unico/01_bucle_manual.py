@@ -207,8 +207,7 @@ def run_loop(
 
     def finish(stop: str, iteration: int, response: Any = None) -> LoopResult:
         final = " ".join(b.text for b in blocks_of(response, "text")) if response is not None else None
-        if echo:
-            print(f"[parada] {stop} tras {iteration} iteraciones y {len(calls)} llamadas")
+        # La parada, las iteraciones y las llamadas las da el cierre estándar (`summary`): aquí no se repiten.
         return LoopResult(stop, iteration, history, calls, final or None)
 
     for iteration in range(1, safety_cap + 1):
