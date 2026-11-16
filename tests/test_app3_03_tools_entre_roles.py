@@ -10,7 +10,6 @@ QUÉ NO HACE: no ejecuta el coordinador ni llama al modelo.
 import json
 
 from harness.data import load
-from harness.offline import run_hook
 from harness.recorder import RunRecord, ToolCall
 from tests.cargar import load as load_module
 
@@ -140,14 +139,9 @@ def test_coordinator_prompt_does_not_name_the_cross_role_tool_or_the_url_rule():
         assert word not in prompt
 
 
-def test_coordinator_gate_denies_the_main_agent_and_lets_subagents_through():
-    # `tools=["Agent"]` solo limita las integradas: las tools MCP siguen visibles para el coordinador.
-    # La barrera es este hook, no el prompt. Un subagente trae `agent_id`; el agente principal, no.
-    for name in ALL:
-        denied = run_hook(mod.coordinator_gate, "PreToolUse", name, {"url": DOC_URL})
-        assert denied.decision == "deny" and "subagentes" in denied.reason
-        assert run_hook(mod.coordinator_gate, "PreToolUse", name, {"url": DOC_URL}, agent_id="agent-1").decision is None
-
+# (El test que probaba aquí que el hook deniega al agente principal y deja pasar a los subagentes sobre cada tool
+# vivía duplicado: el hook no mira el nombre de la tool y lo cubren `test_gate_denies_the_main_agent` y
+# `test_gate_lets_subagents_through` de `test_app3_coordinator_gate.py`. Aquí solo se comprueba que las opciones la llevan.)
 
 def test_gate_is_registered_for_the_investigation_tools_only():
     options = mod.build_options(None, budget=0.5, model="m", subagent_model="s")

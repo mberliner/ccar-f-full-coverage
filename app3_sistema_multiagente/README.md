@@ -1618,7 +1618,7 @@ Notas:
 - **La confianza de un campo en `null` habla de la ausencia:** con Haiku 4.5 ronda 0,32 aunque el `null` sea correcto, y mezclarla con los valores extraídos daba un hueco de calibración de 0,137 con Haiku 5.5 que era un artefacto. El módulo la mide aparte.
 - **Segmentos pequeños:** con 6 documentos por conjunto, el tipo raro no llega a los 20 ejemplos de confianza alta que se piden. No se puede validar, así que no se automatiza (`insufficient_data` no es lo mismo que `below_target`).
 - La población es simulada (la genera `datos/generar_sinteticos.py`): la confianza de sus valores no es la de un modelo real. **Los umbrales por segmento (5.5-S3) solo se fijan sobre esa confianza simulada.** La parte con modelo es la única que mide una confianza declarada de verdad, y lo que mide es su calibración: no fija umbrales con ella.
-- Lo que no depende del modelo se prueba en `tests/test_app3_10_confianza_y_revision.py` y `tests/test_datos_entrega3c.py`.
+- Lo que no depende del modelo se prueba en `tests/test_app3_10_confianza_y_revision.py` y `tests/test_datos_sinteticos.py`.
 </details>
 
 ### Pregunta tipo examen
@@ -1826,7 +1826,7 @@ Notas:
 Avisos sobre las cifras y la ejecución:
 
 - **El tope de coste** es `--max-budget-usd` de cada `claude -p`: el módulo le pasa a cada repetición lo menor entre lo que queda de `--budget` y `--budget` dividido entre las repeticiones, así que una repetición no puede gastarse el tope de las siguientes. La sonda de contexto del principio cuenta en el mismo tope.
-- Lo que no depende del modelo se prueba en `tests/test_app3_11_criterios_y_ci.py`, `tests/test_headless.py` y `tests/test_datos_entrega3c.py`. Coste de las ejecuciones con modelo de este módulo: 0,63 $ en la medida después de las correcciones (0,37 $ la revisión y 0,26 $ los tests); el de antes, en el apéndice de `docs/hallazgos.md`.
+- Lo que no depende del modelo se prueba en `tests/test_app3_11_criterios_y_ci.py`, `tests/test_headless.py` y `tests/test_datos_sinteticos.py`. Coste de las ejecuciones con modelo de este módulo: 0,63 $ en la medida después de las correcciones (0,37 $ la revisión y 0,26 $ los tests); el de antes, en el apéndice de `docs/hallazgos.md`.
 </details>
 
 ### Pregunta tipo examen
