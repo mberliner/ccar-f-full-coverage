@@ -11,6 +11,7 @@ Para quien practica el curso.
 - [`tipos-de-senal.md`](tipos-de-senal.md): qué partes de cada módulo enseñan el mecanismo al ejecutarlas y cuáles solo se explican; se consulta antes de decidir qué ejecutar.
 - [`simulaciones-por-escenario.md`](simulaciones-por-escenario.md): cómo se practican varias preguntas sobre un contexto compartido, como en el examen, y el estado de los seis casos de `simulaciones/`.
 - [`repaso/`](repaso/): una hoja por dominio (D1 a D5) con viñeta, idea, trampa y módulo, para un vistazo rápido. Están generadas: no se editan a mano.
+- [`hooks/`](hooks/): ayuda rápida de los hooks `PreToolUse` y `PostToolUse` (TS 1.5) y sus escenarios con código ejecutable (`hooks_escenarios.py`, autocomprobación sin modelo). Documentos autónomos y portables: no usan el arnés del proyecto.
 
 ## Construcción
 
