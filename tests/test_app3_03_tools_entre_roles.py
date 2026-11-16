@@ -17,7 +17,6 @@ mod = load_module("app3_sistema_multiagente/03_tools_entre_roles.py")
 
 P = "mcp__investigacion__"
 SEARCH_KB, LOAD, FETCH, VERIFY, SEARCH_T = (P + n for n in ("search_kb", "load_document", "fetch_url", "verify_fact", "search_tickets"))
-ALL = [SEARCH_T, SEARCH_KB, FETCH, LOAD, VERIFY]
 CATALOG = load("documentos.json")
 DOC_URL = next(u["url"] for u in CATALOG["urls"] if u["is_document"])
 JUNK_URL = next(u["url"] for u in CATALOG["urls"] if not u["is_document"])

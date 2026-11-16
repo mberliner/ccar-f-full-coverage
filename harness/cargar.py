@@ -8,7 +8,8 @@ POR QUÉ EXISTE: la misma lógica estaba copiada en `tests/cargar.py` y en cuatr
 solo nombre por archivo, las dataclass de un módulo son las mismas para sus hermanos y para los tests.
 
 QUÉ NO HACE: no ejecuta `main()` (el bloque `__main__` no corre al cargar) ni busca fuera de la ruta
-dada. Un archivo inexistente da `FileNotFoundError` y no deja nada registrado.
+dada. Un archivo inexistente da `FileNotFoundError` y no deja nada registrado. Si el nombre ya está en
+caché desde otra ruta, `ValueError` con las dos rutas y el módulo en caché queda intacto.
 """
 
 import importlib.util
@@ -22,7 +23,12 @@ def load_path(path: str | Path) -> ModuleType:
     path = Path(path).resolve()
     name = "_app_" + path.parent.name + "_" + path.stem
     if name in sys.modules:
-        return sys.modules[name]
+        cached = sys.modules[name]
+        cached_path = getattr(cached, "__file__", None)
+        # El nombre sale de carpeta y archivo: otra ruta con los mismos nombres no puede recibir este módulo.
+        if cached_path is not None and Path(cached_path).resolve() != path:
+            raise ValueError(f"el nombre {name} ya está cargado desde {cached_path}, no desde {path}")
+        return cached
     # Se comprueba antes de registrar nada: un fallo no debe dejar un módulo a medias.
     if not path.is_file():
         raise FileNotFoundError(path)

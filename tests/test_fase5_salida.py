@@ -211,6 +211,33 @@ def test_app2_05_counts_a_run_without_escalation_as_incomplete(monkeypatch, caps
     assert "[clave] handoff completo 1/2 (50 %)" in capsys.readouterr().out.splitlines()
 
 
+def test_app2_05_a_run_cut_by_the_budget_does_not_count_against_the_handoff(monkeypatch, capsys):
+    # Revisión 5.5: con `--repeat N` cada ejecución tiene 1/N del tope, y un corte no es una decisión del agente
+    # (como `scorable` en app2/04). `run_once` devuelve `CUT` y la tasa se calcula sobre las no cortadas.
+    mod = load("app2_agente_con_control/05_multi_concern_y_handoff.py")
+    outcomes = iter([[], mod.CUT, ["falta la fecha"]])
+
+    async def run_once(args, budget, model):
+        return next(outcomes)
+
+    monkeypatch.setattr(mod, "preamble", fake_preamble(["modelo-agent"], 0.30))
+    monkeypatch.setattr(mod, "run_once", run_once)
+    asyncio.run(mod.main_async(["--repeat", "3"]))
+    assert "[clave] handoff completo 1/2 (50 %) · cortadas por el presupuesto: 1" in capsys.readouterr().out.splitlines()
+
+
+def test_app2_05_with_every_run_cut_there_is_no_rate(monkeypatch, capsys):
+    mod = load("app2_agente_con_control/05_multi_concern_y_handoff.py")
+
+    async def run_once(args, budget, model):
+        return mod.CUT
+
+    monkeypatch.setattr(mod, "preamble", fake_preamble(["modelo-agent"], 0.30))
+    monkeypatch.setattr(mod, "run_once", run_once)
+    asyncio.run(mod.main_async(["--repeat", "2"]))
+    assert "[clave] handoff completo sin datos · cortadas por el presupuesto: 2" in capsys.readouterr().out.splitlines()
+
+
 def test_app3_02_repeats_the_parallel_part_and_reports_each_speedup(monkeypatch, capsys):
     # `paralelo` es de ejecución obligatoria y su aceleración varía entre pasadas: N ejecuciones la muestran.
     mod = load("app3_sistema_multiagente/02_paralelo_y_descomposicion.py")
@@ -241,41 +268,52 @@ def test_app2_07_uses_build_parser_and_keeps_its_anti():
 APP_MODULES = sorted(p for p in ROOT.glob("app[0-9]_*/[0-9][0-9]_*.py"))
 
 
+def other_names_after_anti_or(text: str) -> list[str]:
+    """Etiquetas distintas de `correcta` en la forma `anti or '…'`, la que usaban los módulos antes de 5.3."""
+    return [n for n in re.findall(r"anti or ['\"]([^'\"]+)['\"]", text) if n != "correcta"]
+
+
+def test_the_anti_or_check_detects_another_label():
+    # Control positivo (revisión 5.5): sin él, la comprobación pasaría en vacío si cambiara la forma del código.
+    assert other_names_after_anti_or("print(f\"variante {args.anti or 'puerta'}\")") == ["puerta"]
+    assert other_names_after_anti_or("print(f\"variante {args.anti or 'correcta'}\")") == []
+
+
 @pytest.mark.parametrize("path", APP_MODULES, ids=lambda p: p.relative_to(ROOT).as_posix())
-def test_correct_variant_is_never_named_otherwise(path):
-    # Hoy hay `case facts`, `hooks`, `puerta`, `updatedInput`… en lugar de `correcta`.
-    names = re.findall(r"anti or ['\"]([^'\"]+)['\"]", path.read_text(encoding="utf-8"))
-    assert [n for n in names if n != "correcta"] == []
+def test_no_module_labels_the_correct_variant_with_anti_or_another_name(path):
+    # Solo vigila la forma `anti or '…'` (hoy sustituida por `variant_label`); otras etiquetas de cabecera,
+    # como el «acotado (5 tools)» de app1/05 o la «instancia nueva» de app3/12, describen una rama y no son esto.
+    assert other_names_after_anti_or(path.read_text(encoding="utf-8")) == []
 
 
 # --- app1/01, el primer módulo con la salida estándar -----------------------------------------------------
 
 
 @pytest.fixture(scope="module")
-def bucle():
+def loop_module():
     return load("app1_agente_unico/01_bucle_manual.py")
 
 
-def test_app1_01_declares_its_mechanism_and_what_each_variant_expects(bucle):
-    vignette, sentence = bucle.MECHANISM
+def test_app1_01_declares_its_mechanism_and_what_each_variant_expects(loop_module):
+    vignette, sentence = loop_module.MECHANISM
     assert vignette.startswith("TS 1.1-") and sentence
     salida.mechanism_line(vignette, sentence)  # no lanza: viñeta y frase válidas
-    assert set(bucle.EXPECTED) == {"correcta", *bucle.ANTI_VARIANTS}
-    assert all(bucle.EXPECTED.values())
+    assert set(loop_module.EXPECTED) == {"correcta", *loop_module.ANTI_VARIANTS}
+    assert all(loop_module.EXPECTED.values())
 
 
 @pytest.mark.parametrize("anti", [None, "tope"])
-def test_app1_01_summary_follows_the_standard_format(bucle, anti):
-    result = bucle.LoopResult(stop="end_turn", iterations=2, history=[], final_text="z" * (salida.RESPONSE_LIMIT + 10))
-    lines = bucle.summary(result, anti=anti, verbose=False).splitlines()
-    assert lines[0] == salida.mechanism_line(*bucle.MECHANISM)
-    assert lines[1] == salida.expected_line(bucle.EXPECTED[salida.variant_label(anti)])
+def test_app1_01_summary_follows_the_standard_format(loop_module, anti):
+    result = loop_module.LoopResult(stop="end_turn", iterations=2, history=[], final_text="z" * (salida.RESPONSE_LIMIT + 10))
+    lines = loop_module.summary(result, anti=anti, verbose=False).splitlines()
+    assert lines[0] == salida.mechanism_line(*loop_module.MECHANISM)
+    assert lines[1] == salida.expected_line(loop_module.EXPECTED[salida.variant_label(anti)])
     assert [line for line in lines if line.startswith("[clave]")] == [lines[2]]
     assert "parada=end_turn" in lines[2]
     assert all(line.startswith("[medida]") for line in lines[3:-1])
     assert lines[-1] == salida.full_response(result.final_text, verbose=False)
 
 
-def test_app1_01_summary_shows_the_whole_answer_with_verbose(bucle):
-    result = bucle.LoopResult(stop="end_turn", iterations=1, history=[], final_text="z" * (salida.RESPONSE_LIMIT + 10))
-    assert bucle.summary(result, anti=None, verbose=True).splitlines()[-1] == "[respuesta completa] " + result.final_text
+def test_app1_01_summary_shows_the_whole_answer_with_verbose(loop_module):
+    result = loop_module.LoopResult(stop="end_turn", iterations=1, history=[], final_text="z" * (salida.RESPONSE_LIMIT + 10))
+    assert loop_module.summary(result, anti=None, verbose=True).splitlines()[-1] == "[respuesta completa] " + result.final_text

@@ -72,6 +72,9 @@ SEARCH_KB = tool_name("search_kb")
 LIST_TICKETS = tool_name("list_employee_tickets")
 ESCALATE = tool_name("escalate_to_human")
 ANTI_VARIANTS = ["resumen", "handoff_libre"]
+# Resultado de `run_once` cuando el presupuesto cortó la conversación: no es una decisión del agente y no
+# cuenta ni a favor ni en contra del handoff (con `--repeat N` cada ejecución solo tiene 1/N del tope).
+CUT = object()
 
 # Palabras que asignan una frase o un resultado a un asunto. El orden es el de
 # la capa por asunto en el bloque.
@@ -233,8 +236,8 @@ def make_parser():
     return build_parser(__doc__.splitlines()[0], anti_variants=ANTI_VARIANTS)
 
 
-async def run_once(args: Any, budget: float, model: str) -> list[str] | None:
-    """Una conversación completa. Devuelve los problemas del handoff (vacía si está completo) o `None` sin escalamiento."""
+async def run_once(args: Any, budget: float, model: str) -> list[str] | None | object:
+    """Una conversación completa. Devuelve los problemas del handoff (vacía si está completo), `None` sin escalamiento o `CUT` si el presupuesto la cortó."""
     ticket = multi_concern_ticket()
     print(f"[asuntos] {ticket['ticket_id']}: {decompose(ticket['description'])}")
     state = HelpdeskState()
@@ -242,10 +245,12 @@ async def run_once(args: Any, budget: float, model: str) -> list[str] | None:
     summary: str | None = None
     facts: dict[str, dict[str, Any]] = {}
     spent = 0.0
+    cut = False
 
     for number, message in enumerate(user_turns(ticket), start=1):
         if budget - spent <= 0:
             print(f"[corte] presupuesto agotado antes del turno {number} (${spent:.4f} de ${budget})")
+            cut = True
             break
         # Cada turno empieza una sesión nueva con el resumen: es la
         # sumarización progresiva. Lo que cambia entre variantes es si los
@@ -273,6 +278,8 @@ async def run_once(args: Any, budget: float, model: str) -> list[str] | None:
                                                    extract_user_facts(message)))
             await client.query(SUMMARY_REQUEST)
             summary_rec = await record(client.receive_response(), echo=False)
+        # El SDK también corta por presupuesto dentro de una consulta: se anota igual que el `break` de arriba.
+        cut = cut or rec.budget_exceeded or summary_rec.budget_exceeded
         summary = summary_rec.final_text
         # Se suman las dos consultas de la sesión. Si el SDK diera el coste
         # acumulado de la sesión, esto lo sobrestima: se queda del lado seguro.
@@ -280,6 +287,8 @@ async def run_once(args: Any, budget: float, model: str) -> list[str] | None:
         print(f"[resumen para el turno siguiente] {summary}")
 
     print(f"\n{render_case_facts(facts)}")
+    if cut:
+        return CUT
     if not state.escalations:
         print("[medida] no hubo escalamiento")
         return None
@@ -294,13 +303,18 @@ async def main_async(argv: list[str] | None = None) -> int:
     args = make_parser().parse_args(argv)
     (model,), budget = preamble(args.budget, "agent")
     complete = 0
+    cut = 0
     for run in range(1, args.repeat + 1):
         print(f"\n=== ejecución {run}/{args.repeat} · variante {variant_label(args.anti)} ===")
         # El tope es de toda la ejecución del script, repartido entre repeticiones.
         problems = await run_once(args, budget / args.repeat, model)
+        if problems is CUT:
+            cut += 1
+            continue
         # Sin escalamiento no hay handoff que dar por completo: cuenta como incompleto.
         complete += problems == []
-    print(f"[clave] handoff completo {rate_text((complete, args.repeat))}")
+    note = f" · cortadas por el presupuesto: {cut}" if cut else ""
+    print(f"[clave] handoff completo {rate_text((complete, args.repeat - cut))}{note}")
     return 0
 
 

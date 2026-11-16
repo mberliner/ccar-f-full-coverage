@@ -128,6 +128,27 @@ def test_unknown_anti_and_unknown_part_are_rejected(capsys):
     parse_fails(by_part(default_part="p1"), ["--parte", "p9"], capsys)
 
 
+def test_an_empty_anti_value_is_rejected_like_with_choices(capsys):
+    # Revisión 5.5: `--anti ""` o `--anti=` no es «sin valor»; con `anti_variants` (`choices`) sale con 2, y aquí igual.
+    parse_fails(by_part(default_part="p1"), ["--anti", ""], capsys)
+    parse_fails(by_part(default_part="p1"), ["--anti="], capsys)
+
+
+def test_parse_known_args_validates_anti_by_part_too(capsys):
+    # La validación por parte vive en el parser, no solo en `parse_args`: `parse_known_args` la aplica igual.
+    with pytest.raises(SystemExit) as exc:
+        by_part(default_part="p1").parse_known_args(["--parte", "p2", "--anti", "a"])
+    assert exc.value.code == 2
+    capsys.readouterr()
+    args, rest = by_part(default_part="p1").parse_known_args(["--parte", "p2", "--anti", "--otra"])
+    assert (args.anti, rest) == ("c", ["--otra"])
+
+
+def test_anti_help_also_applies_with_anti_by_part(capsys):
+    by_part(default_part="p1", anti_help="texto propio de --anti").print_help()
+    assert "texto propio de --anti" in " ".join(capsys.readouterr().out.split())
+
+
 def test_default_part_and_required_part():
     assert by_part(default_part="p1").parse_args([]).parte == "p1"
     with pytest.raises(SystemExit):
@@ -311,6 +332,18 @@ def test_missing_file_raises_and_leaves_nothing_registered():
     with pytest.raises(FileNotFoundError):
         load_sibling(APP3 / "08_validacion_reintento.py", "99_no_existe.py")
     assert "_app_app3_sistema_multiagente_99_no_existe" not in sys.modules
+
+
+def test_a_cached_module_from_another_path_is_not_reused(tmp_path):
+    # Revisión 5.5: el nombre en caché sale de la carpeta y del archivo; otra ruta con los mismos nombres
+    # (una copia en un test) no puede recibir el módulo ya cargado ni pisarlo.
+    original = load_path(APP3 / "07_extraccion_schema.py")
+    copy = tmp_path / "app3_sistema_multiagente" / "07_extraccion_schema.py"
+    copy.parent.mkdir()
+    copy.write_text("MARK = 'copia'\n", encoding="utf-8")
+    with pytest.raises(ValueError):
+        load_path(copy)
+    assert sys.modules[original.__name__] is original
 
 
 # --- ok, error y deny --------------------------------------------------------------------------------------

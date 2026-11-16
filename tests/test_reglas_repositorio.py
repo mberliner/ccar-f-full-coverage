@@ -98,24 +98,57 @@ def test_infrastructure_header_has_the_three_parts(path):
 
 # --- 3 · Aislamiento: opciones del SDK solo con `isolated_options` o `headless.build_command` -----------
 
-# Un módulo «del SDK» es el que usa el Agent SDK para lanzar un agente o el que lanza `claude -p`.
-SDK_USE = re.compile(r"\bClaudeSDKClient\b|\bClaudeAgentOptions\(|from claude_agent_sdk import[^\n]*\bquery\b|claude -p")
-SDK_MODULES = sorted(p for app in APPS for p in app.glob("[0-9][0-9]_*.py") if SDK_USE.search(p.read_text(encoding="utf-8")))
+def called_names(tree: ast.AST) -> set[str]:
+    """Nombres de las funciones que el AST llama de verdad (`f(...)` o `x.f(...)`): un comentario o un docstring no cuentan."""
+    names = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            func = node.func
+            names.add(func.id if isinstance(func, ast.Name) else func.attr if isinstance(func, ast.Attribute) else "")
+    return names
+
+
+SDK_IMPORTS = {"harness.recorder", "harness.headless", "headless"}
+# Nombres de `claude_agent_sdk` que lanzan un agente. Importar solo `HookMatcher` (app2/07, sin modelo) no es
+# usar el SDK para lanzar nada: sería un incumplimiento falso.
+SDK_LAUNCHERS = {"ClaudeSDKClient", "ClaudeAgentOptions", "query"}
+
+
+def is_sdk_module(text: str) -> bool:
+    """Un módulo «del SDK» lanza un agente (importa `ClaudeSDKClient`, `query`…, o `harness.recorder`) o `claude -p` (`harness.headless`)."""
+    for node in ast.walk(ast.parse(text)):
+        if isinstance(node, ast.Import):
+            # `import claude_agent_sdk` (o `import harness.recorder`).
+            modules = {alias.name for alias in node.names}
+            if "claude_agent_sdk" in modules or SDK_IMPORTS & modules:
+                return True
+        elif isinstance(node, ast.ImportFrom):
+            module = node.module or ""
+            names = {alias.name for alias in node.names}
+            # `from harness import recorder` nombra el módulo en `names`, no en `module`.
+            qualified = {module} | {f"{module}.{n}" for n in names}
+            if SDK_IMPORTS & qualified:
+                return True
+            if module.split(".")[0] == "claude_agent_sdk" and SDK_LAUNCHERS & names:
+                return True
+    return False
+SDK_MODULES = sorted(p for app in APPS for p in app.glob("[0-9][0-9]_*.py") if is_sdk_module(p.read_text(encoding="utf-8")))
 SDK_KNOWN: set[str] = set()
 
 
 def test_there_are_sdk_modules_to_check():
-    # Si el patrón dejara de encontrar módulos, la regla pasaría en vacío.
+    # Si la detección dejara de encontrar módulos, la regla pasaría en vacío.
     assert len(SDK_MODULES) >= 10
 
 
 def sdk_problems(text: str) -> list[str]:
     """Qué incumple un módulo del SDK: no pasa por el arnés o construye `ClaudeAgentOptions(` a mano."""
+    calls = called_names(ast.parse(text))
     problems = []
-    if "isolated_options(" not in text and "build_command(" not in text:
+    if not {"isolated_options", "build_command"} & calls:
         problems.append("sin isolated_options ni build_command")
     # Nunca `ClaudeAgentOptions(` directamente: saltaría el aislamiento y el tope de coste.
-    if "ClaudeAgentOptions(" in text:
+    if "ClaudeAgentOptions" in calls:
         problems.append("ClaudeAgentOptions a mano")
     return problems
 
@@ -145,35 +178,59 @@ SERVERS = sorted(p for app in APPS for p in app.glob("servers/*.py"))
 DELIBERATE_GENERIC = {("app1_agente_unico/servers/mesa.py", "generic_error")}
 
 
-def error_builders(path: Path) -> list[tuple[str, str]]:
-    """[(función, código)] de cada función que construye un resultado con `is_error` verdadero."""
-    source = path.read_text(encoding="utf-8")
+ERROR_KEYS = ("errorCategory", "isRetryable")
+FUNCTIONS = (ast.FunctionDef, ast.AsyncFunctionDef)
+
+
+def own_nodes(function: ast.AST):
+    """Los nodos de la función sin bajar a sus funciones anidadas (cada una se juzga por separado)."""
+    stack = list(ast.iter_child_nodes(function))
+    while stack:
+        node = stack.pop()
+        yield node
+        if not isinstance(node, FUNCTIONS):
+            stack.extend(ast.iter_child_nodes(node))
+
+
+def error_builders(text: str) -> list[tuple[str, set[str]]]:
+    """[(función, claves de ERROR_KEYS presentes)] de cada función que construye un resultado con `is_error` verdadero.
+
+    Las claves se buscan en el AST de la propia función (claves de dict, argumentos con nombre y cadenas,
+    sin su docstring): un comentario que las nombre no cuenta.
+    """
     found = []
-    for node in ast.walk(ast.parse(source)):
-        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+    for function in ast.walk(ast.parse(text)):
+        if not isinstance(function, FUNCTIONS):
             continue
-        marks = False
-        for inner in ast.walk(node):
-            if isinstance(inner, ast.Dict):
-                marks |= any(isinstance(k, ast.Constant) and k.value == "is_error" and isinstance(v, ast.Constant) and v.value is True for k, v in zip(inner.keys, inner.values))
-            elif isinstance(inner, ast.keyword):
-                marks |= inner.arg in ("is_error", "isError") and isinstance(inner.value, ast.Constant) and inner.value.value is True
-        # Solo la función más interna que lo construye: la que lo envuelve se juzga por sus propias líneas.
-        if marks and not any(isinstance(c, (ast.FunctionDef, ast.AsyncFunctionDef)) and c is not node for c in ast.walk(node)):
-            found.append((node.name, ast.get_source_segment(source, node) or ""))
+        nodes = list(own_nodes(function))
+        marks = any(
+            (isinstance(n, ast.Dict) and any(isinstance(k, ast.Constant) and k.value == "is_error" and isinstance(v, ast.Constant) and v.value is True for k, v in zip(n.keys, n.values)))
+            or (isinstance(n, ast.keyword) and n.arg in ("is_error", "isError") and isinstance(n.value, ast.Constant) and n.value.value is True)
+            for n in nodes
+        )
+        if not marks:
+            continue
+        # El docstring es la primera expresión-cadena del cuerpo: se excluye para que no valga como metadato.
+        doc = function.body[0].value if function.body and isinstance(function.body[0], ast.Expr) else None
+        present = set()
+        for n in nodes:
+            strings = [n.value] if isinstance(n, ast.Constant) and isinstance(n.value, str) and n is not doc else []
+            names = [n.arg] if isinstance(n, ast.keyword) and n.arg else []
+            present |= {key for key in ERROR_KEYS if key in names or any(key in s for s in strings)}
+        found.append((function.name, present))
     return found
 
 
 def test_servers_build_error_results():
-    assert sum(len(error_builders(p)) for p in SERVERS) >= 4
+    assert sum(len(error_builders(p.read_text(encoding="utf-8"))) for p in SERVERS) >= 4
 
 
 @pytest.mark.parametrize("path", SERVERS, ids=rel)
 def test_server_errors_carry_category_and_retryable(path):
     wrong = [
         name
-        for name, code in error_builders(path)
-        if (rel(path), name) not in DELIBERATE_GENERIC and not ("errorCategory" in code and "isRetryable" in code)
+        for name, present in error_builders(path.read_text(encoding="utf-8"))
+        if (rel(path), name) not in DELIBERATE_GENERIC and present != set(ERROR_KEYS)
     ]
     assert wrong == []
 
@@ -211,15 +268,48 @@ def test_sdk_check_detects_options_built_by_hand():
     assert sdk_problems("options = isolated_options(max_budget_usd=0.1)\n") == []
 
 
-def test_server_check_detects_an_error_without_category(tmp_path):
-    server = tmp_path / "malo.py"
-    server.write_text(
+def wrong_builders(text: str) -> list[str]:
+    return [name for name, present in error_builders(text) if present != set(ERROR_KEYS)]
+
+
+def test_sdk_check_ignores_a_comment_that_quotes_the_constructor():
+    # Un comentario o un docstring con `ClaudeAgentOptions(` no es una llamada.
+    quoted = '"""Nunca ClaudeAgentOptions( a mano."""\n# ClaudeAgentOptions( está prohibido\noptions = isolated_options()\n'
+    assert sdk_problems(quoted) == []
+
+
+def test_sdk_detection_reads_multiline_imports_and_headless():
+    multiline = "from claude_agent_sdk import (\n    ClaudeSDKClient,\n    HookMatcher,\n)\n"
+    assert is_sdk_module(multiline)
+    assert is_sdk_module("from harness.recorder import record\n")
+    assert is_sdk_module("from harness import headless\n")
+    # Importar solo `HookMatcher` no lanza ningún agente, y nombrar el SDK en un comentario tampoco.
+    assert not is_sdk_module("from claude_agent_sdk import HookMatcher\n")
+    assert not is_sdk_module("# usa claude_agent_sdk y claude -p\nimport json\n")
+
+
+def test_server_check_detects_an_error_without_category():
+    server = (
         "def bad_err():\n    return {'content': [{'type': 'text', 'text': 'fallo'}], 'is_error': True}\n"
-        "def good_err():\n    return {'content': [{'type': 'text', 'text': '{\"errorCategory\": 1, \"isRetryable\": 0}'}], 'is_error': True}\n",
-        encoding="utf-8",
+        "def good_err():\n    return {'content': [{'type': 'text', 'text': '{\"errorCategory\": 1, \"isRetryable\": 0}'}], 'is_error': True}\n"
     )
-    wrong = [name for name, code in error_builders(server) if not ("errorCategory" in code and "isRetryable" in code)]
-    assert wrong == ["bad_err"]
+    assert wrong_builders(server) == ["bad_err"]
+
+
+def test_server_check_detects_a_nested_function_that_returns_is_error_without_metadata():
+    # La función envolvente tiene los metadatos, la anidada no: antes la envolvente se descartaba y la anidada pasaba.
+    server = (
+        "def outer():\n    meta = {'errorCategory': 'x', 'isRetryable': False}\n"
+        "    def inner():\n        return {'is_error': True}\n    return inner, meta\n"
+    )
+    assert wrong_builders(server) == ["inner"]
+
+
+def test_server_check_does_not_accept_a_comment_with_both_names():
+    server = "def bad_err():\n    # errorCategory e isRetryable van aquí\n    return {'is_error': True}\n"
+    assert wrong_builders(server) == ["bad_err"]
+    docstring_only = 'def bad_err():\n    """errorCategory, isRetryable."""\n    return {\'is_error\': True}\n'
+    assert wrong_builders(docstring_only) == ["bad_err"]
 
 
 # --- Comprobación en vivo, sin modelo: los constructores de error de cada servidor dan las dos claves ---------

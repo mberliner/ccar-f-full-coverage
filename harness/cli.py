@@ -5,9 +5,11 @@ comparten todos: `--anti [variante]` (par anti-patrón / correcto), `--repeat N`
 (medir una tasa en varias ejecuciones) y `--budget` (bajar el tope de coste
 para una prueba barata), y calcular el presupuesto efectivo.
 
-POR QUÉ EXISTE: repetir el mismo `argparse` en 8 módulos invita a que cada uno
-lo haga a su manera. El módulo puede añadir sus propias opciones al parser
-devuelto (`--parte` en app3/02).
+POR QUÉ EXISTE: repetir el mismo `argparse` en cada módulo invita a que cada uno
+lo haga a su manera. `build_parser` cubre también `--parte` (con `anti_by_part`),
+los roles de modelo (`--rol-modelo` o el `role_flag` que se pida), `--verbose`,
+`no_repeat` y `budget=False`; el módulo solo añade al parser devuelto lo que no
+sea común.
 
 QUÉ NO HACE: no tiene `--model`, para que el `.env` sea siempre la fuente que
 manda (ver `harness/config.py`), y `--budget` nunca sube el tope resuelto: una
@@ -33,6 +35,34 @@ def positive_int(text: str) -> int:
     if value <= 0:
         raise argparse.ArgumentTypeError("debe ser un entero positivo")
     return value
+
+
+# `const` de `--anti` con `anti_by_part`: distingue «--anti sin valor» de un valor vacío.
+_BARE = object()
+
+
+class _ByPartParser(argparse.ArgumentParser):
+    """Parser cuyo `--anti` se valida contra la parte elegida, ya analizada.
+
+    Se sobrescribe `parse_known_args` porque `parse_args` lo llama y porque quien lo use directamente
+    también recibe la validación.
+    """
+
+    anti_by_part: dict[str, list[str]]
+
+    def parse_known_args(self, args=None, namespace=None):
+        parsed, rest = super().parse_known_args(args, namespace)
+        if parsed.anti is None:
+            return parsed, rest
+        valid = self.anti_by_part.get(parsed.parte, [])
+        if parsed.anti is _BARE:
+            if not valid:
+                self.error(f"la parte {parsed.parte} no tiene variantes de --anti")
+            parsed.anti = valid[0]
+        elif parsed.anti not in valid:
+            every = "; ".join(f"{part}: {', '.join(names)}" for part, names in self.anti_by_part.items())
+            self.error(f"--anti {parsed.anti} no vale en la parte {parsed.parte}. Variantes válidas: {every}")
+        return parsed, rest
 
 
 def build_parser(
@@ -69,7 +99,7 @@ def build_parser(
     if default_role is not None and default_role not in (model_roles or []):
         raise ValueError(f"default_role desconocido: {default_role}")
 
-    parser = argparse.ArgumentParser(description=description)
+    parser = (_ByPartParser if anti_by_part else argparse.ArgumentParser)(description=description)
     if parts:
         parser.add_argument(
             "--parte",
@@ -85,25 +115,14 @@ def build_parser(
         # La ayuda lista las variantes de cada parte, como hacía `choices` en el `--help` del módulo.
         by_part_help = "; ".join(f"{part}: {', '.join(names)}" for part, names in anti_by_part.items())
         parser.add_argument(
-            "--anti", nargs="?", const="", help=f"ejecuta el anti-patrón de la parte elegida ({by_part_help}); sin valor: el primero de esa parte"
+            "--anti",
+            nargs="?",
+            const=_BARE,  # centinela: `--anti ""` y `--anti=` son un valor vacío (error), no «sin valor»
+            help=f"ejecuta el anti-patrón de la parte elegida ({by_part_help}); sin valor: el primero de esa parte"
+            if anti_help is None
+            else anti_help,
         )
-        original_parse = parser.parse_args
-
-        def parse_args(argv=None, namespace=None):
-            args = original_parse(argv, namespace)
-            if args.anti is None:
-                return args
-            valid = anti_by_part.get(args.parte, [])
-            if args.anti == "":
-                if not valid:
-                    parser.error(f"la parte {args.parte} no tiene variantes de --anti")
-                args.anti = valid[0]
-            elif args.anti not in valid:
-                every = "; ".join(f"{part}: {', '.join(names)}" for part, names in anti_by_part.items())
-                parser.error(f"--anti {args.anti} no vale en la parte {args.parte}. Variantes válidas: {every}")
-            return args
-
-        parser.parse_args = parse_args
+        parser.anti_by_part = anti_by_part
     elif anti_variants:
         # `--anti` sin valor elige la primera variante: la que el módulo
         # considera el anti-patrón principal.
