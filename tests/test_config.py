@@ -1,4 +1,11 @@
-"""Tests de `harness/config.py`: prioridad `.env` > entorno > defecto, vacíos descartados y presupuesto positivo. Sin modelo."""
+"""Tests de `harness/config.py`: prioridad `.env` > entorno > defecto, vacíos descartados y presupuesto positivo. Sin modelo.
+
+PROPÓSITO: comprobar la prioridad `.env` > entorno > valor por defecto, que los valores vacíos se descartan y que el presupuesto tiene que ser positivo.
+
+POR QUÉ EXISTE: modelos y presupuestos de todos los módulos salen de `harness/config.py`; una precedencia errónea cambiaría el modelo o el tope sin que el módulo lo avise.
+
+QUÉ NO HACE: no lee la configuración real de quien ejecuta los tests ni llama al modelo.
+"""
 
 import pytest
 

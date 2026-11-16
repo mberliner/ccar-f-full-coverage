@@ -1,4 +1,11 @@
-"""Tests de app2/03_permisos: cada configuración construye lo que dice el README. Sin modelo."""
+"""Tests de app2/03_permisos: cada configuración construye lo que dice el README. Sin modelo.
+
+PROPÓSITO: comprobar que cada configuración de permisos que el módulo construye es la que describe el README de la app.
+
+POR QUÉ EXISTE: el README y el código pueden divergir sin aviso; la ejecución con modelo mostraría entonces una configuración distinta de la documentada.
+
+QUÉ NO HACE: no ejecuta el agente ni comprueba cómo reacciona el modelo a cada modo de permisos.
+"""
 
 import pytest
 

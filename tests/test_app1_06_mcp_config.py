@@ -1,4 +1,11 @@
-"""Tests de app1/06_mcp_config: `.mcp.json` generado, comando de ámbito de usuario, archivos de artículos, contadores de llamadas, agrupación de tools por servidor y opciones por parte. Sin modelo."""
+"""Tests de app1/06_mcp_config: `.mcp.json` generado, comando de ámbito de usuario, archivos de artículos, contadores de llamadas, agrupación de tools por servidor y opciones por parte. Sin modelo.
+
+PROPÓSITO: comprobar el `.mcp.json` generado, el comando de ámbito de usuario, los archivos de artículos, los contadores de llamadas, la agrupación de tools por servidor y las opciones de cada parte.
+
+POR QUÉ EXISTE: la configuración MCP es lo que el módulo enseña; un `.mcp.json` mal generado haría que la ejecución mostrara otra cosa.
+
+QUÉ NO HACE: no lanza servidores MCP ni llama al modelo; escribe solo en directorios temporales.
+"""
 
 import json
 from pathlib import Path

@@ -1,4 +1,11 @@
-"""Tests de app1/02_tools_integradas: llamadores esperados con ast, comprobadores de rutas y de edición, señales del RunRecord y configuración por parte. Sin modelo."""
+"""Tests de app1/02_tools_integradas: llamadores esperados con ast, comprobadores de rutas y de edición, señales del RunRecord y configuración por parte. Sin modelo.
+
+PROPÓSITO: comprobar los llamadores esperados (con `ast`), los comprobadores de rutas y de edición sobre una copia temporal de `repo_mesa`, las señales del `RunRecord` y la configuración de cada parte.
+
+POR QUÉ EXISTE: las señales que el módulo imprime salen de este código; si fallara, una ejecución con modelo mostraría una medida falsa.
+
+QUÉ NO HACE: no ejecuta el agente ni llama al modelo; usa `RunRecord` construidos a mano.
+"""
 
 import pytest
 

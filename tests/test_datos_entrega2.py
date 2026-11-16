@@ -1,4 +1,11 @@
-"""Tests de los conjuntos de la entrega 2 de `datos/generar_sinteticos.py` (`repo_mesa/` y `documentos.json`). Sin modelo."""
+"""Tests de los conjuntos de la entrega 2 de `datos/generar_sinteticos.py` (`repo_mesa/` y `documentos.json`). Sin modelo.
+
+PROPÓSITO: comprobar los invariantes del repositorio de juguete `repo_mesa/` y de `documentos.json` que genera `datos/generar_sinteticos.py`.
+
+POR QUÉ EXISTE: los módulos de app1 y app3 se apoyan en estos conjuntos; si el generador cambia y un invariante se pierde, el módulo deja de enseñar su lección sin que nada lo avise.
+
+QUÉ NO HACE: no regenera ni edita `datos/sinteticos/` ni llama al modelo.
+"""
 
 import ast
 import importlib

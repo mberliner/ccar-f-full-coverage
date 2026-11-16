@@ -86,22 +86,8 @@ INFRA = sorted(
     if p.read_text(encoding="utf-8").strip()
 )
 INFRA_MARKERS = ["PROPÓSITO", "POR QUÉ EXISTE", "QUÉ NO HACE"]
-# Tests que hoy abren con su línea «Sin modelo» y una explicación libre, sin las tres piezas.
-INFRA_HEADER_KNOWN: set[str] = {
-    f"tests/test_{name}.py"
-    for name in """
-    app1_01_bucle_manual app1_02_tools_integradas app1_03_servidor_mcp app1_04_errores_estructurados
-    app1_05_scoping_y_tool_choice app1_06_mcp_config app1_07_recorte_de_contexto app1_servers_catalogo
-    app1_servers_mesa app2_01_prompt_vs_enforcement app2_02_hooks_pre_post app2_03_permisos
-    app2_04_few_shot_y_escalamiento app2_05_multi_concern_y_handoff app2_06_sesiones app2_07_hook_reescritura
-    app2_servers_helpdesk app3_01_coordinador app3_02_paralelo_y_descomposicion app3_03_tools_entre_roles
-    app3_04_errores_entre_agentes app3_05_procedencia app3_06_contexto_largo app3_07_extraccion_schema
-    app3_08_validacion_reintento app3_09_batches app3_10_confianza_y_revision app3_11_criterios_y_ci
-    app3_11_grupo1 app3_12_grupo4 app3_12_revision_independiente app3_servers_investigacion budget cli
-    config credentials data datos_entrega2 datos_entrega3 datos_entrega3c datos_entrega3d datos_sinteticos
-    estado hooks_proyecto narrador offline options recorder
-    """.split()
-}
+# Archivos que hoy no traen las tres piezas (5.4a los completó: la lista queda vacía).
+INFRA_HEADER_KNOWN: set[str] = set()
 
 
 @pytest.mark.parametrize("path", cases(INFRA, INFRA_HEADER_KNOWN, "cabecera de infraestructura incompleta"))
@@ -143,7 +129,7 @@ def test_sdk_module_builds_options_through_the_harness(path):
 
 # Los tests bajo `datos/` quedan fuera: son datos del repositorio de juguete que analizan los módulos.
 TEST_FILES = sorted(p for p in ROOT.rglob("test_*.py") if not {".venv", "node_modules"} & set(p.parts) and rel(p).split("/")[0] != "datos")
-TEST_LINE_KNOWN: set[str] = {"tests/test_consola.py", "tests/test_headless.py", "tests/test_perimetro.py", "tests/test_una_vez.py"}
+TEST_LINE_KNOWN: set[str] = set()
 
 
 @pytest.mark.parametrize("path", cases(TEST_FILES, TEST_LINE_KNOWN, "primera línea sin «Sin modelo»"))

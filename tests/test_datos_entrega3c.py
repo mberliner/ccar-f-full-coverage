@@ -3,6 +3,10 @@
 PROPÓSITO: la población que usa `app3/10` tiene que esconder de verdad un segmento malo detrás de una exactitud
 agregada alta (TS 5.5-K1): si el generador cambia y el segmento desaparece, el módulo deja de enseñar su lección y
 ningún otro test lo notaría.
+
+POR QUÉ EXISTE: `app3/10` no usa modelo en su parte `poblacion`; la lección depende por completo de lo que contenga esta población sintética.
+
+QUÉ NO HACE: no regenera ni edita `datos/sinteticos/` ni llama al modelo.
 """
 
 import json

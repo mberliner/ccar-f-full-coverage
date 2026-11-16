@@ -1,4 +1,11 @@
-"""Tests del servidor MCP `mesa` de app1 (familias routing, errores y amplio/acotado). Sin modelo."""
+"""Tests del servidor MCP `mesa` de app1 (familias routing, errores y amplio/acotado). Sin modelo.
+
+PROPÓSITO: comprobar las tools del servidor `mesa` en cada familia (routing, errores, amplio/acotado) llamándolas con `harness.offline.call_tool`.
+
+POR QUÉ EXISTE: varios módulos de app1 comparten este servidor y su variante anti devuelve a propósito un error genérico; hay que fijar qué devuelve cada familia.
+
+QUÉ NO HACE: no conecta el servidor a un agente ni llama al modelo.
+"""
 
 import json
 

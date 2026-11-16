@@ -1,4 +1,11 @@
-"""Tests de app3/12 tras la revisión independiente (tanda C4, grupo 4): archivos nuevos en el diff generado, repositorio generador sin el futuro, fusión de hallazgos distintos y la variante `una_pasada`. Sin modelo."""
+"""Tests de app3/12 tras la revisión independiente (tanda C4, grupo 4): archivos nuevos en el diff generado, repositorio generador sin el futuro, fusión de hallazgos distintos y la variante `una_pasada`. Sin modelo.
+
+PROPÓSITO: comprobar los archivos nuevos en el diff generado, el repositorio generador sin el futuro, la fusión de hallazgos distintos y la variante `una_pasada`.
+
+POR QUÉ EXISTE: la revisión independiente de `app3/12` encontró estos casos borde (un diff sin los archivos nuevos, un generador que dejaba ver el cambio); aquí quedan fijados.
+
+QUÉ NO HACE: no lanza `claude -p` ni llama al modelo.
+"""
 
 import shutil
 import subprocess

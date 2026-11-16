@@ -1,4 +1,11 @@
-"""Tests de app1/04_errores_estructurados: lectura de errores del RunRecord, reintentos útiles e inútiles, detección de «no hay datos» y configuración por variante. Sin modelo."""
+"""Tests de app1/04_errores_estructurados: lectura de errores del RunRecord, reintentos útiles e inútiles, detección de «no hay datos» y configuración por variante. Sin modelo.
+
+PROPÓSITO: comprobar la lectura de los errores del `RunRecord`, la distinción entre reintentos útiles e inútiles, la detección de «no hay datos» y la configuración de cada variante.
+
+POR QUÉ EXISTE: separar un fallo transitorio de uno de negocio o de validación es lo que el módulo enseña; su clasificación tiene que ser fiable antes de interpretar una ejecución.
+
+QUÉ NO HACE: no ejecuta el agente ni llama al modelo; los errores son JSON escritos en el propio test.
+"""
 
 import json
 

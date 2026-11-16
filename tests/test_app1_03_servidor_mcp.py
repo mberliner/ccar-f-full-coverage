@@ -1,4 +1,11 @@
-"""Tests de app1/03_servidor_mcp: batería de peticiones, acierto de enrutamiento sobre la primera llamada MCP y configuración por variante. Sin modelo."""
+"""Tests de app1/03_servidor_mcp: batería de peticiones, acierto de enrutamiento sobre la primera llamada MCP y configuración por variante. Sin modelo.
+
+PROPÓSITO: comprobar la batería de peticiones, el acierto de enrutamiento medido sobre la primera llamada MCP y la configuración de cada variante.
+
+POR QUÉ EXISTE: el acierto de enrutamiento es la señal del módulo; su cálculo tiene que estar fijado antes de pagar una ejecución.
+
+QUÉ NO HACE: no arranca el servidor MCP ni llama al modelo; usa `RunRecord` y `ToolCall` hechos a mano.
+"""
 
 from harness.data import load
 from harness.recorder import RunRecord, ToolCall

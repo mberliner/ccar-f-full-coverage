@@ -1,4 +1,11 @@
-"""Tests de app2/01_prompt_vs_enforcement: conteo de reembolsos intentados y ejecutados sin verificación sobre un RunRecord hecho a mano. Sin modelo."""
+"""Tests de app2/01_prompt_vs_enforcement: conteo de reembolsos intentados y ejecutados sin verificación sobre un RunRecord hecho a mano. Sin modelo.
+
+PROPÓSITO: comprobar el conteo de reembolsos intentados y ejecutados sin verificación previa, sobre un `RunRecord` construido a mano.
+
+POR QUÉ EXISTE: la tasa de reembolsos sin verificar es la señal que compara el prompt con el enforcement; su conteo tiene que ser correcto antes de leer una ejecución.
+
+QUÉ NO HACE: no ejecuta el agente ni llama al modelo.
+"""
 
 from harness.recorder import RunRecord, ToolCall
 from tests.cargar import load

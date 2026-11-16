@@ -1,4 +1,4 @@
-"""Test de perímetro (roadmap §3, regla 5, y §11.2).
+"""Test de perímetro: marca en el código de las apps y del arnés los mecanismos de la lista de exclusión (roadmap §3, regla 5, y §11.2). Sin modelo.
 
 PROPÓSITO: marcar en el código Python de las apps y del arnés cualquier uso de
 los mecanismos de la lista de exclusión conocida (`perimetro_excluido.yaml`).

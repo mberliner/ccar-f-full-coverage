@@ -1,4 +1,11 @@
-"""Tests de `harness/data.py`: lectura y `copy_to_temp`. Sin modelo."""
+"""Tests de `harness/data.py`: lectura y `copy_to_temp`. Sin modelo.
+
+PROPÓSITO: comprobar la lectura de los datos sintéticos y que `copy_to_temp` copia un conjunto a un directorio temporal.
+
+POR QUÉ EXISTE: los módulos y los tests leen los datos por aquí y trabajan sobre copias; si la copia tocara el original, se editaría `datos/sinteticos/` sin pasar por el generador.
+
+QUÉ NO HACE: no valida el contenido de los datos (eso es `tests/test_datos_sinteticos.py`) ni llama al modelo.
+"""
 
 from harness.data import DATA_DIR, copy_to_temp, load
 

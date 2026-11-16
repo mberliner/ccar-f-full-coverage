@@ -1,4 +1,11 @@
-"""Tests de los servidores stdio de app1 (`catalogo` e `inventario`), llamados en proceso con MCPServer. Sin modelo."""
+"""Tests de los servidores stdio de app1 (`catalogo` e `inventario`), llamados en proceso con MCPServer. Sin modelo.
+
+PROPÓSITO: llamar a las tools de los servidores `catalogo` e `inventario` en proceso y comprobar su resultado y sus errores.
+
+POR QUÉ EXISTE: los módulos de app1 que usan estos servidores dan por hecho el formato de sus resultados; un cambio lo rompería a la vez en todos.
+
+QUÉ NO HACE: no arranca los servidores como procesos stdio ni los conecta a un agente; no llama al modelo.
+"""
 
 import asyncio
 import json

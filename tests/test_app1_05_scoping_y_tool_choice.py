@@ -1,4 +1,11 @@
-"""Tests de app1/05_scoping_y_tool_choice: batería de scoping, medida de acierto y consistencia, petición por modo de `tool_choice`, secuencia forzado → auto y clasificador de la primera respuesta. Sin modelo."""
+"""Tests de app1/05_scoping_y_tool_choice: batería de scoping, medida de acierto y consistencia, petición por modo de `tool_choice`, secuencia forzado → auto y clasificador de la primera respuesta. Sin modelo.
+
+PROPÓSITO: comprobar la batería de scoping, la medida de acierto y consistencia, la petición que se arma por modo de `tool_choice`, la secuencia forzado → auto y el clasificador de la primera respuesta.
+
+POR QUÉ EXISTE: la petición y la medida son lo que el módulo compara entre variantes; un error en cualquiera falsearía la lección y costaría una ejecución.
+
+QUÉ NO HACE: no llama a la Messages API ni al modelo; las respuestas son `SimpleNamespace` hechos a mano.
+"""
 
 import json
 from types import SimpleNamespace

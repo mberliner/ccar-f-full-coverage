@@ -1,4 +1,11 @@
-"""Tests de app3/11 tras la revisión independiente (tanda C4, grupo 1): el árbol de cada revisión, la clave de un escenario de test con lo que espera y la coincidencia estricta por símbolo. Sin modelo."""
+"""Tests de app3/11 tras la revisión independiente (tanda C4, grupo 1): el árbol de cada revisión, la clave de un escenario de test con lo que espera y la coincidencia estricta por símbolo. Sin modelo.
+
+PROPÓSITO: comprobar el árbol de cada revisión (el del commit que revisa, sin `.git`), la clave de un escenario de test con lo que espera y la coincidencia estricta por símbolo.
+
+POR QUÉ EXISTE: la revisión independiente de `app3/11` encontró que el revisor podía leer el commit siguiente y que la coincidencia por símbolo era laxa; estos tests fijan la corrección.
+
+QUÉ NO HACE: no lanza `claude -p` ni llama al modelo.
+"""
 
 import shutil
 

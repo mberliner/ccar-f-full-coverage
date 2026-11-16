@@ -1,4 +1,11 @@
-"""Tests de los conjuntos de la tanda A de la entrega 3 (`documentos_compra*.json` de `datos/generar_sinteticos.py`). Sin modelo."""
+"""Tests de los conjuntos de la tanda A de la entrega 3 (`documentos_compra*.json` de `datos/generar_sinteticos.py`). Sin modelo.
+
+PROPÓSITO: comprobar los invariantes de los documentos de compra y de sus etiquetas, que los módulos de extracción de app3 usan como entrada y como criterio.
+
+POR QUÉ EXISTE: si el generador cambia y un documento deja de tener el defecto o el dato que el módulo necesita, la lección se pierde sin que nada lo avise.
+
+QUÉ NO HACE: no regenera ni edita `datos/sinteticos/` ni llama al modelo.
+"""
 
 import json
 

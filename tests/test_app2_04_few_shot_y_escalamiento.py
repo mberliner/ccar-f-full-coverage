@@ -1,4 +1,11 @@
-"""Tests de app2/04_few_shot_y_escalamiento: prompt por variante, clasificación de la acción desde las llamadas a tools, puntuación contra etiquetas y proxy de sentimiento. Sin modelo."""
+"""Tests de app2/04_few_shot_y_escalamiento: prompt por variante, clasificación de la acción desde las llamadas a tools, puntuación contra etiquetas y proxy de sentimiento. Sin modelo.
+
+PROPÓSITO: comprobar el prompt de cada variante, la clasificación de la acción a partir de las llamadas a tools, la puntuación contra las etiquetas y el proxy de sentimiento.
+
+POR QUÉ EXISTE: la puntuación de la decisión de escalar es lo que el módulo compara entre variantes; su clasificación debe estar fijada antes de pagar la batería de casos.
+
+QUÉ NO HACE: no ejecuta el agente ni llama al modelo.
+"""
 
 import json
 

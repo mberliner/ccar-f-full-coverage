@@ -1,4 +1,11 @@
-"""Tests de app2/06_sesiones: diff de estados, aviso de cambios concreto, resumen estructurado y decisión reanudar/empezar de nuevo. Sin modelo."""
+"""Tests de app2/06_sesiones: diff de estados, aviso de cambios concreto, resumen estructurado y decisión reanudar/empezar de nuevo. Sin modelo.
+
+PROPÓSITO: comprobar el diff de estados, el aviso de cambios concreto, el resumen estructurado y la decisión de reanudar o empezar de nuevo.
+
+POR QUÉ EXISTE: el módulo contrasta reanudar con un resumen frente a empezar de cero; el diff entre fases es la entrada de esa decisión y debe ser correcto.
+
+QUÉ NO HACE: no reanuda sesiones reales ni llama al modelo.
+"""
 
 import json
 

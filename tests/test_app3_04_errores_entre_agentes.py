@@ -1,4 +1,11 @@
-"""Tests de app3/04_errores_entre_agentes: forma del contexto de error, cobertura anotada, vacío frente a fallo, reintentos locales y opciones del coordinador. Sin modelo."""
+"""Tests de app3/04_errores_entre_agentes: forma del contexto de error, cobertura anotada, vacío frente a fallo, reintentos locales y opciones del coordinador. Sin modelo.
+
+PROPÓSITO: comprobar la forma del contexto de error, la cobertura anotada, la distinción entre vacío y fallo, los reintentos locales y las opciones del coordinador.
+
+POR QUÉ EXISTE: distinguir un fallo de una búsqueda vacía es lo que el módulo enseña; esa distinción tiene que estar fijada antes de leer una ejecución.
+
+QUÉ NO HACE: no ejecuta el coordinador ni llama al modelo.
+"""
 
 import json
 

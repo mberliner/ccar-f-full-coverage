@@ -1,4 +1,11 @@
-"""Tests de `harness/cli.py`: `--anti [variante]`, `--repeat` y `--budget` que solo baja el tope. Sin modelo."""
+"""Tests de `harness/cli.py`: `--anti [variante]`, `--repeat` y `--budget` que solo baja el tope. Sin modelo.
+
+PROPÓSITO: comprobar el análisis de `--anti [variante]`, `--repeat` y `--budget` en `harness/cli.py`, y que `--budget` solo puede bajar el tope, nunca subirlo.
+
+POR QUÉ EXISTE: todos los módulos ejecutables comparten estas opciones; que `--budget` no pueda subir el tope es parte de la regla de coste del proyecto.
+
+QUÉ NO HACE: no ejecuta ningún módulo ni llama al modelo.
+"""
 
 import pytest
 

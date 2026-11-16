@@ -58,7 +58,6 @@ Uso: `uv run python app3_sistema_multiagente/03_tools_entre_roles.py [--anti tod
 """
 
 import asyncio
-import json
 import sys
 from pathlib import Path
 

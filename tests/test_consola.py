@@ -1,4 +1,5 @@
-"""
+"""Test de la salida por tubería en Windows: el arnés imprime ✓ y ✗ sin UnicodeEncodeError. Sin modelo.
+
 PROPÓSITO: comprobar que los módulos pueden imprimir ✓, ✗ y similares por una
 tubería en Windows sin que la persona haya activado UTF-8 a mano.
 POR QUÉ EXISTE: con la salida redirigida (Claude Code con `!`, `| tee`, un

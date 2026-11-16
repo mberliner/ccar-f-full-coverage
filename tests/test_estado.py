@@ -1,4 +1,11 @@
-"""Tests de `harness/estado.py`: ruta del estado personal, perfiles y copia de plantillas sin pisar nada. Sin modelo."""
+"""Tests de `harness/estado.py`: ruta del estado personal, perfiles y copia de plantillas sin pisar nada. Sin modelo.
+
+PROPÓSITO: comprobar la ruta del estado personal, la selección de perfil y que la copia de plantillas no pisa lo ya escrito.
+
+POR QUÉ EXISTE: `estado/<perfil>/` guarda fallos y notas de quien practica; perder o sobrescribir ese estado es lo único irrecuperable del flujo.
+
+QUÉ NO HACE: no toca el `estado/` real (usa directorios temporales) ni llama al modelo.
+"""
 
 import pytest
 

@@ -1,4 +1,11 @@
-"""Tests del servidor MCP `helpdesk` de app2: verificación, puerta del reembolso, handoff y cambios de estado. Sin modelo."""
+"""Tests del servidor MCP `helpdesk` de app2: verificación, puerta del reembolso, handoff y cambios de estado. Sin modelo.
+
+PROPÓSITO: comprobar las tools del servidor `helpdesk`: la verificación de identidad, la puerta del reembolso, el handoff y los cambios de estado.
+
+POR QUÉ EXISTE: todos los módulos de app2 usan este servidor y la puerta de verificación vive en su handler; un cambio aquí altera todos sus resultados.
+
+QUÉ NO HACE: no conecta el servidor a un agente ni llama al modelo.
+"""
 
 import json
 

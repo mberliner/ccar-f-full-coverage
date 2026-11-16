@@ -1,4 +1,11 @@
-"""Tests de app3/06_contexto_largo: scratchpad, manifest de estado, resumen entre fases, retomar tras una caída, medidas y opciones. Sin modelo."""
+"""Tests de app3/06_contexto_largo: scratchpad, manifest de estado, resumen entre fases, retomar tras una caída, medidas y opciones. Sin modelo.
+
+PROPÓSITO: comprobar el scratchpad, el manifest de estado, el resumen entre fases, el retomado tras una caída, las medidas y las opciones del módulo.
+
+POR QUÉ EXISTE: el estado que sobrevive a una caída es la lección del módulo; su escritura y su lectura deben ser correctas antes de depender de ellas en una ejecución larga.
+
+QUÉ NO HACE: no ejecuta el agente ni llama al modelo; el estado se escribe en directorios temporales.
+"""
 
 import json
 

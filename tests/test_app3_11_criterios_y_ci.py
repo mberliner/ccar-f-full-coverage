@@ -1,9 +1,15 @@
-"""Tests de app3/11_criterios_y_ci: repositorio temporal con el cambio, diff, prompts por variante (una sola diferencia), schema, puntuación contra lo sembrado, registro de descartados, segunda revisión y generación de tests. Sin modelo."""
+"""Tests de app3/11_criterios_y_ci: repositorio temporal con el cambio, diff, prompts por variante (una sola diferencia), schema, puntuación contra lo sembrado, registro de descartados, segunda revisión y generación de tests. Sin modelo.
+
+PROPÓSITO: comprobar el repositorio temporal con el cambio de prueba, el diff, los prompts de cada variante (con una sola diferencia), el schema, la puntuación contra lo sembrado, el registro de descartados, la segunda revisión y la generación de tests.
+
+POR QUÉ EXISTE: el módulo compara variantes de criterios sobre el mismo cambio; el cambio y la puntuación tienen que ser exactos para que la diferencia se deba al prompt.
+
+QUÉ NO HACE: no lanza `claude -p` ni llama al modelo; usa repositorios git temporales.
+"""
 
 import json
 import shutil
 import subprocess
-from pathlib import Path
 
 import jsonschema
 import pytest

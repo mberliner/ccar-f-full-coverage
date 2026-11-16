@@ -1,4 +1,11 @@
-"""Tests de `harness/budget.py`: coste por `usage`, tramo de contexto largo y corte al superar el tope. Sin modelo."""
+"""Tests de `harness/budget.py`: coste por `usage`, tramo de contexto largo y corte al superar el tope. Sin modelo.
+
+PROPÓSITO: comprobar el coste calculado a partir de `usage`, el tramo de contexto largo y el corte al superar el tope de presupuesto.
+
+POR QUÉ EXISTE: los módulos que usan la Messages API se protegen del gasto con este código; si el coste o el corte fallan, el tope `max_budget_usd` no protege.
+
+QUÉ NO HACE: no llama a la API ni al modelo; el `usage` es simulado.
+"""
 
 from types import SimpleNamespace
 

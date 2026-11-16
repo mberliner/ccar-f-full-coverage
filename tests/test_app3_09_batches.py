@@ -1,4 +1,11 @@
-"""Tests de app3/09_batches: construcción del lote, emparejado por custom_id, clasificación de resultados, selección y troceo de los fallidos, ventana frente a SLA, estimación de coste y coste con descuento. Sin modelo."""
+"""Tests de app3/09_batches: construcción del lote, emparejado por custom_id, clasificación de resultados, selección y troceo de los fallidos, ventana frente a SLA, estimación de coste y coste con descuento. Sin modelo.
+
+PROPÓSITO: comprobar la construcción del lote, el emparejado por `custom_id`, la clasificación de resultados, la selección y el troceo de los fallidos, la ventana frente al SLA y la estimación de coste con descuento.
+
+POR QUÉ EXISTE: un lote tarda y no se puede repetir barato; su construcción y su emparejado deben ser correctos antes de enviarlo.
+
+QUÉ NO HACE: no envía lotes ni llama a la API ni al modelo.
+"""
 
 import itertools
 import re

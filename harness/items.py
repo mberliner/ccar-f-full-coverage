@@ -22,9 +22,10 @@ from collections import Counter
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
+from typing import NamedTuple
 
 from harness.credentials import ROOT
-from harness.narrador import DETAILS, STEP4, CHECKS_HEADING, readme_text, route, subsections
+from harness.narrador import DETAILS, STEP4, CHECKS_HEADING, route, subsections
 
 D3_README = Path("d3_claude_code") / "README.md"
 QUESTION_HEADING = "Pregunta tipo examen"
@@ -128,36 +129,61 @@ def _module_items(module) -> list[Item]:
     return items
 
 
+class D3Block(NamedTuple):
+    """Un `####` de la sección 4 de D3: el número de su `###` («4.1»…, «» si no hay), su título y su cuerpo."""
+
+    subsection: str
+    title: str
+    body: str
+
+
+def d3_section4(root: Path = ROOT) -> list[D3Block]:
+    """Los `####` de la sección 4 del README de D3, en orden. Es el único sitio que parte el README por su sección 4."""
+    text = (root / D3_README).read_text(encoding="utf-8").split("\n## 4 · ", 1)[1]
+    blocks: list[D3Block] = []
+    subsection = ""
+    collecting = False
+    for line in text.splitlines():
+        if line.startswith("#### "):
+            blocks.append(D3Block(subsection, line[5:].strip(), ""))
+            collecting = True
+        elif line.startswith("### "):
+            # «### 4.1 · …» → «4.1»; un `###` sin número deja la subsección vacía.
+            match = re.match(r"### (\d+\.\d+)", line)
+            subsection = match.group(1) if match else ""
+            collecting = False
+        elif line.startswith("## "):
+            collecting = False
+        elif collecting:
+            last = blocks[-1]
+            blocks[-1] = last._replace(body=last.body + line + "\n")
+    return blocks
+
+
 def _d3_items(root: Path) -> list[Item]:
-    text = (root / D3_README).read_text(encoding="utf-8")
-    sections = re.split(r"^### ", text, flags=re.MULTILINE)
+    kinds = {"4.1": ("comprobacion", "C"), "4.2": ("pregunta", "P")}
+    counts = {"4.1": 0, "4.2": 0}
     items: list[Item] = []
-    for section in sections:
-        if section.startswith("4.1"):
-            kind, prefix = "comprobacion", "C"
-        elif section.startswith("4.2"):
-            kind, prefix = "pregunta", "P"
-        else:
+    for block in d3_section4(root):
+        if block.subsection not in kinds:
             continue
-        number = 0
-        for block in re.split(r"^#### ", section, flags=re.MULTILINE)[1:]:
-            found = _answers(block, "Respuesta")
-            if not found:
-                continue
-            number += 1
-            title, _, rest = block.partition("\n")
-            answer = found[0][2]
-            statement = f"{title.strip()}\n\n" + DETAILS.sub("", rest.split("<details>", 1)[0]).strip() + "\n"
-            items.append(
-                Item(
-                    f"d3:{prefix}{number}",
-                    "d3",
-                    kind,
-                    frozenset(cited(answer) | cited(title)),
-                    statement,
-                    answer,
-                )
+        found = _answers(block.body, "Respuesta")
+        if not found:
+            continue
+        kind, prefix = kinds[block.subsection]
+        counts[block.subsection] += 1
+        answer = found[0][2]
+        statement = f"{block.title}\n\n" + DETAILS.sub("", block.body.split("<details>", 1)[0]).strip() + "\n"
+        items.append(
+            Item(
+                f"d3:{prefix}{counts[block.subsection]}",
+                "d3",
+                kind,
+                frozenset(cited(answer) | cited(block.title)),
+                statement,
+                answer,
             )
+        )
     return items
 
 

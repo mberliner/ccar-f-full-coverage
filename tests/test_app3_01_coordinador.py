@@ -1,4 +1,11 @@
-"""Tests de app3/01_coordinador: definición de subagentes, prompt del sintetizador con hallazgos y metadatos, y medidas sobre un RunRecord sintético. Sin modelo."""
+"""Tests de app3/01_coordinador: definición de subagentes, prompt del sintetizador con hallazgos y metadatos, y medidas sobre un RunRecord sintético. Sin modelo.
+
+PROPÓSITO: comprobar la definición de los subagentes, el prompt del sintetizador con hallazgos y metadatos, y las medidas calculadas sobre un `RunRecord` sintético.
+
+POR QUÉ EXISTE: la delegación y la síntesis son lo que el módulo enseña; sus medidas tienen que ser fiables antes de interpretar una ejecución multiagente, que es cara.
+
+QUÉ NO HACE: no lanza subagentes ni llama al modelo.
+"""
 
 import json
 

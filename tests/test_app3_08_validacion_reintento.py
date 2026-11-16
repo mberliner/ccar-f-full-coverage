@@ -1,8 +1,14 @@
-"""Tests de app3/08_validacion_reintento: validador sin modelo, mensaje de error específico, detección del dato ausente en la fuente, tope de reintentos y el bucle con un modelo simulado. Sin modelo."""
+"""Tests de app3/08_validacion_reintento: validador sin modelo, mensaje de error específico, detección del dato ausente en la fuente, tope de reintentos y el bucle con un modelo simulado. Sin modelo.
+
+PROPÓSITO: comprobar el validador sin modelo, el mensaje de error específico, la detección del dato ausente en la fuente, el tope de reintentos y el bucle de reintento con un modelo simulado.
+
+POR QUÉ EXISTE: el reintento solo sirve si el error es específico y si el dato está en la fuente; ambos puntos se fijan aquí sin gastar una llamada.
+
+QUÉ NO HACE: no llama a la Messages API ni a ningún modelo real.
+"""
 
 from types import SimpleNamespace
 
-import pytest
 
 from harness.data import load
 from tests.cargar import load as load_module

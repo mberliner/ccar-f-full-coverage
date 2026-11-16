@@ -86,7 +86,6 @@ Uso: `uv run python app2_agente_con_control/04_few_shot_y_escalamiento.py [--par
 """
 
 import asyncio
-import json
 import re
 import sys
 from dataclasses import dataclass, field

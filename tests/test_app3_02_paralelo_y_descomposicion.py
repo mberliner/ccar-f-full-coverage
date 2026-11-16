@@ -1,4 +1,11 @@
-"""Tests de app3/02_paralelo_y_descomposicion: agrupación de llamadas por respuesta, latencia, comprobador de brechas, cadena de prompts y paquete legacy. Sin modelo."""
+"""Tests de app3/02_paralelo_y_descomposicion: agrupación de llamadas por respuesta, latencia, comprobador de brechas, cadena de prompts y paquete legacy. Sin modelo.
+
+PROPÓSITO: comprobar la agrupación de llamadas por respuesta, la latencia, el comprobador de brechas, la cadena de prompts y el paquete legacy que el módulo lee como `cwd`.
+
+POR QUÉ EXISTE: la paralelización se mide agrupando las llamadas de cada turno; si esa agrupación falla, la ejecución con modelo mostraría un paralelismo que no existió.
+
+QUÉ NO HACE: no ejecuta el coordinador ni llama al modelo.
+"""
 
 import pytest
 

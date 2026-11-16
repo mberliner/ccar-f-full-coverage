@@ -1,4 +1,11 @@
-"""Tests de `harness/options.py`: aislamiento por defecto y presupuesto obligatorio. Sin modelo."""
+"""Tests de `harness/options.py`: aislamiento por defecto y presupuesto obligatorio. Sin modelo.
+
+PROPÓSITO: comprobar que `isolated_options` aplica el aislamiento por defecto y que exige `max_budget_usd`.
+
+POR QUÉ EXISTE: el aislamiento y el tope de coste de todas las ejecuciones con el Agent SDK salen de aquí; sin él, el `CLAUDE.md` o la memoria del usuario contaminarían una prueba.
+
+QUÉ NO HACE: no lanza ningún agente ni llama al modelo.
+"""
 
 import pytest
 

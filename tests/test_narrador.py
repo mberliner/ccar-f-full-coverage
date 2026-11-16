@@ -1,4 +1,11 @@
-"""Tests de `harness/narrador.py`: ruta de módulos, fases sin revelar antes de tiempo, menú y puesta en marcha. Sin modelo."""
+"""Tests de `harness/narrador.py`: ruta de módulos, fases sin revelar antes de tiempo, menú y puesta en marcha. Sin modelo.
+
+PROPÓSITO: comprobar la ruta de módulos, que cada fase entrega solo lo que le toca (sin adelantar resultado ni respuesta), el menú y la puesta en marcha del narrador.
+
+POR QUÉ EXISTE: la práctica guiada depende de que el narrador no revele el resultado antes de que quien practica prediga; si una fase filtrara la respuesta, el ejercicio perdería su valor.
+
+QUÉ NO HACE: no narra con un modelo (el narrador es determinista) ni llama al modelo.
+"""
 
 import pytest
 

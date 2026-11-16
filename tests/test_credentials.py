@@ -1,4 +1,11 @@
-"""Tests de `harness/credentials.py`: precedencia de fuentes y variables vacías. Sin modelo ni red."""
+"""Tests de `harness/credentials.py`: precedencia de fuentes y variables vacías. Sin modelo ni red.
+
+PROPÓSITO: comprobar la precedencia entre las fuentes de la credencial y que una variable vacía no cuenta como credencial.
+
+POR QUÉ EXISTE: las ejecuciones con modelo dependen de encontrar la credencial correcta; una variable vacía que pisara a una válida daría un error confuso o usaría la cuenta equivocada.
+
+QUÉ NO HACE: no valida la credencial contra la API ni llama al modelo.
+"""
 
 import os
 

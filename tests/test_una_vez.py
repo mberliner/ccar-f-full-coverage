@@ -1,4 +1,4 @@
-"""Test «una vez por viñeta» (roadmap §2 y §11.2).
+"""Test «una vez por viñeta»: un único `INTRODUCE` por viñeta en su destino y `USA` solo sobre viñetas ya introducidas (roadmap §2 y §11.2). Sin modelo.
 
 PROPÓSITO: comprobar que cada viñeta de la guía tiene un único marcador
 `INTRODUCE`, en el destino que le asigna `CONCEPTOS.md`, y que los `USA` solo
@@ -15,7 +15,6 @@ trabaja solo con identificadores y rutas. No llama al modelo.
 import re
 from pathlib import Path
 
-import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 

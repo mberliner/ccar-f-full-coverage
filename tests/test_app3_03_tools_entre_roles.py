@@ -1,4 +1,11 @@
-"""Tests de app3/03_tools_entre_roles: tools por rol y variante, llamadas fuera de rol, URLs no documento, delegaciones y opciones del coordinador. Sin modelo."""
+"""Tests de app3/03_tools_entre_roles: tools por rol y variante, llamadas fuera de rol, URLs no documento, delegaciones y opciones del coordinador. Sin modelo.
+
+PROPÓSITO: comprobar las tools que recibe cada rol y variante, el recuento de llamadas fuera de rol, las URLs que no son documentos, las delegaciones y las opciones del coordinador.
+
+POR QUÉ EXISTE: el reparto de tools entre roles es la lección del módulo; hay que fijar qué ve cada agente antes de contar sus desvíos.
+
+QUÉ NO HACE: no ejecuta el coordinador ni llama al modelo.
+"""
 
 import json
 

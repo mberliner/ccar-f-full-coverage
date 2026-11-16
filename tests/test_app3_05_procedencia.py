@@ -1,4 +1,11 @@
-"""Tests de app3/05_procedencia: forma de lo que devuelve cada subagente, comprobador de procedencia, detector de cifras fusionadas y variantes. Sin modelo."""
+"""Tests de app3/05_procedencia: forma de lo que devuelve cada subagente, comprobador de procedencia, detector de cifras fusionadas y variantes. Sin modelo.
+
+PROPÓSITO: comprobar la forma de lo que devuelve cada subagente, el comprobador de procedencia, el detector de cifras fusionadas y las variantes del módulo.
+
+POR QUÉ EXISTE: que una cifra conserve su fuente es la señal del módulo; sus comprobadores deben ser fiables antes de usarlos sobre una ejecución.
+
+QUÉ NO HACE: no ejecuta el coordinador ni llama al modelo.
+"""
 
 import json
 

@@ -1,4 +1,11 @@
-"""Tests de app2/02_hooks_pre_post: frontera del umbral, redirección al escalamiento y normalización de fechas y estados. Sin modelo."""
+"""Tests de app2/02_hooks_pre_post: frontera del umbral, redirección al escalamiento y normalización de fechas y estados. Sin modelo.
+
+PROPÓSITO: comprobar la frontera del umbral de reembolso, la redirección al escalamiento y la normalización de fechas y estados que hacen los hooks del módulo.
+
+POR QUÉ EXISTE: los hooks son el enforcement determinista del módulo; su frontera exacta (qué importe se deja pasar) no debe depender de lo que haga el modelo.
+
+QUÉ NO HACE: no ejecuta el agente ni llama al modelo.
+"""
 
 import json
 

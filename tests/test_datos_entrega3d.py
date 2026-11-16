@@ -4,6 +4,10 @@ PROPÓSITO: `app2/04` evalúa al agente contra casos de escalamiento con etiquet
 pueden ser esos mismos casos (TS 4.2-K3: generalizar, no memorizar); `app1/07` necesita un inventario con 40 campos
 por equipo, de los que solo 5 hacen falta (TS 5.1-K3). Si el generador cambia y esto deja de cumplirse, el módulo
 deja de enseñar su lección y ningún otro test lo notaría.
+
+POR QUÉ EXISTE: los casos de escalamiento y el inventario son la entrada y el criterio de dos módulos con modelo; un fallo aquí se descubriría tras gastar una ejecución.
+
+QUÉ NO HACE: no regenera ni edita `datos/sinteticos/` ni llama al modelo.
 """
 
 import json

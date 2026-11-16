@@ -1,4 +1,11 @@
-"""Tests de app3/10_confianza_y_revision: exactitud por segmento, calibración, umbrales, muestreo estratificado, cola de revisión con cupo y puerta de automatización. Sin modelo."""
+"""Tests de app3/10_confianza_y_revision: exactitud por segmento, calibración, umbrales, muestreo estratificado, cola de revisión con cupo y puerta de automatización. Sin modelo.
+
+PROPÓSITO: comprobar la exactitud por segmento, la calibración, los umbrales, el muestreo estratificado, la cola de revisión con cupo y la puerta de automatización.
+
+POR QUÉ EXISTE: la parte `poblacion` del módulo no usa modelo y estos cálculos son su lección; la parte con modelo reutiliza las mismas funciones.
+
+QUÉ NO HACE: no llama al modelo; trabaja con la población sintética y sus etiquetas.
+"""
 
 import random
 from types import SimpleNamespace

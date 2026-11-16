@@ -298,20 +298,10 @@ D3_PHASES = ("comprobaciones", "soluciones", "pregunta", "respuesta")
 
 
 def d3_blocks(root: Path = ROOT) -> list[tuple[str, str]]:
-    """[(título del `####`, cuerpo)] de la sección 4 del README de D3, en orden."""
-    text = (root / "d3_claude_code" / "README.md").read_text(encoding="utf-8").split("\n## 4 · ", 1)[1]
-    blocks: list[tuple[str, str]] = []
-    collecting = False
-    for line in text.splitlines():
-        if line.startswith("#### "):
-            blocks.append((line[5:].strip(), ""))
-            collecting = True
-        elif line.startswith("## ") or line.startswith("### "):
-            collecting = False
-        elif collecting:
-            title, body = blocks[-1]
-            blocks[-1] = (title, body + line + "\n")
-    return blocks
+    """[(título del `####`, cuerpo)] de la sección 4 del README de D3, en orden (lo parte `harness.items.d3_section4`)."""
+    from harness.items import d3_section4  # import local: `harness.items` importa este módulo
+
+    return [(b.title, b.body) for b in d3_section4(root)]
 
 
 def d3_phase(name: str, root: Path = ROOT) -> str:

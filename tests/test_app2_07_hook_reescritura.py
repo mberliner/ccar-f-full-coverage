@@ -1,4 +1,11 @@
-"""Tests de app2/07_hook_reescritura: allow con `updatedInput` frente a deny con motivo, prerrequisito del ID verificado y los desenlaces del escenario determinista. Sin modelo."""
+"""Tests de app2/07_hook_reescritura: allow con `updatedInput` frente a deny con motivo, prerrequisito del ID verificado y los desenlaces del escenario determinista. Sin modelo.
+
+PROPÓSITO: comprobar el hook que reescribe la entrada (allow con `updatedInput`) frente al que deniega con motivo, el prerrequisito del ID verificado y los desenlaces del escenario determinista.
+
+POR QUÉ EXISTE: el módulo es determinista y sin modelo por diseño; estos tests son su verificación completa.
+
+QUÉ NO HACE: no ejecuta el agente ni llama al modelo.
+"""
 
 import pytest
 

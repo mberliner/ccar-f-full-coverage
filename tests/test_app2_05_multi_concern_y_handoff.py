@@ -1,4 +1,11 @@
-"""Tests de app2/05_multi_concern_y_handoff: descomposición, extracción y fusión de case facts, render del bloque y validación del handoff. Sin modelo."""
+"""Tests de app2/05_multi_concern_y_handoff: descomposición, extracción y fusión de case facts, render del bloque y validación del handoff. Sin modelo.
+
+PROPÓSITO: comprobar la descomposición de la petición, la extracción y fusión de los case facts, el render de su bloque y la validación del handoff.
+
+POR QUÉ EXISTE: lo que el handoff conserva o pierde es la señal del módulo; la lógica que lo mide tiene que ser fiable antes de interpretar una ejecución.
+
+QUÉ NO HACE: no ejecuta el agente ni llama al modelo.
+"""
 
 import json
 

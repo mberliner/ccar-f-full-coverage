@@ -2,6 +2,12 @@
 
 `harness/offline.run_hook` sirve para los callbacks del SDK; estos hooks son
 scripts que leen el JSON por stdin y deciden con el código de salida.
+
+PROPÓSITO: lanzar cada hook de `.claude/hooks/` como lo hace Claude Code y comprobar su veredicto.
+
+POR QUÉ EXISTE: los hooks de proyecto impiden ediciones directas de datos y ejecutan los tests; un fallo silencioso dejaría pasar justo lo que deben impedir.
+
+QUÉ NO HACE: no prueba los callbacks del SDK (eso es `harness/offline.py`) ni llama al modelo.
 """
 
 import json

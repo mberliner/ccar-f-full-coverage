@@ -209,7 +209,7 @@ async def main_async() -> int:
         print(f"\n=== ejecución {run}/{args.repeat} · variante {variant_label(args.anti)} · {ticket['ticket_id']} "
               f"({ticket['amount_eur']} EUR, created_at={ticket['created_at']!r}) ===")
         print(f"[esperado] fecha={normalize_date(ticket['created_at'])} estado=in_progress · pago denegado y escalado")
-        rec = await record(query(prompt=prompt, options=options))
+        await record(query(prompt=prompt, options=options))
         print(f"[medida] pagos={state.paid} · escalados={len(state.escalations)}")
     return 0
 

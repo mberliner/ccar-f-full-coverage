@@ -1,4 +1,11 @@
-"""Tests de app1/07_recorte_de_contexto: recorte de campos, tools del inventario, bucle con `usage` por petición y comprobación de la respuesta. Sin modelo."""
+"""Tests de app1/07_recorte_de_contexto: recorte de campos, tools del inventario, bucle con `usage` por petición y comprobación de la respuesta. Sin modelo.
+
+PROPÓSITO: comprobar el recorte de campos, las tools del inventario, el bucle que registra `usage` por petición y la comprobación de la respuesta contra las etiquetas del inventario.
+
+POR QUÉ EXISTE: el ahorro de tokens es la señal del módulo; el recorte y el conteo tienen que ser correctos antes de comparar variantes con modelo.
+
+QUÉ NO HACE: no llama al modelo; el bucle se prueba con respuestas simuladas.
+"""
 
 import json
 from types import SimpleNamespace

@@ -1,4 +1,11 @@
-"""Tests de `datos/generar_sinteticos.py`: determinismo, sincronía con disco e invariantes. Sin modelo."""
+"""Tests de `datos/generar_sinteticos.py`: determinismo, sincronía con disco e invariantes. Sin modelo.
+
+PROPÓSITO: comprobar que el generador es determinista, que lo que hay en `datos/sinteticos/` coincide con lo que genera y que los conjuntos cumplen sus invariantes.
+
+POR QUÉ EXISTE: `datos/sinteticos/` solo se cambia ejecutando el generador; este test avisa si alguien lo edita a mano o si el generador y el disco se desincronizan.
+
+QUÉ NO HACE: no escribe en `datos/sinteticos/` ni llama al modelo.
+"""
 
 import json
 

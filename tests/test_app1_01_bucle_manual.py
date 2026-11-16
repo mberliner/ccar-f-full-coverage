@@ -1,4 +1,11 @@
-"""Tests de app1/01_bucle_manual: parada por stop_reason, tool_use_id, historial completo y variantes anti con respuestas falsas. Sin modelo."""
+"""Tests de app1/01_bucle_manual: parada por stop_reason, tool_use_id, historial completo y variantes anti con respuestas falsas. Sin modelo.
+
+PROPÓSITO: comprobar la parada por `stop_reason`, el emparejado por `tool_use_id`, el historial completo y las variantes anti, con respuestas falsas con la forma de `anthropic.types.Message`.
+
+POR QUÉ EXISTE: el módulo gasta dinero en cada ejecución; la lógica del bucle se fija aquí para que un cambio no se descubra con una ejecución de pago.
+
+QUÉ NO HACE: no llama al modelo ni a la red; lo que el modelo haría con el bucle se observa ejecutando el módulo.
+"""
 
 import json
 from types import SimpleNamespace

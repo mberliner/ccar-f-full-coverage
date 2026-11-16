@@ -1,4 +1,4 @@
-"""Tests de `harness/headless.py`: la orden aislada de `claude -p`, el tope y la lectura del resultado.
+"""Tests de `harness/headless.py`: la orden aislada de `claude -p`, el tope y la lectura del resultado. Sin modelo.
 
 PROPÓSITO: fijar sin modelo lo que la sonda C1 midió con modelo (docs/hallazgos.md, tanda C).
 

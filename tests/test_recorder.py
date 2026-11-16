@@ -1,4 +1,11 @@
-"""Tests de `harness/recorder.py` sobre un flujo construido con los tipos reales del SDK. Sin modelo."""
+"""Tests de `harness/recorder.py` sobre un flujo construido con los tipos reales del SDK. Sin modelo.
+
+PROPÓSITO: comprobar que el grabador convierte un flujo de mensajes (construido con los tipos reales del SDK) en un `RunRecord` con sus llamadas a tools, resultados y coste.
+
+POR QUÉ EXISTE: las señales de casi todos los módulos se leen del `RunRecord`; si el grabador interpretara mal el flujo, todas las medidas saldrían falseadas.
+
+QUÉ NO HACE: no ejecuta un agente ni llama al modelo.
+"""
 
 import asyncio
 

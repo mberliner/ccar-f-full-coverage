@@ -1,4 +1,11 @@
-"""Tests de app3/07_extraccion_schema: schema por variante, validador de forma, puntuación contra etiquetas, petición por modo de `tool_choice`, tools por tipo y few-shot. Sin modelo."""
+"""Tests de app3/07_extraccion_schema: schema por variante, validador de forma, puntuación contra etiquetas, petición por modo de `tool_choice`, tools por tipo y few-shot. Sin modelo.
+
+PROPÓSITO: comprobar el schema de cada variante, el validador de forma, la puntuación contra las etiquetas, la petición que se arma por modo de `tool_choice`, las tools por tipo de documento y el few-shot.
+
+POR QUÉ EXISTE: la puntuación y la petición son lo que el módulo compara entre variantes; un error en cualquiera falsearía la comparación.
+
+QUÉ NO HACE: no llama a la Messages API ni al modelo.
+"""
 
 import json
 from types import SimpleNamespace

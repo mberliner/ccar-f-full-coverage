@@ -1,4 +1,11 @@
-"""Tests de `harness/offline.py`: hooks y handlers de tools invocados como el SDK. Sin modelo."""
+"""Tests de `harness/offline.py`: hooks y handlers de tools invocados como el SDK. Sin modelo.
+
+PROPÓSITO: comprobar que `run_hook` y `call_tool` invocan los hooks y los handlers `@tool` con la misma forma que el SDK.
+
+POR QUÉ EXISTE: todos los tests de hooks y tools del proyecto pasan por estas dos funciones; si no imitaran al SDK, esos tests darían verde sobre un comportamiento que el SDK no tiene.
+
+QUÉ NO HACE: no arranca el SDK ni llama al modelo.
+"""
 
 import json
 

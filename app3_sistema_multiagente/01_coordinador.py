@@ -52,7 +52,6 @@ Uso: `uv run python app3_sistema_multiagente/01_coordinador.py [--pregunta ampli
 """
 
 import asyncio
-import json
 import re
 import sys
 from pathlib import Path

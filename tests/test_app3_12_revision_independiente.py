@@ -1,4 +1,11 @@
-"""Tests de app3/12_revision_independiente: reparto de pasadas, prompts de cada rama (una diferencia), fusión de hallazgos, confianza y coste de la sesión reanudada. Sin modelo."""
+"""Tests de app3/12_revision_independiente: reparto de pasadas, prompts de cada rama (una diferencia), fusión de hallazgos, confianza y coste de la sesión reanudada. Sin modelo.
+
+PROPÓSITO: comprobar el reparto de pasadas, los prompts de cada rama (con una diferencia), la fusión de hallazgos, la confianza y el coste de la sesión reanudada.
+
+POR QUÉ EXISTE: el módulo compara una revisión independiente con la del propio generador; el reparto y el coste de la rama reanudada deben ser correctos para que la comparación valga.
+
+QUÉ NO HACE: no lanza `claude -p` ni llama al modelo.
+"""
 
 import shutil
 

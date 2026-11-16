@@ -1,4 +1,11 @@
-"""Tests del servidor MCP `investigacion` de app3: búsqueda en tickets y KB con contenido y metadatos separados. Sin modelo."""
+"""Tests del servidor MCP `investigacion` de app3: búsqueda en tickets y KB con contenido y metadatos separados. Sin modelo.
+
+PROPÓSITO: comprobar la búsqueda en tickets y KB del servidor `investigacion` y que su resultado separa siempre el contenido de los metadatos.
+
+POR QUÉ EXISTE: todos los módulos de app3 usan este servidor y la procedencia depende de que los metadatos viajen aparte del contenido.
+
+QUÉ NO HACE: no conecta el servidor a un agente ni llama al modelo.
+"""
 
 import json
 

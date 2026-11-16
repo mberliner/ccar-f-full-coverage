@@ -15,31 +15,18 @@ import re
 from collections import Counter
 from pathlib import Path
 
+from harness.items import d3_section4
+
 ROOT = Path(__file__).resolve().parent.parent
-README = (ROOT / "d3_claude_code" / "README.md").read_text(encoding="utf-8")
 SHORT_TS = ["3.1", "3.2", "3.3", "3.4", "3.5"]
 MAX_PER_LETTER = 3  # de 8 preguntas: ninguna letra domina
 OPTION = re.compile(r"^- ([A-D])\. (.+)$", re.MULTILINE)
 ANSWER = re.compile(r"<details>\s*<summary>Respuesta</summary>\s*\*\*([A-D])\.\*\*(.*?)</details>", re.DOTALL)
 
 
-def section_four() -> str:
-    return README.split("\n## 4 · ", 1)[1]
-
-
 def question_blocks() -> dict[str, str]:
-    """{título: texto} de cada pregunta (`####`) de la sección 4, hasta el siguiente encabezado."""
-    blocks: dict[str, str] = {}
-    current = None
-    for line in section_four().splitlines():
-        if line.startswith("#### "):
-            current = line[5:].strip()
-            blocks[current] = ""
-        elif line.startswith("## ") or line.startswith("### "):
-            current = None
-        elif current is not None:
-            blocks[current] += line + "\n"
-    return blocks
+    """{título: texto} de cada pregunta (`####`) de la sección 4, vía el lector único `harness.items.d3_section4`."""
+    return {b.title: b.body for b in d3_section4(ROOT)}
 
 
 def correct_letter(block: str) -> str:
