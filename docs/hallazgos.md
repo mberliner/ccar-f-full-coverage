@@ -7,7 +7,7 @@ Notas de producto y hallazgos de esta implementación. Qué va aquí, qué va al
 - «Abiertos»: pendientes vivos, con la entrada donde se explican.
 - Notas de las entregas 1 y 2, del Hito T y generales: «Aislamiento y configuración de la sesión», «SDK y arnés», «Hooks de la sesión de construcción», «Medidas por módulo de las entregas 1 y 2», «Práctica D3 y skills», «Hito T y práctica guiada» y «TS 5.6 · una lección externa».
 - Entrega 3: «tanda A», «tanda B, después de las correcciones B4», «Auditoría 2026-11-06 · G-01», «Comparaciones entre modelos y calibración», «tanda C, sonda C1», «tanda C4» y «tanda D».
-- Mejoras didácticas: «Práctica guiada · preguntas de «Predice antes de ejecutar» confusas», «Precedencia y superposición de nombres» y «Fase 3 · paquetes sin interacción».
+- Mejoras didácticas: «Práctica guiada · preguntas de «Predice antes de ejecutar» confusas», «Precedencia y superposición de nombres», «Fase 3 · paquetes sin interacción» y «Fases 4 y 5 · documentos y código».
 - «Apéndice · Histórico de medidas»: medidas superadas por otras posteriores, con sus cifras (tanda B antes de B4, tanda C antes de C4, `app2/04` primera a tercera medida) y las tablas de filas ya aplicadas en `docs/tipos-de-senal.md`.
 
 ## Abiertos
@@ -371,6 +371,20 @@ Cada paquete de la fase 3 se lanzó con `claude -p`, sin nadie que respondiera, 
 - **Una revisión de solo lectura no puede ejecutar `--check` ni búsquedas compuestas**; tiene que decir en su informe qué deja sin cubrir.
 - **Los datos reales sacaron lo que los contratos no previeron:** la celda «Viñeta» de `FALLOS.md` se escribe a mano (varias viñetas, comentarios, solo la TS), y el repaso descartaba esas filas hasta 3.7-codigo.
 - **Llevado también al roadmap el 2026-11-15** (eran reglas del proyecto sin marca `→ roadmap`): los dos formatos de pregunta (§2), el tipo de señal de cada parte y «un modelo es un banco de pruebas» (§13), y lo construido en la fase 3: repaso espaciado, práctica mezclada, hojas de repaso y simulaciones por escenario (§5, §10 `S-1` y §13).
+
+## Fases 4 y 5 · documentos y código (2026-11-15)
+
+Lo que se aprendió al reorganizar `docs/` y al refactorizar el código. Las lecciones que le servirían a otra implementación ya están en el roadmap; aquí queda lo propio de esta.
+
+- **Una fuente por regla, con dos excepciones (el resumen de `CLAUDE.md` y las reglas por ruta):** ✓ roadmap 2026-11-15 §4. Lo propio: el mapa 4.0 y las decisiones de 4.1 en `NOTAS.md`.
+- **`docs/` en estudio, construcción e histórico, con índice; lo superado a `docs/historico/` sin reescribir sus rutas:** ✓ roadmap 2026-11-15 §5.
+- **Ninguna opción aceptada sin efecto y la variante correcta siempre `correcta`:** ✓ roadmap 2026-11-15 §2. Lo propio: `--repeat` repite en `app2/05` y en `app3/02` `paralelo` y se rechaza en `app2/03`, `06`, `07` y `app3/09`.
+- **Helpers del arnés (`preamble`, `build_parser` por partes, `make_create`/`run_guarded`, `cargar`, `results`, `metrics`, `salida`):** ✓ roadmap 2026-11-15 §5. Lo propio: lo que se dejó sin migrar y por qué, en «5.2-app1» a «5.2-app3» de `NOTAS.md`.
+- **Salida para quien estudia (`[mecanismo]`, `[esperado]`, `[clave]`, `[medida]`):** ✓ roadmap 2026-11-15 §13. Lo propio: solo en `app1/01`; vista con modelo (Haiku 5.5, 0,0006 $ con `--budget 0.05`), y extenderla al resto queda por decidir.
+- **Con `--repeat N`, una ejecución cortada por presupuesto no cuenta en la tasa:** ✓ roadmap 2026-11-15 §4.3 (amplía la entrada de `app2/04`).
+- **Tests de reglas por AST con control positivo; referencia de `--help`, salidas sin modelo y cadenas largas antes de refactorizar; lista de tests recogidos al fusionar:** ✓ roadmap 2026-11-15 §11.10–12.
+- **Worktree con el mismo nombre de carpeta; dos corridas en paralelo para un paquete de diseño; tests de contrato que nunca se han ejecutado:** ✓ roadmap 2026-11-15 §4.3. Lo propio: 5.0 con Opus 5.5 y otra herramienta de otra familia de modelos; base de Opus por encajar con el código, con piezas de la otra (detalle en «5.0 · contratos» de `NOTAS.md`).
+- **Revisiones independientes con otra herramienta cuando el modelo previsto no está:** 4.5 y 5.5 se hicieron así, con un encargo autónomo fuera de git (`estado/<perfil>/headless/4.5-encargo.md` y `5.5-encargo.md`), y cada hallazgo se comprobó en la sesión interactiva antes de aplicarlo. Sin hallazgos altos en ninguna de las dos.
 
 ## Apéndice · Histórico de medidas
 
