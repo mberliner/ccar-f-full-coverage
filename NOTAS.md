@@ -415,6 +415,7 @@ El roadmap es una plantilla sin seguimiento: el avance vive aquí y el criterio 
 
 - **Cobertura 240/240:** alcanzada en la tanda D; `test_full_coverage` ya no lleva `xfail` y falla si una viñeta se queda sin introducir.
 - **Viñetas de D3:** las 40 introducidas. 13 en `d3_claude_code/README.md` (3.1-S1, 3.1-S4, 3.2-K4, 3.2-S5 y las 9 de 3.5) y 27 en `CLAUDE.md`, `docs/` y `.claude/`.
+- **`docs/referencia/` (2026-11-22):** los temas de producto que sirven sin el proyecto salen de la mecánica: `docs/precedencia-y-nombres.md` y `docs/plan-pruebas-precedencia.md` → `docs/referencia/precedencia/` (`plan-pruebas.md`), sin las líneas propias del proyecto; `docs/hooks/` → `docs/referencia/hooks/`. El apéndice «Histórico de medidas» de `docs/hallazgos.md` → `docs/historico/hallazgos-medidas-superadas.md`. Criterio en `docs/referencia/README.md` y en `docs/estandares-flujo.md`, «Registro entre sesiones». Las rutas antiguas de este archivo y de `docs/historico/` no se reescriben.
 ## Citas en prosa por convertir a `# USA`
 
 El arnés cita estas viñetas en prosa porque aún no están introducidas (roadmap §2). Se convierten en el mismo cambio que las introduce:

@@ -8,7 +8,7 @@ la llamada. Lee el evento por stdin y se comporta según el modo (argumento):
   post-exit2 PostToolUse: `exit 2` solo muestra el stderr a Claude; la herramienta ya corrió.
 
 POR QUÉ EXISTE: para probar el comportamiento de los códigos de salida sin cargar nada en
-el proyecto. `docs/hooks/hooks_escenarios.py` lo invoca como subproceso en su autocomprobación.
+el proyecto. `docs/referencia/hooks/hooks_escenarios.py` lo invoca como subproceso en su autocomprobación.
 
 QUÉ NO HACE: no se registra en `.claude/settings.json` (el ejemplo está en
 `hooks_escenarios_settings.json` y no se carga solo), no es una lista completa de comandos

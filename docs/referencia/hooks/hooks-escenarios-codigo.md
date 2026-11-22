@@ -13,8 +13,8 @@
 | [`hooks_escenarios_settings.json`](hooks_escenarios_settings.json) | Cómo se registraría S1 en `settings.json`; no se carga solo |
 
 ```bash
-uv run python docs/hooks/hooks_escenarios.py     # sin modelo: llama a cada hook con entradas sintéticas
-uv run python docs/hooks/hooks_escenarios.py --demo "<prompt>"   # con modelo: ver «Cómo se conecta»
+uv run python docs/referencia/hooks/hooks_escenarios.py     # sin modelo: llama a cada hook con entradas sintéticas
+uv run python docs/referencia/hooks/hooks_escenarios.py --demo "<prompt>"   # con modelo: ver «Cómo se conecta»
 ```
 
 ## Qué escenario cubre cada caso de la ayuda
@@ -175,7 +175,7 @@ async for message in query(prompt="Reembolsa 750 al pedido A-1042", options=opti
 
 ```bash
 # Gasta tokens (tope de 0.30 USD). Con otra cuenta, HOOKS_DEMO_CLI apunta a su lanzador.
-uv run python docs/hooks/hooks_escenarios.py --demo "Consulta el pedido A-1042 y reembolsa 750 si está entregado."
+uv run python docs/referencia/hooks/hooks_escenarios.py --demo "Consulta el pedido A-1042 y reembolsa 750 si está entregado."
 ```
 
 - **Sin servidor externo:** `create_sdk_mcp_server` y `@tool` montan `billing` y `crm` dentro del propio proceso. Así los nombres son `mcp__billing__*` y `mcp__crm__*` y los hooks se prueban sin infraestructura.
@@ -420,7 +420,7 @@ Anota herramienta, `tool_use_id` (el mismo que tuvo el `PreToolUse`), duración 
 
 ```json
 {"hooks": {"PreToolUse": [{"matcher": "Bash",
-  "hooks": [{"type": "command", "command": "python docs/hooks/hooks_escenarios_shell.py exit2", "onFailure": "block"}]}]}}
+  "hooks": [{"type": "command", "command": "python docs/referencia/hooks/hooks_escenarios_shell.py exit2", "onFailure": "block"}]}]}}
 ```
 
 Con la entrada `rm -rf /var/data` en `PreToolUse`:

@@ -1,8 +1,8 @@
 # Precedencia y superposición de nombres
 
-Referencia de producto, no un estándar. Resume qué definición gana cuando dos comparten nombre y cómo se combinan las fuentes que se acumulan. El hallazgo que la enlaza está en `docs/hallazgos.md` (sección «Precedencia y superposición de nombres»).
+Referencia de producto, no un estándar. Resume qué definición gana cuando dos comparten nombre y cómo se combinan las fuentes que se acumulan.
 
-**Alcance de la verificación (2026-11-11, Claude Code 2.1.322).** Cada afirmación lleva la clave de su fuente entre corchetes; las claves se resuelven en la sección 7. Lo de examen se contrastó con la Exam Guide v1.0 y lo de producto, con la documentación oficial de Claude Code leída ese día. Lo que la documentación no resuelve se comprueba con las pruebas de `docs/plan-pruebas-precedencia.md`, que se ejecutan en un directorio desechable fuera de este repositorio: las ya ejecutadas figuran aquí con la clave [P-n] y las pendientes, en la sección 8. Este documento no cambia ninguna respuesta de examen.
+**Alcance de la verificación (2026-11-11, Claude Code 2.1.322).** Cada afirmación lleva la clave de su fuente entre corchetes; las claves se resuelven en la sección 7. Lo de examen se contrastó con la Exam Guide v1.0 y lo de producto, con la documentación oficial de Claude Code leída ese día. Lo que la documentación no resuelve se comprueba con las pruebas de [`plan-pruebas.md`](plan-pruebas.md), que se ejecutan en un directorio desechable fuera de cualquier repositorio: las ya ejecutadas figuran aquí con la clave [P-n] y las pendientes, en la sección 8. Este documento no cambia ninguna respuesta de examen.
 
 ## 1. Qué es examen y qué no
 
@@ -84,9 +84,9 @@ Detalles del mismo tipo:
 ### `settings.local.json`
 
 - Está por encima de los settings de proyecto y de usuario, y por debajo de `--settings` y de los gestionados [D-ST-1].
-- No se versiona, pero Claude Code solo lo añade a los *global git excludes* la primera vez que él mismo escribe el archivo. Si se crea a mano (como hace este proyecto copiando el `.example`), hay que ignorarlo a mano [D-ST-3].
+- No se versiona, pero Claude Code solo lo añade a los *global git excludes* la primera vez que él mismo escribe el archivo. Si se crea a mano (por ejemplo, copiando un `.example`), hay que ignorarlo a mano [D-ST-3].
 - `CLAUDE.local.md` hay que añadirlo a `.gitignore` a mano. La única excepción documentada es `/init` con `CLAUDE_CODE_NEW_INIT=1` y la opción personal, que lo hace por ti [D-ME-5].
-- `claudeMdExcludes` y `skillOverrides` son claves de settings y pueden ir en este archivo [D-ME-6][D-SK-6]. Es lo que usa este proyecto para aislarse del contexto heredado (ver `CLAUDE.md`).
+- `claudeMdExcludes` y `skillOverrides` son claves de settings y pueden ir en este archivo [D-ME-6][D-SK-6].
 
 ## 5. Criterios comunes y diferencias
 
@@ -163,7 +163,7 @@ Consultadas el 2026-11-11. La documentación de producto no está versionada por
 | D-PE-3 | `permissions` | *Settings precedence* |
 | D-PL-1 | `plugins-reference` | Campo `name` del manifiesto (espacio de nombres de los componentes) |
 
-**Pruebas propias** (`docs/plan-pruebas-precedencia.md`), ejecutadas el 2026-11-11 con Claude Code 2.1.322; modelo de la medida: Opus 5.5. P-1 y P-2, en sesión interactiva; P-3 a P-5, con `claude -p`. Una ejecución por caso:
+**Pruebas propias** ([`plan-pruebas.md`](plan-pruebas.md)), ejecutadas el 2026-11-11 con Claude Code 2.1.322; modelo de la medida: Opus 5.5. P-1 y P-2, en sesión interactiva; P-3 a P-5, con `claude -p`. Una ejecución por caso:
 
 | Clave | Prueba | Señal |
 |---|---|---|
@@ -175,7 +175,7 @@ Consultadas el 2026-11-11. La documentación de producto no está versionada por
 
 ## 8. Sin respaldo en la documentación
 
-La documentación consultada no resuelve este punto, así que no figura arriba como hecho. Su prueba está en `docs/plan-pruebas-precedencia.md`.
+La documentación consultada no resuelve este punto, así que no figura arriba como hecho. Su prueba está en [`plan-pruebas.md`](plan-pruebas.md).
 
 | Punto | Prueba |
 |---|---|

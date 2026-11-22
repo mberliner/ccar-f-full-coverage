@@ -1,14 +1,14 @@
 # Pruebas de precedencia y superposición de nombres
 
-Producto observado (no evaluable). Pruebas propias para los puntos que la documentación oficial de Claude Code no resuelve. Sus resultados son la fuente de las claves [P-n] de `docs/precedencia-y-nombres.md`. **Estado: P1 a P5 ejecutadas; P6, sin ejecutar.** Ningún resultado cambia una respuesta de examen.
+Producto observado (no evaluable). Pruebas propias para los puntos que la documentación oficial de Claude Code no resuelve. Sus resultados son la fuente de las claves [P-n] de [`precedencia-y-nombres.md`](precedencia-y-nombres.md). **Estado: P1 a P5 ejecutadas; P6, sin ejecutar.** Ningún resultado cambia una respuesta de examen.
 
 ## 1. Condiciones comunes
 
-- **Dónde.** En un directorio desechable con `git init`, fuera de este repositorio (`<lab>`), para que ni `claudeMdExcludes` ni las reglas del proyecto alteren el resultado.
+- **Dónde.** En un directorio desechable con `git init`, fuera de cualquier repositorio (`<lab>`), para que ni el `claudeMdExcludes` ni las reglas de un proyecto alteren el resultado.
 - **Nombres.** Todo lo que se crea lleva el prefijo `zz-prec-`.
 - **Contenido marcador.** Cada definición responde con una cadena que dice de dónde viene (`ORIGEN=usuario-command`, `ORIGEN=proyecto-skill`…), así que el resultado se lee en la salida.
 - **Coste.** Las ejecuciones con `claude -p` llevan `--max-budget-usd` y `--max-turns` (este último, solo como red de seguridad).
-- **Tipo de señal.** Con las categorías de `docs/tipos-de-senal.md`.
+- **Tipo de señal.** Con las categorías del proyecto de origen (`docs/tipos-de-senal.md` de ccar-f-full-coverage): determinista o probabilística con control positivo.
 - **Git Bash en Windows.** Hace falta `MSYS_NO_PATHCONV=1`: sin ella, un prompt como `/zz-prec-p3` llega convertido en una ruta.
 
 ## 2. Pruebas ejecutadas
@@ -52,6 +52,6 @@ Todas el 2026-11-11, con Claude Code 2.1.322 y modelo de la medida Opus 5.5. Una
 
 **Al cerrarla:**
 
-- El resultado pasa a la tabla de la sección 2 y, como hecho con la clave [P-6], a `docs/precedencia-y-nombres.md`, donde sale de la sección 8.
-- Se añade una línea con fecha y versión a `docs/hallazgos.md`. Si el resultado compara modelos, va solo allí.
+- El resultado pasa a la tabla de la sección 2 y, como hecho con la clave [P-6], a [`precedencia-y-nombres.md`](precedencia-y-nombres.md), donde sale de la sección 8.
+- Se añade una línea con fecha y versión al registro de hallazgos del proyecto que la ejecute. Si el resultado compara modelos, va solo allí.
 - Se borra `<lab>`. Las sesiones abiertas en él dejan una entrada en `projects` de `~/.claude.json` y una carpeta en `~/.claude/projects/`, que también se pueden borrar.

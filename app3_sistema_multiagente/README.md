@@ -575,7 +575,7 @@ Notas:
   - «Resultado parcial» pide cifras de las fuentes pedidas que respondieron y no cuenta fechas.
   - «Alternativa o reintento mencionados» es laxa (palabras sueltas): léela junto al texto.
 - **Reintento local:** no cuenta como error del coordinador (`coordinator_errors` = 0).
-- **Medición anterior** (antes de las correcciones de la revisión; ya no se reproduce con el código actual): en `docs/hallazgos.md`, «Apéndice · Histórico de medidas», sección «Entrega 3 · tanda B, antes de las correcciones B4».
+- **Medición anterior** (antes de las correcciones de la revisión; ya no se reproduce con el código actual): en `docs/historico/hallazgos-medidas-superadas.md`, sección «Entrega 3 · tanda B, antes de las correcciones B4».
 - Las medidas, la forma del contexto de error y las opciones se prueban sin modelo en `tests/test_app3_04_errores_entre_agentes.py`.
 </details>
 
@@ -738,7 +738,7 @@ Notas:
   - `explanation_found` mira qué contexto usa el informe en las líneas que nombran cada par. Ya no toma «la tabla muestra» ni «se espera confirmar» por contexto, ni «el mismo método» por atribución, pero sigue leyendo palabras.
   - `merged_figures` detecta promedios con su unidad («22 horas», «≈4 sobre 5», «10 %»), no cualquier forma de fusionar.
   - `sources_passed` pide que el id de la fuente vaya con su afirmación en el prompt del sintetizador.
-- **Medición anterior** (antes de las correcciones de la revisión): en `docs/hallazgos.md`, «Apéndice · Histórico de medidas», sección «Entrega 3 · tanda B, antes de las correcciones B4».
+- **Medición anterior** (antes de las correcciones de la revisión): en `docs/historico/hallazgos-medidas-superadas.md`, sección «Entrega 3 · tanda B, antes de las correcciones B4».
 - Las medidas, la forma de las afirmaciones y las opciones se prueban sin modelo en `tests/test_app3_05_procedencia.py`.
 
 **Para pensar (sin evaluación):** ¿aparecería el efecto de `medio` con un informe mucho más largo o con distracciones más parecidas al hallazgo? No se ha medido.
@@ -917,7 +917,7 @@ Notas:
 - **Sin señal de degradación (TS 5.4-K1):** con ~11.000 caracteres (unos pocos miles de tokens) el informe del hilo único no perdió ningún hecho ni recurrió a «patrones típicos». Que aparezca en una sesión mucho más larga es una hipótesis sin comprobar; no se alargó la investigación para forzarla. Lo que sí se midió es la diferencia de contexto: 11.134 caracteres juntos frente a un máximo de 4.106 en una fase de la correcta.
 - **Coste:** la correcta cuesta unas 2,5 veces más que el hilo único (0,068 $ frente a 0,025–0,029 $): tres conversaciones y subagentes. Lo que compra no es ahorro, sino contexto acotado por fase y la posibilidad de retomar.
 - **Lo que hizo el subagente:** en la fase 1 el coordinador lanzó un subagente por fuente, en paralelo, y cada uno guardó sus hallazgos (5–7 en total, con algún duplicado del total de tickets). La barrera impidió que el coordinador consultara las fuentes por su cuenta (0 intentos denegados).
-- **Medida de hechos:** un falso negativo de una versión anterior de la medida, ya corregido; en `docs/hallazgos.md`, «Apéndice · Histórico de medidas», sección «Entrega 3 · tanda B, antes de las correcciones B4».
+- **Medida de hechos:** un falso negativo de una versión anterior de la medida, ya corregido; en `docs/historico/hallazgos-medidas-superadas.md`, sección «Entrega 3 · tanda B, antes de las correcciones B4».
 - **Medidas:** «hechos del informe» comprueba que cada cifra aparece, no que vaya con su fuente, y «patrón típico» busca expresiones sueltas. Léelas junto al texto.
 - `Explore` y `/compact` no se pueden observar aquí: son de Claude Code.
 - Las medidas, el scratchpad, el manifest y las opciones se prueban sin modelo en `tests/test_app3_06_contexto_largo.py`.
@@ -1792,7 +1792,7 @@ En `revision`: qué fallos sembrados encuentra (A a F, el segundo commit añade 
 - **P7** Se evita proponer escenarios que la suite ya cubre (TS 3.6-S4). El `CLAUDE.md` es por donde llega el contexto del proyecto en CI, y documentar ahí los estándares mejora los tests y reduce los que aportan poco (TS 3.6-K3, 3.6-S5). En la medida, sin los tests existentes no hubo repetidos (sin diferencia), y sin los estándares salieron más tests (9 a 12 frente a 7 u 8).
 - **P8** Que el mismo patrón salga con nombres distintos y el registro lo disperse: el comentario del cambio correcto salió como `misleading_comment`, `dubious_comment`, `comment_does_not_match_code`… El campo sirve para analizar qué patrones se descartan (TS 4.4-K3, 4.4-S3), pero solo agrupa bien si el nombre es estable; `normalize_pattern` solo iguala mayúsculas y separadores.
 
-Sonnet 5.5 (rol `reviewer`), `claude -p` aislado. **Las cifras de referencia son las de después de las correcciones C4** (2026-11-07, 5 ejecuciones por variante, la misma puntuación en toda la batería): cada revisión corre sobre el árbol del commit que revisa, un escenario de test se compara con lo que espera y el símbolo se compara por nombre completo. Las cifras anteriores de `rerevision` están en la tabla, rotuladas «antes»; las demás, en el apéndice de `docs/hallazgos.md` (puntero más abajo). **No son comparables**: el revisor del primer commit leía el árbol del segundo, donde A ya estaba arreglado, la puntuación era otra, el prompt de todas las variantes era otro (la línea de `bug` citaba el docstring y el ejemplo de `minor` era otro) y los datos tenían `TIMEOUT` duplicado (ahora `NOTIF_TIMEOUT`).
+Sonnet 5.5 (rol `reviewer`), `claude -p` aislado. **Las cifras de referencia son las de después de las correcciones C4** (2026-11-07, 5 ejecuciones por variante, la misma puntuación en toda la batería): cada revisión corre sobre el árbol del commit que revisa, un escenario de test se compara con lo que espera y el símbolo se compara por nombre completo. Las cifras anteriores de `rerevision` están en la tabla, rotuladas «antes»; las demás, en `docs/historico/hallazgos-medidas-superadas.md` (puntero más abajo). **No son comparables**: el revisor del primer commit leía el árbol del segundo, donde A ya estaba arreglado, la puntuación era otra, el prompt de todas las variantes era otro (la línea de `bug` citaba el docstring y el ejemplo de `minor` era otro) y los datos tenían `TIMEOUT` duplicado (ahora `NOTIF_TIMEOUT`).
 
 | Variante | Señal observada | Qué dice |
 | :--- | :--- | :--- |
@@ -1821,12 +1821,12 @@ Notas:
 
 `--anti sin_ejemplos` tampoco da señal (B falta en 1 de 25): no contradice 4.2-S2 y S3, pero no la demuestra.
 
-**Antes de las correcciones C4** (no comparable; salvo las filas `rerevision` de la tabla, que no se volvieron a medir): en `docs/hallazgos.md`, «Apéndice · Histórico de medidas», sección «`app3/11`, criterios y revisión en CI (tanda C, 2026-11-06) · antes de las correcciones C4».
+**Antes de las correcciones C4** (no comparable; salvo las filas `rerevision` de la tabla, que no se volvieron a medir): en `docs/historico/hallazgos-medidas-superadas.md`, sección «`app3/11`, criterios y revisión en CI (tanda C, 2026-11-06) · antes de las correcciones C4».
 
 Avisos sobre las cifras y la ejecución:
 
 - **El tope de coste** es `--max-budget-usd` de cada `claude -p`: el módulo le pasa a cada repetición lo menor entre lo que queda de `--budget` y `--budget` dividido entre las repeticiones, así que una repetición no puede gastarse el tope de las siguientes. La sonda de contexto del principio cuenta en el mismo tope.
-- Lo que no depende del modelo se prueba en `tests/test_app3_11_criterios_y_ci.py`, `tests/test_headless.py` y `tests/test_datos_sinteticos.py`. Coste de las ejecuciones con modelo de este módulo: 0,63 $ en la medida después de las correcciones (0,37 $ la revisión y 0,26 $ los tests); el de antes, en el apéndice de `docs/hallazgos.md`.
+- Lo que no depende del modelo se prueba en `tests/test_app3_11_criterios_y_ci.py`, `tests/test_headless.py` y `tests/test_datos_sinteticos.py`. Coste de las ejecuciones con modelo de este módulo: 0,63 $ en la medida después de las correcciones (0,37 $ la revisión y 0,26 $ los tests); el de antes, en `docs/historico/hallazgos-medidas-superadas.md`.
 </details>
 
 ### Pregunta tipo examen
@@ -2055,7 +2055,7 @@ Por repetición: qué fallos sembrados encontró cada pasada, cuáles faltan, fa
 - **P5** No los perdió: 24 de 25 (el que faltó una vez fue C, no D ni F), con la mitad de coste. Con un diff de este tamaño no hay diferencia; la guía habla de revisiones grandes.
 - **P6** Para enrutar la revisión de forma calibrada (TS 4.6-S3). Aquí, los hallazgos con confianza de la verificación desde 0,8 se publican, y el resto y los que no la tienen van a una persona; cuenta la de la verificación, no la que el hallazgo trae al nacer. Para fiarse hay que comprobar esa confianza contra hallazgos etiquetados, como la confianza por campo del módulo 10 (inferencia propia: TS 4.6-S3 no lo dice): aquí el hueco de calibración fue de 0,129 a 0,215.
 
-Sonnet 5.5 (rol `reviewer`), `claude -p` aislado. Hay tres mediciones, cada una con su versión del código (la primera, de la tanda C, está en el apéndice de `docs/hallazgos.md`); **la de referencia es la última**, después de las correcciones C4 (2026-11-07). En ella la sesión generadora escribió exactamente el cambio dado (93 líneas, cuatro archivos) en las dos ramas.
+Sonnet 5.5 (rol `reviewer`), `claude -p` aislado. Hay tres mediciones, cada una con su versión del código (la primera, de la tanda C, está en `docs/historico/hallazgos-medidas-superadas.md`); **la de referencia es la última**, después de las correcciones C4 (2026-11-07). En ella la sesión generadora escribió exactamente el cambio dado (93 líneas, cuatro archivos) en las dos ramas.
 
 **Después de las correcciones C4** (5 ejecuciones por rama):
 
@@ -2076,7 +2076,7 @@ Calibración de la verificación: con `una_pasada`, los 5 hallazgos de la banda 
 
 Que la instancia nueva lo encontrara todo **no es un control positivo**: no prueba que la medida pueda registrar una pérdida. Lo que sí lo prueba es la pasada por archivo de la instancia nueva, que pierde F en 5 de 5 y la medida lo registra. Con el techo al 100 % en las tres ramas, falta señal, no muestra: para ver un efecto haría falta un fallo más sutil. Las 25 oportunidades por rama son 5 ejecuciones sobre el mismo diff y no son independientes, así que no dan una cota de la tasa de pérdida.
 
-**Antes, tanda C** (2 a 3 ejecuciones, con una versión anterior del código): en `docs/hallazgos.md`, «Apéndice · Histórico de medidas», sección «`app3/12`, revisión independiente: batería de la autorrevisión (tanda C, 2026-11-06) · antes de las correcciones C4», apartado «Antes (tanda C: 3 + 2 ejecuciones)».
+**Antes, tanda C** (2 a 3 ejecuciones, con una versión anterior del código): en `docs/historico/hallazgos-medidas-superadas.md`, sección «`app3/12`, revisión independiente: batería de la autorrevisión (tanda C, 2026-11-06) · antes de las correcciones C4», apartado «Antes (tanda C: 3 + 2 ejecuciones)».
 
 Notas:
 
@@ -2086,7 +2086,7 @@ Notas:
 - **La sesión bifurcada no es una pasada local:** como la sesión generadora escribió los cuatro archivos, ve a los llamadores en su historial. Una instancia nueva sin tools es la única pasada local de verdad.
 - **El coste de la sesión reanudada es acumulado:** cada revisión bifurcada informa del coste de la generadora más el suyo. El módulo cuenta cada revisión por la diferencia y suma la generadora una vez.
 - **La orden «no crees ningún otro archivo»** se añadió tras la medida en que la generadora añadió un archivo de tests. En la última medida copió el cambio exacto, pero no se probó sin la orden: no se sabe si es ella la que lo evita.
-- Lo que no depende del modelo se prueba en `tests/test_app3_12_revision_independiente.py` y `tests/test_headless.py`. Coste de las ejecuciones con modelo de este módulo: 1,90 $ en la batería de la autorrevisión y 0,76 $ en la medida tras las correcciones; el de la tanda C, en el apéndice de `docs/hallazgos.md`.
+- Lo que no depende del modelo se prueba en `tests/test_app3_12_revision_independiente.py` y `tests/test_headless.py`. Coste de las ejecuciones con modelo de este módulo: 1,90 $ en la batería de la autorrevisión y 0,76 $ en la medida tras las correcciones; el de la tanda C, en `docs/historico/hallazgos-medidas-superadas.md`.
 
 **Para pensar (sin evaluación):** ¿qué pasaría si la pasada de integración y una pasada por archivo se contradijeran? El módulo no lo provoca, así que no cuenta como predicción.
 </details>

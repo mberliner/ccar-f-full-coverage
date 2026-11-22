@@ -45,6 +45,7 @@ Se separa lo que es del proyecto (versionado y igual para todos) de lo que es de
 **Versionado:**
 - `NOTAS.md`: avance de todos los hitos (el roadmap es una plantilla y no lo lleva) y notas de construcción.
 - `docs/hallazgos.md`: notas de producto no evaluables y hallazgos de esta implementación.
+- `docs/referencia/`: temas de producto que sirven sin este proyecto, uno por carpeta, con fecha, versión y fuentes. Lo que solo vale aquí se queda en `docs/hallazgos.md`, que enlaza al tema (criterio en `docs/referencia/README.md`).
 - Mejoras para el roadmap: una nota que le pasaría también a otra persona, con otra máquina y otra cuenta, se marca `→ roadmap`. Al llevarla al roadmap (a la sección afectada o a §4.3, actualizando la fecha de revisión de su cabecera) se reduce en `docs/hallazgos.md` a un puntero `✓ roadmap YYYY-MM-DD §x`, para no duplicarla. Las que dependen de esta implementación o aún no se han comprobado se quedan solo allí (criterio en roadmap §12, «Mantener la plantilla al día»).
 - Estos documentos son siempre agnósticos: rutas relativas al proyecto o genéricas (`~/.claude/…`), sin rutas absolutas, sin nombres de personas, cuentas ni perfiles.
 

@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python docs/hooks/hooks_escenarios_shell.py exit2",
+            "command": "python docs/referencia/hooks/hooks_escenarios_shell.py exit2",
             "onFailure": "block"
           }
         ]
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python docs/hooks/hooks_escenarios_shell.py post-exit2"
+            "command": "python docs/referencia/hooks/hooks_escenarios_shell.py post-exit2"
           }
         ]
       }

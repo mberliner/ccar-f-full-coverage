@@ -1,7 +1,7 @@
 """Hooks de prueba (callbacks del Agent SDK) para `hooks-escenarios-codigo.md`.
 
 PROPÓSITO: un callback ejecutable por cada escenario del documento, más una
-autocomprobación sin modelo (`python docs/hooks/hooks_escenarios.py`) que los llama con
+autocomprobación sin modelo (`python docs/referencia/hooks/hooks_escenarios.py`) que los llama con
 entradas sintéticas y verifica la salida JSON que devolvería cada uno.
 
 POR QUÉ EXISTE: el documento enseña qué campo es válido en cada evento y qué
@@ -15,8 +15,8 @@ su servidor: `unwrap_response` admite las formas habituales (dict, texto JSON y 
 bloques de texto) y `--demo` imprime la que llega de verdad.
 
 Uso:
-  uv run python docs/hooks/hooks_escenarios.py                 # autocomprobación, sin modelo
-  uv run python docs/hooks/hooks_escenarios.py --demo "<prompt>"   # llamada real con query()
+  uv run python docs/referencia/hooks/hooks_escenarios.py                 # autocomprobación, sin modelo
+  uv run python docs/referencia/hooks/hooks_escenarios.py --demo "<prompt>"   # llamada real con query()
   (con `HOOKS_DEMO_CLI=<ruta del ejecutable claude>` se elige otro lanzador, p. ej. otra cuenta)
 """
 
